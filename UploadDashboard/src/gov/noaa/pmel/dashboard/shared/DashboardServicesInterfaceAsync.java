@@ -197,6 +197,9 @@ public interface DashboardServicesInterfaceAsync {
 	void updateDataColumnSpecs(String username, DashboardDataset newSpecs, 
 			AsyncCallback<DashboardDatasetData> callback);
 
+	void saveDataColumnSpecs(String username, DashboardDataset newSpecs, 
+			AsyncCallback<DashboardDatasetData> callback);
+
 	/**
 	 * Updates the data column specifications for the datasets with the 
 	 * given IDs.  Column types are assigned from column names-to-types

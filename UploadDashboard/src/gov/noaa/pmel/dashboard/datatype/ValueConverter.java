@@ -31,6 +31,9 @@ public abstract class ValueConverter<T> {
 			new Double[] {-999.0, -999.9, -999.99, -999.999,
 					-9999.0, -9999.9, -9999.99, -99999.0, -99999.9};
 
+	
+	public static final int VALUE_NOT_APPLICABLE = -9999;
+	
 	protected String fromUnit;
 	protected String toUnit;
 	protected String missVal;
@@ -113,6 +116,7 @@ public abstract class ValueConverter<T> {
 	/**
 	 * @param valueString
 	 * 		the string representation of the data value in the input unit/format
+	 * @param recordNumber TODO
 	 * @return
 	 * 		null if the string representation matches a missing value;
 	 * 		otherwise, the data value convert to the output unit/format
@@ -122,8 +126,17 @@ public abstract class ValueConverter<T> {
 	 * @throws IllegalStateException
 	 * 		if unit/format conversion of the data value cannot be performed
 	 */
-	public abstract T convertValueOf(String valueString) throws IllegalArgumentException, IllegalStateException;
+	public abstract T convertValueOf(String valueString, int recordNumber) throws IllegalArgumentException, IllegalStateException;
 
+	protected static String conversionKey(String fromUnit, String toUnit) {
+		String from = fromUnit == null || fromUnit.trim().length() == 0 ? "none" : fromUnit.trim();
+		String to = toUnit == null || toUnit.trim().length() == 0 ? "none" : toUnit.trim();
+		StringBuffer keyBuf = new StringBuffer("from");
+		keyBuf.append(" \"").append(from).append("\"");
+		keyBuf.append(" to \"").append(to).append("\"");
+		return keyBuf.toString();
+	}
+	
 	@Override
 	public String toString() {
 		return "ValueConverter" +

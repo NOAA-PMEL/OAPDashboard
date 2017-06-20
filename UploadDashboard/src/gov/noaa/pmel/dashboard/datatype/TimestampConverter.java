@@ -96,7 +96,7 @@ public class TimestampConverter extends ValueConverter<String> {
 	}
 
 	@Override
-	public String convertValueOf(String valueString) throws IllegalArgumentException, IllegalStateException {
+	public String convertValueOf(String valueString, int recordNumber) throws IllegalArgumentException, IllegalStateException {
 		// Deal with missing values
 		if ( isMissingValue(valueString, true) )
 			return null;

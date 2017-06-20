@@ -20,7 +20,9 @@
 
 	<!-- Other module inherits -->
 	<inherits name='com.googlecode.gwt.crypto.Crypto' />
-
+	<inherits name="com.google.gwt.logging.Logging"/>
+	<inherits name="com.google.gwt.http.HTTP"/>
+	
 	<!-- Specify the app entry point class. -->
 	<entry-point class='gov.noaa.pmel.dashboard.client.UploadDashboard' />
 

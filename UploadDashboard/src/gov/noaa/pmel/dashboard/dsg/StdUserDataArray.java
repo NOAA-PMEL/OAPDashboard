@@ -39,6 +39,13 @@ public class StdUserDataArray extends StdDataArray {
 	private String[] userColNames;
 	private String[] userUnits;
 	private String[] userMissVals;
+	/**
+	 * Tri-state flag representing a column's standarization state.
+	 * Boolean.TRUE = column's data has been standardized,<br/>
+	 * Boolean.FALSE = column's data has not been standardized (FALSE),<br/>
+	 * null = column's data cannot be standardized<br/>
+	 * per the check in {@link #getStdVal(int, int)}
+	 */
 	private Boolean[] standardized;
 	private ArrayList<ADCMessage> stdMsgList;
 	int woceAutocheckIndex;
@@ -109,7 +116,7 @@ public class StdUserDataArray extends StdDataArray {
 
 		standardized = new Boolean[numDataCols];
 		for (int k = 0; k < numDataCols; k++)
-			standardized[k] = null;
+			standardized[k] = Boolean.FALSE;
 
 		ArrayList<ArrayList<String>> dataVals = dataset.getDataValues();
 		if ( dataVals.isEmpty() )
@@ -128,35 +135,35 @@ public class StdUserDataArray extends StdDataArray {
 		// Create a 2-D array of these Strings for efficiency
 		String[][] strDataVals = new String[numSamples][numDataCols];
 		int woceIdx = -1;
-		for (int j = 0; j < numSamples; j++) {
-			ArrayList<String> rowVals = dataVals.get(j);
+		for (int row = 0; row < numSamples; row++) {
+			ArrayList<String> rowVals = dataVals.get(row);
 			if ( rowVals.size() != numUserDataCols ) {
 				// Generate a general message for this row - in case too long
 				ADCMessage msg = new ADCMessage();
 				msg.setSeverity(Severity.CRITICAL);
-				msg.setRowNumber(j+1);
+				msg.setRowNumber(row+1);
 				msg.setGeneralComment(INCONSISTENT_NUMBER_OF_DATA_VALUES_MSG);
 				msg.setDetailedComment(INCONSISTENT_NUMBER_OF_DATA_VALUES_MSG + "; " + 
 						numUserDataCols + " expected but " + rowVals.size() + " found");
 				stdMsgList.add(msg);
 				// Continue on, assuming the missing values are at the end
 			}
-			for (int k = 0; k < numUserDataCols; k++) {
+			for (int col = 0; col < numUserDataCols; col++) {
 				try {
-					strDataVals[j][k] = rowVals.get(k);
+					strDataVals[row][col] = rowVals.get(col);
 				} catch ( IndexOutOfBoundsException ex ) {
 					// Setting it to null will generate a "no value given" message
-					strDataVals[j][k] = null;
+					strDataVals[row][col] = null;
 				}
 			}
-			for (int k = numUserDataCols; k < numDataCols; k++) {
-				if ( DashboardServerUtils.SAMPLE_NUMBER.typeNameEquals(dataTypes[k]) ) {
-					strDataVals[j][k] = rowNums.get(j).toString();
+			for (int col = numUserDataCols; col < numDataCols; col++) {
+				if ( DashboardServerUtils.SAMPLE_NUMBER.typeNameEquals(dataTypes[col]) ) {
+					strDataVals[row][col] = rowNums.get(row).toString();
 				}
-				else if ( DashboardServerUtils.WOCE_AUTOCHECK.typeNameEquals(dataTypes[k]) ) {
+				else if ( DashboardServerUtils.WOCE_AUTOCHECK.typeNameEquals(dataTypes[col]) ) {
 					// Default to acceptable; update afterwards
-					strDataVals[j][k] = DashboardServerUtils.FLAG_ACCEPTABLE.toString();
-					woceIdx = k;
+					strDataVals[row][col] = DashboardServerUtils.FLAG_ACCEPTABLE.toString();
+					woceIdx = col;
 				}
 				else {
 					throw new IllegalArgumentException("unexpected unknown added data types");
@@ -179,39 +186,41 @@ public class StdUserDataArray extends StdDataArray {
 		boolean needsAnotherPass;
 		do {
 			needsAnotherPass = false;
-			for (int k = 0; k < numDataCols; k++) {
-				DashDataType<?> colType = dataTypes[k];
+			for (int col = 0; col < numDataCols; col++) {
+				DashDataType<?> colType = dataTypes[col];
 				if ( DashboardServerUtils.UNKNOWN.typeNameEquals(colType) ||
 						DashboardServerUtils.OTHER.typeNameEquals(colType) ) {
-					for (int j = 0; j < numSamples; j++) {
-						stdObjects[j][k] = null;
+					for (int row = 0; row < numSamples; row++) {
+						stdObjects[row][col] = null;
 					}
-					standardized[k] = null;
+					standardized[col] = null;
 				}
 				else {
 					try {
-						ValueConverter<?> stdizer = colType.getStandardizer(userUnits[k], userMissVals[k], this);
-						for (int j = 0; j < numSamples; j++) {
-							try {
-								stdObjects[j][k] = stdizer.convertValueOf(strDataVals[j][k]);
-							} catch ( IllegalArgumentException ex ) {
-								stdObjects[j][k] = null;
-								ADCMessage msg = new ADCMessage();
-								msg.setSeverity(Severity.CRITICAL);
-								msg.setRowNumber(j+1);
-								msg.setColNumber(k+1);
-								msg.setColName(userColNames[k]);
-								msg.setGeneralComment(ex.getMessage());
-								if ( strDataVals[j][k] == null )
-									msg.setDetailedComment(ex.getMessage());
-								else
-									msg.setDetailedComment(ex.getMessage() + ": \"" + strDataVals[j][k] + "\"");
-								stdMsgList.add(msg);
+						ValueConverter<?> stdizer = colType.getStandardizer(userUnits[col], userMissVals[col], this);
+						for (int row = 0; row < numSamples; row++) {
+							if ( ! Boolean.TRUE.equals(standardized[col])) {
+								try {
+									stdObjects[row][col] = stdizer.convertValueOf(strDataVals[row][col], row);
+								} catch ( IllegalArgumentException ex ) {
+									stdObjects[row][col] = null;
+									ADCMessage msg = new ADCMessage();
+									msg.setSeverity(Severity.CRITICAL);
+									msg.setRowNumber(row+1);
+									msg.setColNumber(col+1);
+									msg.setColName(userColNames[col]);
+									msg.setGeneralComment(ex.getMessage());
+									if ( strDataVals[row][col] == null )
+										msg.setDetailedComment(ex.getMessage());
+									else
+										msg.setDetailedComment(ex.getMessage() + ": \"" + strDataVals[row][col] + "\"");
+									stdMsgList.add(msg);
+								}
 							}
 						}
-						standardized[k] = true;
+						standardized[col] = Boolean.TRUE;
 					} catch ( IllegalStateException ex ) {
-						standardized[k] = false;
+						standardized[col] = Boolean.FALSE;
 						needsAnotherPass = true;
 					}
 				}
@@ -526,6 +535,71 @@ public class StdUserDataArray extends StdDataArray {
 		if ( ! standardized[columnIdx] )
 			throw new IllegalStateException("value has not been standardized");
 		return stdObjects[sampleIdx][columnIdx];
+	}
+	
+	public Object[] getStdValues(int columnIdx) 
+			throws IndexOutOfBoundsException, IllegalArgumentException, IllegalStateException {
+		if ( (columnIdx < 0) || (columnIdx >= numDataCols) )
+			throw new IndexOutOfBoundsException("data column index is invalid: " + columnIdx);
+		if ( standardized[columnIdx] == null )
+			throw new IllegalArgumentException("value cannot be standardized");
+		if ( ! standardized[columnIdx] )
+			throw new IllegalStateException("value has not been standardized");
+		Object[] values = new Object[numSamples];
+		for (int row = 0; row < numSamples; row++ ) {
+			values[row] = getStdVal(row, columnIdx);
+		}
+		return values;
+	}
+
+	public Object[] getStdValuesForUserType(String userTypeColumnName)  
+			throws NoSuchFieldException, IllegalArgumentException, IllegalStateException {
+		if ( (userTypeColumnName == null) || "".equals(userTypeColumnName.trim()))
+			throw new NoSuchFieldException("data column name is invalid: " + userTypeColumnName);
+		int columnIdx = findUserTypeColumn(userTypeColumnName);
+		return getStdValues(dataTypes[columnIdx].getStandardName());
+	}
+	public Object[] getStdValues(String stdTypeColumnName) 
+			throws NoSuchFieldException, IllegalArgumentException, IllegalStateException {
+		if ( (stdTypeColumnName == null) || "".equals(stdTypeColumnName.trim()))
+			throw new NoSuchFieldException("data column name is invalid: " + stdTypeColumnName);
+		int columnIdx = findStdTypeColumn(stdTypeColumnName);
+		if ( standardized[columnIdx] == null )
+			throw new IllegalArgumentException("value cannot be standardized");
+		if ( ! standardized[columnIdx] )
+			throw new IllegalStateException("value has not been standardized");
+		Object[] values = new Object[numSamples];
+		for (int row = 0; row < numSamples; row++ ) {
+			values[row] = getStdVal(row, columnIdx);
+		}
+		return values;
+	}
+
+	private int findUserTypeColumn(String userTypeColumnName) throws NoSuchFieldException {
+		int columnIdx = -1;
+		for (int i = 0; i < numDataCols; i++ ) {
+			if ( userColNames[i].equals(userTypeColumnName)) {
+				columnIdx = i;
+				break;
+			}
+		}
+		if ( columnIdx == -1 ) {
+			throw new NoSuchFieldException("No user type found for " + userTypeColumnName);
+		}
+		return columnIdx;
+	}
+	private int findStdTypeColumn(String stdTypeColumnName) throws NoSuchFieldException {
+		int columnIdx = -1;
+		for (int i = 0; i < numDataCols; i++ ) {
+			if ( dataTypes[i].getStandardName().equalsIgnoreCase(stdTypeColumnName)) {
+				columnIdx = i;
+				break;
+			}
+		}
+		if ( columnIdx == -1 ) {
+			throw new NoSuchFieldException("No standard type found for " + stdTypeColumnName);
+		}
+		return columnIdx;
 	}
 
 	/**

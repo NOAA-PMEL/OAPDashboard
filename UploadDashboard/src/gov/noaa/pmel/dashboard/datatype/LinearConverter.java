@@ -22,7 +22,7 @@ public class LinearConverter extends ValueConverter<Double> {
 		String key;
 
 		// Depth
-		key = "from \"km\" to \"m\"";
+		key = conversionKey("km", "m"); // "from \"km\" to \"m\"";
 		SLOPES_MAP.put(key, 1000.0);
 		INTERCEPTS_MAP.put(key, 0.0);
 
@@ -106,7 +106,7 @@ public class LinearConverter extends ValueConverter<Double> {
 			return;
 		}
 
-		String conversionKey = "from \"" + fromUnit + "\" to \"" + toUnit + "\"";
+		String conversionKey = conversionKey(fromUnit, toUnit); // "from \"" + fromUnit + "\" to \"" + toUnit + "\"";
 		slope = SLOPES_MAP.get(conversionKey);
 		intercept = INTERCEPTS_MAP.get(conversionKey);
 		if ( (slope == null) || (intercept == null) )
@@ -114,7 +114,7 @@ public class LinearConverter extends ValueConverter<Double> {
 	}
 
 	@Override
-	public Double convertValueOf(String valueString) 
+	public Double convertValueOf(String valueString, int recordNumber) 
 			throws IllegalArgumentException, IllegalStateException {
 		if ( (slope == null) || (intercept == null) )
 			throw new IllegalArgumentException("conversion from \"" + 

@@ -204,7 +204,7 @@ public class IntDashDataType extends DashDataType<Integer> {
 
 		ValueConverter<Integer> stdConverter = new ValueConverter<Integer>(null, null, missingValue) {
 			@Override
-			public Integer convertValueOf(String valueString) 
+			public Integer convertValueOf(String valueString, int recordNumber) 
 					throws IllegalArgumentException, IllegalStateException {
 				if ( isMissingValue(valueString, true) )
 					return null;

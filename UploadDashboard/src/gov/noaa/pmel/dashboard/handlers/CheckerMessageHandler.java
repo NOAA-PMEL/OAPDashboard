@@ -364,6 +364,9 @@ public class CheckerMessageHandler {
 			for (int j = 0; j < numSamples; j++) {
 				try {
 					Character flagVal = (Character) stdUserData.getStdVal(j, k);
+					if ( flagVal == null ) { // Getting NPE on nulls. ???: Would a null QC flag be an error?
+						continue;
+					}
 					int value = Integer.parseInt(flagVal.toString());
 					if ( (value >= 3) && (value <= 9) ) {
 						Severity severity;

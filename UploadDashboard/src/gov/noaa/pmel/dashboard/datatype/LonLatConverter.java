@@ -50,7 +50,7 @@ public class LonLatConverter extends ValueConverter<Double> {
 	}
 
 	@Override
-	public Double convertValueOf(String valueString) throws IllegalArgumentException, IllegalStateException {
+	public Double convertValueOf(String valueString, int recordNumber) throws IllegalArgumentException, IllegalStateException {
 		// Deal with missing values
 		if ( isMissingValue(valueString, true) )
 			return null;

@@ -193,8 +193,9 @@ public class DoubleDashDataType extends DashDataType<Double> {
 	}
 
 	@Override
-	public ValueConverter<Double> getStandardizer(String inputUnit, String missingValue, 
-			StdUserDataArray stdArray) throws IllegalArgumentException, IllegalStateException {
+	public ValueConverter<Double> getStandardizer(String inputUnit, String missingValue, StdUserDataArray stdArray) 
+			throws IllegalArgumentException, IllegalStateException { 
+		String errInfoMsg = "";
 		String outputUnit = units.get(0);
 		if ( DashboardUtils.STRING_MISSING_VALUE.equals(outputUnit) )
 			outputUnit = null;
@@ -214,9 +215,25 @@ public class DoubleDashDataType extends DashDataType<Double> {
 		} catch ( IllegalArgumentException ex ) {
 			// try another converter
 		}
+		
+		try {
+			ValueConverter<Double> stdConverter = 
+				DensityDependentValueConverter.getConverterFor(this.varName, inputUnit, outputUnit, missingValue, stdArray);
+			return stdConverter;
+		} catch ( IllegalArgumentException ex ) {
+			errInfoMsg = " : " + ex.getMessage();
+		}
+
+//		try {
+//			ValueConverter<Double> stdConverter = new DependentValueConverter(inputUnit, outputUnit, missingValue, 
+//			                                                                  stdArray, this.varName, "density");
+//			return stdConverter;
+//		} catch ( IllegalArgumentException ex ) {
+//			errInfoMsg = " : " + ex.getMessage();
+//		}
 
 		throw new IllegalArgumentException("conversion from \"" + 
-				inputUnit + "\" to \"" + outputUnit + "\" is not supported");
+				inputUnit + "\" to \"" + outputUnit + "\" is not supported" + errInfoMsg);
 	}
 
 	@Override

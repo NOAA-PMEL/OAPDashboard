@@ -199,7 +199,7 @@ public class CharDashDataType extends DashDataType<Character> {
 
 		ValueConverter<Character> stdConverter = new ValueConverter<Character>(null, null, missingValue) {
 			@Override
-			public Character convertValueOf(String valueString) {
+			public Character convertValueOf(String valueString, int recordNumber) {
 				if ( isMissingValue(valueString, true) )
 					return null;
 				return dataValueOf(valueString);

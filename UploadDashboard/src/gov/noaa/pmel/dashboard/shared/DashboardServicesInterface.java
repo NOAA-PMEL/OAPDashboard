@@ -308,4 +308,7 @@ public interface DashboardServicesInterface extends RemoteService {
 
 	void suspendDatasets(String username, Set<String> datasetIds, String localTimestamp)
 					throws IllegalArgumentException;
+
+	DashboardDatasetData saveDataColumnSpecs(String pageUsername, DashboardDataset newSpecs) 
+					throws IllegalArgumentException;
 }

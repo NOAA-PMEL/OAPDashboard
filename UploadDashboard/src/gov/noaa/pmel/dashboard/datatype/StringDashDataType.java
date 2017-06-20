@@ -195,7 +195,7 @@ public class StringDashDataType extends DashDataType<String> {
 		if ( (inputUnit == null) && (outputUnit == null) ) {
 			ValueConverter<String> stdConverter = new ValueConverter<String>(inputUnit, outputUnit, missingValue) {
 				@Override
-				public String convertValueOf(String valueString) {
+				public String convertValueOf(String valueString, int recordNumber) {
 					if ( isMissingValue(valueString, true) )
 						return null;
 					return dataValueOf(valueString);
