@@ -322,7 +322,7 @@ public class CheckerMessageHandler {
 					}
 					else if ( Severity.WARNING.equals(severity) ) {
 						QCFlag flag;
-						if ( colNumber > 0 )
+						if ( colNumber != null && colNumber > 0 )
 							flag = new QCFlag(woceFlagName, DashboardServerUtils.WOCE_QUESTIONABLE, 
 									Severity.WARNING, colNumber-1, rowNum-1);
 						else
@@ -346,8 +346,8 @@ public class CheckerMessageHandler {
 		// If "WOCE" (case insensitive) is in the data type description, 3 is WARNING 
 		// and 4-9 are ERROR; otherwise 3-9 are all ERROR.
 		TreeSet<QCFlag> qcFlags = new TreeSet<QCFlag>();
-		for (int k = 0; k < numUserCols; k++) {
-			DashDataType<?> colType = stdDataTypes.get(k);
+		for (int col = 0; col < numUserCols; col++) {
+			DashDataType<?> colType = stdDataTypes.get(col);
 			if ( ! colType.isQCType() )
 				continue;
 			// Check for another column associated with this QC column
@@ -361,9 +361,9 @@ public class CheckerMessageHandler {
 			Severity severityOfThree = Severity.ERROR;
 			if ( colType.getDescription().toUpperCase().contains("WOCE") )
 				severityOfThree = Severity.WARNING;
-			for (int j = 0; j < numSamples; j++) {
+			for (int row = 0; row < numSamples; row++) {
 				try {
-					Character flagVal = (Character) stdUserData.getStdVal(j, k);
+					Character flagVal = (Character) stdUserData.getStdVal(row, col);
 					if ( flagVal == null ) { // Getting NPE on nulls. ???: Would a null QC flag be an error?
 						continue;
 					}
@@ -376,9 +376,9 @@ public class CheckerMessageHandler {
 							severity = Severity.ERROR;
 						QCFlag flag;
 						if ( qcDataIdx >= 0 )
-							flag = new QCFlag(colType.getVarName(), flagVal, severity, qcDataIdx, k);
+							flag = new QCFlag(colType.getVarName(), flagVal, severity, qcDataIdx, row);
 						else
-							flag = new QCFlag(colType.getVarName(), flagVal, severity, null, k);
+							flag = new QCFlag(colType.getVarName(), flagVal, severity, null, row);
 						qcFlags.add(flag);
 					}
 				} catch (NumberFormatException ex) {
