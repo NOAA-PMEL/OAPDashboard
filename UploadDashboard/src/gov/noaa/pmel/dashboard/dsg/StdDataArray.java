@@ -34,6 +34,7 @@ public class StdDataArray {
 	protected int longitudeIndex;
 	protected int latitudeIndex;
 	protected int sampleDepthIndex;
+	protected int castIdIndex;
 	protected int timestampIndex;
 	protected int dateIndex;
 	protected int yearIndex;
@@ -358,6 +359,7 @@ public class StdDataArray {
 		longitudeIndex = DashboardUtils.INT_MISSING_VALUE;
 		latitudeIndex = DashboardUtils.INT_MISSING_VALUE;
 		sampleDepthIndex = DashboardUtils.INT_MISSING_VALUE;
+		castIdIndex = DashboardUtils.INT_MISSING_VALUE;
 		timestampIndex = DashboardUtils.INT_MISSING_VALUE;
 		dateIndex = DashboardUtils.INT_MISSING_VALUE;
 		yearIndex = DashboardUtils.INT_MISSING_VALUE;
@@ -376,6 +378,8 @@ public class StdDataArray {
 				latitudeIndex = k;
 			else if ( DashboardServerUtils.SAMPLE_DEPTH.typeNameEquals(dataTypes[k]) )
 				sampleDepthIndex = k;
+			else if ( DashboardServerUtils.STATION_CAST.typeNameEquals(dataTypes[k]))
+				castIdIndex = k;
 			else if ( DashboardServerUtils.TIMESTAMP.typeNameEquals(dataTypes[k]) )
 				timestampIndex = k;
 			else if ( DashboardServerUtils.DATE.typeNameEquals(dataTypes[k]) )
@@ -450,6 +454,9 @@ public class StdDataArray {
 			sampleLongitudes[j] = (Double) stdObjects[j][longitudeIndex];
 		return sampleLongitudes;
 	}
+	public int getLongitudeIndex() {
+		return longitudeIndex;
+	}
 
 	/**
 	 * @return
@@ -466,6 +473,9 @@ public class StdDataArray {
 			sampleLatitudes[j] = (Double) stdObjects[j][latitudeIndex];
 		return sampleLatitudes;
 	}
+	public int getLatitudeIndex() {
+		return latitudeIndex;
+	}
 
 	/**
 	 * @return
@@ -481,6 +491,9 @@ public class StdDataArray {
 		for (int j = 0; j < numSamples; j++)
 			sampleDepths[j] = (Double) stdObjects[j][sampleDepthIndex];
 		return sampleDepths;
+	}
+	public int getSampleDepthIndex() {
+		return sampleDepthIndex;
 	}
 
 	/**
@@ -849,6 +862,74 @@ public class StdDataArray {
 		if ( (columnIdx < 0) || (columnIdx >= numDataCols) )
 			throw new IndexOutOfBoundsException("data column index is invalid: " + columnIdx);
 		return stdObjects[sampleIdx][columnIdx];
+	}
+
+	/**
+	 * Checks to see if the dataset has a defined column of the type specified.
+	 * 
+	 * @param dataColStdName The standard name for the column type.
+	 * @return  true if the named column type exists in the dataset 
+	 */
+	public boolean hasDataColumn(String dataColStdName) {
+		return lookForDataColumnIndex(dataColStdName) != null;
+	}
+		
+	/**
+	 * Looks to see if the named column type is defined for this dataset.
+	 * @param dataColStdName The standard name for the column date to look for.
+	 * @return The Integer value of the zero-based column index for the named column if found, or null if not found. 
+	 */
+	public Integer lookForDataColumnIndex(String dataColStdName) {
+		Integer columnIdx = null;
+		List<DashDataType<?>> colTypes = getDataTypes();
+		int idx = 0;
+		for (DashDataType<?> colType : colTypes) {
+			String colName = colType.getVarName();
+			if ( colName.equalsIgnoreCase(dataColStdName)) {
+				columnIdx = new Integer(idx);
+				break;
+			}
+			idx += 1;
+		}
+		return columnIdx;
+	}
+	
+	/**
+	 * Get the cast ID for the specified row.
+	 * 
+	 * @param row Zero-based row index
+	 * @return The castId for the specified row.
+	 * @throws IllegalStateException If there is no cast ID column defined.
+	 */
+	public String getCastId(int row) throws IllegalStateException {
+		String castId = null;
+		int cidx = getCastIdIndex();
+		castId = String.valueOf((getStdVal(row, cidx)));
+		return castId;
+	}
+	
+	private int getCastIdIndex() {
+		if ( castIdIndex == DashboardUtils.INT_MISSING_VALUE.intValue() ) {
+			Integer checkIdx = lookForDataColumnIndex("station_cast");
+			if ( checkIdx == null ) {
+				throw new IllegalStateException("No castId column found.");
+			}
+			castIdIndex = checkIdx.intValue();
+		}
+		return castIdIndex;
+	}
+
+	/**
+	 * Check to see if a castId column has been defined.
+	 * @return
+	 */
+	public boolean hasCastIdColumn() {
+		try {
+			getCastIdIndex();
+			return true;
+		} catch (Exception e) {
+			return false;
+		}
 	}
 
 	@Override

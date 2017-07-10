@@ -368,7 +368,7 @@ public class CheckerMessageHandler {
 						continue;
 					}
 					int value = Integer.parseInt(flagVal.toString());
-					if ( (value >= 3) && (value <= 9) ) {
+					if ( (value >= 3) && (value < 9) ) {  // XXX user is using QC flag 9 to represent missing sample
 						Severity severity;
 						if ( value == 3 )
 							severity = severityOfThree;

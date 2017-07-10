@@ -89,6 +89,19 @@ public class ADCMessage implements Serializable, IsSerializable {
 	}
 
 	/**
+	 * @param rowIndex 
+	 * 		the zero-based index of the data row number to set; if null or invalid (not in [1,999999]), 
+	 * 		{@link DashboardUtils#INT_MISSING_VALUE} is assigned. This is equivalent to calling
+	 * 		setRowNumber(rowIndex + 1).
+	 */
+	public void setRowIndex(Integer rowIndex) {
+		if ( (rowIndex == null) || (rowIndex < 1) || (rowIndex > 999999) )
+			this.rowNumber = DashboardUtils.INT_MISSING_VALUE;
+		else
+			this.rowNumber = new Integer(rowIndex.intValue()+1);
+	}
+
+	/**
 	 * @return 
 	 * 		the longitude; never null, but may be 
 	 * 		{@link DashboardUtils#FP_MISSING_VALUE} if not available.
@@ -194,6 +207,19 @@ public class ADCMessage implements Serializable, IsSerializable {
 			this.colNumber = DashboardUtils.INT_MISSING_VALUE;
 		else
 			this.colNumber = colNumber;
+	}
+	
+	/**
+	 * @param colIndex 
+	 * 		the zero-based index of the input data column number to set; if null or invalid (not in [1,999]), 
+	 * 		{@link DashboardUtils#INT_MISSING_VALUE} is assigned. This is equivalent to calling
+	 * 		setColNumber(colIndex + 1).
+	 */
+	public void setColIndex(Integer colIndex) {
+		if ( (colIndex == null) || (colIndex < 1) || (colNumber > 999) )
+			this.colNumber = DashboardUtils.INT_MISSING_VALUE;
+		else
+			this.colNumber = new Integer(colIndex.intValue()+1);
 	}
 
 	/**

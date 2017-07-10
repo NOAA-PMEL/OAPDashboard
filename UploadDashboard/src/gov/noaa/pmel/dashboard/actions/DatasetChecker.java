@@ -121,18 +121,20 @@ public class DatasetChecker {
 		// Check for missing lon/lat/depth/time 
 		Double[] sampleTimes = stdUserData.checkMissingLonLatDepthTime();
 
-		// Reorder the data as best possible
-		stdUserData.reorderData(sampleTimes);
-
 		// Bounds check the standardized data values
 		stdUserData.checkBounds();
 
-		// Perform any other data checks
-		// TODO:
+		// Perform any other data checks // TODO:
+		stdUserData.checkCastConsistency();
 
 		// Save the messages accumulated in stdUserData for this dataset.
 		// Assigns the sets of checker-generated QC flags and user-provided QC flags 
 		msgHandler.processCheckerMessages(dataset, stdUserData);
+
+		// IMPORTANT: DO THIS ONLY AFTER ALL DATA CHECKS HAVE BEEN COMPLETED!
+		// INCLUDING processing the CheckerMessages (since that pulls in User QC flags.)
+		// Reorder the data as best possible
+		stdUserData.reorderData(sampleTimes);
 
 		// Get the indices values the PI marked as bad.
 		boolean hasCriticalError = false;

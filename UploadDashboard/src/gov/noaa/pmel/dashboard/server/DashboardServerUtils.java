@@ -115,6 +115,11 @@ public class DashboardServerUtils {
 	public static final StringDashDataType DATASET_NAME = new StringDashDataType(DashboardUtils.DATASET_NAME, 
 			"cruise_name", IDENTIFIER_CATEGORY, null, null, null, null, null);
 
+	public static final StringDashDataType STATION_CAST = new StringDashDataType(DashboardUtils.STATION_CAST, 
+			"station", IDENTIFIER_CATEGORY, null, null, null, null, null);
+	public static final StringDashDataType NISKIN = new StringDashDataType(DashboardUtils.NISKIN, 
+			"niskin", IDENTIFIER_CATEGORY, null, null, null, null, null);
+	
 	public static final StringDashDataType PLATFORM_NAME = new StringDashDataType(DashboardUtils.PLATFORM_NAME, 
 			"platform_name", PLATFORM_CATEGORY, null, null, null, null, null);
 	public static final StringDashDataType PLATFORM_TYPE = new StringDashDataType(DashboardUtils.PLATFORM_TYPE, 

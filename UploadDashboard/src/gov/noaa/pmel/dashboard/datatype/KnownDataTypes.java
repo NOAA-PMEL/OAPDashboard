@@ -78,6 +78,8 @@ public class KnownDataTypes {
 		addDataType(DashboardServerUtils.PLATFORM_TYPE);
 		addDataType(DashboardServerUtils.ORGANIZATION_NAME);
 		addDataType(DashboardServerUtils.INVESTIGATOR_NAMES);
+		addDataType(DashboardServerUtils.STATION_CAST);
+		addDataType(DashboardServerUtils.NISKIN);
 		addDataType(DashboardServerUtils.SAMPLE_ID);
 		addDataType(DashboardServerUtils.LONGITUDE);
 		addDataType(DashboardServerUtils.LATITUDE);

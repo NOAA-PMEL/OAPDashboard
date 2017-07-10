@@ -8,6 +8,7 @@ import java.util.Arrays;
 import java.util.Date;
 import java.util.TreeSet;
 
+import gov.noaa.pmel.dashboard.data.sanity.CastChecker;
 import gov.noaa.pmel.dashboard.datatype.CharDashDataType;
 import gov.noaa.pmel.dashboard.datatype.DashDataType;
 import gov.noaa.pmel.dashboard.datatype.DoubleDashDataType;
@@ -49,7 +50,7 @@ public class StdUserDataArray extends StdDataArray {
 	private Boolean[] standardized;
 	private ArrayList<ADCMessage> stdMsgList;
 	int woceAutocheckIndex;
-
+	
 	/**
 	 * Create from the user's data column descriptions, data strings,  
 	 * data row numbers, and data check flags given for this dataset.  Any 
@@ -487,6 +488,14 @@ public class StdUserDataArray extends StdDataArray {
 	}
 
 	/**
+	 * Adds a new data standardization message to the message list.
+	 * @param msg The standardization message to add.
+	 */
+	public void addStandardizationMessage(ADCMessage msg) {
+		stdMsgList.add(msg);
+	}
+	
+	/**
 	 * Determines is this data column is an appropriate index.
 	 * Checks that the value is in the appropriate range and 
 	 * that the column with this index has been standardized.
@@ -532,19 +541,13 @@ public class StdUserDataArray extends StdDataArray {
 			throw new IndexOutOfBoundsException("data column index is invalid: " + columnIdx);
 		if ( standardized[columnIdx] == null )
 			throw new IllegalArgumentException("value cannot be standardized");
-		if ( ! standardized[columnIdx] )
+		if ( ! standardized[columnIdx].booleanValue() )
 			throw new IllegalStateException("value has not been standardized");
 		return stdObjects[sampleIdx][columnIdx];
 	}
 	
 	public Object[] getStdValues(int columnIdx) 
 			throws IndexOutOfBoundsException, IllegalArgumentException, IllegalStateException {
-		if ( (columnIdx < 0) || (columnIdx >= numDataCols) )
-			throw new IndexOutOfBoundsException("data column index is invalid: " + columnIdx);
-		if ( standardized[columnIdx] == null )
-			throw new IllegalArgumentException("value cannot be standardized");
-		if ( ! standardized[columnIdx] )
-			throw new IllegalStateException("value has not been standardized");
 		Object[] values = new Object[numSamples];
 		for (int row = 0; row < numSamples; row++ ) {
 			values[row] = getStdVal(row, columnIdx);
@@ -559,15 +562,12 @@ public class StdUserDataArray extends StdDataArray {
 		int columnIdx = findUserTypeColumn(userTypeColumnName);
 		return getStdValues(dataTypes[columnIdx].getStandardName());
 	}
+	
 	public Object[] getStdValues(String stdTypeColumnName) 
 			throws NoSuchFieldException, IllegalArgumentException, IllegalStateException {
 		if ( (stdTypeColumnName == null) || "".equals(stdTypeColumnName.trim()))
 			throw new NoSuchFieldException("data column name is invalid: " + stdTypeColumnName);
 		int columnIdx = findStdTypeColumn(stdTypeColumnName);
-		if ( standardized[columnIdx] == null )
-			throw new IllegalArgumentException("value cannot be standardized");
-		if ( ! standardized[columnIdx] )
-			throw new IllegalStateException("value has not been standardized");
 		Object[] values = new Object[numSamples];
 		for (int row = 0; row < numSamples; row++ ) {
 			values[row] = getStdVal(row, columnIdx);
@@ -731,4 +731,13 @@ public class StdUserDataArray extends StdDataArray {
 		return repr;
 	}
 
+
+	public void checkCastConsistency() {
+		if ( !hasCastIdColumn()) {
+			System.err.println("No castID column found.");
+			return;
+		}
+		CastChecker cc = new CastChecker(this);
+		cc.checkCastConsistency();
+	}
 }
