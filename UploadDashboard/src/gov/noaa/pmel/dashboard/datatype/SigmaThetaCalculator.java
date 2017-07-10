@@ -52,24 +52,6 @@ public abstract class SigmaThetaCalculator {
 		_dataset = dataset;
 	}
 	
-	protected int findDependentValueColumnIdx(String varName) throws IllegalStateException {
-		int columnIdx = -1;
-		List<DashDataType<?>> colTypes = _dataset.getDataTypes();
-		int idx = 0;
-		for (DashDataType<?> colType : colTypes) {
-			String colName = colType.getVarName();
-			if ( colName.equalsIgnoreCase(varName)) {
-				columnIdx = idx;
-				break;
-			}
-			idx += 1;
-		}
-		if ( columnIdx == -1 ) {
-			throw new IllegalArgumentException(varName + " column not found.");
-		}
-		return columnIdx;
-	}
-	
 	private static class CTDSigmaThetaCalculator extends SigmaThetaCalculator {
 
 		int _tempColumnIdx = -1;
@@ -77,8 +59,16 @@ public abstract class SigmaThetaCalculator {
 
 		public CTDSigmaThetaCalculator(StdUserDataArray dataset) {
 			super(dataset);
-			_tempColumnIdx = findDependentValueColumnIdx("ctd_temperature");
-			_salinityColumnIdx = findDependentValueColumnIdx("ctd_salinity");
+			Integer tempIdx = _dataset.lookForDataColumnIndex("ctd_temperature");
+			if ( tempIdx == null ) {
+				throw new IllegalArgumentException("No CTD Temperature column found.");
+			}
+			_tempColumnIdx = tempIdx != null ? tempIdx.intValue() : -1;
+			Integer salIdx = _dataset.lookForDataColumnIndex("ctd_salinity");
+			if ( salIdx == null ) {
+				throw new IllegalArgumentException("No CTD Salinity column found.");
+			}
+			_salinityColumnIdx = salIdx.intValue();
 		}
 		
 		@Override
@@ -103,11 +93,13 @@ public abstract class SigmaThetaCalculator {
 
 		private LabSigmaThetaCalculator(StdUserDataArray dataset) {
 			super(dataset);
-			try {
-				_salinityColumnIdx = findDependentValueColumnIdx("salinity");
-			} catch (IllegalArgumentException iae) {
+			Integer salinityColumnIdx = _dataset.lookForDataColumnIndex("salinity");
+			if ( salinityColumnIdx == null ) {
 				System.err.println("No bottle salinity found.  Trying ctd_salinity");
-				_salinityColumnIdx = findDependentValueColumnIdx("ctd_salinity");
+				salinityColumnIdx = _dataset.lookForDataColumnIndex("ctd_salinity");
+			}
+			if ( salinityColumnIdx == null ) {
+				throw new IllegalArgumentException("No salinity column found.");
 			}
 		}
 		
