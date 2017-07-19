@@ -197,6 +197,26 @@ public interface DashboardServicesInterfaceAsync {
 	void updateDataColumnSpecs(String username, DashboardDataset newSpecs, 
 			AsyncCallback<DashboardDatasetData> callback);
 
+	/**
+	 * Saves the user's data column specifications for the given dataset 
+	 * without running the SanityChecker.  This allows the intermediate saving 
+	 * of the entered dataset column specifications to prevent loss of work.
+	 * 
+	 * @param username
+	 * 		username for validation
+	 * @param newSpecs
+	 * 		data column types to assign.  The dataset ID in this 
+	 * 		object specifies the dataset to update.  Any sample data in 
+	 * 		this object is ignored.
+	 * @param callback
+	 * 		callback to make with the the updated dataset with  
+	 * 		(abbreviated) data after processing through the SanityChecker 
+	 * 		after processing through the SanityChecker.  The fail method 
+	 * 		is invoked if authentication fails, if dataset ID is invalid, 
+	 * 		if the dataset does not exist, or if there are problems 
+	 * 		obtaining or evaluating the data for the dataset
+	 */
+    	
 	void saveDataColumnSpecs(String username, DashboardDataset newSpecs, 
 			AsyncCallback<DashboardDatasetData> callback);
 
