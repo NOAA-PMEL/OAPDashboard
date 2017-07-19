@@ -319,6 +319,23 @@ public interface DashboardServicesInterfaceAsync {
 			String archiveStatus, String localTimestamp, boolean repeatSend,
 			AsyncCallback<Void> callback);
 
+	/**
+	 * Suspend a dataset from Quality Control.  This allows a user to remove a dataset
+	 * from the Quality Control process to allow further changes or resubmission to
+	 * correct data quality issues.
+	 * 
+	 * @param username
+	 * 		name of user making this request - for validation
+	 * @param datasetIds
+	 * 		IDs of datasets to suspend
+	 * @param localTimestamp
+	 * 		client local timestamp string of this request 
+	 * @param callback
+	 * 		the callback to make when complete; the onFailure method 
+	 * 		of the callback will be called if authentication failed, 
+	 * 		if a dataset does not exist for any of the IDs, or if the
+	 * 		suspension of a dataset or change in archive status failed.
+	 */
 	void suspendDatasets(String username, Set<String> datasetIds,String localTimestamp, AsyncCallback<Void> callback);
 
 }
