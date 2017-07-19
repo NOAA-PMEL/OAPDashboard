@@ -306,9 +306,45 @@ public interface DashboardServicesInterface extends RemoteService {
 			String archiveStatus, String localTimestamp, boolean repeatSend)
 					throws IllegalArgumentException;
 
+	/**
+	 * Suspend a dataset from Quality Control.  This allows a user to remove a dataset
+	 * from the Quality Control process to allow further changes or resubmission to
+	 * correct data quality issues.
+	 * 
+	 * @param username
+	 * 		name of user making this request - for validation
+	 * @param datasetIds
+	 * 		IDs of datasets to suspend
+	 * @param localTimestamp
+	 * 		client local timestamp string of this request 
+	 * @param callback
+	 * 		the callback to make when complete; the onFailure method 
+	 * 		of the callback will be called if authentication failed, 
+	 * 		if a dataset does not exist for any of the IDs, or if the
+	 * 		suspension of a dataset or change in archive status failed.
+	 */
 	void suspendDatasets(String username, Set<String> datasetIds, String localTimestamp)
 					throws IllegalArgumentException;
 
+	/**
+	 * Saves the user's data column specifications for the given dataset 
+	 * without running the SanityChecker.  This allows the intermediate saving 
+	 * of the entered dataset column specifications to prevent loss of work.
+	 * 
+	 * @param username
+	 * 		username for validation
+	 * @param newSpecs
+	 * 		data column types to assign.  The dataset ID in this 
+	 * 		object specifies the dataset to update.  Any sample data in 
+	 * 		this object is ignored.
+	 * @param callback
+	 * 		callback to make with the the updated dataset with  
+	 * 		(abbreviated) data after processing through the SanityChecker 
+	 * 		after processing through the SanityChecker.  The fail method 
+	 * 		is invoked if authentication fails, if dataset ID is invalid, 
+	 * 		if the dataset does not exist, or if there are problems 
+	 * 		obtaining or evaluating the data for the dataset
+	 */
 	DashboardDatasetData saveDataColumnSpecs(String pageUsername, DashboardDataset newSpecs) 
 					throws IllegalArgumentException;
 }
