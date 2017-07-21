@@ -3,7 +3,9 @@
  */
 package gov.noaa.pmel.dashboard.actions;
 
+import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.List;
 
 import gov.noaa.pmel.dashboard.datatype.KnownDataTypes;
 import gov.noaa.pmel.dashboard.dsg.DsgMetadata;
@@ -157,7 +159,7 @@ public class DatasetChecker {
 		}
 		// Get the indices of data rows the automated data checker 
 		// found having errors not not detected by the PI.
-		HashSet<Integer> errRows = new HashSet<Integer>();
+		List<Integer> errRows = new ArrayList<Integer>();
 		for ( QCFlag wtype : dataset.getCheckerFlags() ) {
 			if ( Severity.CRITICAL.equals(wtype.getSeverity()) ) {
 				hasCriticalError = true;
@@ -173,7 +175,7 @@ public class DatasetChecker {
 		}
 		// Get the indices of data rows the automated data checker 
 		// found having only warnings but not detected by the PI.
-		HashSet<Integer> warnRows = new HashSet<Integer>();
+		List<Integer> warnRows = new ArrayList<Integer>();
 		for ( QCFlag wtype : dataset.getCheckerFlags() ) {
 			if ( Severity.WARNING.equals(wtype.getSeverity()) ) {
 				RowColumn rowCol = new RowColumn(wtype.getRowIndex(), wtype.getColumnIndex());
