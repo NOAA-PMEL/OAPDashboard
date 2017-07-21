@@ -42,9 +42,24 @@ public class CastChecker {
 		for (CastSet cast : _casts) {
 			if ( cast.indeces().size() == 1 ) {
 				ADCMessage msg = new ADCMessage();
-				msg.setRowNumber(cast.indeces().get(0));
-				msg.setDetailedComment("Cast only contains one sample: " + cast);
-				msg.setSeverity(Severity.WARNING);
+				Integer row = cast.indeces().get(0);
+				msg.setRowIndex(row);
+				String castId = cast.id();
+				String genlComment;
+				String detailComment;
+				Severity severity;
+				if ( castId == null || castId.trim().length() == 0 || "null".equalsIgnoreCase(castId)) {
+					genlComment = "Missing cast ID";
+					detailComment = genlComment + " at row " + row;
+					severity = Severity.ERROR;
+				} else {
+					genlComment = "Cast only contains one sample";
+					detailComment = genlComment +  " for cast " + cast + " at row " + row;
+					severity = Severity.WARNING;
+				}
+				msg.setGeneralComment(genlComment);
+				msg.setDetailedComment(detailComment);
+				msg.setSeverity(severity);
 				_dataset.addStandardizationMessage(msg);
 				continue;
 			}
@@ -63,15 +78,14 @@ public class CastChecker {
 		for (int idx = 1; idx < castRows.size(); idx++) {
 			int prevRow = castRows.get(idx-1).intValue();
 			int nextRow = castRows.get(idx).intValue();
-			if ( ! ( lats[prevRow].equals(lats[nextRow]) &&
-					 lons[prevRow].equals(lons[nextRow]))) {
-				String genlComment = "Inconsistent locations for cast " + cs.toString() ;
-				String detailMsg = genlComment + 
+			if ( ! ( lats[prevRow].equals(lats[nextRow]) )) {
+				String genlComment = "Inconsistent cast locations.";
+				String detailMsg = "Inconsistent latitudes for cast " + cs.toString() +
 	                                " between samples " + prevRow + " and " + nextRow + ". " +
 									" Found [" + lats[prevRow] + ", " + lons[prevRow] + "] " +
 									" and [" + lats[nextRow] + ", " + lons[nextRow] + "] " ;
 				ADCMessage amsg = new ADCMessage();
-				amsg.setSeverity(Severity.ERROR); // XXX Really an error?
+				amsg.setSeverity(Severity.ERROR); 
 				amsg.setRowIndex(nextRow);
 				amsg.setColIndex(latCol);
 				amsg.setColName("latitude");
@@ -79,21 +93,21 @@ public class CastChecker {
 				amsg.setGeneralComment(genlComment);
 				stda.addStandardizationMessage(amsg);
 			}
-//			if ( ! ( lons[prevRow].equals(lons[nextRow]))) {
-//				String genlComment = "Inconsistent locations for cast " + cs.toString() ;
-//				String detailMsg = genlComment + 
-//	                                " between samples " + prevRow + " and " + nextRow + ". " +
-//									" Found [" + lats[prevRow] + ", " + lons[prevRow] + "] " +
-//									" and [" + lats[nextRow] + ", " + lons[nextRow] + "] " ;
-//				ADCMessage amsg = new ADCMessage();
-//				amsg.setSeverity(Severity.ERROR); // XXX Really an error?
-//				amsg.setRowIndex(nextRow);
-//				amsg.setColIndex(lonCol);
-//				amsg.setColName("longitude");
-//				amsg.setDetailedComment(detailMsg);
-//				amsg.setGeneralComment(genlComment);
-//				stda.addStandardizationMessage(amsg);
-//			}
+			if ( ! ( lons[prevRow].equals(lons[nextRow]))) {
+				String genlComment = "Inconsistent cast locations.";
+				String detailMsg = "Inconsistent longitudes for cast " + cs.toString() +
+	                                " between samples " + prevRow + " and " + nextRow + ". " +
+									" Found [" + lats[prevRow] + ", " + lons[prevRow] + "] " +
+									" and [" + lats[nextRow] + ", " + lons[nextRow] + "] " ;
+				ADCMessage amsg = new ADCMessage();
+				amsg.setSeverity(Severity.ERROR);
+				amsg.setRowIndex(nextRow);
+				amsg.setColIndex(lonCol);
+				amsg.setColName("longitude");
+				amsg.setDetailedComment(detailMsg);
+				amsg.setGeneralComment(genlComment);
+				stda.addStandardizationMessage(amsg);
+			}
 		}
 	}
 	// This is checking date based on the sampleTime double, interpreted in UTC, so we may roll over a date here
@@ -115,8 +129,8 @@ public class CastChecker {
 			int prevYearDay = prevDate.get(Calendar.DAY_OF_YEAR);
 			int nextYearDay = nextDate.get(Calendar.DAY_OF_YEAR);
 			if ( prevYearDay != nextYearDay ) {
-				String genlComment = "Inconsistent dates for cast " + cs.toString();
-				String detailMsg = genlComment +
+				String genlComment = "Inconsistent cast dates.";
+				String detailMsg = "Inconsistent dates for cast " + cs.toString() +
 	                                " between samples " + prevRow + " and " + nextRow + ". " +
 									" Found " + prevDate.toString() +
 									" and " + nextDate.toString();
@@ -155,8 +169,8 @@ public class CastChecker {
 			int checkRow = castRows.get(check).intValue();
 			Double depth = depths[checkRow];
 			if ( ! checkDepths.add(depth)) {
-				String genlComment = "Duplicate depths for cast " + cs.toString();
-				String detailMsg = genlComment + " at row " + checkRow; 
+				String genlComment = "Duplicate depths in cast.";
+				String detailMsg =  "Duplicate depths in cast " + cs.toString() + " at row " + checkRow; 
 				ADCMessage amsg = new ADCMessage();
 				amsg.setSeverity(Severity.WARNING); 
 				amsg.setRowIndex(checkRow);
