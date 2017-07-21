@@ -101,6 +101,7 @@ public abstract class SigmaThetaCalculator {
 			if ( salinityColumnIdx == null ) {
 				throw new IllegalArgumentException("No salinity column found.");
 			}
+			_salinityColumnIdx = salinityColumnIdx.intValue();
 		}
 		
 		private LabSigmaThetaCalculator(StdUserDataArray dataset, double labTemp) {
