@@ -82,7 +82,7 @@ public class ADCMessage implements Serializable, IsSerializable {
 	 * 		{@link DashboardUtils#INT_MISSING_VALUE} is assigned.
 	 */
 	public void setRowNumber(Integer rowNumber) {
-		if ( (rowNumber == null) || (rowNumber < 1) || (rowNumber > 999999) )
+		if ( (rowNumber == null) || (rowNumber < 1) || (rowNumber > 999999) ) 
 			this.rowNumber = DashboardUtils.INT_MISSING_VALUE;
 		else
 			this.rowNumber = rowNumber;
@@ -95,7 +95,7 @@ public class ADCMessage implements Serializable, IsSerializable {
 	 * 		setRowNumber(rowIndex + 1).
 	 */
 	public void setRowIndex(Integer rowIndex) {
-		if ( (rowIndex == null) || (rowIndex < 1) || (rowIndex > 999999) )
+		if ( (rowIndex == null) || (rowIndex < 0) || (rowIndex > 999999) )
 			this.rowNumber = DashboardUtils.INT_MISSING_VALUE;
 		else
 			this.rowNumber = new Integer(rowIndex.intValue()+1);
@@ -313,11 +313,11 @@ public class ADCMessage implements Serializable, IsSerializable {
 
 		if ( severity != other.severity )
 			return false;
-		if ( rowNumber != other.rowNumber )
+		if ( ! rowNumber.equals(other.rowNumber))
 			return false;
 		if ( ! timestamp.equals(other.timestamp) )
 			return false;
-		if ( colNumber != other.colNumber )
+		if ( ! colNumber.equals(other.colNumber))
 			return false;
 		if ( ! colName.equals(other.colName) )
 			return false;
