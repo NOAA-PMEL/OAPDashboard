@@ -16,7 +16,9 @@
 				</g:FlowPanel>
 				<g:HTML addStyleNames="{style.introhtml}" ui:field="introHtml" />
 			</g:FlowPanel>
-			<cell:DataGrid addStyleNames="{style.datagrid}" ui:field="dataGrid" />
+			<g:ScrollPanel ui:field="dgScroll">
+				<cell:DataGrid addStyleNames="{style.datagrid}" ui:field="dataGrid" />
+			</g:ScrollPanel>
 			<g:FlowPanel>
 				<g:FlowPanel addStyleNames="{style.datamsgpanel}" >
 					<g:InlineLabel addStyleNames="{style.datapagerlabel}" ui:field="pagerLabel" />

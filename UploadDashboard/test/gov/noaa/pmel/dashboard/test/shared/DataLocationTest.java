@@ -30,17 +30,17 @@ public class DataLocationTest {
 	private static final Double MY_DEPTH = 15.0;
 
 	/**
-	 * Test method for {@link gov.noaa.pmel.dashboard.shared.DataLocation#getRowNumber()} 
-	 * and {@link gov.noaa.pmel.dashboard.shared.DataLocation#setRowNumber(java.lang.Integer)}.
+	 * Test method for {@link gov.noaa.pmel.dashboard.shared.DataLocation#getRowIndex()} 
+	 * and {@link gov.noaa.pmel.dashboard.shared.DataLocation#setRowIndex(java.lang.Integer)}.
 	 */
 	@Test
 	public void testGetSetRowNumber() {
 		DataLocation myflag = new DataLocation();
-		assertEquals(DashboardUtils.INT_MISSING_VALUE, myflag.getRowNumber());
-		myflag.setRowNumber(MY_ROW_NUMBER);
-		assertEquals(MY_ROW_NUMBER, myflag.getRowNumber());
-		myflag.setRowNumber(null);
-		assertEquals(DashboardUtils.INT_MISSING_VALUE, myflag.getRowNumber());
+		assertEquals(DashboardUtils.INT_MISSING_VALUE, myflag.getRowIndex());
+		myflag.setRowIndex(MY_ROW_NUMBER);
+		assertEquals(MY_ROW_NUMBER, myflag.getRowIndex());
+		myflag.setRowIndex(null);
+		assertEquals(DashboardUtils.INT_MISSING_VALUE, myflag.getRowIndex());
 	}
 
 	/**
@@ -53,7 +53,7 @@ public class DataLocationTest {
 		assertEquals(DashboardUtils.DATE_MISSING_VALUE, myflag.getDataDate());
 		myflag.setDataDate(MY_DATA_DATE);
 		assertEquals(MY_DATA_DATE, myflag.getDataDate());
-		assertEquals(DashboardUtils.INT_MISSING_VALUE, myflag.getRowNumber());
+		assertEquals(DashboardUtils.INT_MISSING_VALUE, myflag.getRowIndex());
 		myflag.setDataDate(null);
 		assertEquals(DashboardUtils.DATE_MISSING_VALUE, myflag.getDataDate());
 	}
@@ -69,7 +69,7 @@ public class DataLocationTest {
 		myflag.setLongitude(MY_LONGITUDE);
 		assertEquals(MY_LONGITUDE, myflag.getLongitude());
 		assertEquals(DashboardUtils.DATE_MISSING_VALUE, myflag.getDataDate());
-		assertEquals(DashboardUtils.INT_MISSING_VALUE, myflag.getRowNumber());
+		assertEquals(DashboardUtils.INT_MISSING_VALUE, myflag.getRowIndex());
 		myflag.setLongitude(null);
 		assertEquals(DashboardUtils.FP_MISSING_VALUE, myflag.getLongitude());
 	}
@@ -86,7 +86,7 @@ public class DataLocationTest {
 		assertEquals(MY_LATITUDE, myflag.getLatitude());
 		assertEquals(DashboardUtils.FP_MISSING_VALUE, myflag.getLongitude());
 		assertEquals(DashboardUtils.DATE_MISSING_VALUE, myflag.getDataDate());
-		assertEquals(DashboardUtils.INT_MISSING_VALUE, myflag.getRowNumber());
+		assertEquals(DashboardUtils.INT_MISSING_VALUE, myflag.getRowIndex());
 		myflag.setLatitude(null);
 		assertEquals(DashboardUtils.FP_MISSING_VALUE, myflag.getLatitude());
 	}
@@ -104,7 +104,7 @@ public class DataLocationTest {
 		assertEquals(DashboardUtils.FP_MISSING_VALUE, myflag.getLatitude());
 		assertEquals(DashboardUtils.FP_MISSING_VALUE, myflag.getLongitude());
 		assertEquals(DashboardUtils.DATE_MISSING_VALUE, myflag.getDataDate());
-		assertEquals(DashboardUtils.INT_MISSING_VALUE, myflag.getRowNumber());
+		assertEquals(DashboardUtils.INT_MISSING_VALUE, myflag.getRowIndex());
 		myflag.setDepth(null);
 		assertEquals(DashboardUtils.FP_MISSING_VALUE, myflag.getDepth());
 	}
@@ -123,7 +123,7 @@ public class DataLocationTest {
 		assertEquals(DashboardUtils.FP_MISSING_VALUE, myflag.getLatitude());
 		assertEquals(DashboardUtils.FP_MISSING_VALUE, myflag.getLongitude());
 		assertEquals(DashboardUtils.DATE_MISSING_VALUE, myflag.getDataDate());
-		assertEquals(DashboardUtils.INT_MISSING_VALUE, myflag.getRowNumber());
+		assertEquals(DashboardUtils.INT_MISSING_VALUE, myflag.getRowIndex());
 		myflag.setDataValue(null);
 		assertEquals(DashboardUtils.FP_MISSING_VALUE, myflag.getDataValue());
 	}
@@ -142,10 +142,10 @@ public class DataLocationTest {
 		assertTrue( myflag.hashCode() == otherflag.hashCode() );
 		assertTrue( myflag.equals(otherflag) );
 
-		myflag.setRowNumber(MY_ROW_NUMBER);
+		myflag.setRowIndex(MY_ROW_NUMBER);
 		assertFalse( myflag.hashCode() == otherflag.hashCode() );
 		assertFalse( myflag.equals(otherflag) );
-		otherflag.setRowNumber(MY_ROW_NUMBER);
+		otherflag.setRowIndex(MY_ROW_NUMBER);
 		assertTrue( myflag.hashCode() == otherflag.hashCode() );
 		assertTrue( myflag.equals(otherflag) );
 

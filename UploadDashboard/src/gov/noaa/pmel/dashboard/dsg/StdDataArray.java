@@ -7,7 +7,9 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.GregorianCalendar;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.TimeZone;
 
 import gov.noaa.pmel.dashboard.datatype.CharDashDataType;
@@ -47,6 +49,8 @@ public class StdDataArray {
 	protected int dayOfYearIndex;
 	protected int secondOfDayIndex;
 
+	protected Map<String, DashDataType<?>> dataTypeMap = new HashMap<>();
+	
 	/**
 	 * Create and assign the 1-D arrays of data column types from 
 	 * the given user's descriptions of the data column.  Appends 
@@ -81,6 +85,7 @@ public class StdDataArray {
 			if ( dataTypes[k] == null )
 				throw new IllegalArgumentException("unknown data column type: " + 
 						dataColType.getDisplayName());
+			dataTypeMap.put(dataTypes[k].getVarName(), dataTypes[k]);
 		}
 		dataTypes[numDataCols] = DashboardServerUtils.SAMPLE_NUMBER;
 		dataTypes[numDataCols+1] = DashboardServerUtils.WOCE_AUTOCHECK;
@@ -791,7 +796,7 @@ public class StdDataArray {
 	 * 		if there is a valid {@link DashboardServerUtils#YEAR} data column
 	 */
 	public boolean hasYear() {
-		return isUsableIndex(yearIndex);
+		return isUsableIndex(yearIndex) || isUsableIndex(dateIndex) || isUsableIndex(timestampIndex);
 	}
 
 	/**
@@ -799,7 +804,7 @@ public class StdDataArray {
 	 * 		if there is a valid {@link DashboardServerUtils#MONTH_OF_YEAR} data column
 	 */
 	public boolean hasMonthOfYear() {
-		return isUsableIndex(monthOfYearIndex);
+		return isUsableIndex(monthOfYearIndex) || isUsableIndex(dateIndex) || isUsableIndex(timestampIndex);
 	}
 
 	/**
@@ -807,7 +812,7 @@ public class StdDataArray {
 	 * 		if there is a valid {@link DashboardServerUtils#DAY_OF_MONTH} data column
 	 */
 	public boolean hasDayOfMonth() {
-		return isUsableIndex(dayOfMonthIndex);
+		return isUsableIndex(dayOfMonthIndex) || isUsableIndex(dateIndex) || isUsableIndex(timestampIndex);
 	}
 
 	/**
@@ -815,7 +820,7 @@ public class StdDataArray {
 	 * 		if there is a valid {@link DashboardServerUtils#HOUR_OF_DAY} data column
 	 */
 	public boolean hasHourOfDay() {
-		return isUsableIndex(hourOfDayIndex);
+		return isUsableIndex(hourOfDayIndex) || isUsableIndex(timeOfDayIndex) || isUsableIndex(timestampIndex);
 	}
 
 	/**
@@ -823,7 +828,7 @@ public class StdDataArray {
 	 * 		if there is a valid {@link DashboardServerUtils#MINUTE_OF_HOUR} data column
 	 */
 	public boolean hasMinuteOfHour() {
-		return isUsableIndex(minuteOfHourIndex);
+		return isUsableIndex(minuteOfHourIndex) || isUsableIndex(timeOfDayIndex) || isUsableIndex(timestampIndex);
 	}
 
 	/**
@@ -831,7 +836,7 @@ public class StdDataArray {
 	 * 		if there is a valid {@link DashboardServerUtils#SECOND_OF_MINUTE} data column
 	 */
 	public boolean hasSecondOfMinute() {
-		return isUsableIndex(secondOfMinuteIndex);
+		return isUsableIndex(secondOfMinuteIndex) || isUsableIndex(timeOfDayIndex) || isUsableIndex(timestampIndex);
 	}
 
 	/**

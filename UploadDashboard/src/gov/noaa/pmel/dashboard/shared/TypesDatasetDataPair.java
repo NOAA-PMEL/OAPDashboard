@@ -20,6 +20,7 @@ public class TypesDatasetDataPair implements Serializable, IsSerializable {
 
 	protected ArrayList<DataColumnType> allKnownTypes;
 	protected DashboardDatasetData datasetData;
+	protected ADCMessageList msgList;
 
 	public TypesDatasetDataPair() {
 		allKnownTypes = null;
@@ -60,6 +61,14 @@ public class TypesDatasetDataPair implements Serializable, IsSerializable {
 	 */
 	public void setDatasetData(DashboardDatasetData cruiseData) {
 		this.datasetData = cruiseData;
+	}
+
+	public ADCMessageList getMsgList() {
+		return msgList;
+	}
+
+	public void setMsgList(ADCMessageList msgList) {
+		this.msgList = msgList;
 	}
 
 	@Override

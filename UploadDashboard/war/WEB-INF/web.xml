@@ -6,7 +6,7 @@
 
 	<display-name>OAP Upload Dashboard</display-name>
 	<session-config>
-		<session-timeout>180</session-timeout>
+		<session-timeout>180</session-timeout> <!-- XXX 180 -->
 	</session-config>
 
 	<!-- Servlets -->

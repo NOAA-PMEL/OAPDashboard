@@ -20,7 +20,7 @@ public class DataLocation implements Comparable<DataLocation>, Serializable, IsS
 
 	private static final long serialVersionUID = -4529761335909387444L;
 
-	protected Integer rowNumber;
+	protected Integer rowIndex;
 	protected Date dataDate;
 	protected Double longitude;
 	protected Double latitude;
@@ -32,7 +32,7 @@ public class DataLocation implements Comparable<DataLocation>, Serializable, IsS
 	 * (all values set to the appropriate missing value)
 	 */
 	public DataLocation() {
-		rowNumber = DashboardUtils.INT_MISSING_VALUE;
+		rowIndex = DashboardUtils.INT_MISSING_VALUE;
 		dataDate = DashboardUtils.DATE_MISSING_VALUE;
 		longitude = DashboardUtils.FP_MISSING_VALUE;
 		latitude = DashboardUtils.FP_MISSING_VALUE;
@@ -45,20 +45,20 @@ public class DataLocation implements Comparable<DataLocation>, Serializable, IsS
 	 * 		the data row number; 
 	 * 		never null but may be {@link DashboardUtils#INT_MISSING_VALUE}
 	 */
-	public Integer getRowNumber() {
-		return rowNumber;
+	public Integer getRowIndex() {
+		return rowIndex;
 	}
 
 	/**
-	 * @param rowNumber 
+	 * @param rowIndex 
 	 * 		the data row number to set;
 	 * 		if null, {@link DashboardUtils#INT_MISSING_VALUE} is assigned
 	 */
-	public void setRowNumber(Integer rowNumber) {
-		if ( rowNumber == null )
-			this.rowNumber = DashboardUtils.INT_MISSING_VALUE;
+	public void setRowIndex(Integer rowIndex) {
+		if ( rowIndex == null )
+			this.rowIndex = DashboardUtils.INT_MISSING_VALUE;
 		else
-			this.rowNumber = rowNumber;
+			this.rowIndex = rowIndex;
 	}
 
 	/**
@@ -203,7 +203,7 @@ public class DataLocation implements Comparable<DataLocation>, Serializable, IsS
 		result = dataValue.compareTo(other.dataValue);
 		if ( result != 0 )
 			return result;
-		result = rowNumber.compareTo(other.rowNumber);
+		result = rowIndex.compareTo(other.rowIndex);
 		if ( result != 0 )
 			return result;
 		return 0;
@@ -212,7 +212,7 @@ public class DataLocation implements Comparable<DataLocation>, Serializable, IsS
 	@Override
 	public int hashCode() {
 		final int prime = 37;
-		int result = rowNumber.hashCode();
+		int result = rowIndex.hashCode();
 		result = result * prime + dataDate.hashCode();
 		// Ignore floating point values as they do not have to be exactly the same for equals
 		return result;
@@ -229,7 +229,7 @@ public class DataLocation implements Comparable<DataLocation>, Serializable, IsS
 			return false;
 		DataLocation other = (DataLocation) obj;
 
-		if ( ! rowNumber.equals(other.rowNumber) )
+		if ( ! rowIndex.equals(other.rowIndex) )
 			return false;
 		if ( ! dataDate.equals(other.dataDate) )
 			return false;
@@ -253,7 +253,7 @@ public class DataLocation implements Comparable<DataLocation>, Serializable, IsS
 	@Override
 	public String toString() {
 		return "DataLocation" +
-				"[ rowNumber=" + rowNumber.toString() + 
+				"[ rowIndex=" + rowIndex.toString() + 
 				", dataTime=" + Long.toString(Math.round((dataDate.getTime()/1000.0))) + 
 				", longitude=" + longitude.toString() + 
 				", latitude=" + latitude.toString() + 

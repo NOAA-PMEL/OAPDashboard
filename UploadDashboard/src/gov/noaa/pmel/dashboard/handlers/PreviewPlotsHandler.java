@@ -10,6 +10,7 @@ import gov.noaa.pmel.dashboard.actions.DatasetChecker;
 import gov.noaa.pmel.dashboard.datatype.KnownDataTypes;
 import gov.noaa.pmel.dashboard.dsg.DsgMetadata;
 import gov.noaa.pmel.dashboard.dsg.DsgNcFile;
+import gov.noaa.pmel.dashboard.dsg.DsgNcFile.DsgFileType;
 import gov.noaa.pmel.dashboard.dsg.StdUserDataArray;
 import gov.noaa.pmel.dashboard.ferret.FerretConfig;
 import gov.noaa.pmel.dashboard.ferret.SocatTool;
@@ -160,8 +161,8 @@ public class PreviewPlotsHandler {
 										"(missing lon/lat/depth/time or uninterpretable values)");
 
 		// Get the preview DSG filename, creating the parent directory if it does not exist
-		DsgNcFile dsgFile = new DsgNcFile(getDatasetPreviewDsgDir(stdId), 
-				stdId + "_" + timetag + ".nc");
+		DsgNcFile dsgFile = DsgNcFile.createProfileFile(getDatasetPreviewDsgDir(stdId), 
+														stdId + "_" + timetag + ".nc");
 
 		log.debug("generating preview DSG file " + dsgFile.getPath());
 

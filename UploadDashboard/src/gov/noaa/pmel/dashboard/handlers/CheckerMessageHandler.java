@@ -361,9 +361,9 @@ public class CheckerMessageHandler {
 			Severity severityOfThree = Severity.ERROR;
 			if ( colType.getDescription().toUpperCase().contains("WOCE") )
 				severityOfThree = Severity.WARNING;
-			for (int row = 0; row < numSamples; row++) {
+			for (int rowIdx = 0; rowIdx < numSamples; rowIdx++) {
 				try {
-					Character flagVal = (Character) stdUserData.getStdVal(row, col);
+					Character flagVal = (Character) stdUserData.getStdVal(rowIdx, col);
 					if ( flagVal == null ) { // Getting NPE on nulls. ???: Would a null QC flag be an error?
 						continue;
 					}
@@ -375,11 +375,21 @@ public class CheckerMessageHandler {
 						else
 							severity = Severity.ERROR;
 						QCFlag flag;
-						if ( qcDataIdx >= 0 )
-							flag = new QCFlag(colType.getVarName(), flagVal, severity, qcDataIdx, row);
-						else
-							flag = new QCFlag(colType.getVarName(), flagVal, severity, null, row);
+						ADCMessage msg = new ADCMessage();
+						msg.setRowIndex(rowIdx);
+						msg.setSeverity(severity);
+						msg.setGeneralComment("User QC flag");
+						if ( qcDataIdx >= 0 ) {
+							msg.setDetailedComment("User QC flag set to " + flagVal + " for data column " + 
+													qcDataIdx+1 + " on row " + rowIdx+1);
+							flag = new QCFlag(colType.getVarName(), flagVal, severity, qcDataIdx, rowIdx);
+						}
+						else {
+							msg.setDetailedComment("User QC flag set to " + flagVal + " for row " + rowIdx+1);
+							flag = new QCFlag(colType.getVarName(), flagVal, severity, null, rowIdx);
+						}
 						qcFlags.add(flag);
+						stdUserData.addStandardizationMessage(msg);
 					}
 				} catch (NumberFormatException ex) {
 					// Assuming a missing value
@@ -415,111 +425,103 @@ public class CheckerMessageHandler {
 		ArrayList<String> summaryMsgs = msgList.getSummaries();
 		// Read the cruise messages file
 		File msgsFile = messagesFile(datasetId);
-		BufferedReader msgReader;
-		msgReader = new BufferedReader(new FileReader(msgsFile));
-		try {
-			try {
-				String msgline = msgReader.readLine();
-				while ( msgline != null ) {
-					if ( ! msgline.trim().isEmpty() ) {
+		
+		try ( BufferedReader msgReader = new BufferedReader(new FileReader(msgsFile)); ) {
+			String msgline;
+			while (( msgline = msgReader.readLine()) != null ) {
+				if ( ! msgline.trim().isEmpty() ) {
 
-						if ( msgline.startsWith(MSG_SUMMARY_MSG_KEY + MSG_KEY_VALUE_SEP) ) {
-							summaryMsgs.add(msgline.substring(MSG_SUMMARY_MSG_KEY.length() + 
-									MSG_KEY_VALUE_SEP.length()).trim());
-							msgline = msgReader.readLine();
-							continue;
-						}
-
-						Properties msgProps = new Properties();
-						for ( String msgPart : DashboardUtils.decodeStringArrayList(msgline) ) {
-							String[] keyValue = msgPart.split(MSG_KEY_VALUE_SEP, 2);
-							if ( keyValue.length != 2 )
-								throw new IOException("Invalid key:value pair '" + msgPart + "'");
-							msgProps.setProperty(keyValue[0], keyValue[1]);
-						}
-
-						ADCMessage msg = new ADCMessage();
-
-						String propVal = msgProps.getProperty(MSG_SEVERITY_KEY);
-						try {
-							msg.setSeverity(Severity.valueOf(propVal));
-						} catch ( Exception ex ) {
-							// leave as the default
-						}
-
-						propVal = msgProps.getProperty(MSG_ROW_NUMBER_KEY);
-						try {
-							msg.setRowNumber(Integer.parseInt(propVal));
-						} catch ( Exception ex ) {
-							// leave as the default
-						}
-
-						propVal = msgProps.getProperty(MSG_LONGITUDE_KEY);
-						try {
-							msg.setLongitude(Double.valueOf(propVal));
-						} catch ( Exception ex ) {
-							// leave as the default
-						}
-
-						propVal = msgProps.getProperty(MSG_LATITUDE_KEY);
-						try {
-							msg.setLatitude(Double.valueOf(propVal));
-						} catch ( Exception ex ) {
-							// leave as the default
-						}
-
-						propVal = msgProps.getProperty(MSG_LATITUDE_KEY);
-						try {
-							msg.setLatitude(Double.valueOf(propVal));
-						} catch ( Exception ex ) {
-							// leave as the default
-						}
-
-						propVal = msgProps.getProperty(MSG_DEPTH_KEY);
-						try {
-							msg.setDepth(Double.valueOf(propVal));
-						} catch ( Exception ex ) {
-							// leave as the default
-						}
-
-						propVal = msgProps.getProperty(MSG_TIMESTAMP_KEY);
-						if ( propVal != null ) {
-							msg.setTimestamp(propVal);
-						}
-
-						propVal = msgProps.getProperty(MSG_COLUMN_NUMBER_KEY);
-						try {
-							msg.setColNumber(Integer.parseInt(propVal));
-						} catch ( Exception ex ) {
-							// leave as the default
-						}
-
-						propVal = msgProps.getProperty(MSG_COLUMN_NAME_KEY);
-						if ( propVal != null ) {
-							msg.setColName(propVal);
-						}
-
-						propVal = msgProps.getProperty(MSG_GENERAL_MSG_KEY);
-						if ( propVal != null ) {
-							// Replace all escaped newlines in the message string
-							propVal = propVal.replace("\\n", "\n");
-							msg.setGeneralComment(propVal);
-						}
-
-						propVal = msgProps.getProperty(MSG_DETAILED_MSG_KEY);
-						if ( propVal != null ) {
-							// Replace all escaped newlines in the message string
-							propVal = propVal.replace("\\n", "\n");
-							msg.setDetailedComment(propVal);
-						}
-
-						msgList.add(msg);
-
-						msgline = msgReader.readLine();
+					if ( msgline.startsWith(MSG_SUMMARY_MSG_KEY + MSG_KEY_VALUE_SEP) ) {
+						summaryMsgs.add(msgline.substring(MSG_SUMMARY_MSG_KEY.length() + 
+										MSG_KEY_VALUE_SEP.length()).trim());
+						continue;
 					}
+
+					Properties msgProps = new Properties();
+					for ( String msgPart : DashboardUtils.decodeStringArrayList(msgline) ) {
+						String[] keyValue = msgPart.split(MSG_KEY_VALUE_SEP, 2);
+						if ( keyValue.length != 2 )
+							throw new IOException("Invalid key:value pair '" + msgPart + "'");
+						msgProps.setProperty(keyValue[0], keyValue[1]);
+					}
+
+					ADCMessage msg = new ADCMessage();
+
+					String propVal = msgProps.getProperty(MSG_SEVERITY_KEY);
+					try {
+						msg.setSeverity(Severity.valueOf(propVal));
+					} catch ( Exception ex ) {
+						// leave as the default
+					}
+
+					propVal = msgProps.getProperty(MSG_ROW_NUMBER_KEY);
+					try {
+						msg.setRowNumber(Integer.parseInt(propVal));
+					} catch ( Exception ex ) {
+						// leave as the default
+					}
+
+					propVal = msgProps.getProperty(MSG_LONGITUDE_KEY);
+					try {
+						msg.setLongitude(Double.valueOf(propVal));
+					} catch ( Exception ex ) {
+						// leave as the default
+					}
+
+					propVal = msgProps.getProperty(MSG_LATITUDE_KEY);
+					try {
+						msg.setLatitude(Double.valueOf(propVal));
+					} catch ( Exception ex ) {
+						// leave as the default
+					}
+
+					propVal = msgProps.getProperty(MSG_LATITUDE_KEY);
+					try {
+						msg.setLatitude(Double.valueOf(propVal));
+					} catch ( Exception ex ) {
+						// leave as the default
+					}
+
+					propVal = msgProps.getProperty(MSG_DEPTH_KEY);
+					try {
+						msg.setDepth(Double.valueOf(propVal));
+					} catch ( Exception ex ) {
+						// leave as the default
+					}
+
+					propVal = msgProps.getProperty(MSG_TIMESTAMP_KEY);
+					if ( propVal != null ) {
+						msg.setTimestamp(propVal);
+					}
+
+					propVal = msgProps.getProperty(MSG_COLUMN_NUMBER_KEY);
+					try {
+						msg.setColNumber(Integer.parseInt(propVal));
+					} catch ( Exception ex ) {
+						// leave as the default
+					}
+
+					propVal = msgProps.getProperty(MSG_COLUMN_NAME_KEY);
+					if ( propVal != null ) {
+						msg.setColName(propVal);
+					}
+
+					propVal = msgProps.getProperty(MSG_GENERAL_MSG_KEY);
+					if ( propVal != null ) {
+						// Replace all escaped newlines in the message string
+						propVal = propVal.replace("\\n", "\n");
+						msg.setGeneralComment(propVal);
+					}
+
+					propVal = msgProps.getProperty(MSG_DETAILED_MSG_KEY);
+					if ( propVal != null ) {
+						// Replace all escaped newlines in the message string
+						propVal = propVal.replace("\\n", "\n");
+						msg.setDetailedComment(propVal);
+					}
+
+					msgList.add(msg);
 				}
-			} finally {
-				msgReader.close();
 			}
 		} catch (IOException ex) {
 			throw new IllegalArgumentException("Unexpected problem reading messages from " + 

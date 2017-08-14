@@ -65,7 +65,7 @@ public class DerivedVariablesTest {
 		tool.run();
 		assertFalse(tool.hasError());
 
-		DsgNcFile decDsgFile = new DsgNcFile(decDataFilename);
+		DsgNcFile decDsgFile = DsgNcFile.createTrajectoryFile(decDataFilename);
 		unknownNames = decDsgFile.readMetadata(DsgNcFileTest.KNOWN_METADATA_FILE_TYPES);
 		assertEquals(0, unknownNames.size());
 		unknownNames = decDsgFile.readData(DsgNcFileTest.KNOWN_DATA_FILE_TYPES);

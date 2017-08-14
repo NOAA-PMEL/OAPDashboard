@@ -11,6 +11,7 @@ import java.util.TreeSet;
 
 import com.googlecode.gwt.crypto.client.TripleDesCipher;
 
+import gov.noaa.pmel.dashboard.server.DashboardServerUtils;
 import gov.noaa.pmel.dashboard.shared.QCFlag.Severity;
 
 /**
@@ -698,6 +699,8 @@ public class DashboardUtils {
 	public static boolean closeTo(Double first, Double second, 
 									double rtol, double atol) {
 
+		if ( first == null || second == null ) { return false; }
+		
 		// NaN (only) matches NaN
 		if ( first.isNaN() ) {
 			return second.isNaN();
@@ -723,6 +726,23 @@ public class DashboardUtils {
 		double absDiff = Math.abs(first - second);
 		double absAver = Math.abs((first + second) * 0.5);
 		return ( absDiff < absAver * rtol + atol );
+	}
+	
+	public static boolean isEmptyNullOrNull(Object value) {
+		return value == null || "null".equalsIgnoreCase(String.valueOf(value)) ||
+				(( value instanceof String ) && ((String)value).trim().length() == 0);
+	}
+	
+	public static boolean isEmptyNull(String value) {
+		return value == null || value.trim().length() == 0;
+	}
+	
+	public static boolean isEmptyNullOrNull(String value) {
+		return value == null || "null".equalsIgnoreCase(String.valueOf(value)) || value.trim().length() == 0;
+	}
+	
+	public static boolean isNullOrNull(Object value) {
+		return value == null || "null".equalsIgnoreCase(String.valueOf(value));
 	}
 
 }

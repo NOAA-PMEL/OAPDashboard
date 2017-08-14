@@ -37,8 +37,8 @@ public class ADCMessage implements Serializable, IsSerializable {
 	public ADCMessage() {
 		severity = Severity.UNASSIGNED;
 		rowNumber = DashboardUtils.INT_MISSING_VALUE;
-		longitude = DashboardUtils.FP_MISSING_VALUE;
-		latitude = DashboardUtils.FP_MISSING_VALUE;
+		longitude = Double.NaN;
+		latitude = Double.NaN;
 		depth = DashboardUtils.FP_MISSING_VALUE;
 		timestamp = DashboardUtils.STRING_MISSING_VALUE;
 		colNumber = DashboardUtils.INT_MISSING_VALUE;
@@ -99,6 +99,19 @@ public class ADCMessage implements Serializable, IsSerializable {
 			this.rowNumber = DashboardUtils.INT_MISSING_VALUE;
 		else
 			this.rowNumber = new Integer(rowIndex.intValue()+1);
+	}
+	
+	/**
+	 * 
+	 * @return
+	 * 		the 0-based index of the relevant row, 
+	 * 		or {@link DashboardUtils#INT_MISSING_VALUE} if not available.
+	 */
+	public Integer getRowIndex() {
+		if ( ! DashboardUtils.INT_MISSING_VALUE.equals(rowNumber) ) {
+			return new Integer(rowNumber.intValue()-1);
+		}
+		return DashboardUtils.INT_MISSING_VALUE;
 	}
 
 	/**

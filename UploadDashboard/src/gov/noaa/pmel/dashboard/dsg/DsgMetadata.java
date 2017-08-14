@@ -23,7 +23,7 @@ import gov.noaa.pmel.dashboard.shared.DashboardUtils;
 public class DsgMetadata {
 
 	// Maps of variable types to values
-	TreeMap<DashDataType<?>,Object> valuesMap;
+	private TreeMap<DashDataType<?>,Object> valuesMap;
 
 	/**
 	 * Create with the given data types.  Sets all values for these types 

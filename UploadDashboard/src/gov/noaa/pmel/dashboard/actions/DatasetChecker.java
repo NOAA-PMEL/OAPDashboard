@@ -7,6 +7,7 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 
+import gov.noaa.pmel.dashboard.data.sanity.CastChecker;
 import gov.noaa.pmel.dashboard.datatype.KnownDataTypes;
 import gov.noaa.pmel.dashboard.dsg.DsgMetadata;
 import gov.noaa.pmel.dashboard.dsg.StdUserDataArray;
@@ -29,13 +30,13 @@ public class DatasetChecker {
 
 		public RowColumn(Integer rowIndex, Integer columnIndex) {
 			if ( rowIndex == null )
-				row = DashboardUtils.INT_MISSING_VALUE;
+				row = DashboardUtils.INT_MISSING_VALUE.intValue();
 			else
-				row = rowIndex;
+				row = rowIndex.intValue();
 			if ( columnIndex == null )
-				column = DashboardUtils.INT_MISSING_VALUE;
+				column = DashboardUtils.INT_MISSING_VALUE.intValue();
 			else
-				column = columnIndex;
+				column = columnIndex.intValue();
 		}
 
 		@Override
@@ -127,7 +128,7 @@ public class DatasetChecker {
 		stdUserData.checkBounds();
 
 		// Perform any other data checks // TODO:
-		stdUserData.checkCastConsistency();
+		checkCastConsistency(stdUserData);
 
 		// Save the messages accumulated in stdUserData for this dataset.
 		// Assigns the sets of checker-generated QC flags and user-provided QC flags 
@@ -137,7 +138,7 @@ public class DatasetChecker {
 		// INCLUDING processing the CheckerMessages (since that pulls in User QC flags.)
 		// Reorder the data as best possible
 		stdUserData.reorderData(sampleTimes);
-
+		
 		// Get the indices values the PI marked as bad.
 		boolean hasCriticalError = false;
 		HashSet<RowColumn> userErrs = new HashSet<RowColumn>();
@@ -217,4 +218,12 @@ public class DatasetChecker {
 		return stdUserData;
 	}
 
+	private static void checkCastConsistency(StdUserDataArray stdData) {
+		if ( !stdData.hasCastIdColumn()) {
+			System.err.println("No castID column found.");	// XXX TODO Return an Error or Warning message?
+			return;
+		}
+		CastChecker cc = new CastChecker(stdData);
+		cc.checkCastConsistency();
+	}
 }

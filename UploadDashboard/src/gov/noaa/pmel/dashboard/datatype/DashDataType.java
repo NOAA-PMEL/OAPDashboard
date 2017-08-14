@@ -630,6 +630,8 @@ public abstract class DashDataType<T extends Comparable<T>> implements Comparabl
 		String otherKey = DashboardServerUtils.getKeyForName(name);
 		if ( DashboardServerUtils.getKeyForName(varName).equals(otherKey) )
 			return true;
+		if ( DashboardServerUtils.getKeyForName(standardName).equals(otherKey) )
+			return true;
 		if ( DashboardServerUtils.getKeyForName(displayName).equals(otherKey) )
 			return true;
 		return false;
@@ -1012,6 +1014,24 @@ public abstract class DashDataType<T extends Comparable<T>> implements Comparabl
 			throw new IllegalArgumentException("Invalid JSON description of \"" + 
 					varName + "\" : " + ex.getMessage(), ex);
 		}
+	}
+
+	public boolean typeNameLike(String string) {
+		if ( DashboardUtils.isEmptyNullOrNull(string))
+			return false;
+		if ( varName.matches(string) || standardName.matches(string) || displayName.matches(string)) 
+			return true;
+		String contains = string.toLowerCase();
+		String check = varName.toLowerCase();
+		if ( check.indexOf(contains) >= 0 )
+			return true;
+		check = standardName;
+		if ( check.indexOf(contains) >= 0 )
+			return true;
+		check = displayName;
+		if ( check.indexOf(contains) >= 0 )
+			return true;
+		return false;
 	}
 
 }

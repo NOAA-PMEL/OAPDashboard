@@ -22,6 +22,7 @@ import gov.noaa.pmel.dashboard.actions.DatasetChecker;
 import gov.noaa.pmel.dashboard.actions.DatasetModifier;
 import gov.noaa.pmel.dashboard.datatype.DashDataType;
 import gov.noaa.pmel.dashboard.datatype.KnownDataTypes;
+import gov.noaa.pmel.dashboard.dsg.StdUserDataArray;
 import gov.noaa.pmel.dashboard.handlers.DataFileHandler;
 import gov.noaa.pmel.dashboard.handlers.MetadataFileHandler;
 import gov.noaa.pmel.dashboard.handlers.UserFileHandler;
@@ -304,6 +305,11 @@ public class DashboardServices extends RemoteServiceServlet implements Dashboard
 		typesAndDataset.setAllKnownTypes(knownTypesList);
 		typesAndDataset.setDatasetData(dataset);
 
+		// So we can show the error message on the page.
+		ADCMessageList msgs = getDataMessages(pageUsername, datasetId);
+		if ( msgs != null ) {
+			typesAndDataset.setMsgList(msgs);
+		}
 		LogManager.getLogger("DashboardServices").info("data columns specs returned for " + 
 				datasetId + " for " + username);
 		// Return the cruise with the partial data
@@ -404,7 +410,7 @@ public class DashboardServices extends RemoteServiceServlet implements Dashboard
 
 		// Run the automated data checker with the updated data types.
 		// Assigns the data check status and the WOCE-3 and WOCE-4 flags.
-		configStore.getDashboardDatasetChecker().standardizeDataset(dataset, null);
+		StdUserDataArray stdArray = configStore.getDashboardDatasetChecker().standardizeDataset(dataset, null);
 
 		// Save and commit the updated data columns
 		configStore.getDataFileHandler().saveDatasetInfoToFile(dataset, 
@@ -487,8 +493,10 @@ public class DashboardServices extends RemoteServiceServlet implements Dashboard
 		ADCMessageList scMsgList;
 		try {
 			scMsgList = configStore.getCheckerMsgHandler().getCheckerMessages(datasetId);
-		} catch (FileNotFoundException ex) {
-			throw new IllegalArgumentException("The automated data checker has never been run on dataset " + datasetId);
+		} catch (Exception ex) {
+			LogManager.getLogger("DashboardServices").info("No messages for dataset id " + datasetId);
+			return null;
+//			throw new IllegalArgumentException("The automated data checker has never been run on dataset " + datasetId);
 		}
 		scMsgList.setUsername(username);
 		LogManager.getLogger("DashboardServices")

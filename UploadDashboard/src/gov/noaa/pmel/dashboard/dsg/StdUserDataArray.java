@@ -37,6 +37,8 @@ public class StdUserDataArray extends StdDataArray {
 	public static final String INCONSISTENT_NUMBER_OF_DATA_VALUES_MSG = 
 			"inconstistent number of data values";
 
+	private String datasetId;
+	
 	private String[] userColNames;
 	private String[] userUnits;
 	private String[] userMissVals;
@@ -50,6 +52,16 @@ public class StdUserDataArray extends StdDataArray {
 	private Boolean[] standardized;
 	private ArrayList<ADCMessage> stdMsgList;
 	int woceAutocheckIndex;
+	
+	public StdUserDataArray(StdUserDataArray other, KnownDataTypes knownTypes) {
+		super(other, knownTypes);
+		userUnits = other.userUnits;
+		userMissVals = other.userMissVals;
+		userColNames = other.userColNames;
+		stdMsgList = other.stdMsgList;
+		standardized = other.standardized;
+		datasetId = other.datasetId;
+	}
 	
 	/**
 	 * Create from the user's data column descriptions, data strings,  
@@ -77,8 +89,10 @@ public class StdUserDataArray extends StdDataArray {
 	 * 		if a standardizer for a given data type is not known
 	 */
 	public StdUserDataArray(DashboardDatasetData dataset, 
-			KnownDataTypes knownTypes) throws IllegalArgumentException {
+							KnownDataTypes knownTypes) throws IllegalArgumentException {
 		super(dataset.getDataColTypes(), knownTypes);
+		
+		datasetId = dataset.getDatasetId();
 
 		// Add the user's units, missing values, and user column names
 		userUnits = new String[numDataCols];
@@ -136,13 +150,13 @@ public class StdUserDataArray extends StdDataArray {
 		// Create a 2-D array of these Strings for efficiency
 		String[][] strDataVals = new String[numSamples][numDataCols];
 		int woceIdx = -1;
-		for (int row = 0; row < numSamples; row++) {
-			ArrayList<String> rowVals = dataVals.get(row);
+		for (int rowIdx = 0; rowIdx < numSamples; rowIdx++) {
+			ArrayList<String> rowVals = dataVals.get(rowIdx);
 			if ( rowVals.size() != numUserDataCols ) {
 				// Generate a general message for this row - in case too long
 				ADCMessage msg = new ADCMessage();
 				msg.setSeverity(Severity.CRITICAL);
-				msg.setRowNumber(row+1);
+				msg.setRowIndex(rowIdx);
 				msg.setGeneralComment(INCONSISTENT_NUMBER_OF_DATA_VALUES_MSG);
 				msg.setDetailedComment(INCONSISTENT_NUMBER_OF_DATA_VALUES_MSG + "; " + 
 						numUserDataCols + " expected but " + rowVals.size() + " found");
@@ -151,19 +165,19 @@ public class StdUserDataArray extends StdDataArray {
 			}
 			for (int col = 0; col < numUserDataCols; col++) {
 				try {
-					strDataVals[row][col] = rowVals.get(col);
+					strDataVals[rowIdx][col] = rowVals.get(col);
 				} catch ( IndexOutOfBoundsException ex ) {
 					// Setting it to null will generate a "no value given" message
-					strDataVals[row][col] = null;
+					strDataVals[rowIdx][col] = null;
 				}
 			}
 			for (int col = numUserDataCols; col < numDataCols; col++) {
 				if ( DashboardServerUtils.SAMPLE_NUMBER.typeNameEquals(dataTypes[col]) ) {
-					strDataVals[row][col] = rowNums.get(row).toString();
+					strDataVals[rowIdx][col] = rowNums.get(rowIdx).toString();
 				}
 				else if ( DashboardServerUtils.WOCE_AUTOCHECK.typeNameEquals(dataTypes[col]) ) {
 					// Default to acceptable; update afterwards
-					strDataVals[row][col] = DashboardServerUtils.FLAG_ACCEPTABLE.toString();
+					strDataVals[rowIdx][col] = DashboardServerUtils.FLAG_ACCEPTABLE.toString();
 					woceIdx = col;
 				}
 				else {
@@ -189,6 +203,9 @@ public class StdUserDataArray extends StdDataArray {
 			needsAnotherPass = false;
 			for (int col = 0; col < numDataCols; col++) {
 				DashDataType<?> colType = dataTypes[col];
+				if ( standardized[col] == null || standardized[col].booleanValue()) {
+					continue;
+				}
 				if ( DashboardServerUtils.UNKNOWN.typeNameEquals(colType) ||
 						DashboardServerUtils.OTHER.typeNameEquals(colType) ) {
 					for (int row = 0; row < numSamples; row++) {
@@ -200,15 +217,15 @@ public class StdUserDataArray extends StdDataArray {
 					try {
 						ValueConverter<?> stdizer = colType.getStandardizer(userUnits[col], userMissVals[col], this);
 						for (int row = 0; row < numSamples; row++) {
-							if ( ! Boolean.TRUE.equals(standardized[col])) {
+//							if ( ! Boolean.TRUE.equals(standardized[col])) {
 								try {
 									stdObjects[row][col] = stdizer.convertValueOf(strDataVals[row][col], row);
 								} catch ( IllegalArgumentException ex ) {
 									stdObjects[row][col] = null;
 									ADCMessage msg = new ADCMessage();
 									msg.setSeverity(Severity.CRITICAL);
-									msg.setRowNumber(row+1);
-									msg.setColNumber(col+1);
+									msg.setRowIndex(row);
+									msg.setColIndex(col);
 									msg.setColName(userColNames[col]);
 									msg.setGeneralComment(ex.getMessage());
 									if ( strDataVals[row][col] == null )
@@ -218,7 +235,7 @@ public class StdUserDataArray extends StdDataArray {
 									stdMsgList.add(msg);
 								}
 							}
-						}
+//						}
 						standardized[col] = Boolean.TRUE;
 					} catch ( IllegalStateException ex ) {
 						standardized[col] = Boolean.FALSE;
@@ -242,12 +259,12 @@ public class StdUserDataArray extends StdDataArray {
 	public Double[] checkMissingLonLatDepthTime() {
 		try {
 			Double[] longitudes = getSampleLongitudes();
-			for (int j = 0; j < numSamples; j++) {
-				if ( longitudes[j] == null ) {
+			for (int rowIdx = 0; rowIdx < numSamples; rowIdx++) {
+				if ( longitudes[rowIdx] == null ) {
 					ADCMessage msg = new ADCMessage();
 					msg.setSeverity(Severity.CRITICAL);
-					msg.setRowNumber(j+1);
-					msg.setColNumber(longitudeIndex+1);
+					msg.setRowIndex(rowIdx);
+					msg.setColIndex(longitudeIndex);
 					msg.setColName(userColNames[longitudeIndex]);
 					String comment = "missing longitude";
 					msg.setGeneralComment(comment);
@@ -266,12 +283,12 @@ public class StdUserDataArray extends StdDataArray {
 
 		try {
 			Double[] latitudes = getSampleLatitudes();
-			for (int j = 0; j < numSamples; j++) {
-				if ( latitudes[j] == null ) {
+			for (int rowIdx = 0; rowIdx < numSamples; rowIdx++) {
+				if ( latitudes[rowIdx] == null ) {
 					ADCMessage msg = new ADCMessage();
 					msg.setSeverity(Severity.CRITICAL);
-					msg.setRowNumber(j+1);
-					msg.setColNumber(latitudeIndex+1);
+					msg.setRowIndex(rowIdx);
+					msg.setColIndex(latitudeIndex);
 					msg.setColName(userColNames[latitudeIndex]);
 					String comment = "missing latitude";
 					msg.setGeneralComment(comment);
@@ -290,12 +307,12 @@ public class StdUserDataArray extends StdDataArray {
 
 		try {
 			Double[] depths = getSampleDepths();
-			for (int j = 0; j < numSamples; j++) {
-				if ( depths[j] == null ) {
+			for (int rowIdx = 0; rowIdx < numSamples; rowIdx++) {
+				if ( depths[rowIdx] == null ) {
 					ADCMessage msg = new ADCMessage();
 					msg.setSeverity(Severity.CRITICAL);
-					msg.setRowNumber(j+1);
-					msg.setColNumber(sampleDepthIndex+1);
+					msg.setRowIndex(rowIdx);
+					msg.setColIndex(sampleDepthIndex);
 					msg.setColName(userColNames[sampleDepthIndex]);
 					String comment = "missing sample depth";
 					msg.setGeneralComment(comment);
@@ -315,11 +332,11 @@ public class StdUserDataArray extends StdDataArray {
 		Double[] times = null;
 		try {
 			times = getSampleTimes();
-			for (int j = 0; j < numSamples; j++) {
-				if ( times[j] == null ) {
+			for (int rowIdx = 0; rowIdx < numSamples; rowIdx++) {
+				if ( times[rowIdx] == null ) {
 					ADCMessage msg = new ADCMessage();
 					msg.setSeverity(Severity.CRITICAL);
-					msg.setRowNumber(j+1);
+					msg.setRowIndex(rowIdx);
 					String comment = "incomplete sample date/time specification";
 					msg.setGeneralComment(comment);
 					msg.setDetailedComment(comment);
@@ -377,7 +394,7 @@ public class StdUserDataArray extends StdDataArray {
 		for (int rowIdx = 0; rowIdx < numSamples; rowIdx++) {
 			DataLocation dataLoc = new DataLocation();
 			// Assign the row index instead of the number
-			dataLoc.setRowNumber(rowIdx);
+			dataLoc.setRowIndex(rowIdx);
 			if ( longitudes != null )
 				dataLoc.setLongitude(longitudes[rowIdx]);
 			if ( latitudes != null )
@@ -400,7 +417,7 @@ public class StdUserDataArray extends StdDataArray {
 		int rowIdx = 0;
 		for ( DataLocation dataLoc : orderedSet ) {
 			// getRowNumber returns the row index assigned above
-			orderedRows[rowIdx] = stdObjects[dataLoc.getRowNumber()];
+			orderedRows[rowIdx] = stdObjects[dataLoc.getRowIndex()];
 			rowIdx++;
 		}
 		// Update the array of array of objects to the new ordering
@@ -567,7 +584,7 @@ public class StdUserDataArray extends StdDataArray {
 			throws NoSuchFieldException, IllegalArgumentException, IllegalStateException {
 		if ( (stdTypeColumnName == null) || "".equals(stdTypeColumnName.trim()))
 			throw new NoSuchFieldException("data column name is invalid: " + stdTypeColumnName);
-		int columnIdx = findStdTypeColumn(stdTypeColumnName);
+		int columnIdx = findDataColumnIndex(stdTypeColumnName);
 		Object[] values = new Object[numSamples];
 		for (int row = 0; row < numSamples; row++ ) {
 			values[row] = getStdVal(row, columnIdx);
@@ -588,16 +605,27 @@ public class StdUserDataArray extends StdDataArray {
 		}
 		return columnIdx;
 	}
-	private int findStdTypeColumn(String stdTypeColumnName) throws NoSuchFieldException {
+	public DashDataType<?> findDataColumn(String varName) {
+		if ( dataTypeMap.containsKey(varName)) {
+			return dataTypeMap.get(varName);
+		}
+		for (int i = 0; i < numDataCols; i++ ) {
+			if ( dataTypes[i].typeNameEquals(varName)) {
+				return dataTypes[i];
+			}
+		}
+		return null;
+	}
+	public int findDataColumnIndex(String varName) throws NoSuchFieldException {
 		int columnIdx = -1;
 		for (int i = 0; i < numDataCols; i++ ) {
-			if ( dataTypes[i].getStandardName().equalsIgnoreCase(stdTypeColumnName)) {
+			if ( dataTypes[i].typeNameEquals(varName)) {
 				columnIdx = i;
 				break;
 			}
 		}
 		if ( columnIdx == -1 ) {
-			throw new NoSuchFieldException("No standard type found for " + stdTypeColumnName);
+			throw new NoSuchFieldException("No standard type found for " + varName);
 		}
 		return columnIdx;
 	}
@@ -732,12 +760,8 @@ public class StdUserDataArray extends StdDataArray {
 	}
 
 
-	public void checkCastConsistency() {
-		if ( !hasCastIdColumn()) {
-			System.err.println("No castID column found.");
-			return;
-		}
-		CastChecker cc = new CastChecker(this);
-		cc.checkCastConsistency();
+	public String getDatasetId() {
+		return datasetId;
 	}
+	
 }

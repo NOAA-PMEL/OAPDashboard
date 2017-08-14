@@ -4,34 +4,31 @@
 package gov.noaa.pmel.dashboard.datatype;
 
 import java.util.ArrayList;
-import java.util.Calendar;
-import java.util.Collection;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
-import java.util.TimeZone;
-import java.util.TreeSet;
 
-import gov.noaa.pmel.dashboard.data.sanity.CastChecker;
 import gov.noaa.pmel.dashboard.dsg.StdUserDataArray;
-import gov.noaa.pmel.dashboard.handlers.DataFileHandler;
-import gov.noaa.pmel.dashboard.server.DashboardConfigStore;
-import gov.noaa.pmel.dashboard.shared.DashboardDatasetData;
+import gov.noaa.pmel.dashboard.shared.DashboardUtils;
 
 /**
  * @author kamb
  *
  */
-public class CastSet {
+public class CastSet implements Comparable<CastSet> {
 
 	private final String _expoCode;
 	private final String _castId;
 	private List<Integer> _castRowIndeces;
+	private double _expectedLat = DashboardUtils.FP_MISSING_VALUE.doubleValue();
+	private double _expectedLon = DashboardUtils.FP_MISSING_VALUE.doubleValue();
+	private double _expectedTime = DashboardUtils.FP_MISSING_VALUE.doubleValue();
 	
-	public static Collection<CastSet> extractCastSetsFrom(StdUserDataArray dataset) {
-		Collection<CastSet> casts = new ArrayList<>();
+	public static List<CastSet> extractCastSetsFrom(StdUserDataArray dataset) {
+		List<CastSet> casts = new ArrayList<>();
 		String lastId = "";
 		CastSet cast = null;
+		Double[] lats = dataset.getSampleLatitudes();
+		Double[] lons = dataset.getSampleLongitudes();
+		Double[] times = dataset.getSampleTimes();
 		Integer dsNameCol = dataset.lookForDataColumnIndex("dataset_name");
 		if ( dsNameCol == null ) {
 			throw new IllegalStateException("No dataset name column found");
@@ -43,6 +40,21 @@ public class CastSet {
 				cast = new CastSet(castId, expoCode);
 				casts.add(cast);
 				lastId = castId;
+				if ( lats[row] != null ) {
+					cast._expectedLat = lats[row].doubleValue();
+				} else {
+					// TODO: warn
+				}
+				if ( lons[row] != null ) {
+					cast._expectedLon = lons[row].doubleValue();
+				} else {
+					// TODO: warn
+				}
+				if ( times[row] != null ) {
+					cast._expectedTime = times[row].doubleValue();
+				} else {
+					// TODO: warn
+				}
 			}
 			cast.addIndex(row);
 		}
@@ -59,6 +71,10 @@ public class CastSet {
 		this._castId = castId;
 		this._expoCode = expoCode;
 		this._castRowIndeces = castRowIndeces;
+	}
+	
+	public int size() {
+		return _castRowIndeces.size();
 	}
 	
 	public String id() {
@@ -80,6 +96,16 @@ public class CastSet {
 		_castRowIndeces = castRowIndeces;
 	}
 	
+	public double expectedLat() {
+		return _expectedLat;
+	}
+	public double expectedLon() {
+		return _expectedLon;
+	}
+	public double expectedTime() {
+		return _expectedTime;
+	}
+	
 	@Override
 	public String toString() {
 		return _expoCode + ":" + _castId;
@@ -87,75 +113,76 @@ public class CastSet {
 	public String debugString() {
 		return _expoCode + ":" + _castId + _castRowIndeces;
 	}
-	
-	public static void main(String[] args) {
-		System.out.println(CastSet.class + " running");
-		String datasetId = "PRISM022008"; // "HOGREEF64W32N";
-		try {
-			DashboardConfigStore dcfg = DashboardConfigStore.get(false);
-			DataFileHandler dataFileHandler = dcfg.getDataFileHandler();
-			KnownDataTypes knownDataTypes = dcfg.getKnownUserDataTypes();
-			DashboardDatasetData ddd = dataFileHandler.getDatasetDataFromFiles(datasetId, 0, -1);
-			StdUserDataArray stda = new StdUserDataArray(ddd, knownDataTypes);
-			stda.checkCastConsistency();
-			System.out.println(stda.getStandardizationMessages());
-		} catch (Exception ex) {
-			ex.printStackTrace();
-		}
+
+	@Override
+	public int compareTo(CastSet o) {
+		int result = o == null ? 1 : Double.compare(this._expectedTime, o._expectedTime);
+		return result;
 	}
 
-	/*
-	private static void checkCastConsistency(StdUserDataArray stda, CastSet cs) throws IllegalStateException {
-		checkCastLocations(stda, cs);
-		checkCastDates(stda, cs);
-		checkCastDepths(stda, cs);
+	@Override
+	public int hashCode() {
+		final int prime = 31;
+		int result = 1;
+		result = prime * result + ((_castId == null) ? 0 : _castId.hashCode());
+		result = prime * result + ((_castRowIndeces == null) ? 0 : _castRowIndeces.hashCode());
+		long temp;
+		temp = Double.doubleToLongBits(_expectedLat);
+		result = prime * result + (int) (temp ^ (temp >>> 32));
+		temp = Double.doubleToLongBits(_expectedLon);
+		result = prime * result + (int) (temp ^ (temp >>> 32));
+		temp = Double.doubleToLongBits(_expectedTime);
+		result = prime * result + (int) (temp ^ (temp >>> 32));
+		result = prime * result + ((_expoCode == null) ? 0 : _expoCode.hashCode());
+		return result;
 	}
-	
-	private static void checkCastLocations(StdUserDataArray stda, CastSet cs) throws IllegalStateException {
-		List<Integer> castRows = cs.indeces();
-		Double[] lats = stda.getSampleLatitudes();
-		Double[] lons = stda.getSampleLongitudes();
-		for (int idx = 1; idx < castRows.size(); idx++) {
-			int prevRow = castRows.get(idx-1).intValue();
-			int nextRow = castRows.get(idx).intValue();
-			if ( ! ( lats[prevRow].equals(lats[nextRow]) || 
-					 lons[prevRow].equals(lons[nextRow]) )) {
-				throw new IllegalStateException("Inconsistent locations for cast " + cs.toString() + 
-				                                " between samples " + prevRow + " and " + nextRow + ". " +
-												" Found [" + lats[prevRow] + ", " + lons[prevRow] + "] " +
-												" and [" + lats[nextRow] + ", " + lons[nextRow] + "] " );
-			}
-		}
+
+	@Override
+	public boolean equals(Object obj) {
+		if (this == obj)
+			return true;
+		if (obj == null)
+			return false;
+		if (getClass() != obj.getClass())
+			return false;
+		CastSet other = (CastSet) obj;
+		if (_castId == null) {
+			if (other._castId != null)
+				return false;
+		} else if (!_castId.equals(other._castId))
+			return false;
+		if (_castRowIndeces == null) {
+			if (other._castRowIndeces != null)
+				return false;
+		} else if (!_castRowIndeces.equals(other._castRowIndeces))
+			return false;
+		if (Double.doubleToLongBits(_expectedLat) != Double.doubleToLongBits(other._expectedLat))
+			return false;
+		if (Double.doubleToLongBits(_expectedLon) != Double.doubleToLongBits(other._expectedLon))
+			return false;
+		if (Double.doubleToLongBits(_expectedTime) != Double.doubleToLongBits(other._expectedTime))
+			return false;
+		if (_expoCode == null) {
+			if (other._expoCode != null)
+				return false;
+		} else if (!_expoCode.equals(other._expoCode))
+			return false;
+		return true;
 	}
-	private static void checkCastDates(StdUserDataArray stda, CastSet cs) throws IllegalStateException {
-		List<Integer> castRows = cs.indeces();
-		Double[] times = stda.getSampleTimes();
-		Calendar prevDate = Calendar.getInstance(TimeZone.getTimeZone("UTC"));
-		Calendar nextDate = Calendar.getInstance(TimeZone.getTimeZone("UTC"));
-		for (int idx = 1; idx < castRows.size(); idx++) {
-			int prevRow = castRows.get(idx-1).intValue();
-			int nextRow = castRows.get(idx).intValue();
-			prevDate.setTimeInMillis(times[prevRow].longValue());
-			nextDate.setTimeInMillis(times[nextRow].longValue());
-			if ( prevDate.get(Calendar.DAY_OF_YEAR) != nextDate.get(Calendar.DAY_OF_YEAR)) {
-				throw new IllegalStateException("Inconsistent dates for cast " + cs.toString() + 
-				                                " between samples " + prevRow + " and " + nextRow + ". " +
-												" Found " + prevDate.toString() +
-												" and " + nextDate.toString());
-			}
-		}
-	}
-	private static void checkCastDepths(StdUserDataArray stda, CastSet cs) {
-		List<Integer> castRows = cs.indeces();
-		Double[] depths = stda.getSampleDepths();
-		Set<Double> checkDepths = new HashSet<>();
-		for (int check = 0; check < castRows.size(); check++) {
-			int checkRow = castRows.get(check).intValue();
-			if ( ! checkDepths.add(depths[checkRow])) {
-				throw new IllegalStateException("Duplicate depths for cast " + cs.toString() + 
-				                                " at row " + checkRow); 
-			}
-		}
-	}
-	*/
+
+//	public static void main(String[] args) {		// XXX Move to test
+//		System.out.println(CastSet.class + " running");
+//		String datasetId = "PRISM022008"; // "HOGREEF64W32N";
+//		try {
+//			DashboardConfigStore dcfg = DashboardConfigStore.get(false);
+//			DataFileHandler dataFileHandler = dcfg.getDataFileHandler();
+//			KnownDataTypes knownDataTypes = dcfg.getKnownUserDataTypes();
+//			DashboardDatasetData ddd = dataFileHandler.getDatasetDataFromFiles(datasetId, 0, -1);
+//			StdUserDataArray stda = new StdUserDataArray(ddd, knownDataTypes);
+//			stda.checkCastConsistency();
+//			System.out.println(stda.getStandardizationMessages());
+//		} catch (Exception ex) {
+//			ex.printStackTrace();
+//		}
+//	}
 }

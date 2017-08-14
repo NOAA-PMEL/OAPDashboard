@@ -27,6 +27,11 @@ public class QCFlag implements Comparable<QCFlag>, Serializable, IsSerializable 
 		ERROR,
 		CRITICAL
 	}
+	
+	public enum FlagSource implements Serializable, IsSerializable {
+		USER,
+		CHECKER
+	}
 
 	protected String flagName;
 	protected Character flagValue;
@@ -34,6 +39,7 @@ public class QCFlag implements Comparable<QCFlag>, Serializable, IsSerializable 
 	protected Integer columnIndex;
 	protected Integer rowIndex;
 	protected String comment;
+	protected FlagSource source = FlagSource.CHECKER;
 
 	/**
 	 * Create with a 

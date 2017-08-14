@@ -202,14 +202,14 @@ public class DatasetPreviewPage extends CompositeWithUsername {
 		else
 			this.expocode = "";
 		introHtml.setHTML(INTRO_HTML_PROLOGUE + SafeHtmlUtils.htmlEscape(this.expocode));
-		if ( this.expocode.length() > 11 ) {
+//		if ( this.expocode.length() > 11 ) { // WTF?
 			// Tell the server to generate the preview plots
 			UploadDashboard.showWaitCursor();
 			DateTimeFormat formatter = DateTimeFormat.getFormat("MMddHHmmss");
 			this.timetag = formatter.format(new Date(), TimeZone.createTimeZone(0));
 			service.buildPreviewImages(getUsername(), this.expocode, 
 					this.timetag, true, checkStatusCallback);
-		}
+//		}
 		// Set the URLs for the images.
 		resetImageUrls();
 	}

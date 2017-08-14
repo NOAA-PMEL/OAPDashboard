@@ -3,8 +3,11 @@
  */
 package gov.noaa.pmel.dashboard.server;
 
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Date;
+import java.util.TimeZone;
 import java.util.regex.Pattern;
 
 import gov.noaa.pmel.dashboard.datatype.CharDashDataType;
@@ -357,6 +360,42 @@ public class DashboardServerUtils {
 		distance *= EARTH_AUTHALIC_RADIUS;
 
 		return distance;
+	}
+
+	private static final double DISTANCE_MULTIPLIER_KM = 6371.007;
+	private static final double DISTANCE_MULTIPLIER_MILES = 3958.756;
+	private static final double DISTANCE_MULTIPLIER_NAUTICAL_MILES = 3440.065;
+	
+	public static double greatCircleDistance_Km(double lat1, double lon1, double lat2, double lon2) {
+		return greatCircleDistanceBaseCalc(lat1, lon1, lat2, lon2) * DISTANCE_MULTIPLIER_KM;
+	}
+	public static double greatCircleDistance_M(double lat1, double lon1, double lat2, double lon2) {
+		return greatCircleDistanceBaseCalc(lat1, lon1, lat2, lon2) * DISTANCE_MULTIPLIER_MILES;
+	}
+	public static double greatCircleDistance_NM(double lat1, double lon1, double lat2, double lon2) {
+		 return greatCircleDistanceBaseCalc(lat1, lon1, lat2, lon2) * DISTANCE_MULTIPLIER_NAUTICAL_MILES;
+	}
+	public static double greatCircleDistanceBaseCalc(double lat1, double lon1, double lat2, double lon2) {
+		double distanceBase;
+		// ACOS(COS(RADIANS(90-Latitude1)) *
+		//		COS(RADIANS(90-Latitude2)) +
+		//		SIN(RADIANS(90-Latitude1)) *
+		//		SIN(RADIANS(90-Latitude2)) *
+		//		COS(RADIANS(Longitude1-Longitude2))) * 3440.065 
+		distanceBase = Math.acos(Math.cos(Math.toRadians(90-lat1)) *
+		                     Math.cos(Math.toRadians(90-lat2)) +
+		                     Math.sin(Math.toRadians(90-lat1)) *
+		                     Math.sin(Math.toRadians(90-lat2)) *
+		                     Math.cos(Math.toRadians(lon1-lon2)));
+		return distanceBase;
+	}
+
+	public static final String UTC_FORMAT = "yyyy-mm-dd hh:mm:ss z";
+
+	public static String formatUTC(Date date) {
+		SimpleDateFormat sdf = new SimpleDateFormat(UTC_FORMAT);
+		sdf.setTimeZone(TimeZone.getTimeZone("UTC"));
+		return sdf.format(date);
 	}
 
 }

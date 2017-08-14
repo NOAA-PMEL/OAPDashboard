@@ -11,6 +11,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import gov.noaa.pmel.dashboard.dsg.DsgMetadata;
+import gov.noaa.pmel.dashboard.dsg.StdUserDataArray;
 import gov.noaa.pmel.dashboard.handlers.ArchiveFilesBundler;
 import gov.noaa.pmel.dashboard.handlers.DataFileHandler;
 import gov.noaa.pmel.dashboard.handlers.DatabaseRequestHandler;
@@ -114,7 +115,7 @@ public class DatasetSubmitter {
 
 					// Standardize the data
 					// TODO: update the metadata with data-derived values
-					datasetChecker.standardizeDataset(dataset, null);
+					StdUserDataArray standardized = datasetChecker.standardizeDataset(dataset, null);
 					if ( DashboardUtils.CHECK_STATUS_UNACCEPTABLE.equals(dataset.getDataCheckStatus()) ) {
 						errorMsgs.add(datasetId + ": unacceptable; check data check error messages " +
 													"(missing lon/lat/depth/time or uninterpretable values)");
@@ -123,7 +124,7 @@ public class DatasetSubmitter {
 
 					// Generate the NetCDF DSG file, enhanced by Ferret
 					logger.debug("Generating the full-data DSG file for " + datasetId);
-					dsgHandler.saveDatasetDsg(dsgMData, dataset);
+					dsgHandler.saveDatasetDsg(dsgMData, standardized);
 
 					// Generate the decimated-data DSG file from the full-data DSG file
 					logger.debug("Generating the decimated-data DSG file for " + datasetId);
@@ -170,6 +171,7 @@ public class DatasetSubmitter {
 				;
 			}
 		}
+		if (true) return;
 
 		// notify ERDDAP of new/updated dataset
 		if ( ! ingestIds.isEmpty() )

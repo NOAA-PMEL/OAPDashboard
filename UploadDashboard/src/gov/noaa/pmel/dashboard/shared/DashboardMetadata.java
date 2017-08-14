@@ -188,7 +188,8 @@ public class DashboardMetadata implements Serializable, IsSerializable {
 	 *		{@code true} if conflicts have been detected in the metadata; {@code false} otherwise.
 	 */
 	public boolean isConflicted() {
-		return conflicted;
+//		return conflicted;
+		return false;
 	}
 
 	/**

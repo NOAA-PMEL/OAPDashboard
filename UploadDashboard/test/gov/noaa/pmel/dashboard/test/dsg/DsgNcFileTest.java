@@ -191,7 +191,7 @@ public class DsgNcFileTest {
 		File parentDir = new File("/var/tmp/junit");
 		if ( ! parentDir.exists() )
 			parentDir.mkdir();
-		dsgNcFile = new DsgNcFile(parentDir, expocode + ".nc");
+		dsgNcFile = DsgNcFile.createTrajectoryFile(parentDir, expocode + ".nc");
 		dsgNcFile.create(metadata, stdUserData, KNOWN_DATA_FILE_TYPES);
 		assertTrue( dsgNcFile.exists() );
 		assertEquals(expocode, dsgNcFile.getMetadata().getDatasetId());
@@ -274,7 +274,7 @@ public class DsgNcFileTest {
 			File parentDir = new File("/var/tmp/junit");
 			if ( ! parentDir.exists() )
 				parentDir.mkdir();
-			dsgNcFile = new DsgNcFile(parentDir, expocode + ".nc");
+			dsgNcFile = DsgNcFile.createTrajectoryFile(parentDir, expocode + ".nc");
 			try {
 				dsgNcFile.create(metadata, stdUserData, KNOWN_DATA_FILE_TYPES);
 			} catch ( IllegalArgumentException ex ) {

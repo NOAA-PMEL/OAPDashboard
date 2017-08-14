@@ -16,6 +16,7 @@ import java.util.ArrayList;
 import gov.noaa.pmel.dashboard.datatype.KnownDataTypes;
 import gov.noaa.pmel.dashboard.dsg.DsgMetadata;
 import gov.noaa.pmel.dashboard.dsg.DsgNcFile;
+import gov.noaa.pmel.dashboard.dsg.DsgNcFile.DsgFileType;
 import gov.noaa.pmel.dashboard.dsg.StdDataArray;
 import gov.noaa.pmel.dashboard.dsg.StdUserDataArray;
 import gov.noaa.pmel.dashboard.ferret.FerretConfig;
@@ -129,7 +130,7 @@ public class DsgNcFileHandler {
 			throw new IllegalArgumentException("Unable to create the new subdirectory " + 
 					parentDir.getPath());
 		}
-		return new DsgNcFile(parentDir, stdId + DSG_FILE_SUFFIX);
+		return DsgNcFile.createProfileFile(parentDir, stdId + DSG_FILE_SUFFIX); // XXX hard-coded profile type
 	}
 
 	/**
@@ -161,7 +162,7 @@ public class DsgNcFileHandler {
 			throw new IllegalArgumentException("Unable to create the new subdirectory " + 
 					parentDir.getPath());
 		}
-		return new DsgNcFile(parentDir, stdId + DSG_FILE_SUFFIX);
+		return DsgNcFile.createProfileFile(parentDir, stdId + DSG_FILE_SUFFIX);
 	}
 
 	/**
@@ -180,31 +181,35 @@ public class DsgNcFileHandler {
 	 * 		if there are problems creating or writing the full-data DSG file
 	 */
 	public void saveDatasetDsg(DsgMetadata metadata, 
-			DashboardDatasetData dataset) throws IllegalArgumentException {
+	                           StdUserDataArray stdUserData) throws IllegalArgumentException {
+//			DashboardDatasetData dataset) throws IllegalArgumentException {
 		// Get the location and name for the NetCDF DSG file
-		DsgNcFile dsgFile = getDsgNcFile(dataset.getDatasetId());
+		DsgNcFile dsgFile = getDsgNcFile(stdUserData.getDatasetId());
 
 		// Convert the data strings into the appropriate type
-		StdUserDataArray stdUserData = new StdUserDataArray(dataset, knownUserDataTypes);
+//		StdUserDataArray stdUserData = new StdUserDataArray(dataset, knownUserDataTypes);
 
 		// Create the NetCDF DSG file
 		try {
 			dsgFile.create(metadata, stdUserData, knownDataFileTypes);
 		} catch (Exception ex) {
 			dsgFile.delete();
+			ex.printStackTrace();
 			throw new IllegalArgumentException("Problems creating the DSG file " + 
 					dsgFile.getName() + "\n    " + ex.getMessage(), ex);
 		}
 
+		if ( false ) {
 		// Call Ferret to add the computed variables to the NetCDF DSG file
 		SocatTool tool = new SocatTool(ferretConfig);
 		ArrayList<String> scriptArgs = new ArrayList<String>(1);
 		scriptArgs.add(dsgFile.getPath());
-		tool.init(scriptArgs, dataset.getDatasetId(), FerretConfig.Action.COMPUTE);
+		tool.init(scriptArgs, stdUserData.getDatasetId(), FerretConfig.Action.COMPUTE);
 		tool.run();
 		if ( tool.hasError() )
 			throw new IllegalArgumentException("Failure adding computed variables: " + 
 					tool.getErrorMessage());
+		}
 	}
 
 	/**

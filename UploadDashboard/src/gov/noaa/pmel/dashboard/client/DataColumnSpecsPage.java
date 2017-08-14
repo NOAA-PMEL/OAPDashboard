@@ -5,34 +5,45 @@ package gov.noaa.pmel.dashboard.client;
 
 import java.text.ParseException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Map;
 import java.util.TreeSet;
 
-import com.google.gwt.cell.client.Cell;
 import com.google.gwt.core.client.GWT;
+import com.google.gwt.dom.client.BrowserEvents;
 import com.google.gwt.dom.client.Style;
+import com.google.gwt.dom.client.TableCellElement;
+import com.google.gwt.dom.client.TableRowElement;
 import com.google.gwt.event.dom.client.ClickEvent;
-import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
+import com.google.gwt.event.dom.client.DoubleClickEvent;
+import com.google.gwt.event.dom.client.DoubleClickHandler;
 import com.google.gwt.safehtml.shared.SafeHtmlUtils;
 import com.google.gwt.text.client.IntegerParser;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.uibinder.client.UiHandler;
 import com.google.gwt.user.cellview.client.DataGrid;
+import com.google.gwt.user.cellview.client.RowStyles;
 import com.google.gwt.user.cellview.client.SimplePager;
-import com.google.gwt.user.cellview.client.TextColumn;
 import com.google.gwt.user.client.History;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.google.gwt.user.client.ui.Button;
 import com.google.gwt.user.client.ui.HTML;
 import com.google.gwt.user.client.ui.InlineLabel;
 import com.google.gwt.user.client.ui.Label;
+import com.google.gwt.user.client.ui.ScrollPanel;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.gwt.view.client.AsyncDataProvider;
+import com.google.gwt.view.client.CellPreviewEvent;
 import com.google.gwt.view.client.HasData;
+import com.google.gwt.view.client.ProvidesKey;
 import com.google.gwt.view.client.Range;
+import com.google.gwt.view.client.SingleSelectionModel;
 
 import gov.noaa.pmel.dashboard.client.UploadDashboard.PagesEnum;
+import gov.noaa.pmel.dashboard.shared.ADCMessage;
+import gov.noaa.pmel.dashboard.shared.ADCMessageList;
 import gov.noaa.pmel.dashboard.shared.DashboardDataset;
 import gov.noaa.pmel.dashboard.shared.DashboardDatasetData;
 import gov.noaa.pmel.dashboard.shared.DashboardServicesInterface;
@@ -40,7 +51,6 @@ import gov.noaa.pmel.dashboard.shared.DashboardServicesInterfaceAsync;
 import gov.noaa.pmel.dashboard.shared.DashboardUtils;
 import gov.noaa.pmel.dashboard.shared.DataColumnType;
 import gov.noaa.pmel.dashboard.shared.QCFlag;
-import gov.noaa.pmel.dashboard.shared.QCFlag.Severity;
 import gov.noaa.pmel.dashboard.shared.TypesDatasetDataPair;
 
 /**
@@ -164,6 +174,7 @@ public class DataColumnSpecsPage extends CompositeWithUsername {
 	@UiField InlineLabel userInfoLabel;
 	@UiField Button logoutButton;
 	@UiField HTML introHtml;
+	@UiField ScrollPanel dgScroll;
 	@UiField DataGrid<ArrayList<String>> dataGrid;
 	@UiField Label pagerLabel;
 	@UiField Label messagesLabel;
@@ -172,6 +183,10 @@ public class DataColumnSpecsPage extends CompositeWithUsername {
 	@UiField Button submitButton;
 	@UiField Button cancelButton;
 	@UiField Button saveButton;
+	
+	private SingleSelectionModel<ArrayList<String>> selectionModel;
+	private ADCMessageList datasetMessages;
+	private Map<Integer, ADCMessage> rowMsgMap = new HashMap<Integer, ADCMessage>();
 
 	// Popup to confirm continue with default zero seconds
 	private DashboardAskPopup defaultSecondsPopup;
@@ -191,6 +206,10 @@ public class DataColumnSpecsPage extends CompositeWithUsername {
 	private boolean wasLoggingOut;
 	// List of cruises to be assigned once this page is dismissed
 	private ArrayList<String> expocodes;
+
+	protected int selectedRow;
+
+	protected int selectedColumn;
 
 	// Singleton instance of this page
 	private static DataColumnSpecsPage singleton = null;
@@ -223,6 +242,32 @@ public class DataColumnSpecsPage extends CompositeWithUsername {
 		cruiseDataCols = new ArrayList<DatasetDataColumn>();
 		expocodes = new ArrayList<String>();
 
+		selectionModel = new SingleSelectionModel<ArrayList<String>>(new ProvidesKey<ArrayList<String>>() {
+			@Override
+			public Object getKey(ArrayList<String> item) {
+				return item.get(0);
+			}
+		});
+		dataGrid.setRowStyles(new RowStyles<ArrayList<String>>() {
+			@Override
+			public String getStyleNames(ArrayList<String> row, int rowIndex) {
+				String rowStyle = "oa_row ";
+				ADCMessage amsg = rowMsgMap.get(rowIndex);
+				if ( amsg != null ) {
+					switch (amsg.getSeverity()) {
+						case WARNING:
+							rowStyle += "oa_datagrid_checker_warning_row";
+							break;
+						case ERROR:
+						case CRITICAL:
+							rowStyle += "oa_datagrid_checker_error_row";
+							break;
+						default:
+					}
+				}
+				return rowStyle;
+			}
+		});
 		// Create the asynchronous data provider for the data grid
 		dataProvider = new AsyncDataProvider<ArrayList<String>>() {
 			@Override
@@ -247,6 +292,7 @@ public class DataColumnSpecsPage extends CompositeWithUsername {
 						if ( actualStart < 0 )
 							actualStart = range.getStart();
 						updateRowData(actualStart, newData);
+						updateScroll();
 						UploadDashboard.showAutoCursor();
 					}
 					@Override
@@ -260,8 +306,63 @@ public class DataColumnSpecsPage extends CompositeWithUsername {
 		dataProvider.addDataDisplay(dataGrid);
 		// Assign the pager controlling which rows of the the data grid are shown
 		gridPager.setDisplay(dataGrid);
+		
+		dataGrid.addCellPreviewHandler(new CellPreviewEvent.Handler<ArrayList<String>>() {
+			@Override
+			public void onCellPreview(CellPreviewEvent<ArrayList<String>> event) {
+				String eType = event.getNativeEvent().getType();
+				if ( BrowserEvents.CLICK.equals(eType)) {
+					selectedRow = event.getIndex();
+					selectedColumn = event.getColumn();
+				}
+			}
+		});
+		dataGrid.addDomHandler(new DoubleClickHandler() {
+			
+			@Override
+			public void onDoubleClick(DoubleClickEvent event) {
+				ADCMessage amsg = rowMsgMap.get(selectedRow);
+				if ( amsg == null ) { return; }
+//				NativeEvent nevt = event.getNativeEvent();
+				int left = event.getClientX();
+				int top = event.getClientY();
+				String msg = amsg.getDetailedComment();
+				PopupMsg pu = new PopupMsg(msg);
+				pu.setPopupPosition(left, top);
+				pu.show();
+			}
+		}, DoubleClickEvent.getType());
 	}
 
+	Integer scrollToRow = null;
+	Integer scrollToCol = null;
+	
+	private void updateScroll() {
+		if ( scrollToRow != null ) {
+			int rowIdx = scrollToRow.intValue();
+			int colIdx = scrollToCol.intValue();
+			TableRowElement row = dataGrid.getRowElement(rowIdx);
+			TableCellElement cell = row.getCells().getItem(colIdx);
+			cell.scrollIntoView();
+//			int cellTop = dgScroll.getVerticalScrollPosition();
+//			int cellHeight = cell.getScrollHeight();
+//			int cellLeft = dgScroll.getHorizontalScrollPosition();
+//			int cellWidth = cell.getScrollWidth();
+////			cell.setScrollTop(cellTop - ( 2 * cellHeight ));
+////			cell.setScrollLeft(cellLeft + ( 2 * cellWidth ));
+//			int rowPos = rowIdx * cellHeight;
+//			dgScroll.setVerticalScrollPosition(rowPos);
+		}
+		scrollToRow = null;
+		scrollToCol = null;
+		
+//		TableCellElement idCol = row.getCells().getItem(0);
+//		String id = String.valueOf(idCol.getInnerText());
+//		ArrayList<String> al = new ArrayList<String>();
+//		al.add(id);
+//		selectionModel.setSelected(al, true);
+	}
+	
 	/**
 	 * Display the cruise data column specifications page for a cruise
 	 * with the latest cruise data column specifications from the server.
@@ -289,6 +390,8 @@ public class DataColumnSpecsPage extends CompositeWithUsername {
 					singleton.knownUserTypes.clear();
 					if ( cruiseSpecs.getAllKnownTypes() != null )
 						singleton.knownUserTypes.addAll(cruiseSpecs.getAllKnownTypes());
+					singleton.updateDatasetMessages(cruiseSpecs.getMsgList());
+					singleton.updateDatasetMessages(cruiseSpecs.getDatasetData());
 					singleton.updateDatasetColumnSpecs(cruiseSpecs.getDatasetData());
 					History.newItem(PagesEnum.IDENTIFY_COLUMNS.name(), false);
 				}
@@ -318,6 +421,38 @@ public class DataColumnSpecsPage extends CompositeWithUsername {
 		else {
 			UploadDashboard.updateCurrentPage(singleton);
 		}
+	}
+
+	static void redisplayPage(String username, Integer rowNumber, Integer columnNumber) {
+		if ( (username == null) || username.isEmpty() || 
+			 (singleton == null) || ! singleton.getUsername().equals(username) ) {
+			DatasetListPage.showPage();
+		}
+		else {
+			UploadDashboard.updateCurrentPage(singleton);
+			singleton.setView(rowNumber, columnNumber);
+		}
+	}
+	
+	void setView(Integer rowNumber, Integer columnNumber) {
+		int showColumnIdx = columnNumber == null || columnNumber.equals(DashboardUtils.INT_MISSING_VALUE) ? 
+								0 : columnNumber.intValue()-1;
+		int showRowIdx = rowNumber == null || rowNumber.equals(DashboardUtils.INT_MISSING_VALUE) ? 
+								0 : rowNumber.intValue()-1;
+		int pageSize = gridPager.getPageSize();
+		int showPage = showRowIdx / pageSize;
+		int pageRow = showRowIdx % pageSize;
+		int cPage = gridPager.getPage();
+		if ( cPage != showPage ) {
+			scrollToRow = new Integer(pageRow);
+			scrollToCol = new Integer(showColumnIdx);
+			gridPager.setPage(showPage);
+		}
+		
+//			int dgHeight = singleton.dataGrid.getOffsetHeight();
+//			int vpos = singleton.dgScroll.getVerticalScrollPosition();
+//			int hpos = singleton.dgScroll.getHorizontalScrollPosition();
+//			Window.alert("h:"+dgHeight+", v:"+vpos+", h:"+hpos);
 	}
 
 	/**
@@ -412,14 +547,14 @@ public class DataColumnSpecsPage extends CompositeWithUsername {
 					cruise.getDataColTypes().size());
 		int minTableWidth = 2;
 		// First column is the dashboard-generated sample number (no header)
-		ArrayListTextColumn rowNumColumn = new ArrayListTextColumn(0);
+		ArrayListTextColumn rowNumColumn = new ArrayListTextColumn(0, cruise, rowMsgMap);
 		dataGrid.addColumn(rowNumColumn);
 		dataGrid.setColumnWidth(rowNumColumn, UploadDashboard.NARROW_COLUMN_WIDTH, Style.Unit.EM);
 		minTableWidth += UploadDashboard.NARROW_COLUMN_WIDTH;
 		// Rest of the columns are actual data columns
 		for (k = 0; k < cruise.getDataColTypes().size(); k++) {
 			// TextColumn for displaying the data strings for this column
-			ArrayListTextColumn dataColumn = new ArrayListTextColumn(k+1);
+			ArrayListTextColumn dataColumn = new ArrayListTextColumn(k+1, cruise, rowMsgMap);
 			// DatasetDataColumn for creating the Header cell for this column
 			DatasetDataColumn cruiseColumn = new DatasetDataColumn(knownUserTypes, cruise, k);
 			// Maintain a reference to the DatasetDataColumn object
@@ -451,6 +586,33 @@ public class DataColumnSpecsPage extends CompositeWithUsername {
 		// Set the number of data rows to display in the grid.
 		// This will refresh the view.
 		dataGrid.setPageSize(DashboardUtils.MAX_ROWS_PER_GRID_PAGE);
+	}
+
+	private void updateDatasetMessages(DashboardDatasetData cruiseSpecs) {
+		for ( QCFlag flag : cruiseSpecs.getUserFlags()) {
+			Integer rowIdx = flag.getRowIndex();
+			if ( DashboardUtils.INT_MISSING_VALUE.equals(rowIdx)) { continue; }
+			ADCMessage m = new ADCMessage();
+			m.setSeverity(flag.getSeverity());
+			m.setColIndex(flag.getColumnIndex());
+			m.setRowIndex(rowIdx);
+			String msg = "User QC Flag set for row " + (rowIdx.intValue()+1);
+			Integer colIdx = flag.getColumnIndex();
+			if ( ! DashboardUtils.INT_MISSING_VALUE.equals(colIdx)) { 
+				msg += " on column " + (colIdx.intValue()+1);
+			}
+			m.setDetailedComment(msg);
+			rowMsgMap.put(rowIdx, m);
+		}
+	}
+	protected void updateDatasetMessages(ADCMessageList msgList) {
+		rowMsgMap.clear();
+		datasetMessages = msgList;
+		if ( datasetMessages != null ) {
+			for (ADCMessage msg : datasetMessages) {
+				rowMsgMap.put(msg.getRowIndex(), msg);
+			}
+		}
 	}
 
 	@UiHandler("logoutButton")
@@ -870,85 +1032,101 @@ public class DataColumnSpecsPage extends CompositeWithUsername {
 		
 	}
 
-	/**
-	 * TextColumn for displaying the value at a given index 
-	 * of an ArrayList of Strings 
-	 */
-	private class ArrayListTextColumn extends TextColumn<ArrayList<String>> {
-		private int colNum;
-		/**
-		 * Creates a TextColumn for an ArrayList of Strings that 
-		 * displays the value at the given index in the ArrayList.
-		 * @param colNum
-		 * 		display data at this index of the ArrayList
-		 */
-		ArrayListTextColumn(int colNum) {
-			super();
-			this.colNum = colNum;
-		}
-		@Override
-		public String getValue(ArrayList<String> dataRow) {
-			if ( (dataRow != null) && (0 <= colNum) && (colNum < dataRow.size()) )
-				return dataRow.get(colNum);
-			return "";
-		}
-		@Override
-		public void render(Cell.Context ctx, ArrayList<String> obj, SafeHtmlBuilder sb) {
-			if ( colNum == 0 ) {
-				sb.appendHtmlConstant("<div style=\"color:" + 
-						UploadDashboard.ROW_NUMBER_COLOR + ";text-align:right\">");
-				sb.appendEscaped(getValue(obj));
-				sb.appendHtmlConstant("</div>");
-				return;
-			}
-			TreeSet<QCFlag> checkerFlags = cruise.getCheckerFlags();
-			Integer rowIdx = ctx.getIndex();
-			QCFlag woceCell = new QCFlag(null, null, Severity.ERROR, colNum-1, rowIdx);
-			QCFlag woceRow = new QCFlag(null, null, Severity.ERROR, null, rowIdx);
-			QCFlag woceCol = new QCFlag(null, null, Severity.ERROR, colNum-1, null);
-			if ( checkerFlags.contains(woceCell) || 
-				 checkerFlags.contains(woceRow) || 
-				 checkerFlags.contains(woceCol) ) {
-				sb.appendHtmlConstant("<div style=\"background-color:" + 
-						UploadDashboard.CHECKER_ERROR_COLOR + ";font-weight:bold;\">");
-				sb.appendEscaped(getValue(obj));
-				sb.appendHtmlConstant("</div>");
-				return;
-			}
-			TreeSet<QCFlag> userFlags = cruise.getUserFlags();
-			if ( userFlags.contains(woceCell) || 
-				 userFlags.contains(woceRow) || 
-				 userFlags.contains(woceCol) ) {
-				sb.appendHtmlConstant("<div style=\"background-color:" + 
-						UploadDashboard.USER_ERROR_COLOR + ";\">");
-				sb.appendEscaped(getValue(obj));
-				sb.appendHtmlConstant("</div>");
-				return;
-			}
-			woceCell.setSeverity(Severity.WARNING);
-			woceRow.setSeverity(Severity.WARNING);
-			woceCol.setSeverity(Severity.WARNING);
-			if ( checkerFlags.contains(woceCell) || 
-				 checkerFlags.contains(woceRow) || 
-				 checkerFlags.contains(woceCol) ) {
-				sb.appendHtmlConstant("<div style=\"background-color:" + 
-						UploadDashboard.CHECKER_WARNING_COLOR + ";font-weight:bold;\">");
-				sb.appendEscaped(getValue(obj));
-				sb.appendHtmlConstant("</div>");
-				return;
-			}
-			if ( userFlags.contains(woceCell) || 
-				 userFlags.contains(woceRow) || 
-				 userFlags.contains(woceCol) ) {
-				sb.appendHtmlConstant("<div style=\"background-color:" + 
-						UploadDashboard.USER_WARNING_COLOR + ";\">");
-				sb.appendEscaped(getValue(obj));
-				sb.appendHtmlConstant("</div>");
-				return;
-			}
-			// Render normally
-			super.render(ctx, obj, sb);
-		}
-	}
+//	/**
+//	 * TextColumn for displaying the value at a given index 
+//	 * of an ArrayList of Strings 
+//	 */
+//	private class ArrayListTextColumn extends TextColumn<ArrayList<String>> {
+//		private int colNum;
+//		/**
+//		 * Creates a TextColumn for an ArrayList of Strings that 
+//		 * displays the value at the given index in the ArrayList.
+//		 * @param colNum
+//		 * 		display data at this index of the ArrayList
+//		 */
+//		ArrayListTextColumn(int colNum) {
+//			super();
+//			this.colNum = colNum;
+//		}
+//		@Override
+//		public String getValue(ArrayList<String> dataRow) {
+//			if ( (dataRow != null) && (0 <= colNum) && (colNum < dataRow.size()) )
+//				return dataRow.get(colNum);
+//			return "";
+//		}
+//		private void closeTitle(SafeHtmlBuilder sb) {
+//			sb.appendHtmlConstant("</div>");
+//		}
+//		@Override
+//		public void render(Cell.Context ctx, ArrayList<String> obj, SafeHtmlBuilder sb) {
+//			Integer rowIdx = ctx.getIndex();
+//			ADCMessage msg = rowMsgMap.get(rowIdx);
+//			boolean addedTitle = false;
+//			if ( msg != null ) {
+//				sb.appendHtmlConstant("<div title=\"" + msg.getDetailedComment() + "\">");
+//				addedTitle = true;
+//			}
+//			if ( colNum == 0 ) {
+//				sb.appendHtmlConstant("<div style=\"color:" + 
+//						UploadDashboard.ROW_NUMBER_COLOR + ";text-align:right\">");
+//				sb.appendEscaped(getValue(obj));
+//				sb.appendHtmlConstant("</div>");
+//				if ( addedTitle ) closeTitle(sb);
+//				return;
+//			}
+//			TreeSet<QCFlag> checkerFlags = cruise.getCheckerFlags();
+//			QCFlag woceCell = new QCFlag(null, null, Severity.ERROR, colNum-1, rowIdx);
+//			QCFlag woceRow = new QCFlag(null, null, Severity.ERROR, null, rowIdx);
+//			QCFlag woceCol = new QCFlag(null, null, Severity.ERROR, colNum-1, null);
+//			if ( checkerFlags.contains(woceCell) || 
+//				 checkerFlags.contains(woceRow) || 
+//				 checkerFlags.contains(woceCol) ) {
+//				sb.appendHtmlConstant("<div style=\"background-color:" + 
+//						UploadDashboard.CHECKER_ERROR_COLOR + ";font-weight:bold;\">");
+//				sb.appendEscaped(getValue(obj));
+//				sb.appendHtmlConstant("</div>");
+//				if ( addedTitle ) closeTitle(sb);
+//				return;
+//			}
+//			TreeSet<QCFlag> userFlags = cruise.getUserFlags();
+//			if ( userFlags.contains(woceCell) || 
+//				 userFlags.contains(woceRow) || 
+//				 userFlags.contains(woceCol) ) {
+//				sb.appendHtmlConstant("<div style=\"background-color:" + 
+//						UploadDashboard.USER_ERROR_COLOR + ";\">");
+//				sb.appendEscaped(getValue(obj));
+//				sb.appendHtmlConstant("</div>");
+//				if ( addedTitle ) closeTitle(sb);
+//				return;
+//			}
+//			woceCell.setSeverity(Severity.WARNING);
+//			woceRow.setSeverity(Severity.WARNING);
+//			woceCol.setSeverity(Severity.WARNING);
+//			if ( checkerFlags.contains(woceCell) || 
+//				 checkerFlags.contains(woceRow) || 
+//				 checkerFlags.contains(woceCol) ) {
+//				sb.appendHtmlConstant("<div style=\"background-color:" + 
+//						UploadDashboard.CHECKER_WARNING_COLOR + ";font-weight:bold;\">");
+//				sb.appendEscaped(getValue(obj));
+//				sb.appendHtmlConstant("</div>");
+//				if ( addedTitle ) closeTitle(sb);
+//				return;
+//			}
+//			if ( userFlags.contains(woceCell) || 
+//				 userFlags.contains(woceRow) || 
+//				 userFlags.contains(woceCol) ) {
+//				sb.appendHtmlConstant("<div style=\"background-color:" + 
+//						UploadDashboard.USER_WARNING_COLOR + ";\">");
+//				sb.appendEscaped(getValue(obj));
+//				sb.appendHtmlConstant("</div>");
+//				if ( addedTitle ) closeTitle(sb);
+//				return;
+//			}
+//			// Render normally
+//			super.render(ctx, obj, sb);
+//			// Shouldn't happen, but ...
+//			if ( addedTitle ) closeTitle(sb);
+//		}
+//	}
 
 }

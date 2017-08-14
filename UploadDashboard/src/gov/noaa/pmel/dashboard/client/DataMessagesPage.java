@@ -8,6 +8,8 @@ import java.util.List;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.Style;
 import com.google.gwt.event.dom.client.ClickEvent;
+import com.google.gwt.event.dom.client.DoubleClickEvent;
+import com.google.gwt.event.dom.client.DoubleClickHandler;
 import com.google.gwt.i18n.client.NumberFormat;
 import com.google.gwt.safehtml.shared.SafeHtmlUtils;
 import com.google.gwt.uibinder.client.UiBinder;
@@ -26,6 +28,7 @@ import com.google.gwt.user.client.ui.InlineLabel;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.gwt.view.client.ListDataProvider;
+import com.google.gwt.view.client.SingleSelectionModel;
 
 import gov.noaa.pmel.dashboard.client.UploadDashboard.PagesEnum;
 import gov.noaa.pmel.dashboard.shared.ADCMessage;
@@ -79,11 +82,16 @@ public class DataMessagesPage extends CompositeWithUsername {
 	@UiField Button dismissButton;
 	@UiField SimplePager messagesPager;
 	
+	private SingleSelectionModel<ADCMessage> selectionModel;
+	
 	private ListDataProvider<ADCMessage> listProvider;
 
 	// The singleton instance of this page
 	private static DataMessagesPage singleton;
 
+//	private int selectedRow;
+//	private int selectedColumn;
+	
 	/**
 	 * Creates an empty data messages page.  Do not call this 
 	 * constructor; instead use the showPage static method 
@@ -99,7 +107,25 @@ public class DataMessagesPage extends CompositeWithUsername {
 		buildMessageListTable();
 		dismissButton.setText(DISMISS_BUTTON_TEXT);
 
-		// Assign the pager controlling which rows of the the messages grid are shown
+//		messagesGrid.addCellPreviewHandler(new Handler<ADCMessage>() {
+//			@Override
+//			public void onCellPreview(CellPreviewEvent<ADCMessage> event) {
+//				String eType = event.getNativeEvent().getType();
+//				if ( BrowserEvents.CLICK.equals(eType)) {
+//					selectedRow = event.getIndex();
+//					selectedColumn = event.getColumn();
+//				}
+//			}
+//		});
+		selectionModel = new SingleSelectionModel<>();
+		messagesGrid.setSelectionModel(selectionModel);
+		messagesGrid.addDomHandler(new DoubleClickHandler() {
+				@Override
+				public void onDoubleClick(DoubleClickEvent event) {
+					showErrorData(event);
+				}
+			}, DoubleClickEvent.getType());
+		
 		messagesPager.setDisplay(messagesGrid);
 	}
 
@@ -156,6 +182,14 @@ public class DataMessagesPage extends CompositeWithUsername {
 	@UiHandler("dismissButton")
 	void dismissOnClick(ClickEvent event) {
 		DataColumnSpecsPage.redisplayPage(getUsername());
+	}
+	
+	void showErrorData(DoubleClickEvent event) {
+		ADCMessage m = selectionModel.getSelectedObject();
+		Integer errorRow = m.getRowNumber();
+		Integer errorColumn = m.getColNumber();
+		DataColumnSpecsPage.redisplayPage(getUsername(), errorRow, errorColumn);
+		
 	}
 
 	/**

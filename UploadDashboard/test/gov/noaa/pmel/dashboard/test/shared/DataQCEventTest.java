@@ -39,7 +39,7 @@ public class DataQCEventTest {
 	static {
 		MY_LOCATIONS = new ArrayList<DataLocation>(2);
 		DataLocation loc = new DataLocation();
-		loc.setRowNumber(345);
+		loc.setRowIndex(345);
 		loc.setDataDate(new Date(3458139048000L));
 		loc.setLongitude(-179.5);
 		loc.setLatitude(3.5);
@@ -47,7 +47,7 @@ public class DataQCEventTest {
 		loc.setDataValue(1105.450);
 		MY_LOCATIONS.add(loc);
 		loc = new DataLocation();
-		loc.setRowNumber(346);
+		loc.setRowIndex(346);
 		loc.setDataDate(new Date(3458139203000L));
 		loc.setLongitude(-179.6);
 		loc.setLatitude(3.4);
