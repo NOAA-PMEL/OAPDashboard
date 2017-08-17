@@ -227,7 +227,7 @@ body {
 
 .plotspanel {
 	display: block;
-	width: 100em;
+	width: 98%;
 	height: 710px;
 	margin-top: 1em;
 	margin-bottom: 1em;
@@ -237,7 +237,8 @@ body {
 }
 .plotsimage {
 	display: inline;
-	margin: 0em;
+	margin: 3px 5px;
+	width: 32%;
 }
 
 .previewbutton {
@@ -255,7 +256,9 @@ body {
 	padding-bottom: 0em;
 }
 .previewscrollpanel {
-	height: 25em;
+	height: 720px;
+	width: 98%;
+	/* height: 25em; */
 }
 .previewhtml {
 	padding: 0.25em;

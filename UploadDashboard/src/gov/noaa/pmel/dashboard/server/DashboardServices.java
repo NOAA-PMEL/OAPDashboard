@@ -7,6 +7,7 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 import java.util.TreeSet;
 
@@ -33,6 +34,7 @@ import gov.noaa.pmel.dashboard.shared.DashboardMetadata;
 import gov.noaa.pmel.dashboard.shared.DashboardServicesInterface;
 import gov.noaa.pmel.dashboard.shared.DashboardUtils;
 import gov.noaa.pmel.dashboard.shared.DataColumnType;
+import gov.noaa.pmel.dashboard.shared.PreviewPlotResponse;
 import gov.noaa.pmel.dashboard.shared.ADCMessageList;
 import gov.noaa.pmel.dashboard.shared.TypesDatasetDataPair;
 
@@ -533,7 +535,7 @@ public class DashboardServices extends RemoteServiceServlet implements Dashboard
 	}
 
 	@Override
-	public boolean buildPreviewImages(String pageUsername, String datasetId, 
+	public PreviewPlotResponse buildPreviewImages(String pageUsername, String datasetId, 
 			String timetag, boolean firstCall) throws IllegalArgumentException {
 		// Get the dashboard data store and current username, and validate that username
 		if ( ! validateRequest(pageUsername) ) 
@@ -543,9 +545,11 @@ public class DashboardServices extends RemoteServiceServlet implements Dashboard
 		// TODO: refactor so starts this in a separate thread when firstCall is true and 
 		//       returns false, then when gets called again with firstCall is false for
 		//       a status update, returns false if still working and true if all plots are done
-		if ( firstCall )
+		if ( firstCall ) {
 			configStore.getPreviewPlotsHandler().createPreviewPlots(datasetId, timetag);
-		return true;
+		}
+		List<List<String>> plots = configStore.getPreviewPlotsHandler().getPreviewPlots(datasetId);
+		return new PreviewPlotResponse(plots, true);
 	}
 
 	@Override

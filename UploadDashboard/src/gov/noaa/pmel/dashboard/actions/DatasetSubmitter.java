@@ -126,9 +126,10 @@ public class DatasetSubmitter {
 					logger.debug("Generating the full-data DSG file for " + datasetId);
 					dsgHandler.saveDatasetDsg(dsgMData, standardized);
 
-					// Generate the decimated-data DSG file from the full-data DSG file
-					logger.debug("Generating the decimated-data DSG file for " + datasetId);
-					dsgHandler.decimateDatasetDsg(datasetId);
+// Apparently don't need to decimate these OA data.
+//					// Generate the decimated-data DSG file from the full-data DSG file
+//					logger.debug("Generating the decimated-data DSG file for " + datasetId);
+//					dsgHandler.decimateDatasetDsg(datasetId);
 				} catch (Exception ex) {
 					errorMsgs.add(datasetId + ": unacceptable; " + ex.getMessage());
 					continue;
@@ -171,7 +172,7 @@ public class DatasetSubmitter {
 				;
 			}
 		}
-		if (true) return;
+//		if (true) return;
 
 		// notify ERDDAP of new/updated dataset
 		if ( ! ingestIds.isEmpty() )

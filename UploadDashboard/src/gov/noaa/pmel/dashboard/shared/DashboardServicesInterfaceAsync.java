@@ -293,7 +293,7 @@ public interface DashboardServicesInterfaceAsync {
 	 * 		(true if done generating plots)
 	 */
 	void buildPreviewImages(String username, String datasetId, String timetag,
-			boolean firstCall, AsyncCallback<Boolean> callback);
+			boolean firstCall, AsyncCallback<PreviewPlotResponse> callback);
 
 	/**
 	 * Client-side interface for submitting datasets for QC.

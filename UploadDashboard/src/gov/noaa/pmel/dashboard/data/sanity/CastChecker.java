@@ -5,7 +5,6 @@ package gov.noaa.pmel.dashboard.data.sanity;
 
 import java.util.ArrayList;
 import java.util.Calendar;
-import java.util.Collection;
 import java.util.Comparator;
 import java.util.Date;
 import java.util.HashSet;
@@ -13,6 +12,9 @@ import java.util.List;
 import java.util.Set;
 import java.util.TimeZone;
 import java.util.TreeSet;
+
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import gov.noaa.pmel.dashboard.datatype.CastSet;
 import gov.noaa.pmel.dashboard.dsg.StdUserDataArray;
@@ -27,6 +29,8 @@ import gov.noaa.pmel.dashboard.shared.QCFlag.Severity;
  */
 public class CastChecker {
 
+	private static Logger logger = LogManager.getLogger(CastChecker.class.getName());
+	
 	private static final double ABS_MAX_SPEED_knots = 20; // knots
 	private static final double MAX_REASONABLE_SPEED_knots = 15; // knots
 	private static final double MAX_REASONABLE_TIME_BETWEEN_CASTS_h = 7 * 24; // 1 week
@@ -38,9 +42,9 @@ public class CastChecker {
 	public CastChecker(StdUserDataArray dataset) {
 		_dataset = dataset;
 		_casts = CastSet.extractCastSetsFrom(_dataset);
-		System.out.println("casts:" + _casts);
+		logger.debug("unordered casts:" + _casts);
 		_casts = orderCasts(_casts);
-		System.out.println("casts:" + _casts);
+		logger.debug("ordered casts:" + _casts);
 	}
 	
 	/**
@@ -58,7 +62,7 @@ public class CastChecker {
 		Double lastTime = null;
 		String lastId = null;
 		for (CastSet cast : _casts) {
-			System.out.println("Cast " + cast.id() + " time " + new Date((long)(cast.expectedTime()*1000)));
+			logger.debug("Cast " + cast.id() + " time " + new Date((long)(cast.expectedTime()*1000)));
 			if ( cast.indeces().size() == 1 ) {
 				singleCastWarning(cast);
 				continue;
@@ -115,23 +119,6 @@ public class CastChecker {
 		msg.setLongitude(rowLon);
 	}
 		
-//	private static void checkCastOrdering(List<CastSet>casts) {
-//		if ( casts.size() < 2 ) { return; }
-//		double lastT = casts.get(0).expectedTime();
-//		CastSet last = casts.get(1);
-//		double deltaT = last.expectedTime() - lastT;
-//		boolean asc = deltaT > 0;
-//		for (int i = 2; i < casts.size(); i++) {
-//			CastSet cur = casts.get(i);
-//			deltaT = cur.expectedTime() - last.expectedTime();
-//			if (( deltaT > 0 ) != asc ) {
-//				System.err.println("Inconsistent time ordering between casts " + last.id() + " and " + cur.id());
-//				asc = !asc;
-//			}
-//			last = cur;
-//		}
-//	}
-
 	private void checkTimeBetweenCasts(StdUserDataArray stda, CastSet cast, String lastId, Double lastTime) {
 		if ( lastTime == null || lastId == null ) {
 			return;
@@ -162,7 +149,7 @@ public class CastChecker {
 			stda.addStandardizationMessage(msg);
 		}
 		if ( deltaTh < 0 ) {
-			System.err.println("Apparent negative time of " + deltaTh + " hours between casts " + cast.id() + " and " + lastId + " at row " + (row.intValue()+1));
+			logger.info("Apparent negative time of " + deltaTh + " hours between casts " + cast.id() + " and " + lastId + " at row " + (row.intValue()+1));
 		}
 	}
 	
@@ -185,7 +172,7 @@ public class CastChecker {
 				stda.addStandardizationMessage(msg);
 			}
 			if ( deltaTh < 0 ) {
-				System.err.println("Negative time of " + deltaTh + " hours between samples of " + cast + " at row " + (row.intValue()+1));
+				logger.info("Negative time of " + deltaTh + " hours between samples of " + cast + " at row " + (row.intValue()+1));
 			}
 		}
 	}
@@ -202,7 +189,7 @@ public class CastChecker {
 		if ( thisLat == DashboardUtils.FP_MISSING_VALUE.doubleValue() || 
 			 thisLon == DashboardUtils.FP_MISSING_VALUE.doubleValue() ||
 			 thisTime == DashboardUtils.FP_MISSING_VALUE.doubleValue() ) {
-			System.err.println("Missing expected value for " + cast);
+			logger.warn("Missing expected value for " + cast);
 			// TODO: log Error msg
 			ADCMessage msg = new ADCMessage();
 			msg.setSeverity(Severity.ERROR);
@@ -217,7 +204,7 @@ public class CastChecker {
 				                                                     lastLat.doubleValue(), lastLon.doubleValue());
 		double deltaT_h = (thisTime - lastTime.doubleValue()) / 3600;
 		double knots = deltaDistance / Math.abs(deltaT_h);
-		System.out.println(String.format("  [%s] distance: %.2f nm, boat speed: %.2f", cast.id(), deltaDistance, knots));
+		logger.debug(String.format("  [%s] distance: %.2f nm, boat speed: %.2f", cast.id(), deltaDistance, knots));
 		if ( knots > MAX_REASONABLE_SPEED_knots ) {
 			ADCMessage msg = new ADCMessage();
 			msg.setRowIndex(row);
@@ -347,13 +334,13 @@ public class CastChecker {
 	private void checkCastDepths(StdUserDataArray stda, CastSet cs) {
 		List<Integer> castRows = cs.indeces();
 		if ( castRows.size() < 2 ) {
-			System.err.println("Cast of one. Not doing cast depth check.");
+			logger.info("Cast of one. Not doing cast depth check.");
 			return;
 		}
 		Double[] depths = stda.getSampleDepths();
 		Integer depthCol = stda.lookForDataColumnIndex("sample_depth");
 		if ( depthCol == null ) {
-			System.err.println("No sample depth column.  Aborting cast depth checking.");
+			logger.warn("No sample depth column.  Aborting cast depth checking.");
 			return;
 		}
 						 
@@ -379,18 +366,18 @@ public class CastChecker {
 	private void checkCastPressureDepth(StdUserDataArray stda, CastSet cs) {
 		List<Integer> castRows = cs.indeces();
 		if ( castRows.size() < 2 ) {
-			System.err.println("Cast of one. Not doing pressure-depth consistency check.");
+			logger.info("Cast of one. Not doing pressure-depth consistency check.");
 			return;
 		}
 		Integer pressureCol = stda.lookForDataColumnIndex("ctd_pressure");
 		if ( pressureCol == null ) {
-			System.err.println("No pressure column found. Not doing pressure-depth consistency check.");
+			logger.warn("No pressure column found. Not doing pressure-depth consistency check.");
 			return;
 		}
 		int pressureIdx = pressureCol.intValue();
 		Integer depthCol = stda.lookForDataColumnIndex("sample_depth");
 		if ( depthCol == null ) {
-			System.err.println("No depth column found. Not doing pressure-depth consistency check.");
+			logger.warn("No depth column found. Not doing pressure-depth consistency check.");
 			return;
 		}
 		Double[] depths = stda.getSampleDepths();
@@ -404,7 +391,7 @@ public class CastChecker {
 			int checkRow = castRows.get(check).intValue();
 			Double dPressure = (Double)stda.getStdVal(checkRow, pressureIdx);
 			if ( dPressure == null ) {
-				System.err.println("No pressure recorded at row " + checkRow);
+				logger.info("No pressure recorded at row " + checkRow);
 				continue;
 			}
 			double depth = depths[checkRow].doubleValue();

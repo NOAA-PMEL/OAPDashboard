@@ -280,8 +280,8 @@ public interface DashboardServicesInterface extends RemoteService {
 	 * 		if the dataset ID is invalid, or
 	 * 		if the images cannot be created (probably because of bad data)
 	 */
-	boolean buildPreviewImages(String username, String datasetId, String timetag,
-			boolean firstCall) throws IllegalArgumentException;
+	PreviewPlotResponse buildPreviewImages(String username, String datasetId, String timetag,
+											boolean firstCall) throws IllegalArgumentException;
 
 	/**
 	 * Submits datasets named in the given listing for QC.

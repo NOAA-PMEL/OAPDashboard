@@ -55,6 +55,13 @@ import gov.noaa.pmel.dashboard.shared.DashboardUtils;
  */
 public class DashboardConfigStore {
 
+	static class PropertyNotFoundException extends Exception {
+		private static final long serialVersionUID = -7623805430454642262L;
+		public PropertyNotFoundException() { super(); }
+		public PropertyNotFoundException(String message, Throwable cause) { super(message, cause); }
+		public PropertyNotFoundException(String message) { super(message); }
+	}
+		
 	private static final String ENCRYPTION_KEY_NAME_TAG = "EncryptionKey";
 	private static final String ENCRYPTION_SALT_NAME_TAG = "EncryptionSalt";
 	private static final String UPLOAD_VERSION_NAME_TAG = "UploadVersion";
@@ -166,17 +173,8 @@ public class DashboardConfigStore {
 	 * @throws IOException 
 	 * 		if unable to read the standard configuration file
 	 */
-	private DashboardConfigStore(boolean startMonitors) throws IOException {
-		String baseDir = System.getenv("CATALINA_BASE");
-		if ( baseDir == null ) {
-			baseDir = System.getProperty("CATALINA_BASE");
-		}
-		if ( baseDir == null ) {
-			throw new IOException("CATALINA_BASE environment variable is not defined");
-		} else {
-			System.out.println("CATALINA_BASE:"+ baseDir);
-		}
-		baseDir += File.separator;
+	private DashboardConfigStore(boolean startMonitors) throws Exception {
+		String baseDir = getBaseDir();
 
 		// First check is UPLOAD_DASHBOARD_SERVER_NAME is defined for alternate configurations 
 		// when running the dashboard.program.* applications
@@ -206,8 +204,6 @@ public class DashboardConfigStore {
 		if ( !appConfigDir.exists() || !appConfigDir.isDirectory() || !appConfigDir.canRead()) {
 			throw new IllegalStateException("Problem with app config dir: " + appConfigDir.getAbsoluteFile());
 		}
-		String previewDirname = baseDir + "webapps" + File.separator + serverAppName + File.separator + 
-				"preview" + File.separator;
 
 		// Configure the log4j2 logger
 		System.setProperty("log4j.configurationFile", appConfigDirPath + "log4j2.properties");
@@ -574,9 +570,11 @@ public class DashboardConfigStore {
 		// SanityChecker initialization from this same properties file 
 		datasetChecker = new DatasetChecker(knownUserDataTypes, checkerMsgHandler);
 
+		String previewDirname = getPreviewDirName(baseDir, serverAppName);
+
 		// The PreviewPlotsHandler uses the various handlers just created
-		plotsHandler = new PreviewPlotsHandler(previewDirname + "dsgfiles", 
-				previewDirname + "plots", this);
+		plotsHandler = new PreviewPlotsHandler(previewDirname + "/dsgfiles", 
+				previewDirname + "/plots", this);
 
 		// Create the OME XML to PDF generator
 		omePdfGenerator = new OmePdfGenerator(appConfigDir, 
@@ -627,6 +625,43 @@ public class DashboardConfigStore {
 		}
 	}
 
+	private String getPreviewDirName(String baseDir, String serverAppName) {
+		
+		String dirname = tryProperty("PREVIEW_DIR");
+		if ( dirname == null ) {
+			dirname = baseDir + "webapps" + File.separator + serverAppName + File.separator + "preview" + File.separator;
+		}
+		return dirname;
+	}
+
+	private String getBaseDir() throws PropertyNotFoundException {
+		String baseDir = tryProperty("OA_DOCUMENT_ROOT");
+		if ( baseDir == null ) {
+			baseDir = tryProperty("CATALINA_BASE");
+		}
+		if ( baseDir == null ) {
+			throw new PropertyNotFoundException("Document config root not found.");
+		}
+		if ( ! baseDir.endsWith(File.separator)) {
+			baseDir += File.separator;
+		}
+		return baseDir;
+	}
+	
+	private String tryProperty(String propName) { // throws PropertyNotFoundException {
+		String propVal = System.getenv(propName);
+		if ( propVal == null ) {
+			propVal = System.getProperty(propName);
+		}
+		if ( propVal == null ) {
+//			throw new PropertyNotFoundException(propName + " environment variable is not defined");
+			System.err.println(propName + " not found");
+		} else {
+			System.out.println(propName+":"+ propVal);
+		}
+		return propVal;
+	}
+
 	private static String getFilePathProperty(Properties configProps, String propKey, File baseDir) throws IOException {
 		String fPath = configProps.getProperty(propKey);
 		if ( fPath == null ) {
@@ -674,7 +709,12 @@ public class DashboardConfigStore {
 				singleton = null;
 			}
 			if ( singleton == null ) {
-				singleton = new DashboardConfigStore(startMonitors);
+				try {
+					singleton = new DashboardConfigStore(startMonitors);
+				} catch (Exception ex) {
+					ex.printStackTrace();
+					throw new IOException(ex);
+				}
 			}
 		}
 		return singleton;

@@ -11,6 +11,10 @@ import java.util.Collection;
 import java.util.Date;
 import java.util.List;
 import java.util.TimeZone;
+
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
 import java.util.Map.Entry;
 
 import gov.noaa.pmel.dashboard.datatype.CastSet;
@@ -38,6 +42,8 @@ import ucar.nc2.NetcdfFileWriter.Version;
  */
 public class ProfileDsgFile extends DsgNcFile {
 
+	private static Logger logger = LogManager.getLogger("ProfileDsgFile");
+	
 	private static enum ElemCategory {
 		METADATA,
 		PROFILE,
@@ -164,7 +170,7 @@ public class ProfileDsgFile extends DsgNcFile {
 			DashDataType<?> dtype = entry.getKey();
 			Object value = entry.getValue();
 			varName = dtype.getVarName();
-			System.out.println("metadata var:"+varName + ": " + value);
+			logger.debug("metadata var:"+varName + ": " + value);
 			if ( DashboardUtils.isNullOrNull(value)) { continue; }
 			ncfile.addGroupAttribute(null, new Attribute(getAttributeNameFor(dtype), String.valueOf(value)));
 		}
@@ -194,10 +200,10 @@ public class ProfileDsgFile extends DsgNcFile {
 			DashDataType<?> dtype = entry.getKey();
 			Object value = entry.getValue();
 			String varName = dtype.getVarName();
-			System.out.println("metadata var:"+varName + ":" + value);
+			logger.debug("metadata var:"+varName + ":" + value);
 			if ( DashboardUtils.isEmptyNullOrNull(value)) { continue; }
 			Variable var = addVariableFor(ncfile, dtype, ElemCategory.METADATA);
-			System.out.println("Added metadata variable " + var);
+			logger.debug("Added metadata variable " + var);
 			if ( DashboardServerUtils.DATASET_ID.typeNameEquals(dtype) ) {
 				ncfile.addVariableAttribute(var, new Attribute("cf_role", "profile_id"));
 			}
@@ -264,16 +270,16 @@ public class ProfileDsgFile extends DsgNcFile {
 		Collection<DashDataType<?>> dsgVariableTypes = getDataVariablesToWriteToDsgFile();
 		for (DashDataType<?> dtype : dsgVariableTypes) {
 			if ( excludeType(dtype)) {
-				System.out.println("Skipping excluded column: " + dtype);
+				logger.debug("Skipping excluded column: " + dtype);
 				continue;
 			}
 			DashDataType<?> dataCol =  _stdUser.findDataColumn(dtype.getVarName());
 			if ( dataCol == null ) {
-				System.err.println("No data column found for type: " + dtype.getVarName());
+				logger.warn("No data column found for type: " + dtype.getVarName());
 				continue;
 			}
 			Variable var = addVariableFor(ncfile, dtype, ElemCategory.DATA);
-			System.out.println("Added data variable " + var);
+			logger.debug("Added data variable " + var);
 		}
 	}
 		
@@ -300,7 +306,7 @@ public class ProfileDsgFile extends DsgNcFile {
 		Collection<DashDataType<?>> dsgVariableTypes = getDataVariablesToWriteToDsgFile();
 		for (DashDataType<?> dtype : dsgVariableTypes) {
 			if ( excludeType(dtype)) {
-				System.out.println("Skipping excluded type: " + dtype);
+				logger.debug("Skipping excluded type: " + dtype);
 				continue;
 			}
 			String varName = dtype.getVarName();

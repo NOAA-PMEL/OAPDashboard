@@ -3,29 +3,37 @@
  */
 package gov.noaa.pmel.dashboard.client;
 
+import java.util.ArrayList;
 import java.util.Date;
+import java.util.List;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+
+//import org.apache.logging.log4j.Logger;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.i18n.client.TimeZone;
 import com.google.gwt.i18n.shared.DateTimeFormat;
 import com.google.gwt.safehtml.shared.SafeHtmlUtils;
-import com.google.gwt.safehtml.shared.UriUtils;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.uibinder.client.UiHandler;
 import com.google.gwt.user.client.History;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.google.gwt.user.client.ui.Button;
+import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.HTML;
 import com.google.gwt.user.client.ui.Image;
 import com.google.gwt.user.client.ui.InlineLabel;
+import com.google.gwt.user.client.ui.TabLayoutPanel;
 import com.google.gwt.user.client.ui.Widget;
 
 import gov.noaa.pmel.dashboard.client.UploadDashboard.PagesEnum;
 import gov.noaa.pmel.dashboard.shared.DashboardDatasetList;
 import gov.noaa.pmel.dashboard.shared.DashboardServicesInterface;
 import gov.noaa.pmel.dashboard.shared.DashboardServicesInterfaceAsync;
+import gov.noaa.pmel.dashboard.shared.PreviewPlotResponse;
 
 /**
  * Page showing various plots of cruise data.
@@ -35,6 +43,8 @@ import gov.noaa.pmel.dashboard.shared.DashboardServicesInterfaceAsync;
  * @author Karl Smith
  */
 public class DatasetPreviewPage extends CompositeWithUsername {
+	
+	Logger logger = Logger.getLogger("DatasetPreviewPage");
 
 	private static final String TITLE_TEXT = "Preview Dataset";
 	private static final String WELCOME_INTRO = "Logged in as ";
@@ -49,16 +59,18 @@ public class DatasetPreviewPage extends CompositeWithUsername {
 
 	private static final String PLOT_GENERATION_FAILURE_HTML = "<b>Problems generating the plot previews</b>";
 
-	private static final String LAT_VS_LON_TAB_TEXT = "lat vs lon";
-	private static final String LAT_LON_TAB_TEXT = "lat, lon";
-	private static final String SAMPLE_VS_TIME_TAB_TEXT = "sample num vs time";
+	private static final String TAB0_TEXT = "Overview";
+	private static final String TAB1_TEXT = "General";
+	private static final String TAB2_TEXT = "BioGeoChem";
+	private static final String TAB3_TEXT = "Nutrients +";
 
 	private static final String REFRESH_HELP_ADDENDUM = 
 			" -- if plots do not show after awhile, try pressing the '" + REFRESH_TEXT + "' button given below this image.";
 
-	private static final String LAT_VS_LON_ALT_TEXT = "latitude versus longitude";
-	private static final String LAT_LON_ALT_TEXT = "latitude, longitude versus time";
-	private static final String SAMPLE_VS_TIME_ALT_TEXT = "sample number (row number) versus time";
+	private static final String TAB0_ALT_TEXT = "Overview plots";
+	private static final String TAB1_ALT_TEXT = "latitude versus longitude";
+	private static final String TAB2_ALT_TEXT = "latitude, longitude versus time";
+	private static final String TAB3_ALT_TEXT = "sample number (row number) versus time";
 
 	public static final String LAT_VS_LON_IMAGE_NAME = "lat_vs_lon";
 	public static final String LAT_LON_IMAGE_NAME = "lat_lon";
@@ -79,18 +91,26 @@ public class DatasetPreviewPage extends CompositeWithUsername {
 	@UiField HTML introHtml;
 	@UiField Button refreshButton;
 	@UiField Button dismissButton;
+	
+//	@UiField ResizeLayoutPanel resizePanel;
+	@UiField TabLayoutPanel tabsPanel;
+	@UiField FlowPanel tab0Panel;
+	@UiField FlowPanel tab1Panel;
+	@UiField FlowPanel tab2Panel;
+	@UiField FlowPanel tab3Panel;
 
-	@UiField HTML latVsLonHtml;
-	@UiField HTML latLonHtml;
-	@UiField HTML sampleVsTimeHtml;
+	@UiField HTML tab0Html;
+	@UiField HTML tab1Html;
+	@UiField HTML tab2Html;
+	@UiField HTML tab3Html;
 
-	@UiField Image latVsLonImage;
-	@UiField Image latLonImage;
-	@UiField Image sampleVsTimeImage;
-
+	List<List<Image>> tabImages = new ArrayList<List<Image>>();
+	List<List<String>> availablePlots = new ArrayList<>();
+	List<FlowPanel> tabPanels = new ArrayList<FlowPanel>();
+	
 	String expocode;
 	String timetag;
-	AsyncCallback<Boolean> checkStatusCallback;
+	AsyncCallback<PreviewPlotResponse> checkStatusCallback;
 
 	// The singleton instance of this page
 	private static DatasetPreviewPage singleton;
@@ -102,15 +122,18 @@ public class DatasetPreviewPage extends CompositeWithUsername {
 		setUsername(null);
 		expocode = "";
 		// Callback when generating plots
-		checkStatusCallback = new AsyncCallback<Boolean>() {
+		checkStatusCallback = new AsyncCallback<PreviewPlotResponse>() {
 			@Override
-			public void onSuccess(Boolean isDone) {
+			public void onSuccess(PreviewPlotResponse plotResponse) {
+				logger.fine("Got response " + plotResponse);
+				boolean isDone = plotResponse.isFinished();
 				if ( UploadDashboard.isCurrentPage(singleton) ) {
 					if ( isDone ) {
 						UploadDashboard.showAutoCursor();
 					}
+					availablePlots = plotResponse.getPlotTabs();
 					// Refresh this page to get the new image(s)
-					singleton.resetImageUrls();
+					singleton.resetImageUrls(true);
 					if ( ! isDone ) {
 						// More images to be generated - inquire again
 						service.buildPreviewImages(getUsername(), singleton.expocode, 
@@ -120,9 +143,10 @@ public class DatasetPreviewPage extends CompositeWithUsername {
 			}
 			@Override
 			public void onFailure(Throwable ex) {
+				logger.log(Level.FINE, "Get Preview failure", ex);
 				if ( UploadDashboard.isCurrentPage(singleton) ) {
 					UploadDashboard.showAutoCursor();
-					singleton.resetImageUrls();
+					singleton.resetImageUrls(false);
 					UploadDashboard.showFailureMessage(PLOT_GENERATION_FAILURE_HTML, ex);
 				}
 			}
@@ -136,24 +160,31 @@ public class DatasetPreviewPage extends CompositeWithUsername {
 		dismissButton.setText(DISMISS_TEXT);
 
 		// Set the HTML for the tabs
-		latVsLonHtml.setHTML(LAT_VS_LON_TAB_TEXT);
-		latLonHtml.setHTML(LAT_LON_TAB_TEXT);
-		sampleVsTimeHtml.setHTML(SAMPLE_VS_TIME_TAB_TEXT);
+		tab0Html.setHTML(TAB0_TEXT);
+		tab1Html.setHTML(TAB1_TEXT);
+		tab2Html.setHTML(TAB2_TEXT);
+		tab3Html.setHTML(TAB3_TEXT);
 
 		// Set hover helps for the tabs
-		latVsLonHtml.setTitle(LAT_VS_LON_ALT_TEXT);
-		latLonHtml.setTitle(LAT_LON_ALT_TEXT);
-		sampleVsTimeHtml.setTitle(SAMPLE_VS_TIME_ALT_TEXT);
+		tab0Html.setTitle(TAB0_ALT_TEXT);
+		tab1Html.setTitle(TAB1_ALT_TEXT);
+		tab2Html.setTitle(TAB2_ALT_TEXT);
+		tab3Html.setTitle(TAB3_ALT_TEXT);
 
+		tabPanels.add(tab0Panel);
+		tabPanels.add(tab1Panel);
+		tabPanels.add(tab2Panel);
+		tabPanels.add(tab3Panel);
+		
 		// Set text alternative for the images
-		latVsLonImage.setAltText(LAT_VS_LON_ALT_TEXT + REFRESH_HELP_ADDENDUM);
-		latLonImage.setAltText(LAT_LON_ALT_TEXT + REFRESH_HELP_ADDENDUM);
-		sampleVsTimeImage.setAltText(SAMPLE_VS_TIME_ALT_TEXT + REFRESH_HELP_ADDENDUM);
+//		latVsLonImage.setAltText(TAB1_ALT_TEXT + REFRESH_HELP_ADDENDUM);
+//		latLonImage.setAltText(TAB2_ALT_TEXT + REFRESH_HELP_ADDENDUM);
+//		sampleVsTimeImage.setAltText(TAB3_ALT_TEXT + REFRESH_HELP_ADDENDUM);
 
 		// Set hover helps for the images
-		latVsLonImage.setTitle(LAT_VS_LON_ALT_TEXT);
-		latLonImage.setTitle(LAT_LON_ALT_TEXT);
-		sampleVsTimeImage.setTitle(SAMPLE_VS_TIME_ALT_TEXT);
+//		latVsLonImage.setTitle(TAB1_ALT_TEXT);
+//		latLonImage.setTitle(TAB2_ALT_TEXT);
+//		sampleVsTimeImage.setTitle(TAB3_ALT_TEXT);
 	}
 
 	/**
@@ -221,19 +252,58 @@ public class DatasetPreviewPage extends CompositeWithUsername {
 	private void resetImageUrls() {
 		String imagePrefix;
 		String imageSuffix;
-		if ( expocode.length() > 11 ) {
-			imagePrefix = "preview/plots/" + expocode.substring(0,4) + "/" + expocode + "_";
-			imageSuffix = "_" + timetag + ".gif";
+		// XXX This should really come from the server...
+		imagePrefix = "preview/plots/" + expocode.substring(0,4) + "/";
+		clearTabImages();
+		if ( availablePlots == null || availablePlots.isEmpty()) {
+			String url = "images/loadingCircleSpinner.gif";
+			Image img = new Image(url);
+			img.setStyleName("plotsimage");
+			List<Image> tab0Images = new ArrayList<>();
+			tab0Images.add(img);
+			tab0Panel.add(img);
+			tabImages.add(tab0Images);
+		} else {
+			int tab = 0;
+			Image img = null;
+			String noCache="?ts=" + System.currentTimeMillis();
+			for (List<String> tabImageFileNames : availablePlots) {
+				List<Image> tabXimages = new ArrayList<Image>(); // tabImages.get(tab);
+				tabImages.add(tabXimages);
+				FlowPanel tabPanel = tabPanels.get(tab);
+				for (String imageName : tabImageFileNames) {
+					String url = imagePrefix + imageName + noCache;
+					img = new Image(url);
+//					img.setPixelSize(imageSize, imageSize);
+					img.setStyleName("plotsimage");
+					tabPanel.add(img);
+					tabXimages.add(img);
+				}
+				tab += 1;
+				if ( img != null ) {
+					img.addStyleName("lastimage");
+				}
+			}
 		}
-		else {
-			imagePrefix = "preview/plots/invalid_";
-			imageSuffix = ".gif";
-		}
-		latVsLonImage.setUrl(UriUtils.fromString(imagePrefix + LAT_VS_LON_IMAGE_NAME + imageSuffix));
-		latLonImage.setUrl(UriUtils.fromString(imagePrefix + LAT_LON_IMAGE_NAME + imageSuffix));
-		sampleVsTimeImage.setUrl(UriUtils.fromString(imagePrefix + SAMPLE_VS_TIME_IMAGE_NAME + imageSuffix));
 	}
 
+	private void clearTabImages() {
+		if ( tabImages.isEmpty()) { return; }
+		for (int tab = 0; tab < tabImages.size(); tab++ ) {
+			List<Image> tabXimages = tabImages.get(tab);
+			FlowPanel tabPanel = tabPanels.get(tab);
+			for (Image img : tabXimages) {
+				tabPanel.remove(img);
+			}
+			tabXimages.clear();
+		}
+		tabImages.clear();
+	}
+
+	private void resetImageUrls(boolean successful) {
+		resetImageUrls();
+	}
+	
 	@UiHandler("refreshButton")
 	void refreshOnClick(ClickEvent event) {
 		// Reload the images by setting the URLs again
