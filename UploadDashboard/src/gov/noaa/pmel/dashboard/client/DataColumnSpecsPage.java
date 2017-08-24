@@ -942,18 +942,22 @@ public class DataColumnSpecsPage extends CompositeWithUsername {
 		// This update invokes the SanityChecker on the data and
 		// the results are then reported back to this page.
 		service.updateDataColumnSpecs(getUsername(), cruise, 
-				new AsyncCallback<DashboardDatasetData>() {
+				new AsyncCallback<TypesDatasetDataPair>() {
 			@Override
-			public void onSuccess(DashboardDatasetData specs) {
-				if ( specs == null ) {
-					UploadDashboard.showMessage(SUBMIT_FAIL_MSG + 
-							" (unexpected null cruise information returned)");
-					// Show the normal cursor
+			public void onSuccess(TypesDatasetDataPair tddp) {
+				if ( tddp == null ) {
+					UploadDashboard.showMessage(SUBMIT_FAIL_MSG + " (unexpected null cruise information returned)");
 					UploadDashboard.showAutoCursor();
 					return;
 				}
-				updateDatasetColumnSpecs(specs);
-				String status = specs.getDataCheckStatus();
+				DashboardDatasetData ddd = tddp.getDatasetData();
+				if ( ddd == null ) {
+					UploadDashboard.showMessage(SUBMIT_FAIL_MSG + " (unexpected null cruise information returned)");
+					UploadDashboard.showAutoCursor();
+					return;
+				}
+				updateDatasetColumnSpecs(ddd);
+				String status = ddd.getDataCheckStatus();
 				if ( status.equals(DashboardUtils.CHECK_STATUS_NOT_CHECKED) ||
 					 status.equals(DashboardUtils.CHECK_STATUS_UNACCEPTABLE) ) {
 					// the sanity checker had serious problems
@@ -971,6 +975,8 @@ public class DataColumnSpecsPage extends CompositeWithUsername {
 					// no problems
 					UploadDashboard.showMessage(SANITY_CHECK_SUCCESS_MSG);
 				}
+				updateDatasetMessages(tddp.getMsgList());
+				updateDatasetMessages(ddd);
 				// Show the normal cursor
 				UploadDashboard.showAutoCursor();
 			}

@@ -201,7 +201,7 @@ public interface DashboardServicesInterface extends RemoteService {
 	 * 		problems obtaining or evaluating the data for 
 	 * 		the dataset
 	 */
-	DashboardDatasetData updateDataColumnSpecs(String username, 
+	TypesDatasetDataPair updateDataColumnSpecs(String username, 
 			DashboardDataset newSpecs) throws IllegalArgumentException;
 
 	/**

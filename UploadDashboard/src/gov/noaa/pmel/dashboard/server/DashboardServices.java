@@ -390,17 +390,21 @@ public class DashboardServices extends RemoteServiceServlet implements Dashboard
 	}
 	
 	@Override
-	public DashboardDatasetData updateDataColumnSpecs(String pageUsername,
+	public TypesDatasetDataPair updateDataColumnSpecs(String pageUsername,
 			DashboardDataset newSpecs) throws IllegalArgumentException {
+		TypesDatasetDataPair tddp = new TypesDatasetDataPair();
+		
 		// Get the dashboard data store and current username, and validate that username
 		if ( ! validateRequest(pageUsername) ) 
 			throw new IllegalArgumentException("Invalid user request");
 
+		String datasetId = newSpecs.getDatasetId();
+		
 		// Retrieve all the current cruise data
 		DashboardDatasetData dataset = configStore.getDataFileHandler()
-						.getDatasetDataFromFiles(newSpecs.getDatasetId(), 0, -1);
+						.getDatasetDataFromFiles(datasetId, 0, -1);
 		if ( ! dataset.isEditable() )
-			throw new IllegalArgumentException(newSpecs.getDatasetId() + 
+			throw new IllegalArgumentException(datasetId + 
 					" has been submitted for QC; data column types cannot be modified.");
 
 		// Revise the data column types and units 
@@ -417,7 +421,7 @@ public class DashboardServices extends RemoteServiceServlet implements Dashboard
 		// Save and commit the updated data columns
 		configStore.getDataFileHandler().saveDatasetInfoToFile(dataset, 
 				"Data column types, units, and missing values for " + 
-				dataset.getDatasetId() + " updated by " + username);
+				datasetId + " updated by " + username);
 		// Update the user-specific data column names to types, units, and missing values 
 		configStore.getUserFileHandler().updateUserDataColumnTypes(dataset, username);
 		if ( ! username.equals(dataset.getOwner()) )
@@ -436,10 +440,17 @@ public class DashboardServices extends RemoteServiceServlet implements Dashboard
 		}
 
 		LogManager.getLogger("DashboardServices").info("data columns specs updated for " + 
-				dataset.getDatasetId() + " by " + username);
+				datasetId + " by " + username);
 		// Return the updated truncated cruise data for redisplay 
 		// in the DataColumnSpecsPage
-		return dataset;
+		tddp.setDatasetData(dataset);
+		
+		// So we can show the error message on the page.
+		ADCMessageList msgs = getDataMessages(pageUsername, datasetId);
+		if ( msgs != null ) {
+			tddp.setMsgList(msgs);
+		}
+		return tddp;
 	}
 
 	@Override

@@ -195,7 +195,7 @@ public interface DashboardServicesInterfaceAsync {
 	 * 		obtaining or evaluating the data for the dataset
 	 */
 	void updateDataColumnSpecs(String username, DashboardDataset newSpecs, 
-			AsyncCallback<DashboardDatasetData> callback);
+			AsyncCallback<TypesDatasetDataPair> callback);
 
 	/**
 	 * Saves the user's data column specifications for the given dataset 
