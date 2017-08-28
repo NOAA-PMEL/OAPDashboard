@@ -117,7 +117,7 @@ public class DataFileHandler extends VersionedFileHandler {
 	 * @throws IllegalArgumentException
 	 * 		if datasetId is not a valid dataset ID
 	 */
-	File datasetDataFile(String datasetId) throws IllegalArgumentException {
+	public File datasetDataFile(String datasetId) throws IllegalArgumentException {
 		// Check and standardize the dataset ID
 		String upperExpo = DashboardServerUtils.checkDatasetID(datasetId);
 		// Create the file with the full path name of the properties file

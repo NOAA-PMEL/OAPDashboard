@@ -1,0 +1,59 @@
+@CHARSET "UTF-8";
+
+/*
+	This file contains CSS styling that is applied at runtime
+	as opposed to at compile time.
+	Runtime styling needs to be available to the browser.
+*/
+
+.oa_cell {
+	border: none !important;
+}
+.oa_row {
+}
+.oa_row td {
+	border: 2px purple !important;
+}
+.oa_datagrid_normal_row {
+}
+.oa_datagrid_checker_warning_row {
+	background-color: #f7f6ad !important;
+}
+.oa_datagrid_checker_error_row {
+	background-color: #f7bebe !important;
+}
+.oa_datagrid_user_warning_row {
+	background-color: #f7f6c8 !important;
+}
+.oa_datagrid_user_error_row {
+	background-color: #fce8e8 !important;
+}
+.loadingimage {
+	display: inline;
+	padding: 3px 3px;
+	width: 20%;
+	vertical-align: top;
+}
+.plotsimage {
+	display: inline;
+	padding: 3px 3px;
+	width: 32%;
+	vertical-align: top;
+}
+.lastimage {
+	margin-bottom: 50px;
+	padding-bottom: 10px;
+}
+.popupPreviewImage {
+	height: 95%;
+}
+.popupDialogPanel {
+	border: 1px;
+}
+.full_width {
+	width: 100%;
+}
+.popupDialogButton {
+	/* float: right; */
+	margin: 1em !important;
+ }

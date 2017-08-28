@@ -1,15 +1,26 @@
 package gov.noaa.pmel.dashboard.client;
 
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
 import com.google.gwt.core.client.EntryPoint;
 import com.google.gwt.dom.client.Style;
+import com.google.gwt.event.dom.client.ClickEvent;
+import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.event.logical.shared.ValueChangeHandler;
 import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.safehtml.shared.SafeHtmlUtils;
 import com.google.gwt.user.client.History;
+import com.google.gwt.user.client.ui.Button;
+import com.google.gwt.user.client.ui.HTML;
 import com.google.gwt.user.client.ui.PopupPanel;
 import com.google.gwt.user.client.ui.RootLayoutPanel;
+import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.UIObject;
+import com.google.gwt.user.client.ui.VerticalPanel;
 
 public class UploadDashboard implements EntryPoint, ValueChangeHandler<String> {
 
@@ -98,6 +109,71 @@ public class UploadDashboard implements EntryPoint, ValueChangeHandler<String> {
 		singleton.msgPopup.showCentered();
 	}
 
+	private static Map<CompositeWithUsername, List<WindowBox>> pagePopups = new HashMap<>();
+	private static void addPagePopup(CompositeWithUsername page, WindowBox popup) {
+		if ( !pagePopups.containsKey(page)) {
+			pagePopups.put(page, new ArrayList<WindowBox>());
+		}
+		pagePopups.get(page).add(popup);
+	}
+	public static void closePreviews(CompositeWithUsername page) {
+		List<WindowBox> popups = pagePopups.get(page);
+		if ( popups == null ) { return; }
+		for(WindowBox popup : popups) {
+			if ( popup.isVisible()) {
+				popup.hide();
+			}
+		}
+		popups.clear();
+	}
+	public static void showPreviewImage(final CompositeWithUsername page, String imgName, String imgUrl) {
+		final WindowBox dd = new WindowBox(true,  true);
+		dd.setText(imgName);
+		HTML html = new HTML(buildImagePopupHtml(imgUrl));
+		VerticalPanel mainPanel = new VerticalPanel();
+		mainPanel.add(html);
+		mainPanel.addStyleName("popupDialogPanel");
+		SimplePanel buttonPanel = new SimplePanel();
+		Button dismissButton = new Button("DISMISS");
+		dismissButton.addStyleName("popupDialogButton");
+		dismissButton.addClickHandler(new ClickHandler() {
+			@Override
+			public void onClick(ClickEvent event) {
+				dd.hide();
+			}
+		});
+		buttonPanel.add(dismissButton);
+		buttonPanel.addStyleName("full_width");
+		mainPanel.add(buttonPanel);
+		dd.setWidget(mainPanel);
+		dd.addDomHandler(new ClickHandler() {
+			@Override
+			public void onClick(ClickEvent event) {
+				putThisOnTop(page, dd);
+			}
+
+		}, ClickEvent.getType());
+		addPagePopup(page, dd);
+		putThisOnTop(page, dd);
+		dd.center();
+	}
+
+	private static void putThisOnTop(CompositeWithUsername page, WindowBox dd) {
+		List<WindowBox>popups = pagePopups.get(page);
+		for (WindowBox popup : popups) {
+			Style pstyle = popup.getElement().getStyle();
+			if ( popup == dd ) {
+				pstyle.setZIndex(2);
+			} else {
+				pstyle.setZIndex(1);
+			}
+		}
+	}
+			
+	private static String buildImagePopupHtml(String iSrc) {
+		return "<img src=\""+iSrc+"\" class=\"popupPreviewImage\"/>";
+	}
+	
 	/**
 	 * Shows the message in a popup panel relative to the given UI obect. 
 	 * See {@link PopupPanel#showRelativeTo(UIObject)}. 

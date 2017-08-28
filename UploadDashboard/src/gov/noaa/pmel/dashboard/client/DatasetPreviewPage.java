@@ -13,6 +13,8 @@ import java.util.logging.Logger;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.event.dom.client.ClickEvent;
+import com.google.gwt.event.dom.client.DoubleClickEvent;
+import com.google.gwt.event.dom.client.DoubleClickHandler;
 import com.google.gwt.i18n.client.TimeZone;
 import com.google.gwt.i18n.shared.DateTimeFormat;
 import com.google.gwt.safehtml.shared.SafeHtmlUtils;
@@ -104,9 +106,9 @@ public class DatasetPreviewPage extends CompositeWithUsername {
 	@UiField HTML tab2Html;
 	@UiField HTML tab3Html;
 
-	List<List<Image>> tabImages = new ArrayList<List<Image>>();
-	List<List<String>> availablePlots = new ArrayList<>();
+	List<List<String>> availablePlots;
 	List<FlowPanel> tabPanels = new ArrayList<FlowPanel>();
+	List<List<Image>> tabImages = new ArrayList<List<Image>>();
 	
 	String expocode;
 	String timetag;
@@ -117,6 +119,10 @@ public class DatasetPreviewPage extends CompositeWithUsername {
 
 	public DatasetPreviewPage() {
 		initWidget(uiBinder.createAndBindUi(this));
+		
+//		logger.addHandler(new ConsoleLogHandler());
+//		logger.setLevel(Level.ALL);
+		
 		singleton = this;
 
 		setUsername(null);
@@ -239,12 +245,19 @@ public class DatasetPreviewPage extends CompositeWithUsername {
 			DateTimeFormat formatter = DateTimeFormat.getFormat("MMddHHmmss");
 			this.timetag = formatter.format(new Date(), TimeZone.createTimeZone(0));
 			service.buildPreviewImages(getUsername(), this.expocode, 
-					this.timetag, true, checkStatusCallback);
+										this.timetag, true, checkStatusCallback);
 //		}
 		// Set the URLs for the images.
 		resetImageUrls();
 	}
 
+//	private ClickHandler imageClicked = new ClickHandler() {
+//		@Override
+//		public void onClick(ClickEvent event) {
+//			String eventString = event.toDebugString();
+//			logger.log(Level.FINE, "Click:"+eventString);
+//		}
+//	};
 	/**
 	 * Assigns the URLs to the images.  
 	 * This triggers load events so the page should refresh when this is called.
@@ -258,11 +271,12 @@ public class DatasetPreviewPage extends CompositeWithUsername {
 		if ( availablePlots == null || availablePlots.isEmpty()) {
 			String url = "images/loadingCircleSpinner.gif";
 			Image img = new Image(url);
-			img.setStyleName("plotsimage");
+			img.setStyleName("loadingimage");
 			List<Image> tab0Images = new ArrayList<>();
 			tab0Images.add(img);
 			tab0Panel.add(img);
 			tabImages.add(tab0Images);
+			tabsPanel.selectTab(0);
 		} else {
 			int tab = 0;
 			Image img = null;
@@ -271,9 +285,22 @@ public class DatasetPreviewPage extends CompositeWithUsername {
 				List<Image> tabXimages = new ArrayList<Image>(); // tabImages.get(tab);
 				tabImages.add(tabXimages);
 				FlowPanel tabPanel = tabPanels.get(tab);
-				for (String imageName : tabImageFileNames) {
+				for (final String imageName : tabImageFileNames) {
 					String url = imagePrefix + imageName + noCache;
 					img = new Image(url);
+					img.addDomHandler(new DoubleClickHandler() {
+						@Override
+						public void onDoubleClick(DoubleClickEvent event) {
+							String eventString = "DblClick:"+event.toDebugString();
+							logger.log(Level.FINE, eventString);
+							Object oSource = event.getSource();
+							Image image = (Image)oSource;
+							String iSrc = image.getUrl();
+							UploadDashboard.showPreviewImage(singleton, imageName, iSrc);
+						}
+
+					}, DoubleClickEvent.getType());
+//					img.addClickHandler(imageClicked);
 //					img.setPixelSize(imageSize, imageSize);
 					img.setStyleName("plotsimage");
 					tabPanel.add(img);
@@ -317,7 +344,8 @@ public class DatasetPreviewPage extends CompositeWithUsername {
 
 	@UiHandler("dismissButton")
 	void cancelOnClick(ClickEvent event) {
-		// Change to the latest cruise listing page.
+		availablePlots = null;
+		UploadDashboard.closePreviews(this);
 		DatasetListPage.showPage();
 	}
 
