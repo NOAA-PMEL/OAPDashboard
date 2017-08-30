@@ -6,6 +6,9 @@ package gov.noaa.pmel.dashboard.shared;
 import java.io.Serializable;
 import java.util.Comparator;
 
+import javax.xml.bind.annotation.XmlAccessType;
+import javax.xml.bind.annotation.XmlAccessorType;
+
 import com.google.gwt.user.client.rpc.IsSerializable;
 
 /**
@@ -14,6 +17,7 @@ import com.google.gwt.user.client.rpc.IsSerializable;
  *  
  * @author Karl Smith
  */
+@XmlAccessorType(XmlAccessType.NONE)
 public class DashboardMetadata implements Serializable, IsSerializable {
 
 	private static final long serialVersionUID = 4800004152004279471L;
@@ -45,6 +49,10 @@ public class DashboardMetadata implements Serializable, IsSerializable {
 		conflicted = false;
 		version = DashboardUtils.STRING_MISSING_VALUE;
 		doi = DashboardUtils.STRING_MISSING_VALUE;
+	}
+
+	public DashboardMetadata(String datasetId) {
+		this.datasetId = datasetId;
 	}
 
 	/**
@@ -189,7 +197,7 @@ public class DashboardMetadata implements Serializable, IsSerializable {
 	 */
 	public boolean isConflicted() {
 //		return conflicted;
-		return false;
+		return false; // XXX
 	}
 
 	/**

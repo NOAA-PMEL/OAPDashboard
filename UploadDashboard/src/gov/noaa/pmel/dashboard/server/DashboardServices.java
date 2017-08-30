@@ -22,6 +22,7 @@ import com.google.gwt.user.server.rpc.RemoteServiceServlet;
 
 import gov.noaa.pmel.dashboard.actions.DatasetChecker;
 import gov.noaa.pmel.dashboard.actions.DatasetModifier;
+import gov.noaa.pmel.dashboard.actions.OADSMetadata;
 import gov.noaa.pmel.dashboard.datatype.DashDataType;
 import gov.noaa.pmel.dashboard.datatype.KnownDataTypes;
 import gov.noaa.pmel.dashboard.dsg.StdUserDataArray;
@@ -33,6 +34,7 @@ import gov.noaa.pmel.dashboard.shared.DashboardDataset;
 import gov.noaa.pmel.dashboard.shared.DashboardDatasetData;
 import gov.noaa.pmel.dashboard.shared.DashboardDatasetList;
 import gov.noaa.pmel.dashboard.shared.DashboardMetadata;
+import gov.noaa.pmel.dashboard.shared.DashboardOADSMetadata;
 import gov.noaa.pmel.dashboard.shared.DashboardServicesInterface;
 import gov.noaa.pmel.dashboard.shared.DashboardUtils;
 import gov.noaa.pmel.dashboard.shared.DataColumnType;
@@ -428,6 +430,10 @@ public class DashboardServices extends RemoteServiceServlet implements Dashboard
 				datasetId + " updated by " + username);
 		// Update the user-specific data column names to types, units, and missing values 
 		configStore.getUserFileHandler().updateUserDataColumnTypes(dataset, username);
+		DashboardOADSMetadata mdata = OADSMetadata.extractOADSMetadata(stdArray);
+		configStore.getMetadataFileHandler().saveAsOadsXmlDoc(mdata, "Initial Auto-extraction");
+		
+		// ??? Is this possible at this point for a user to be editing another user's dataset ?
 		if ( ! username.equals(dataset.getOwner()) )
 			configStore.getUserFileHandler().updateUserDataColumnTypes(dataset, dataset.getOwner());
 		

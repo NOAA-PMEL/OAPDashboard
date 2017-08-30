@@ -25,10 +25,12 @@ import org.jdom2.output.Format;
 import org.jdom2.output.XMLOutputter;
 import org.tmatesoft.svn.core.SVNException;
 
+import gov.noaa.pmel.dashboard.actions.OADSMetadata;
 import gov.noaa.pmel.dashboard.server.DashboardConfigStore;
 import gov.noaa.pmel.dashboard.server.DashboardOmeMetadata;
 import gov.noaa.pmel.dashboard.server.DashboardServerUtils;
 import gov.noaa.pmel.dashboard.shared.DashboardMetadata;
+import gov.noaa.pmel.dashboard.shared.DashboardOADSMetadata;
 import gov.noaa.pmel.dashboard.shared.DashboardUtils;
 
 /**
@@ -786,6 +788,37 @@ public class MetadataFileHandler extends VersionedFileHandler {
 
 		// Generate the OME XML document
 		Document omeDoc = mdata.createOmeXmlDoc();
+
+		// Save the XML document to the metadata document file
+		try {
+			FileOutputStream out = new FileOutputStream(mdataFile);
+			try {
+				(new XMLOutputter(Format.getPrettyFormat())).output(omeDoc, out);
+			} finally {
+				out.close();
+			}
+		} catch (IOException ex) {
+			throw new IllegalArgumentException(
+					"Problems writing the OME metadata document: " + ex.getMessage());
+		}
+
+		if ( (message == null) || message.trim().isEmpty() )
+			return;
+
+		// Submit the updated information file to version control
+		try {
+			commitVersion(mdataFile, message);
+		} catch ( Exception ex ) {
+			throw new IllegalArgumentException("Problems committing updated OME metadata information " + 
+					mdataFile.getPath() + ":\n    " + ex.getMessage());
+		}
+	}
+
+	public void saveAsOadsXmlDoc(DashboardOADSMetadata mdata, String message) {
+		File mdataFile = getMetadataFile(mdata.getDatasetId(), mdata.getFilename());
+
+		// Generate the OME XML document
+		Document omeDoc = OADSMetadata.createOadsMetadataDoc(mdata);
 
 		// Save the XML document to the metadata document file
 		try {

@@ -74,7 +74,8 @@ public class DataColumnSpecsPage extends CompositeWithUsername {
 	private static final String DISABLED_SUBMIT_HOVER_HELP = 
 			"This cruise has been submitted for QC.  Data column types cannot be modified.";
 
-	private static final String CANCEL_TEXT = "Done";
+	private static final String CANCEL_TEXT = "Cancel";
+	private static final String DONE_TEXT = "Done";
 	private static final String SAVE_BUTTON_TEXT = "Save";
 	private static final String SAVE_BUTTON_HOVER_HELP = "Save column data type definitions";
 
@@ -181,7 +182,7 @@ public class DataColumnSpecsPage extends CompositeWithUsername {
 	@UiField SimplePager gridPager;
 	@UiField Button messagesButton;
 	@UiField Button submitButton;
-	@UiField Button cancelButton;
+	@UiField Button doneButton;
 	@UiField Button saveButton;
 	
 	private SingleSelectionModel<ArrayList<String>> selectionModel;
@@ -234,7 +235,7 @@ public class DataColumnSpecsPage extends CompositeWithUsername {
 		messagesButton.setText(MESSAGES_TEXT);
 		pagerLabel.setText(PAGER_LABEL_TEXT);
 		submitButton.setText(SUBMIT_TEXT);
-		cancelButton.setText(CANCEL_TEXT);
+		doneButton.setText(DONE_TEXT);
 		saveButton.setText(SAVE_BUTTON_TEXT);
 
 		knownUserTypes = new ArrayList<DataColumnType>();
@@ -403,8 +404,13 @@ public class DataColumnSpecsPage extends CompositeWithUsername {
 			}
 			@Override
 			public void onFailure(Throwable ex) {
-				UploadDashboard.showFailureMessage(GET_COLUMN_SPECS_FAIL_MSG, ex);
-				UploadDashboard.showAutoCursor();
+				String exMsg = ex.getMessage();
+				if ( exMsg.indexOf("SESSION HAS EXPIRED") >= 0 ) {
+					UploadDashboard.showMessage("Your session has expired.<br/><br/>Please log in again.");
+				} else {
+					UploadDashboard.showFailureMessage(GET_COLUMN_SPECS_FAIL_MSG, ex);
+					UploadDashboard.showAutoCursor();
+				}
 			}
 		});
 	}
@@ -638,8 +644,8 @@ public class DataColumnSpecsPage extends CompositeWithUsername {
 		}
 	}
 
-	@UiHandler("cancelButton")
-	void cancelOnClick(ClickEvent event) {
+	@UiHandler("doneButton")
+	void doneOnClick(ClickEvent event) {
 		// Check if any changes have been made
 		boolean hasChanged = false;
 		for ( DatasetDataColumn dataCol : cruiseDataCols ) {

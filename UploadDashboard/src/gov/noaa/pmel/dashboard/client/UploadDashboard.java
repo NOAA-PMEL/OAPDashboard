@@ -36,7 +36,7 @@ public class UploadDashboard implements EntryPoint, ValueChangeHandler<String> {
 		IDENTIFY_COLUMNS,
 		/** History tag for DataMessagesPage */
 		SHOW_DATA_MESSAGES,
-		/** History tag for OmeManagerPage */
+		/** History tag for MetadataManagerPage */
 		EDIT_METADATA,
 		/** History tag for AddlDocsManagerPage */
 		MANAGE_DOCUMENTS,
@@ -133,7 +133,6 @@ public class UploadDashboard implements EntryPoint, ValueChangeHandler<String> {
 		VerticalPanel mainPanel = new VerticalPanel();
 		mainPanel.add(html);
 		mainPanel.addStyleName("popupDialogPanel");
-		SimplePanel buttonPanel = new SimplePanel();
 		Button dismissButton = new Button("DISMISS");
 		dismissButton.addStyleName("popupDialogButton");
 		dismissButton.addClickHandler(new ClickHandler() {
@@ -142,9 +141,7 @@ public class UploadDashboard implements EntryPoint, ValueChangeHandler<String> {
 				dd.hide();
 			}
 		});
-		buttonPanel.add(dismissButton);
-		buttonPanel.addStyleName("full_width");
-		mainPanel.add(buttonPanel);
+		mainPanel.add(dismissButton);
 		dd.setWidget(mainPanel);
 		dd.addDomHandler(new ClickHandler() {
 			@Override
@@ -291,7 +288,7 @@ public class UploadDashboard implements EntryPoint, ValueChangeHandler<String> {
 		}
 		else if ( token.equals(PagesEnum.EDIT_METADATA.name()) ) {
 			// OME metadata manager page from history
-			OmeManagerPage.redisplayPage(currentPage.getUsername());
+			MetadataManagerPage.redisplayPage(currentPage.getUsername());
 		}
 		else if ( token.equals(PagesEnum.MANAGE_DOCUMENTS.name()) ) {
 			// Additional data manager page from history

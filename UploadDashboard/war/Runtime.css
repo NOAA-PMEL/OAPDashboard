@@ -45,7 +45,8 @@
 	padding-bottom: 10px;
 }
 .popupPreviewImage {
-	height: 95%;
+	width: 99%;
+	border: 1px solid #ccc;
 }
 .popupDialogPanel {
 	border: 1px;
@@ -54,6 +55,6 @@
 	width: 100%;
 }
 .popupDialogButton {
-	/* float: right; */
+	float: right;
 	margin: 1em !important;
  }

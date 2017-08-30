@@ -204,9 +204,6 @@ public class ProfileDsgFile extends DsgNcFile {
 			if ( DashboardUtils.isEmptyNullOrNull(value)) { continue; }
 			Variable var = addVariableFor(ncfile, dtype, ElemCategory.METADATA);
 			logger.debug("Added metadata variable " + var);
-			if ( DashboardServerUtils.DATASET_ID.typeNameEquals(dtype) ) {
-				ncfile.addVariableAttribute(var, new Attribute("cf_role", "profile_id"));
-			}
 		}
 	}
 	private void writeMetadataVariables(NetcdfFileWriter ncfile) throws Exception {
@@ -286,8 +283,8 @@ public class ProfileDsgFile extends DsgNcFile {
 	private boolean excludeType(DashDataType<?> dtype) {
 		if ( dtype.getVarName().equals("other"))
 			return true;
-		if ( dtype.isQCType())
-			return true;
+//		if ( dtype.isQCType())
+//			return true;
 		if ( dtype.typeNameEquals("date") || dtype.typeNameEquals("time") || dtype.typeNameEquals("timestamp"))
 			return true;
 		if ( dtype.typeNameEquals("dataset_id") || dtype.typeNameEquals("dataset_name"))
@@ -464,31 +461,6 @@ public class ProfileDsgFile extends DsgNcFile {
 		}
 	}
 	
-	private void addTestVariables(NetcdfFileWriter ncfile) {
-		ncfile.addVariable(null, "test_string", DataType.CHAR, _metaStringDimList);
-		ncfile.addVariable(null, "test_char", DataType.CHAR, _metaCharDimList);
-		ncfile.addVariable(null, "test_int", DataType.INT, _metaDimList);
-		ncfile.addVariable(null, "test_double", DataType.DOUBLE, _metaDimList);
-	}
-	private void writeTestVariables(NetcdfFileWriter ncfile) throws Exception {
-		Variable var = ncfile.findVariable("test_string");
-		ArrayChar ac = new ArrayChar.D1(32);
-		ac.setString("this is a test string");
-		ncfile.write(var, ac);
-		var = ncfile.findVariable("test_char");
-		ac = new ArrayChar.D1(1);
-		ac.setChar(0, 'X');
-		ncfile.write(var, ac);
-		var = ncfile.findVariable("test_int");
-		ArrayInt.D1 ai = new ArrayInt.D1(1);
-		ai.setInt(0, 42);
-		ncfile.write(var, ai);
-		var = ncfile.findVariable("test_double");
-		ArrayDouble.D1 ad1 = new ArrayDouble.D1(1);
-		ad1.set(0, 42.4243);
-		ncfile.write(var, ad1);
-		ncfile.flush();
-	}
 	private Variable getVariable(NetcdfFileWriter ncfile, String varName) {
 		Variable var = ncfile.findVariable(varName);
 		if ( var == null ) {
