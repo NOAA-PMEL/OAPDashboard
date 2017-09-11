@@ -72,11 +72,11 @@ public class DatasetListPage extends CompositeWithUsername {
 	private static final String VIEW_DATA_TEXT = "Identify Columns";
 	private static final String VIEW_DATA_HOVER_HELP =
 			"review and modify data column type assignments for the " +
-			"selected dataset; identify issues in the data";
+			"selected dataset;\nidentify issues in the data";
 
-	static final String METADATA_TEXT = "Edit Metadata";
+	static final String METADATA_TEXT = "Submit Metadata";
 	private static final String METADATA_HOVER_HELP =
-			"edit the metadata for the selected datasets";
+			"submit metadata for the selected datasets";
 
 	private static final String ADDL_DOCS_TEXT = "Supplemental Documents";
 	private static final String ADDL_DOCS_HOVER_HELP =
@@ -220,6 +220,11 @@ public class DatasetListPage extends CompositeWithUsername {
 	private static final String UNEXPECTED_INVALID_DATESET_LIST_MSG = 
 			" (unexpected invalid datasets list returned)";
 
+	private static final String SELECT_TO_ENABLE_MSG = 
+			"** SELECT A DATASET TO ENABLE BUTTON **\n";
+	private static final String ONLY_ONE_TO_ENABLE_MSG = 
+			"** SELECT ONLY ONE DATASET TO ENABLE BUTTON **\n";
+	
 	// Select options
 	private static final String SELECTION_OPTION_LABEL = "Select...";
 	private static final String ALL_SELECTION_OPTION = "All";
@@ -279,6 +284,9 @@ public class DatasetListPage extends CompositeWithUsername {
 	@UiField Button deleteButton;
 	@UiField DataGrid<DashboardDataset> datasetsGrid;
 
+	private Button[] selectSet;
+	private Button[] singleSet;
+	
 	private ListDataProvider<DashboardDataset> listProvider;
 	private DashboardAskPopup askDeletePopup;
 	private DashboardAskPopup askRemovePopup;
@@ -306,6 +314,8 @@ public class DatasetListPage extends CompositeWithUsername {
 
 		buildDatasetListTable();
 
+		buildSelectionSets();
+		
 		setUsername(null);
 
 		datasetsSet = new DashboardDatasetList();
@@ -353,6 +363,31 @@ public class DatasetListPage extends CompositeWithUsername {
 		askRemovePopup = null;
 		askDataAutofailPopup = null;
 		uploadButton.setFocus(true);
+	}
+
+	private void buildSelectionSets() {
+		selectSet = new Button[] {
+			viewDataButton,
+			metadataButton,
+			addlDocsButton,
+			reviewButton,
+			qcSubmitButton,
+			suspendDatasetButton,
+			hideDatasetButton,
+			changeOwnerButton,
+			deleteButton
+		};
+		singleSet = new Button[] {
+//			viewDataButton,
+			metadataButton,
+//			addlDocsButton,
+			reviewButton,
+//			qcSubmitButton,
+//			suspendDatasetButton,
+//			hideDatasetButton,
+//			changeOwnerButton,
+//			deleteButton
+		};
 	}
 
 	/**
@@ -449,6 +484,7 @@ public class DatasetListPage extends CompositeWithUsername {
 			else
 				dataset.setSelected(false);
 		}
+		updateAvailableButtons();
 		datasetsGrid.setRowCount(providerList.size());
 		datasetsGrid.setVisibleRange(0, providerList.size());
 		// Make sure the table is sorted according to the last specification
@@ -508,6 +544,7 @@ public class DatasetListPage extends CompositeWithUsername {
 		else {
 			throw new RuntimeException("Unexpected option given the setDatasetSelection: " + option);
 		}
+		updateAvailableButtons();
 		datasetsGrid.setRowCount(providerList.size());
 		datasetsGrid.setVisibleRange(0, providerList.size());
 		// Make sure the table is sorted according to the last specification
@@ -1004,7 +1041,7 @@ public class DatasetListPage extends CompositeWithUsername {
 				UploadDashboard.CHECKBOX_COLUMN_WIDTH, Style.Unit.EM);
 		minTableWidth += UploadDashboard.CHECKBOX_COLUMN_WIDTH;
 		datasetsGrid.setColumnWidth(selectedColumn, 
-				UploadDashboard.NARROW_COLUMN_WIDTH, Style.Unit.EM);
+				UploadDashboard.SELECT_COLUMN_WIDTH, Style.Unit.EM);
 		minTableWidth += UploadDashboard.NARROW_COLUMN_WIDTH;
 		datasetsGrid.setColumnWidth(expocodeColumn, 
 				UploadDashboard.NORMAL_COLUMN_WIDTH, Style.Unit.EM);
@@ -1168,15 +1205,46 @@ public class DatasetListPage extends CompositeWithUsername {
 		selectedColumn.setFieldUpdater(new FieldUpdater<DashboardDataset,Boolean>() {
 			@Override
 			public void update(int index, DashboardDataset cruise, Boolean value) {
-				if ( ! value ) {
-					cruise.setSelected(false);
-				}
-				else {
-					cruise.setSelected(true);
-				}
+				cruise.setSelected(value.booleanValue());
+				updateAvailableButtons();
 			}
+
 		});
 		return selectedColumn;
+	}
+
+	private void updateAvailableButtons() {
+		int selectCount = 0;
+		for (DashboardDataset cruise : listProvider.getList()) {
+			if ( cruise.isSelected()) { selectCount += 1; }
+		}
+		if ( selectCount == 0 ) {
+			disableButtons(selectSet, SELECT_TO_ENABLE_MSG);
+		} else if ( selectCount >= 1 ) {
+			enableButtons(selectSet);
+		} 
+		if ( selectCount > 1) {
+			disableButtons(singleSet, ONLY_ONE_TO_ENABLE_MSG);
+		}
+	}
+			
+	private void enableButtons(Button[] enableSet) {
+		for (Button button : enableSet) {
+			String tt = button.getTitle();
+			int idx = tt.lastIndexOf("**");
+			if ( idx >= 0 ) {
+				String revised = tt.substring(idx+3);
+				button.setTitle(revised);
+			}
+			button.setEnabled(true);
+		}
+	}
+
+	private void disableButtons(Button[] disableSet, String msg) {
+		for (Button button : disableSet) {
+			button.setTitle(msg+button.getTitle());
+			button.setEnabled(false);
+		}
 	}
 
 	/**
