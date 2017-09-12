@@ -57,7 +57,7 @@ go OA_thumbnail_pair time, show_time
 
 ! Profile plots
 go OA_thumbnail_pair ctd_temperature, sample_depth
-go OA_thumbnail_pair ctd_salt, sample_depth
+go OA_thumbnail_pair ctd_salinity, sample_depth
 go OA_thumbnail_pair ctd_pressure, sample_depth
 go OA_thumbnail_pair ctd_density, sample_depth
 go OA_thumbnail_pair ctd_oxygen, sample_depth
@@ -65,7 +65,7 @@ go OA_thumbnail_pair inorganic_carbon, sample_depth
 go OA_thumbnail_pair alkalinity, sample_depth
 
 ! Biogeochemistry
-go OA_thumbnail_pair ctd_salt,alkalinity 
+go OA_thumbnail_pair ctd_salinity,alkalinity 
 go OA_thumbnail_pair ctd_oxygen, inorganic_carbon
 go OA_thumbnail_pair nitrate, inorganic_carbon
 go OA_thumbnail_pair nitrate, alkalinity
