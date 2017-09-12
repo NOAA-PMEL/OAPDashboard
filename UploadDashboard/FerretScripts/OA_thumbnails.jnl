@@ -1,0 +1,84 @@
+! OA_thumbnails.jnl
+!   Ansley Manke 8/14/17
+!   Script to produce set of thumbnail plots from a OA Profile DSG file.
+!   Runs with either Ferret or PyFerret.
+!
+! arguments 
+! 1  The input profile dsg file name name, with path
+! 2  The path for writing image files
+
+! examples
+! From the Ferret command line,
+!   yes? GO OA_thumbnails /home/users/ansley/data/PRISM022008BADCASTS.nc /home/users/ansley/images/
+!
+! or in batch mode, from the Unix command line (this is how LAS would run this script)
+!   > ferret -gif -server -script OA_thumbnails.jnl /home/users/ansley/data/PRISM022008BADCASTS.nc /home/users/ansley/images/
+
+! ------------------
+!
+! Set up to run with either PyFerret or Ferret
+
+define symbol plotextn = gif
+IF ($PROGRAM_NAME"0|PyFerret>1|*>0") THEN 
+   set text/font=calibri
+   define symbol plotextn = png
+endif
+
+set window/siz=0.4
+cancel mode logo
+
+
+! PRISM022008BADCASTS.nc doesn't have ctd_salinity. The script will continue
+! and make a blank plot labeled with the names of variables not found in the file.
+!
+! Here assuming there will be a variable ctd_salt - edit to change it if not.
+
+use ($1)
+let varnames = ..varnames ! the list of variables in the file
+
+! Set the base file name with path to use in naming the image files. 
+! The filenames will have the variable names added onto this.
+
+define symbol fname = `lon,return=dset`
+define symbol fnamepath = ($2)/`lon,return=dset`
+
+
+! Map plot doesn't use the OA_thumbnail_pair.jnl script. The map 
+! and time plots could be fancier, when we do that, make their own scripts.
+
+go basemap x=-126:-120 y=46:50 1
+plot/vs/over/nolab/color=red/thick/sym=18 lon, lat
+frame/file="($fnamepath)_map.($plotextn)"
+
+! Plot showing times of profiles.
+
+let/title="Profile Times"/units=" " show_time = 0*time
+go OA_thumbnail_pair time, show_time
+
+! Profile plots
+go OA_thumbnail_pair ctd_temperature, sample_depth
+go OA_thumbnail_pair ctd_salt, sample_depth
+go OA_thumbnail_pair ctd_pressure, sample_depth
+go OA_thumbnail_pair ctd_density, sample_depth
+go OA_thumbnail_pair ctd_oxygen, sample_depth
+go OA_thumbnail_pair inorganic_carbon, sample_depth
+go OA_thumbnail_pair alkalinity, sample_depth
+
+! Biogeochemistry
+go OA_thumbnail_pair ctd_salt,alkalinity 
+go OA_thumbnail_pair ctd_oxygen, inorganic_carbon
+go OA_thumbnail_pair nitrate, inorganic_carbon
+go OA_thumbnail_pair nitrate, alkalinity
+go OA_thumbnail_pair nitrate, ph_total
+go OA_thumbnail_pair ph_total, inorganic_carbon
+go OA_thumbnail_pair ph_total, alkalinity
+go OA_thumbnail_pair alkalinity, inorganic_carbon
+go OA_thumbnail_pair oxygen, ctd_oxygen
+
+! Nutrients and others
+go OA_thumbnail_pair silicate, sample_depth
+go OA_thumbnail_pair phosphate, sample_depth
+go OA_thumbnail_pair nitrate, sample_depth
+go OA_thumbnail_pair nitrite, sample_depth
+go OA_thumbnail_pair ammonia, sample_depth
+

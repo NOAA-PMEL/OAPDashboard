@@ -1,0 +1,107 @@
+! Plot a pair of variables for the OA thumbnail plots.
+! If the second is the sample_depth, then draw lines
+! connecting the data from each profile.
+
+
+define symbol plotname = ($fnamepath)_($1)_($2).($plotextn)
+
+! Check for existence of requested variables, make a blank plot
+! if one or both are missing. Below we will also test for valid
+! data in one or both variables and label that on the plot
+
+let ok1 = `($1),return=isready`
+let ok2 = `($2),return=isready` 
+IF `ok1 + ok2 LT 2` THEN
+   plot/vs/nolab {-1,1}, {-1,1}
+   IF `ok1+ok2 EQ 1` THEN
+      IF `ok1 eq 0` THEN annotate/norm/x=0.5/y=0.5/halign=0 "@AC($1) is not in ($fname).nc"
+      IF `ok2 eq 0` THEN annotate/norm/x=0.5/y=0.5/halign=0 "@AC($2) is not in ($fname).nc"
+   ELSE
+      IF `ok1 eq 0` THEN annotate/norm/x=0.5/y=0.45/halign=0 "@AC($1) is not in ($fname).nc"
+      IF `ok2 eq 0` THEN annotate/norm/x=0.5/y=0.55/halign=0 "@AC($2) is not in ($fname).nc"
+   ENDIF
+   frame/file="($plotname)"
+
+   exit/script
+ENDIF
+
+! For profile plots, connect the samples in each profile
+
+cancel symbol vlimit
+IF ($2"0|sample_depth>1|*>0") then
+   ppl %range 0 `sample_depth[i=@max]`
+   define symbol vlimit = /vlim=($PPL$RANGE_HIGH):0
+   define symbol vlimit = /vlim=240:0
+
+   plot/vs/color=red/sym=18($vlimit)/set ($1), ($2)
+
+! label the uper left with the # of obs
+      if ($labnum_x"0|*>1") then go unlabel ($labnum_x)
+      if ($labnum_e"0|*>1") then go unlabel ($labnum_e)
+   ppl plot
+
+   let ngood = MIN(($1)[i=@ngd], ($2)[i=@ngd]); say `ngood`
+
+   IF `ngood EQ 0` THEN
+      cancel symbol whichvar
+      if `($1)[i=@ngd] eq 0` then define symbol whichvar = `($1),return=title`
+      if `($2)[i=@ngd] eq 0` then define symbol whichvar = ($whichvar) and `($2),return=title`
+      annotate/norm/x=0.5/y=0.5/halign=0 "No valid data in ($whichvar)"
+   ELSE
+      let ni = log(ngood)
+      define symbol fmt = I3
+      if `ni gt 3` then define symbol fmt = i5
+      if `ni gt 5` then define symbol fmt = i7
+      if `ni gt 7` then 
+         annotate/norm/x=0/y=1.06/siz=0.12 "`ngood` observations shown"
+      ELSE
+         define symbol obslab = `FLOATSTR(ngood, "(($fmt))")`
+         annotate/norm/x=0/y=1.06/siz=0.12 "($obslab) observations shown"
+      ENDIF
+   ENDIF
+   
+   let i1 = 1
+
+   repeat/j=1:`rowcount,return=msize` (\
+     let i2 = rowcount[m=1:`j`@sum];\
+     plot/i=`i1`:`i2`/vs/over/line/color=blue/nolab  ($1), ($2);\
+     let i1 = `i2+1`)
+
+else
+   plot/vs/color=red/sym=18/set ($1), ($2)
+! label the uper left with the # of obs
+      if ($labnum_x"0|*>1") then 
+         go unlabel ($labnum_x)
+	 let ngood = ($1)[i=@ngd]
+	 define symbol num_label = observations
+      endif
+      if ($labnum_e"0|*>1") then 
+         go unlabel ($labnum_e)
+	 let ngood = ($1)[m=@ngd]
+	 define symbol num_label = `..featureType`
+	 IF `ngood gt 1` then define symbol num_label ($num_label)s
+      endif
+   ppl plot
+
+   IF `ngood EQ 0` THEN
+      cancel symbol whichvar
+      if `($1)[i=@ngd] eq 0` then define symbol whichvar = `($1),return=title`
+      if `($2)[i=@ngd] eq 0` then define symbol whichvar = ($whichvar) and `($2),return=title`
+      annotate/norm/x=0.5/y=0.5/halign=0 "No valid data in ($whichvar)"
+   ELSE
+      let ni = log(ngood)
+      define symbol fmt = I3
+      if `ni gt 3` then define symbol fmt = i5
+      if `ni gt 5` then define symbol fmt = i7
+      if `ni gt 7` then 
+         annotate/norm/x=0/y=1.06/siz=0.12 "`ngood` ($num_label) shown"
+      ELSE
+         define symbol obslab = `FLOATSTR(ngood, "(($fmt))")`
+         annotate/norm/x=0/y=1.06/siz=0.12 "($obslab) ($num_label) shown"
+      ENDIF
+   ENDIF
+ENDIF
+
+
+! save the plot
+frame/file="($plotname)"
