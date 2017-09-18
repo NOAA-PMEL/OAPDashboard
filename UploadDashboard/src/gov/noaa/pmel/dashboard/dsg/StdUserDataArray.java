@@ -592,7 +592,7 @@ public class StdUserDataArray extends StdDataArray {
 		return values;
 	}
 
-	private int findUserTypeColumn(String userTypeColumnName) throws NoSuchFieldException {
+	public int findUserTypeColumn(String userTypeColumnName) throws NoSuchFieldException {
 		int columnIdx = -1;
 		for (int i = 0; i < numDataCols; i++ ) {
 			if ( userColNames[i].equals(userTypeColumnName)) {
@@ -604,6 +604,12 @@ public class StdUserDataArray extends StdDataArray {
 			throw new NoSuchFieldException("No user type found for " + userTypeColumnName);
 		}
 		return columnIdx;
+	}
+	public String getUserColumnTypeName(int colIdx) {
+		return userColNames[colIdx];
+	}
+	public String getUserColumnUnits(int colIdx) {
+		return userUnits[colIdx];
 	}
 	public DashDataType<?> findDataColumn(String varName) {
 		if ( dataTypeMap.containsKey(varName)) {

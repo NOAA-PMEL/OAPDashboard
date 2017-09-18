@@ -12,10 +12,13 @@ import java.util.TreeSet;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.BrowserEvents;
+import com.google.gwt.dom.client.NativeEvent;
 import com.google.gwt.dom.client.Style;
 import com.google.gwt.dom.client.TableCellElement;
 import com.google.gwt.dom.client.TableRowElement;
 import com.google.gwt.event.dom.client.ClickEvent;
+import com.google.gwt.event.dom.client.ClickHandler;
+import com.google.gwt.event.dom.client.DomEvent.Type;
 import com.google.gwt.event.dom.client.DoubleClickEvent;
 import com.google.gwt.event.dom.client.DoubleClickHandler;
 import com.google.gwt.safehtml.shared.SafeHtmlUtils;
@@ -315,24 +318,54 @@ public class DataColumnSpecsPage extends CompositeWithUsername {
 				if ( BrowserEvents.CLICK.equals(eType)) {
 					selectedRow = event.getIndex();
 					selectedColumn = event.getColumn();
+					GWT.log("click");
 				}
+//				if ( BrowserEvents.DBLCLICK.equals(eType)) {
+//					GWT.log("Double click");
+//				}
 			}
 		});
 		dataGrid.addDomHandler(new DoubleClickHandler() {
-			
 			@Override
 			public void onDoubleClick(DoubleClickEvent event) {
 				ADCMessage amsg = rowMsgMap.get(selectedRow);
 				if ( amsg == null ) { return; }
-//				NativeEvent nevt = event.getNativeEvent();
+				NativeEvent nevt = event.getNativeEvent();
+				String ntype = nevt.getType();
+				GWT.log("ntype:"+ntype);
 				int left = event.getClientX();
 				int top = event.getClientY();
 				String msg = amsg.getDetailedComment();
-				PopupMsg pu = new PopupMsg(msg);
+				final PopupMsg pu = new PopupMsg(msg);
+				pu.row = amsg.getRowIndex();
+				pu.col = amsg.getColNumber();
+				pu.addDomHandler(new DoubleClickHandler() {
+					@Override
+					public void onDoubleClick(DoubleClickEvent event) {
+						Integer row = pu.row;
+						Integer col = pu.col;
+						if ( col != null ) { 
+							setView(row, col);
+						}
+						pu.setVisible(false);
+					}
+				}, DoubleClickEvent.getType());
 				pu.setPopupPosition(left, top);
 				pu.show();
 			}
 		}, DoubleClickEvent.getType());
+//		dataGrid.addDomHandler(new DoubleClickHandler() {
+//			@Override
+//			public void onDoubleClick(DoubleClickEvent event) {
+//				ADCMessage amsg = rowMsgMap.get(selectedRow);
+//				if ( amsg == null ) { return; }
+//				Integer row = amsg.getRowIndex();
+//				if ( row == null ) { return; } // XXX Shouldn't happen
+//				Integer col = amsg.getColNumber();
+//				int colIdx = col != null ? col.intValue()+2 : 0;
+//				setView(row, colIdx);
+//			}
+//		}, DoubleClickEvent.getType());
 	}
 
 	Integer scrollToRow = null;
@@ -341,18 +374,20 @@ public class DataColumnSpecsPage extends CompositeWithUsername {
 	private void updateScroll() {
 		if ( scrollToRow != null ) {
 			int rowIdx = scrollToRow.intValue();
-			int colIdx = scrollToCol.intValue();
+			int colIdx = scrollToCol != null ? scrollToCol.intValue() : 0;
 			TableRowElement row = dataGrid.getRowElement(rowIdx);
 			TableCellElement cell = row.getCells().getItem(colIdx);
 			cell.scrollIntoView();
 //			int cellTop = dgScroll.getVerticalScrollPosition();
-//			int cellHeight = cell.getScrollHeight();
 //			int cellLeft = dgScroll.getHorizontalScrollPosition();
+//			int cellHeight = cell.getScrollHeight();
 //			int cellWidth = cell.getScrollWidth();
+//			GWT.log("idx:"+rowIdx+", top:"+cellTop+", left:"+cellLeft+", hght:"+cellHeight);
 ////			cell.setScrollTop(cellTop - ( 2 * cellHeight ));
 ////			cell.setScrollLeft(cellLeft + ( 2 * cellWidth ));
 //			int rowPos = rowIdx * cellHeight;
-//			dgScroll.setVerticalScrollPosition(rowPos);
+//			dgScroll.setVerticalScrollPosition(22);
+//			dgScroll.setHorizontalScrollPosition(42);
 		}
 		scrollToRow = null;
 		scrollToCol = null;
@@ -436,24 +471,34 @@ public class DataColumnSpecsPage extends CompositeWithUsername {
 		}
 		else {
 			UploadDashboard.updateCurrentPage(singleton);
+			History.newItem(PagesEnum.IDENTIFY_COLUMNS.name(), false);
 			singleton.setView(rowNumber, columnNumber);
 		}
 	}
 	
 	void setView(Integer rowNumber, Integer columnNumber) {
 		int showColumnIdx = columnNumber == null || columnNumber.equals(DashboardUtils.INT_MISSING_VALUE) ? 
-								0 : columnNumber.intValue()-1;
+								0 : columnNumber.intValue();
 		int showRowIdx = rowNumber == null || rowNumber.equals(DashboardUtils.INT_MISSING_VALUE) ? 
-								0 : rowNumber.intValue()-1;
+								0 : rowNumber.intValue() - 1;
 		int pageSize = gridPager.getPageSize();
 		int showPage = showRowIdx / pageSize;
-		int pageRow = showRowIdx % pageSize;
+		int pageRow = showRowIdx > pageSize ? showRowIdx % pageSize : showRowIdx;
+		if ( pageRow > 6 ) {
+			pageRow = Math.min(pageRow+4, pageSize-1);
+		}
+		if ( showColumnIdx > 5 ) {
+			showColumnIdx = Math.min(showColumnIdx+2, cruiseDataCols.size());
+		}
+		scrollToRow = new Integer(pageRow);
+		scrollToCol = new Integer(showColumnIdx);
 		int cPage = gridPager.getPage();
 		if ( cPage != showPage ) {
-			scrollToRow = new Integer(pageRow);
-			scrollToCol = new Integer(showColumnIdx);
 			gridPager.setPage(showPage);
+		} else {
+			updateScroll();
 		}
+		
 		
 //			int dgHeight = singleton.dataGrid.getOffsetHeight();
 //			int vpos = singleton.dgScroll.getVerticalScrollPosition();

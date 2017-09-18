@@ -181,7 +181,8 @@ public class DataMessagesPage extends CompositeWithUsername {
 
 	@UiHandler("dismissButton")
 	void dismissOnClick(ClickEvent event) {
-		DataColumnSpecsPage.redisplayPage(getUsername());
+		History.back();
+//		DataColumnSpecsPage.redisplayPage(getUsername());
 	}
 	
 	void showErrorData(DoubleClickEvent event) {
@@ -215,6 +216,12 @@ public class DataMessagesPage extends CompositeWithUsername {
 		// Set the number of data rows to display in the grid.
 		// This will refresh the view.
 		messagesGrid.setPageSize(DashboardUtils.MAX_ROWS_PER_GRID_PAGE);
+//		messagesGrid.addDomHandler(new DoubleClickHandler() {
+//				@Override
+//				public void onDoubleClick(DoubleClickEvent event) {
+//					showErrorData(event);
+//				}
+//			}, DoubleClickEvent.getType());
 	}
 
 	/**

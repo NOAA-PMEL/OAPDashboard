@@ -23,6 +23,11 @@ public class DatabaseRequestHandler {
 
 	private static final String REVIEWERS_TABLE_NAME = "Reviewers";
 
+	private static String MYSQL_QUOTE = "`";
+	private static String PGSQL_QUOTE = "\"";
+	
+	private String DB_QUOTE = PGSQL_QUOTE;
+	
 	private static final String SQL_DRIVER_TAG = "sqldriver";
 	private static final String DATABASE_URL_TAG = "databaseurl";
 	private static final String SELECT_USER_TAG = "selectuser";
@@ -92,6 +97,9 @@ public class DatabaseRequestHandler {
 			throw new IllegalArgumentException("Value for " + UPDATE_PASS_TAG + 
 					" must be given in " + configFilename);
 		updatePass = updatePass.trim();
+		if ( databaseUrl.toLowerCase().indexOf("mysql") >= 0 ) {
+			DB_QUOTE = MYSQL_QUOTE;
+		}
 		testConnections(sqlDriverName);
 	}
 
@@ -137,6 +145,9 @@ public class DatabaseRequestHandler {
 		if ( (updatePass == null) || updatePass.trim().isEmpty() )
 			throw new IllegalArgumentException("password for update user must be given");
 		this.updatePass = updatePass.trim();
+		if ( databaseUrl.toLowerCase().contains("mysql")) {
+			DB_QUOTE = MYSQL_QUOTE;
+		}
 		testConnections(sqlDriverName.trim());
 	}
 
@@ -208,8 +219,10 @@ public class DatabaseRequestHandler {
 		String realname = null;
 		Connection catConn = makeConnection(false);
 		try {
-			PreparedStatement prepStmt = catConn.prepareStatement("SELECT `realname` FROM `" + 
-					REVIEWERS_TABLE_NAME + "` WHERE `username` = ?;");
+			PreparedStatement prepStmt = 
+				catConn.prepareStatement("SELECT "+DB_QUOTE+"realname"+DB_QUOTE+
+			                             " FROM "+DB_QUOTE+"" + REVIEWERS_TABLE_NAME + ""+DB_QUOTE+
+			                             " WHERE "+DB_QUOTE+"username"+DB_QUOTE+" = ?;");
 			prepStmt.setString(1, username);
 			ResultSet results = prepStmt.executeQuery();
 			try {
@@ -242,8 +255,10 @@ public class DatabaseRequestHandler {
 		String username = null;
 		Connection catConn = makeConnection(false);
 		try {
-			PreparedStatement prepStmt = catConn.prepareStatement("SELECT `username` FROM `" + 
-					REVIEWERS_TABLE_NAME + "` WHERE `realname` = ?;");
+			PreparedStatement prepStmt = 
+				catConn.prepareStatement("SELECT "+DB_QUOTE+"username"+DB_QUOTE+
+				                         " FROM "+DB_QUOTE+"" + REVIEWERS_TABLE_NAME + ""+DB_QUOTE+
+				                         " WHERE "+DB_QUOTE+"realname"+DB_QUOTE+" = ?;");
 			prepStmt.setString(1, realname);
 			ResultSet results = prepStmt.executeQuery();
 			try {
@@ -276,8 +291,10 @@ public class DatabaseRequestHandler {
 		String userEmail = null;
 		Connection catConn = makeConnection(false);
 		try {
-			PreparedStatement prepStmt = catConn.prepareStatement("SELECT `email` FROM `" + 
-					REVIEWERS_TABLE_NAME + "` WHERE `username` = ?;");
+			PreparedStatement prepStmt = 
+				catConn.prepareStatement("SELECT "+DB_QUOTE+"email"+DB_QUOTE+
+				                         " FROM "+DB_QUOTE+"" + REVIEWERS_TABLE_NAME + ""+DB_QUOTE+
+				                         " WHERE "+DB_QUOTE+"username"+DB_QUOTE+" = ?;");
 			prepStmt.setString(1, username);
 			ResultSet results = prepStmt.executeQuery();
 			try {

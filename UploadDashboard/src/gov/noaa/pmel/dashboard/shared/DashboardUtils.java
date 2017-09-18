@@ -115,12 +115,12 @@ public class DashboardUtils {
 	/**
 	 * The "upload filename" for all OME metadata files.
 	 */
-	public static final String OME_FILENAME = "OME.xml";
+	public static final String _OME_FILENAME = "OME.xml";
 
 	/**
 	 * THe PDF version of the OME XML files.
 	 */
-	public static final String OME_PDF_FILENAME = "OME.pdf";
+	public static final String _OME_PDF_FILENAME = "OME.pdf";
 
 	/**
 	 * The "upload filename" for all PI-provided OME metadata files 
@@ -130,12 +130,12 @@ public class DashboardUtils {
 	 * The use of this name is just a temporary measure 
 	 * until the CDIAC OME brought into the dashboard.
 	 */
-	public static final String PI_OME_FILENAME = "PI_OME.xml";
+	public static final String _PI_OME_FILENAME = "PI_OME.xml";
 
 	/**
 	 * The PDF version of the PI OME XML file.
 	 */
-	public static final String PI_OME_PDF_FILENAME = "PI_OME.pdf";
+	public static final String _PI_OME_PDF_FILENAME = "PI_OME.pdf";
 
 
 	/** For data without any specific units */
@@ -481,8 +481,18 @@ public class DashboardUtils {
 	public static ArrayList<String> decodeStringArrayList(String arrayStr) 
 									throws IllegalArgumentException {
 		if ( ! ( arrayStr.startsWith("[") && arrayStr.endsWith("]") ) )
-			throw new IllegalArgumentException(
-					"Encoded string array not enclosed in brackets");
+		{
+			ArrayList<String> single = new ArrayList<>();
+			String trimmed = arrayStr.trim();
+			if ( trimmed.startsWith("\"") && arrayStr.endsWith("\"")) {
+				single.add(trimmed.substring(1, trimmed.length()-1));
+			} else {
+				single.add(arrayStr);
+			}
+			return single;
+		}
+//			throw new IllegalArgumentException(
+//					"Encoded string array not enclosed in brackets");
 		String contents = arrayStr.substring(1, arrayStr.length() - 1);
 		if ( contents.trim().isEmpty() )
 			return new ArrayList<String>(0);
@@ -743,6 +753,20 @@ public class DashboardUtils {
 	
 	public static boolean isNullOrNull(Object value) {
 		return value == null || "null".equalsIgnoreCase(String.valueOf(value));
+	}
+
+	public static String metadataFilename(String datasetId) {
+		return metadataFilename(datasetId, ".xml");
+	}
+
+	public static String metadataFilename(String datasetId, String extension) {
+		if ( isEmptyNullOrNull(datasetId))
+			throw new IllegalArgumentException("Empty or null dataset ID");
+		return datasetId + "_OADS" + extension;
+	}
+
+	public static String autoExtractedMdFilename(String datasetId) {
+		return "extracted_"+metadataFilename(datasetId);
 	}
 
 }

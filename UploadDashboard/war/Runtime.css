@@ -48,6 +48,9 @@
 	width: 99%;
 	border: 1px solid #ccc;
 }
+.popupPreviewDialogBox {
+	width: 45%;
+}
 .popupDialogPanel {
 	border: 1px;
 }

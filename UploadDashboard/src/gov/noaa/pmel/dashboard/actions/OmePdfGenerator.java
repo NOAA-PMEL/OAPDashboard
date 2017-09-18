@@ -101,13 +101,14 @@ public class OmePdfGenerator {
 	public void createPiOmePdf(String expocode) throws IllegalArgumentException, IOException {
 		String upperExpo = DashboardServerUtils.checkDatasetID(expocode);
 		// Get the full path filename for the PI_OME.xml file
-		File xmlFile = metadataHandler.getMetadataFile(upperExpo, DashboardUtils.PI_OME_FILENAME);
+		// XXX TODO: OME_FILENAME check
+		File xmlFile = metadataHandler.getMetadataFile(upperExpo, DashboardUtils.metadataFilename(expocode));
 		if ( ! xmlFile.exists() )
 			throw new IllegalArgumentException("PI-provided OME XML file does not exist for " + upperExpo);
 		// Get the information about this file
-		DashboardMetadata mdata = metadataHandler.getMetadataInfo(upperExpo, DashboardUtils.PI_OME_FILENAME);
+		DashboardMetadata mdata = metadataHandler.getMetadataInfo(upperExpo, DashboardUtils.metadataFilename(expocode));
 		// Get the full path filename for the PI_OME.pdf file
-		File pdfFile = metadataHandler.getMetadataFile(upperExpo, DashboardUtils.PI_OME_PDF_FILENAME);
+		File pdfFile = metadataHandler.getMetadataFile(upperExpo, DashboardUtils.metadataFilename(expocode));
 		// Output stream for the PDF that will be generated
 		BufferedOutputStream pdfOut;
 		try {
@@ -156,7 +157,7 @@ public class OmePdfGenerator {
 			pdfOut.close();
 		}
 		// Add a properties file for the successfully generated PDF
-		mdata.setFilename(DashboardUtils.PI_OME_PDF_FILENAME);
+		mdata.setFilename(DashboardUtils.metadataFilename(expocode));
 		// Commit the PDF to version control and save/commit the properties file for the PDF
 		metadataHandler.saveMetadataInfo(mdata, upperExpo + 
 				": PI_OME.pdf generated from the PI_OME.xml file", true);

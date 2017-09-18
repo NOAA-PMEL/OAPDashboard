@@ -25,12 +25,11 @@ import org.jdom2.output.Format;
 import org.jdom2.output.XMLOutputter;
 import org.tmatesoft.svn.core.SVNException;
 
-import gov.noaa.pmel.dashboard.actions.OADSMetadata;
+import gov.noaa.pmel.dashboard.oads.DashboardOADSMetadata;
+import gov.noaa.pmel.dashboard.oads.OADSMetadata;
 import gov.noaa.pmel.dashboard.server.DashboardConfigStore;
-import gov.noaa.pmel.dashboard.server.DashboardOmeMetadata;
 import gov.noaa.pmel.dashboard.server.DashboardServerUtils;
 import gov.noaa.pmel.dashboard.shared.DashboardMetadata;
-import gov.noaa.pmel.dashboard.shared.DashboardOADSMetadata;
 import gov.noaa.pmel.dashboard.shared.DashboardUtils;
 
 /**
@@ -99,6 +98,15 @@ public class MetadataFileHandler extends VersionedFileHandler {
 		return metadataFile;
 	}
 
+	public File getMetadataFile(String datasetId) {
+		String stdId = DashboardServerUtils.checkDatasetID(datasetId);
+		String stdName = DashboardUtils.metadataFilename(stdId);
+		File grandParentDir = new File(filesDir, stdId.substring(0,4));
+		File parentDir = new File(grandParentDir, stdId);
+		File metadataFile = new File(parentDir, stdName);
+		return metadataFile;
+	}
+	
 	/**
 	 * Returns the list of valid metadata files (including supplemental 
 	 * documents) associated with the given dataset.
@@ -656,19 +664,22 @@ public class MetadataFileHandler extends VersionedFileHandler {
 	 */
 	public void renameMetadataFiles(String oldId, String newId) 
 											throws IllegalArgumentException {
-		// Rename all the metadata documents associated with the old dataset
+		/*
+		 * 			// XXX TODO: OME_FILENAME check
+
 		DashboardOmeMetadata omeMData = null;
 		DashboardOmeMetadata piOmeMData = null;
 		for ( DashboardMetadata metaDoc : getMetadataFiles(oldId) ) {
 			String uploadFilename = metaDoc.getFilename();
 
 			// If this is the OME metadata file, read the contents 
-			if ( DashboardUtils.OME_FILENAME.equals(uploadFilename) ) {
+			// XXX TODO: OME_FILENAME check
+			if ( DashboardUtils.metadataFilename(metaDoc.getDatasetId()).equals(uploadFilename) ) {
 				omeMData = new DashboardOmeMetadata(metaDoc, this);
 			}
-			else if ( DashboardUtils.PI_OME_FILENAME.equals(uploadFilename) ) {
-				piOmeMData = new DashboardOmeMetadata(metaDoc, this);
-			}
+//			else if ( DashboardUtils.PI_OME_FILENAME.equals(uploadFilename) ) {
+//				piOmeMData = new DashboardOmeMetadata(metaDoc, this);
+//			}
 
 			File oldMetaFile = getMetadataFile(oldId, uploadFilename);
 			if ( ! oldMetaFile.exists() )
@@ -724,6 +735,7 @@ public class MetadataFileHandler extends VersionedFileHandler {
 						"Unable to create the PDF from the OME XML: " + ex.getMessage());
 			}
 		}
+		*/
 	}
 
 	/**
@@ -781,7 +793,7 @@ public class MetadataFileHandler extends VersionedFileHandler {
 	 * @throws IllegalArgumentException
 	 * 		if the dataset or uploadFilename in this object is invalid, or
 	 * 		writing the metadata document file generates one.
-	 */
+	 *
 	public void saveAsOmeXmlDoc(DashboardOmeMetadata mdata, String message) 
 											throws IllegalArgumentException {
 		File mdataFile = getMetadataFile(mdata.getDatasetId(), mdata.getFilename());
@@ -813,24 +825,24 @@ public class MetadataFileHandler extends VersionedFileHandler {
 					mdataFile.getPath() + ":\n    " + ex.getMessage());
 		}
 	}
+	*/
 
-	public void saveAsOadsXmlDoc(DashboardOADSMetadata mdata, String message) {
-		File mdataFile = getMetadataFile(mdata.getDatasetId(), mdata.getFilename());
-
-		// Generate the OME XML document
-		Document omeDoc = OADSMetadata.createOadsMetadataDoc(mdata);
+	public void saveAsOadsXmlDoc(DashboardOADSMetadata mdata, String fileName, String message) {
+		File mdataFile = getMetadataFile(mdata.getDatasetId(), fileName);
 
 		// Save the XML document to the metadata document file
 		try {
+			// Generate the OADS XML 
+			String xml = OADSMetadata.createOadsMetadataXml(mdata);
 			FileOutputStream out = new FileOutputStream(mdataFile);
 			try {
-				(new XMLOutputter(Format.getPrettyFormat())).output(omeDoc, out);
+				out.write(xml.getBytes());
+//				(new XMLOutputter(Format.getPrettyFormat())).output(omeDoc, out);
 			} finally {
 				out.close();
 			}
-		} catch (IOException ex) {
-			throw new IllegalArgumentException(
-					"Problems writing the OME metadata document: " + ex.getMessage());
+		} catch (Exception ex) {
+			throw new IllegalArgumentException( "Problems writing the metadata document: " + ex.getMessage());
 		}
 
 		if ( (message == null) || message.trim().isEmpty() )
@@ -840,7 +852,7 @@ public class MetadataFileHandler extends VersionedFileHandler {
 		try {
 			commitVersion(mdataFile, message);
 		} catch ( Exception ex ) {
-			throw new IllegalArgumentException("Problems committing updated OME metadata information " + 
+			throw new IllegalArgumentException("Problems committing updated metadata information " + 
 					mdataFile.getPath() + ":\n    " + ex.getMessage());
 		}
 	}

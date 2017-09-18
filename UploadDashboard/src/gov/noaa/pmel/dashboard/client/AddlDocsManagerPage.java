@@ -72,11 +72,11 @@ public class AddlDocsManagerPage extends CompositeWithUsername {
 	private static final String NO_FILE_ERROR_MSG = 
 			"Please select a document to upload";
 
-	private static final String NO_OME_OVERWRITE_ERROR_MSG =
-			"Documents with the name " + DashboardUtils.OME_FILENAME + 
-			" or " + DashboardUtils.PI_OME_FILENAME + 
-			" cannot to uploaded as supplemental documents.  " +
-			"Please upload the file under a different name.";
+//	private static final String NO_OME_OVERWRITE_ERROR_MSG =
+//			"Documents with the name " + DashboardUtils.OME_FILENAME + 
+//			" or " + DashboardUtils.PI_OME_FILENAME + 
+//			" cannot to uploaded as supplemental documents.  " +
+//			"Please upload the file under a different name.";
 
 	private static final String ADDL_DOCS_LIST_FAIL_MSG = 
 			"Unexpected problems obtaining the updated supplemental " +
@@ -137,7 +137,7 @@ public class AddlDocsManagerPage extends CompositeWithUsername {
 	@UiField FileUpload docUpload;
 	@UiField Hidden timestampToken;
 	@UiField Hidden datasetIdsToken;
-	@UiField Hidden omeToken;
+	@UiField Hidden supplementalFlag;
 	@UiField Button uploadButton;
 	@UiField Button dismissButton;
 
@@ -267,7 +267,7 @@ public class AddlDocsManagerPage extends CompositeWithUsername {
 	private void clearTokens() {
 		timestampToken.setValue("");
 		datasetIdsToken.setValue("");
-		omeToken.setValue("");
+		supplementalFlag.setValue("");
 	}
 
 	/**
@@ -277,7 +277,7 @@ public class AddlDocsManagerPage extends CompositeWithUsername {
 		String localTimestamp = DateTimeFormat.getFormat("yyyy-MM-dd HH:mm Z").format(new Date());
 		timestampToken.setValue(localTimestamp);
 		datasetIdsToken.setValue(DashboardUtils.encodeStringArrayList(new ArrayList<String>(datasetIds)));
-		omeToken.setValue("false");
+		supplementalFlag.setValue("true");
 	}
 
 	@UiHandler("logoutButton")
@@ -300,12 +300,13 @@ public class AddlDocsManagerPage extends CompositeWithUsername {
 			return;
 		}
 
-		// Disallow any overwrite of an OME file
-		if ( uploadFilename.equals(DashboardUtils.OME_FILENAME) ||
-			 uploadFilename.equals(DashboardUtils.PI_OME_FILENAME) ) {
-			UploadDashboard.showMessage(NO_OME_OVERWRITE_ERROR_MSG);
-			return;
-		}
+// XXX TODO: OME_FILENAME
+//		// Disallow any overwrite of an OME file
+//		if ( uploadFilename.equals(DashboardUtils.OME_FILENAME) ||
+//			 uploadFilename.equals(DashboardUtils.PI_OME_FILENAME) ) {
+//			UploadDashboard.showMessage(NO_OME_OVERWRITE_ERROR_MSG);
+//			return;
+//		}
 
 		// Check for any overwrites that will happen
 		String message = OVERWRITE_WARNING_MSG_PROLOGUE;

@@ -308,35 +308,35 @@ public class DataUploadService extends HttpServlet {
 				}
 				// At this point, datasetData is the dataset to save, regardless of new, overwrite, or append
 
-				// Create the OME XML stub file for this dataset
-				try {
-					OmeMetadata omeMData = new OmeMetadata(datasetId);
-					DashboardOmeMetadata mdata = new DashboardOmeMetadata(omeMData,
-							timestamp, username, datasetData.getVersion());
-					String msg = "New OME XML document from data file for " + 
-							datasetId + " uploaded by " + username;
-					MetadataFileHandler mdataHandler = configStore.getMetadataFileHandler();
-					mdataHandler.saveMetadataInfo(mdata, msg, false);
-					mdataHandler.saveAsOmeXmlDoc(mdata, msg);
-				} catch (Exception ex) {
-					// should not happen
-					messages.add(DashboardUtils.UNEXPECTED_FAILURE_HEADER_TAG + " " + 
-							filename + " ; " + datasetId);
-					messages.add(ex.getMessage());
-					messages.add(DashboardUtils.END_OF_ERROR_MESSAGE_TAG);
-					continue;
-				}
+//				// Create the OME XML stub file for this dataset
+//				try {
+//					OmeMetadata omeMData = new OmeMetadata(datasetId);
+//					DashboardOmeMetadata mdata = new DashboardOmeMetadata(omeMData,
+//							timestamp, username, datasetData.getVersion());
+//					String msg = "New OME XML document from data file for " + 
+//							datasetId + " uploaded by " + username;
+//					MetadataFileHandler mdataHandler = configStore.getMetadataFileHandler();
+//					mdataHandler.saveMetadataInfo(mdata, msg, false);
+//					mdataHandler.saveAsOmeXmlDoc(mdata, msg);
+//				} catch (Exception ex) {
+//					// should not happen
+//					messages.add(DashboardUtils.UNEXPECTED_FAILURE_HEADER_TAG + " " + 
+//							filename + " ; " + datasetId);
+//					messages.add(ex.getMessage());
+//					messages.add(DashboardUtils.END_OF_ERROR_MESSAGE_TAG);
+//					continue;
+//				}
 
 				// Add any existing documents for this cruise
 				ArrayList<DashboardMetadata> mdataList = 
 						configStore.getMetadataFileHandler().getMetadataFiles(datasetId);
 				TreeSet<String> addlDocs = new TreeSet<String>();
 				for ( DashboardMetadata mdata : mdataList ) {
-					if ( DashboardUtils.OME_FILENAME.equals(mdata.getFilename())) {
-						// Ignore the OME XML stub file
+					if ( DashboardUtils.autoExtractedMdFilename(datasetId).equals(mdata.getFilename())) {
+						// Ignore the auto-extracted XML stub file
 					}
-					else if ( DashboardUtils.PI_OME_FILENAME.equals(mdata.getFilename())) {
-						datasetData.setOmeTimestamp(mdata.getUploadTimestamp());					
+					else if ( DashboardUtils.metadataFilename(datasetId).equals(mdata.getFilename())) {
+						datasetData.setMdTimestamp(mdata.getUploadTimestamp());					
 					}
 					else {
 						addlDocs.add(mdata.getAddlDocsTitle());

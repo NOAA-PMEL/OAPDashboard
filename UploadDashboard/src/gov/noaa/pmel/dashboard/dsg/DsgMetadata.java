@@ -22,6 +22,13 @@ import gov.noaa.pmel.dashboard.shared.DashboardUtils;
  */
 public class DsgMetadata {
 
+	/**
+	 * String separating each PI listed in scienceGroup, each organization 
+	 * listed in organizations, and each additional document filename listed 
+	 * in addlDocs.  This is cannot be a semicolon due to Ferret issues.
+	 */
+	public static final String NAMES_SEPARATOR = " : ";
+	
 	// Maps of variable types to values
 	private TreeMap<DashDataType<?>,Object> valuesMap;
 

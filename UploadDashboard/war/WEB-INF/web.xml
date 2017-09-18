@@ -37,15 +37,25 @@
 		<url-pattern>/OAPUploadDashboard/MetadataUploadService</url-pattern>
 	</servlet-mapping>
 
+	<servlet>
+		<servlet-name>DashboardMetadataDownloadServlet</servlet-name>
+		<servlet-class>gov.noaa.pmel.dashboard.server.MetadataDownloadService</servlet-class>
+	</servlet>
+	<servlet-mapping>
+		<servlet-name>DashboardMetadataDownloadServlet</servlet-name>
+		<url-pattern>/OAPUploadDashboard/MetadataDownloadService/*</url-pattern>
+	</servlet-mapping>
+
+<!-- Not currently necessary, as we are using container-managed auth.
 	<filter>
 		<filter-name>AuthenticateFilter</filter-name>
 		<filter-class>gov.noaa.pmel.dashboard.server.AuthenticateFilter</filter-class>
 	</filter>
 	<filter-mapping>
 		<filter-name>AuthenticateFilter</filter-name>
-		<url-pattern>/j_security_check</url-pattern>
+		<url-pattern>/OAPUploadDashboard/*</url-pattern>
 	</filter-mapping>
-
+  -->
 	<security-constraint>
 		<web-resource-collection>
 			<web-resource-name>OAP Dashboard</web-resource-name>
@@ -58,6 +68,11 @@
 		<auth-constraint>
 			<role-name>oapdashboarduser</role-name>
 		</auth-constraint>
+		<!--
+		<user-data-constraint>
+			<transport-guarantee>CONFIDENTIAL</transport-guarantee>
+		</user-data-constraint>
+		  -->
 	</security-constraint>
 
 	<login-config>

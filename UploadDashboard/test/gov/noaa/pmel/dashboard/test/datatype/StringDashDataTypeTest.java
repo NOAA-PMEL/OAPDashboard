@@ -34,7 +34,7 @@ public class StringDashDataTypeTest {
 	private static final Double SORT_ORDER = 3.14159;
 	private static final String DISPLAY_NAME = "cruise name";
 	private static final String DESCRIPTION = "name of the cruise/dataset";
-	private static final ArrayList<String> UNITS = new ArrayList<String>(Arrays.asList("expocode", "actual"));
+	private static final ArrayList<String> UNITS = new ArrayList<String>(Arrays.asList("datasetId", "actual"));
 	private static final String STANDARD_NAME = "name";
 	private static final String CATEGORY_NAME = DashboardServerUtils.IDENTIFIER_CATEGORY;
 	private static final String FILE_UNIT = "IDValue";

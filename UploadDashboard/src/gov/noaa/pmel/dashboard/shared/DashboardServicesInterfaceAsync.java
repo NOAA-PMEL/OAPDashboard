@@ -270,9 +270,13 @@ public interface DashboardServicesInterfaceAsync {
 	 * 		called if authentication failed, or if the appropriate content 
 	 * 		for the OME could not be found
 	 */
-	void getOmeXmlPath(String pageUsername, String datasetId, 
-			String previousId, AsyncCallback<String> callback);
+	// XXX NOT USED
+	// XXX TODO: OME_FILENAME check
+//	void getOmeXmlPath(String pageUsername, String datasetId, 
+//			String previousId, AsyncCallback<String> callback);
 
+	void getMetadataPreviewInfo(String username, String datasetId, AsyncCallback<MetadataPreviewInfo> callback);
+	
 	/**
 	 * Client side request to generate the preview images for a dataset.
 	 * 
@@ -284,7 +288,7 @@ public interface DashboardServicesInterfaceAsync {
 	 * 		tag to be added to the end of the plot file names
 	 * 		(before the filename extension) to make them specific
 	 * 		to the time the request was made
-	 * @param firstCall
+	 * @param force
 	 * 		is this the first request for the preview images?
 	 * 		If true, the process to generate the images are started.
 	 * 		If false, just checks if all the images have been created.
@@ -293,7 +297,7 @@ public interface DashboardServicesInterfaceAsync {
 	 * 		(true if done generating plots)
 	 */
 	void buildPreviewImages(String username, String datasetId, String timetag,
-			boolean firstCall, AsyncCallback<PreviewPlotResponse> callback);
+			boolean force, AsyncCallback<PreviewPlotResponse> callback);
 
 	/**
 	 * Client-side interface for submitting datasets for QC.

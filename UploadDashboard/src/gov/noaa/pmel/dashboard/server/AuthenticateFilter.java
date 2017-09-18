@@ -12,6 +12,9 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
 import gov.noaa.pmel.dashboard.shared.DashboardUtils;
 
 
@@ -20,8 +23,12 @@ import gov.noaa.pmel.dashboard.shared.DashboardUtils;
  */
 public class AuthenticateFilter implements Filter {
 
+	private static Logger logger = LogManager.getLogger(AuthenticateFilter.class);
+	
 	@Override
 	public void init(FilterConfig filterConfig) throws ServletException {
+		System.out.println("AuthFilter init:" + filterConfig);
+		logger.warn("AuthFilter:" + filterConfig);
 	}
 
 	@Override
@@ -31,6 +38,9 @@ public class AuthenticateFilter implements Filter {
 		HttpServletRequest request = (HttpServletRequest) servletRequest;
 		HttpServletResponse response = (HttpServletResponse) servletResponse;
 
+		System.out.println("AuthFilter filter:" + request);
+		logger.warn("AuthFilter:" + request);
+		
 		HttpSession session = request.getSession(false);
 		if ( session == null ) {
 			// Session has been invalidated -

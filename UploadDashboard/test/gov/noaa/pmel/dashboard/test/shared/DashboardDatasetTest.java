@@ -111,22 +111,22 @@ public class DashboardDatasetTest {
 	}
 
 	/**
-	 * Test method for {@link gov.noaa.pmel.dashboard.shared.DashboardDataset#getOmeTimestamp()}
-	 * and {@link gov.noaa.pmel.dashboard.shared.DashboardDataset#setOmeTimestamp(java.lang.String)}.
+	 * Test method for {@link gov.noaa.pmel.dashboard.shared.DashboardDataset#getMdTimestamp()}
+	 * and {@link gov.noaa.pmel.dashboard.shared.DashboardDataset#setMdTimestamp(java.lang.String)}.
 	 */
 	@Test
-	public void testSetGetOmeTimestamp() {
+	public void testSetGetMdTimestamp() {
 		String myOmeFilename = "2014-02-21 9:22";
 		DashboardDataset cruise = new DashboardDataset();
-		assertEquals(DashboardUtils.STRING_MISSING_VALUE, cruise.getOmeTimestamp());
-		cruise.setOmeTimestamp(myOmeFilename);
-		assertEquals(myOmeFilename, cruise.getOmeTimestamp());
+		assertEquals(DashboardUtils.STRING_MISSING_VALUE, cruise.getMdTimestamp());
+		cruise.setMdTimestamp(myOmeFilename);
+		assertEquals(myOmeFilename, cruise.getMdTimestamp());
 		assertEquals(DashboardUtils.STRING_MISSING_VALUE, cruise.getDatasetId() );
 		assertEquals(DashboardUtils.STRING_MISSING_VALUE, cruise.getOwner());
 		assertEquals(DashboardUtils.STRING_MISSING_VALUE, cruise.getVersion());
 		assertFalse( cruise.isSelected() );
-		cruise.setOmeTimestamp(null);
-		assertEquals(DashboardUtils.STRING_MISSING_VALUE, cruise.getOmeTimestamp());
+		cruise.setMdTimestamp(null);
+		assertEquals(DashboardUtils.STRING_MISSING_VALUE, cruise.getMdTimestamp());
 	}
 
 	/**
@@ -143,7 +143,7 @@ public class DashboardDatasetTest {
 		assertEquals(0, cruise.getAddlDocs().size());
 		cruise.setAddlDocs(myMetaNames);
 		assertEquals(myMetaNames, cruise.getAddlDocs());
-		assertEquals(DashboardUtils.STRING_MISSING_VALUE, cruise.getOmeTimestamp());
+		assertEquals(DashboardUtils.STRING_MISSING_VALUE, cruise.getMdTimestamp());
 		assertEquals(DashboardUtils.STRING_MISSING_VALUE, cruise.getDataCheckStatus());
 		assertEquals(DashboardUtils.STRING_MISSING_VALUE, cruise.getDatasetId() );
 		assertEquals(DashboardUtils.STRING_MISSING_VALUE, cruise.getOwner());
@@ -165,7 +165,7 @@ public class DashboardDatasetTest {
 		cruise.setSubmitStatus(myQCStatus);
 		assertEquals(myQCStatus, cruise.getSubmitStatus());
 		assertEquals(0, cruise.getAddlDocs().size());
-		assertEquals(DashboardUtils.STRING_MISSING_VALUE, cruise.getOmeTimestamp());
+		assertEquals(DashboardUtils.STRING_MISSING_VALUE, cruise.getMdTimestamp());
 		assertEquals(DashboardUtils.STRING_MISSING_VALUE, cruise.getDataCheckStatus());
 		assertEquals(DashboardUtils.STRING_MISSING_VALUE, cruise.getDatasetId() );
 		assertEquals(DashboardUtils.STRING_MISSING_VALUE, cruise.getOwner());
@@ -188,7 +188,7 @@ public class DashboardDatasetTest {
 		assertEquals(myArchiveStatus, cruise.getArchiveStatus());
 		assertEquals(DashboardUtils.STATUS_NOT_SUBMITTED, cruise.getSubmitStatus());
 		assertEquals(0, cruise.getAddlDocs().size());
-		assertEquals(DashboardUtils.STRING_MISSING_VALUE, cruise.getOmeTimestamp());
+		assertEquals(DashboardUtils.STRING_MISSING_VALUE, cruise.getMdTimestamp());
 		assertEquals(DashboardUtils.STRING_MISSING_VALUE, cruise.getDataCheckStatus());
 		assertEquals(DashboardUtils.STRING_MISSING_VALUE, cruise.getDatasetId() );
 		assertEquals(DashboardUtils.STRING_MISSING_VALUE, cruise.getOwner());
@@ -212,7 +212,7 @@ public class DashboardDatasetTest {
 		assertEquals(DashboardUtils.ARCHIVE_STATUS_NOT_SUBMITTED, cruise.getArchiveStatus());
 		assertEquals(DashboardUtils.STATUS_NOT_SUBMITTED, cruise.getSubmitStatus());
 		assertEquals(0, cruise.getAddlDocs().size());
-		assertEquals(DashboardUtils.STRING_MISSING_VALUE, cruise.getOmeTimestamp());
+		assertEquals(DashboardUtils.STRING_MISSING_VALUE, cruise.getMdTimestamp());
 		assertEquals(DashboardUtils.STRING_MISSING_VALUE, cruise.getDataCheckStatus());
 		assertEquals(DashboardUtils.STRING_MISSING_VALUE, cruise.getDatasetId() );
 		assertEquals(DashboardUtils.STRING_MISSING_VALUE, cruise.getOwner());
@@ -237,7 +237,7 @@ public class DashboardDatasetTest {
 		assertEquals(DashboardUtils.ARCHIVE_STATUS_NOT_SUBMITTED, cruise.getArchiveStatus());
 		assertEquals(DashboardUtils.STATUS_NOT_SUBMITTED, cruise.getSubmitStatus());
 		assertEquals(0, cruise.getAddlDocs().size());
-		assertEquals(DashboardUtils.STRING_MISSING_VALUE, cruise.getOmeTimestamp());
+		assertEquals(DashboardUtils.STRING_MISSING_VALUE, cruise.getMdTimestamp());
 		assertEquals(DashboardUtils.STRING_MISSING_VALUE, cruise.getDataCheckStatus());
 		assertEquals(DashboardUtils.STRING_MISSING_VALUE, cruise.getDatasetId() );
 		assertEquals(DashboardUtils.STRING_MISSING_VALUE, cruise.getOwner());
@@ -267,7 +267,7 @@ public class DashboardDatasetTest {
 		assertEquals(DashboardUtils.ARCHIVE_STATUS_NOT_SUBMITTED, cruise.getArchiveStatus());
 		assertEquals(DashboardUtils.STATUS_NOT_SUBMITTED, cruise.getSubmitStatus());
 		assertEquals(0, cruise.getAddlDocs().size());
-		assertEquals(DashboardUtils.STRING_MISSING_VALUE, cruise.getOmeTimestamp());
+		assertEquals(DashboardUtils.STRING_MISSING_VALUE, cruise.getMdTimestamp());
 		assertEquals(DashboardUtils.STRING_MISSING_VALUE, cruise.getDataCheckStatus());
 		assertEquals(DashboardUtils.STRING_MISSING_VALUE, cruise.getDatasetId() );
 		assertEquals(DashboardUtils.STRING_MISSING_VALUE, cruise.getOwner());
@@ -295,7 +295,7 @@ public class DashboardDatasetTest {
 		assertEquals(DashboardUtils.ARCHIVE_STATUS_NOT_SUBMITTED, cruise.getArchiveStatus());
 		assertEquals(DashboardUtils.STATUS_NOT_SUBMITTED, cruise.getSubmitStatus());
 		assertEquals(0, cruise.getAddlDocs().size());
-		assertEquals(DashboardUtils.STRING_MISSING_VALUE, cruise.getOmeTimestamp());
+		assertEquals(DashboardUtils.STRING_MISSING_VALUE, cruise.getMdTimestamp());
 		assertEquals(DashboardUtils.STRING_MISSING_VALUE, cruise.getDataCheckStatus());
 		assertEquals(DashboardUtils.STRING_MISSING_VALUE, cruise.getDatasetId() );
 		assertEquals(DashboardUtils.STRING_MISSING_VALUE, cruise.getOwner());
@@ -323,7 +323,7 @@ public class DashboardDatasetTest {
 		assertEquals(DashboardUtils.ARCHIVE_STATUS_NOT_SUBMITTED, cruise.getArchiveStatus());
 		assertEquals(DashboardUtils.STATUS_NOT_SUBMITTED, cruise.getSubmitStatus());
 		assertEquals(0, cruise.getAddlDocs().size());
-		assertEquals(DashboardUtils.STRING_MISSING_VALUE, cruise.getOmeTimestamp());
+		assertEquals(DashboardUtils.STRING_MISSING_VALUE, cruise.getMdTimestamp());
 		assertEquals(DashboardUtils.STRING_MISSING_VALUE, cruise.getDataCheckStatus());
 		assertEquals(DashboardUtils.STRING_MISSING_VALUE, cruise.getDatasetId() );
 		assertEquals(DashboardUtils.STRING_MISSING_VALUE, cruise.getOwner());
@@ -350,7 +350,7 @@ public class DashboardDatasetTest {
 		assertEquals(DashboardUtils.ARCHIVE_STATUS_NOT_SUBMITTED, cruise.getArchiveStatus());
 		assertEquals(DashboardUtils.STATUS_NOT_SUBMITTED, cruise.getSubmitStatus());
 		assertEquals(0, cruise.getAddlDocs().size());
-		assertEquals(DashboardUtils.STRING_MISSING_VALUE, cruise.getOmeTimestamp());
+		assertEquals(DashboardUtils.STRING_MISSING_VALUE, cruise.getMdTimestamp());
 		assertEquals(DashboardUtils.STRING_MISSING_VALUE, cruise.getDataCheckStatus());
 		assertEquals(DashboardUtils.STRING_MISSING_VALUE, cruise.getDatasetId() );
 		assertEquals(DashboardUtils.STRING_MISSING_VALUE, cruise.getOwner());
@@ -382,7 +382,7 @@ public class DashboardDatasetTest {
 		assertEquals(DashboardUtils.ARCHIVE_STATUS_NOT_SUBMITTED, cruise.getArchiveStatus());
 		assertEquals(DashboardUtils.STATUS_NOT_SUBMITTED, cruise.getSubmitStatus());
 		assertEquals(0, cruise.getAddlDocs().size());
-		assertEquals(DashboardUtils.STRING_MISSING_VALUE, cruise.getOmeTimestamp());
+		assertEquals(DashboardUtils.STRING_MISSING_VALUE, cruise.getMdTimestamp());
 		assertEquals(DashboardUtils.STRING_MISSING_VALUE, cruise.getDataCheckStatus());
 		assertEquals(DashboardUtils.STRING_MISSING_VALUE, cruise.getDatasetId() );
 		assertEquals(DashboardUtils.STRING_MISSING_VALUE, cruise.getOwner());
@@ -417,7 +417,7 @@ public class DashboardDatasetTest {
 		assertEquals(DashboardUtils.ARCHIVE_STATUS_NOT_SUBMITTED, cruise.getArchiveStatus());
 		assertEquals(DashboardUtils.STATUS_NOT_SUBMITTED, cruise.getSubmitStatus());
 		assertEquals(0, cruise.getAddlDocs().size());
-		assertEquals(DashboardUtils.STRING_MISSING_VALUE, cruise.getOmeTimestamp());
+		assertEquals(DashboardUtils.STRING_MISSING_VALUE, cruise.getMdTimestamp());
 		assertEquals(DashboardUtils.STRING_MISSING_VALUE, cruise.getDataCheckStatus());
 		assertEquals(DashboardUtils.STRING_MISSING_VALUE, cruise.getDatasetId() );
 		assertEquals(DashboardUtils.STRING_MISSING_VALUE, cruise.getOwner());
@@ -449,7 +449,7 @@ public class DashboardDatasetTest {
 		assertEquals(DashboardUtils.ARCHIVE_STATUS_NOT_SUBMITTED, cruise.getArchiveStatus());
 		assertEquals(DashboardUtils.STATUS_NOT_SUBMITTED, cruise.getSubmitStatus());
 		assertEquals(0, cruise.getAddlDocs().size());
-		assertEquals(DashboardUtils.STRING_MISSING_VALUE, cruise.getOmeTimestamp());
+		assertEquals(DashboardUtils.STRING_MISSING_VALUE, cruise.getMdTimestamp());
 		assertEquals(DashboardUtils.STRING_MISSING_VALUE, cruise.getDataCheckStatus());
 		assertEquals(DashboardUtils.STRING_MISSING_VALUE, cruise.getDatasetId() );
 		assertEquals(DashboardUtils.STRING_MISSING_VALUE, cruise.getOwner());
@@ -482,7 +482,7 @@ public class DashboardDatasetTest {
 		assertEquals(DashboardUtils.ARCHIVE_STATUS_NOT_SUBMITTED, cruise.getArchiveStatus());
 		assertEquals(DashboardUtils.STATUS_NOT_SUBMITTED, cruise.getSubmitStatus());
 		assertEquals(0, cruise.getAddlDocs().size());
-		assertEquals(DashboardUtils.STRING_MISSING_VALUE, cruise.getOmeTimestamp());
+		assertEquals(DashboardUtils.STRING_MISSING_VALUE, cruise.getMdTimestamp());
 		assertEquals(DashboardUtils.STRING_MISSING_VALUE, cruise.getDataCheckStatus());
 		assertEquals(DashboardUtils.STRING_MISSING_VALUE, cruise.getDatasetId() );
 		assertEquals(DashboardUtils.STRING_MISSING_VALUE, cruise.getOwner());
@@ -516,7 +516,7 @@ public class DashboardDatasetTest {
 		assertEquals(DashboardUtils.ARCHIVE_STATUS_NOT_SUBMITTED, cruise.getArchiveStatus());
 		assertEquals(DashboardUtils.STATUS_NOT_SUBMITTED, cruise.getSubmitStatus());
 		assertEquals(0, cruise.getAddlDocs().size());
-		assertEquals(DashboardUtils.STRING_MISSING_VALUE, cruise.getOmeTimestamp());
+		assertEquals(DashboardUtils.STRING_MISSING_VALUE, cruise.getMdTimestamp());
 		assertEquals(DashboardUtils.STRING_MISSING_VALUE, cruise.getDataCheckStatus());
 		assertEquals(DashboardUtils.STRING_MISSING_VALUE, cruise.getDatasetId() );
 		assertEquals(DashboardUtils.STRING_MISSING_VALUE, cruise.getOwner());
@@ -536,7 +536,7 @@ public class DashboardDatasetTest {
 		String myOwner = "SocatUser";
 		String myExpocode = "ABCD20050728";
 		String myDataStatus = "Acceptable";
-		String myOmeTimestamp = "2014-02-21 9:22";
+		String myMdTimestamp = "2014-02-21 9:22";
 		TreeSet<String> myMetaNames = new TreeSet<String>(Arrays.asList(
 				"ABCD20050728.txt; 2014-02-21 9:23", 
 				"ABCD20050728_2.doc; 2014-02-21 9:24", 
@@ -612,10 +612,10 @@ public class DashboardDatasetTest {
 		assertEquals(firstCruise.hashCode(), secondCruise.hashCode());
 		assertEquals(firstCruise, secondCruise);
 
-		firstCruise.setOmeTimestamp(myOmeTimestamp);
+		firstCruise.setMdTimestamp(myMdTimestamp);
 		assertTrue( firstCruise.hashCode() != secondCruise.hashCode() );
 		assertFalse( firstCruise.equals(secondCruise) );
-		secondCruise.setOmeTimestamp(myOmeTimestamp);
+		secondCruise.setMdTimestamp(myMdTimestamp);
 		assertEquals(firstCruise.hashCode(), secondCruise.hashCode());
 		assertEquals(firstCruise, secondCruise);
 

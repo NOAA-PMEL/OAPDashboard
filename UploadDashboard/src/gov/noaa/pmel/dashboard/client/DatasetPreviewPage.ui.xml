@@ -59,7 +59,7 @@
 			</g:ResizeLayoutPanel>
 			<g:FlowPanel addStyleNames="{style.horizontalbuttonpanel}">
 				<g:Button addStyleNames="{style.horizontalbutton}" ui:field="refreshButton" />
-				<g:Button addStyleNames="{style.horizontalbutton}" ui:field="dismissButton" />
+				<g:Button addStyleNames="{style.horizontalbutton}" ui:field="doneButton" />
 			</g:FlowPanel>
 		</g:FlowPanel>
 	</g:ScrollPanel>

@@ -26,7 +26,7 @@ public class DashboardDataset implements Serializable, IsSerializable {
 	protected String owner;
 	protected String datasetId;
 	protected String dataCheckStatus;
-	protected String omeTimestamp;
+	protected String mdTimestamp;
 	protected TreeSet<String> addlDocs;
 	protected String submitStatus;
 	protected String archiveStatus;
@@ -54,7 +54,7 @@ public class DashboardDataset implements Serializable, IsSerializable {
 		owner = DashboardUtils.STRING_MISSING_VALUE;
 		datasetId = DashboardUtils.STRING_MISSING_VALUE;
 		dataCheckStatus = DashboardUtils.CHECK_STATUS_NOT_CHECKED;
-		omeTimestamp = DashboardUtils.STRING_MISSING_VALUE;
+		mdTimestamp = DashboardUtils.STRING_MISSING_VALUE;
 		addlDocs = new TreeSet<String>();
 		submitStatus = DashboardUtils.STATUS_NOT_SUBMITTED;
 		archiveStatus = DashboardUtils.ARCHIVE_STATUS_NOT_SUBMITTED;
@@ -199,8 +199,8 @@ public class DashboardDataset implements Serializable, IsSerializable {
 	 * 		the OME metadata timestamp; 
 	 * 		never null but may be {@link DashboardUtils#STRING_MISSING_VALUE}
 	 */
-	public String getOmeTimestamp() {
-		return omeTimestamp;
+	public String getMdTimestamp() {
+		return mdTimestamp;
 	}
 
 	/**
@@ -208,11 +208,11 @@ public class DashboardDataset implements Serializable, IsSerializable {
 	 * 		the OME metadata timestamp to set;
 	 * 		if null, sets to {@link DashboardUtils#STRING_MISSING_VALUE}
 	 */
-	public void setOmeTimestamp(String omeTimestamp) {
+	public void setMdTimestamp(String omeTimestamp) {
 		if ( omeTimestamp == null )
-			this.omeTimestamp = DashboardUtils.STRING_MISSING_VALUE;
+			this.mdTimestamp = DashboardUtils.STRING_MISSING_VALUE;
 		else
-			this.omeTimestamp = omeTimestamp;
+			this.mdTimestamp = omeTimestamp;
 	}
 
 	/**
@@ -511,7 +511,7 @@ public class DashboardDataset implements Serializable, IsSerializable {
 		result = result * prime + owner.hashCode();
 		result = result * prime + datasetId.hashCode();
 		result = result * prime + dataCheckStatus.hashCode();
-		result = result * prime + omeTimestamp.hashCode();
+		result = result * prime + mdTimestamp.hashCode();
 		result = result * prime + addlDocs.hashCode();
 		result = result * prime + submitStatus.hashCode();
 		result = result * prime + archiveStatus.hashCode();
@@ -550,7 +550,7 @@ public class DashboardDataset implements Serializable, IsSerializable {
 			return false;
 		if ( ! dataCheckStatus.equals(other.dataCheckStatus) )
 			return false;
-		if ( ! omeTimestamp.equals(other.omeTimestamp) )
+		if ( ! mdTimestamp.equals(other.mdTimestamp) )
 			return false;
 		if ( ! addlDocs.equals(other.addlDocs) )
 			return false;
@@ -591,7 +591,7 @@ public class DashboardDataset implements Serializable, IsSerializable {
 				",\n    owner=" + owner + 
 				",\n    datasetId=" + datasetId + 
 				",\n    dataCheckStatus=" + dataCheckStatus +
-				",\n    omeTimestamp=" + omeTimestamp + 
+				",\n    omeTimestamp=" + mdTimestamp + 
 				",\n    addlDocs=" + addlDocs.toString() +
 				",\n    submitStatus=" + submitStatus + 
 				",\n    archiveStatus=" + archiveStatus + 
@@ -710,7 +710,7 @@ public class DashboardDataset implements Serializable, IsSerializable {
 	 * Note that this is inconsistent with DashboardDataset.equals 
 	 * in that this is only examining one field of DashboardDataset.
 	 */
-	public static Comparator<DashboardDataset> omeTimestampComparator = 
+	public static Comparator<DashboardDataset> mdTimestampComparator = 
 			new Comparator<DashboardDataset>() {
 		@Override
 		public int compare(DashboardDataset d1, DashboardDataset d2) {
@@ -720,7 +720,7 @@ public class DashboardDataset implements Serializable, IsSerializable {
 				return -1;
 			if ( d2 == null )
 				return 1;
-			return d1.getOmeTimestamp().compareTo(d2.getOmeTimestamp());
+			return d1.getMdTimestamp().compareTo(d2.getMdTimestamp());
 		}
 	};
 

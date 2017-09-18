@@ -210,7 +210,8 @@ public class ArchiveFilesBundler extends VersionedFileHandler {
 			// Exclude the (dataset)/OME.xml document at this time;
 			// do include the (dataset)/PI_OME.xml 
 			String filename = mdata.getFilename();
-			if ( ! filename.equals(DashboardUtils.OME_FILENAME) ) {
+			// XXX TODO: OME_FILENAME check
+			if ( ! filename.equals(DashboardUtils.metadataFilename(mdata.getDatasetId())) ) {
 				addlDocs.add(metadataHandler.getMetadataFile(stdId, filename));
 			}
 		}
@@ -224,6 +225,9 @@ public class ArchiveFilesBundler extends VersionedFileHandler {
 		try {
 			copyFileToBundle(zipOut, dataFile);
 			infoMsg += "    " + dataFile.getName() + "\n";
+			File oadsMetaFile = metadataHandler.getMetadataFile(stdId);
+			copyFileToBundle(zipOut, oadsMetaFile);
+			infoMsg += "    " + oadsMetaFile.getName() + "\n";
 			for ( File metaFile : addlDocs ) {
 				copyFileToBundle(zipOut, metaFile);
 				infoMsg += "    " + metaFile.getName() + "\n";

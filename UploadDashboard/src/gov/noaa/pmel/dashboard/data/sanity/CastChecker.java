@@ -249,6 +249,40 @@ public class CastChecker {
 		for (int idx = 1; idx < castRows.size(); idx++) {
 			int prevRowIdx = castRows.get(idx-1).intValue();
 			int nextRowIdx = castRows.get(idx).intValue();
+			double thisLat = lats[prevRowIdx];
+			double thisLon = lons[prevRowIdx];
+			if ( thisLat <= -90 || thisLat >= 90 ) {
+				int thisRow = nextRowIdx;
+				String genlComment = "Bad cast latitude.";
+				String detailMsg = "Invalid latitude for cast " + cs.toString() +
+	                                " at row " + thisRow + ". " +
+									" Found [" + lats[prevRowIdx] + "] ";
+				ADCMessage amsg = new ADCMessage();
+				amsg.setSeverity(Severity.ERROR); 
+				amsg.setRowIndex(prevRowIdx);
+				amsg.setColIndex(latCol);
+				amsg.setColName("latitude");
+				amsg.setDetailedComment(detailMsg);
+				amsg.setGeneralComment(genlComment);
+				addTimeAndLocation(amsg, cs, idx);
+				stda.addStandardizationMessage(amsg);
+			}
+			if ( thisLon <= -180 || thisLon >= 180 ) {
+				int thisRow = nextRowIdx;
+				String genlComment = "Bad cast longitude.";
+				String detailMsg = "Invalid longitude for cast " + cs.toString() +
+	                                " at row " + thisRow + ". " +
+									" Found [" + lons[prevRowIdx] + "] ";
+				ADCMessage amsg = new ADCMessage();
+				amsg.setSeverity(Severity.ERROR); 
+				amsg.setRowIndex(prevRowIdx);
+				amsg.setColIndex(lonCol);
+				amsg.setColName("longitude");
+				amsg.setDetailedComment(detailMsg);
+				amsg.setGeneralComment(genlComment);
+				addTimeAndLocation(amsg, cs, idx);
+				stda.addStandardizationMessage(amsg);
+			}
 			if ( ! ( lats[prevRowIdx].equals(lats[nextRowIdx]) )) {
 				int prevRow = prevRowIdx+1;
 				int nextRow = nextRowIdx+1;

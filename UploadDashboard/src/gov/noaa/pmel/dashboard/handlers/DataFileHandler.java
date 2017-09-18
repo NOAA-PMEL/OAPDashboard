@@ -26,8 +26,8 @@ import org.tmatesoft.svn.core.SVNException;
 
 import gov.noaa.pmel.dashboard.datatype.DashDataType;
 import gov.noaa.pmel.dashboard.datatype.KnownDataTypes;
+import gov.noaa.pmel.dashboard.oads.DashboardOADSMetadata;
 import gov.noaa.pmel.dashboard.server.DashboardConfigStore;
-import gov.noaa.pmel.dashboard.server.DashboardOmeMetadata;
 import gov.noaa.pmel.dashboard.server.DashboardServerUtils;
 import gov.noaa.pmel.dashboard.shared.DashboardDataset;
 import gov.noaa.pmel.dashboard.shared.DashboardDatasetData;
@@ -51,7 +51,7 @@ public class DataFileHandler extends VersionedFileHandler {
 	private static final String UPLOAD_TIMESTAMP_ID = "uploadtimestamp";
 	private static final String DOI_ID = "doi";
 	private static final String DATA_CHECK_STATUS_ID = "datacheckstatus";
-	private static final String OME_TIMESTAMP_ID = "ometimestamp";
+	private static final String MD_TIMESTAMP_ID = "mdtimestamp";
 	private static final String ADDL_DOC_TITLES_ID = "addldoctitles";
 	private static final String SUBMIT_STATUS_ID = "submitstatus";
 	private static final String ARCHIVE_STATUS_ID = "archivestatus";
@@ -100,7 +100,7 @@ public class DataFileHandler extends VersionedFileHandler {
 	 * @throws IllegalArgumentException
 	 * 		if datasetId is not a valid dataset ID
 	 */
-	File datasetInfoFile(String datasetId) throws IllegalArgumentException {
+	public File datasetInfoFile(String datasetId) throws IllegalArgumentException {
 		// Check and standardize the dataset ID
 		String upperExpo = DashboardServerUtils.checkDatasetID(datasetId);
 		// Create the file with the full path name of the properties file
@@ -562,7 +562,7 @@ public class DataFileHandler extends VersionedFileHandler {
 		// Data-check status string
 		datasetProps.setProperty(DATA_CHECK_STATUS_ID, dataset.getDataCheckStatus());
 		// OME metadata timestamp
-		datasetProps.setProperty(OME_TIMESTAMP_ID, dataset.getOmeTimestamp());
+		datasetProps.setProperty(MD_TIMESTAMP_ID, dataset.getMdTimestamp());
 		// Metadata documents
 		datasetProps.setProperty(ADDL_DOC_TITLES_ID, 
 				DashboardUtils.encodeStringArrayList(dataset.getAddlDocs()));
@@ -746,22 +746,25 @@ public class DataFileHandler extends VersionedFileHandler {
 		if ( dataset == null )
 			throw new IllegalArgumentException("No dataset with the ID " + datasetId);
 		String timestamp = addlDoc.getUploadTimestamp();
-		if ( addlDoc instanceof DashboardOmeMetadata ) {
+		
+		// XXX TODO: OME_FILENAME check
+		if ( addlDoc instanceof DashboardOADSMetadata ) {
 			// Assign the OME metadata timestamp for this cruise and save
-			if ( ! dataset.getOmeTimestamp().equals(timestamp) ) {
-				dataset.setOmeTimestamp(timestamp);
+			if ( ! dataset.getMdTimestamp().equals(timestamp) ) {
+				dataset.setMdTimestamp(timestamp);
 				saveDatasetInfoToFile(dataset, "Assigned new OME metadata file " +
 						"timestamp '" + timestamp + "' to dataset " + datasetId);
 			}
 		}
 		else {
 			String uploadFilename = addlDoc.getFilename();
-			if ( DashboardUtils.OME_FILENAME.equals(uploadFilename) )
+			// XXX TODO: OME_FILENAME check
+			if ( DashboardUtils.metadataFilename(datasetId).equals(uploadFilename) )
 				throw new IllegalArgumentException("Supplemental documents cannot " +
-						"have the upload filename of " + DashboardUtils.OME_FILENAME);
-			if ( DashboardUtils.PI_OME_FILENAME.equals(uploadFilename) )
-				throw new IllegalArgumentException("Supplemental documents cannot " +
-						"have the upload filename of " + DashboardUtils.PI_OME_FILENAME);
+						"have the upload filename of " + DashboardUtils.metadataFilename(datasetId));
+//			if ( DashboardUtils.PI_OME_FILENAME.equals(uploadFilename) )
+//				throw new IllegalArgumentException("Supplemental documents cannot " +
+//						"have the upload filename of " + DashboardUtils.PI_OME_FILENAME);
 			// Work directly on the additional documents list in the cruise object
 			TreeSet<String> addlDocTitles = dataset.getAddlDocs();
 			String titleToDelete = null;
@@ -955,17 +958,18 @@ public class DataFileHandler extends VersionedFileHandler {
 			// Delete the metadata and additional documents associated with this cruise
 			MetadataFileHandler metadataHandler = configStore.getMetadataFileHandler();
 			try {
-				metadataHandler.deleteMetadata(username, datasetId, DashboardUtils.OME_FILENAME);
+				// XXX TODO: OME_FILENAME check
+				metadataHandler.deleteMetadata(username, datasetId, DashboardUtils.metadataFilename(datasetId));
 			} catch (Exception ex) {
 				// Ignore - may not exist
 				;
 			}
-			try {
-				metadataHandler.deleteMetadata(username, datasetId, DashboardUtils.PI_OME_FILENAME);
-			} catch (Exception ex) {
-				// Ignore - may not exist
-				;
-			}
+//			try {
+//				metadataHandler.deleteMetadata(username, datasetId, DashboardUtils.PI_OME_FILENAME);
+//			} catch (Exception ex) {
+//				// Ignore - may not exist
+//				;
+//			}
 			for ( String mdataTitle : dataset.getAddlDocs() ) {
 				String filename = DashboardMetadata.splitAddlDocsTitle(mdataTitle)[0];
 				try {
@@ -1051,11 +1055,11 @@ public class DataFileHandler extends VersionedFileHandler {
 		dataset.setDataCheckStatus(value);
 
 		// OME metadata timestamp
-		value = cruiseProps.getProperty(OME_TIMESTAMP_ID);
+		value = cruiseProps.getProperty(MD_TIMESTAMP_ID);
 		if ( value == null )
 			throw new IllegalArgumentException("No property value for " + 
-					OME_TIMESTAMP_ID + " given in " + infoFile.getPath());			
-		dataset.setOmeTimestamp(value);
+					MD_TIMESTAMP_ID + " given in " + infoFile.getPath());			
+		dataset.setMdTimestamp(value);
 
 		// Metadata documents
 		value = cruiseProps.getProperty(ADDL_DOC_TITLES_ID);

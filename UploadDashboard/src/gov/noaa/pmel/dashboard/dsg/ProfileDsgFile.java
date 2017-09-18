@@ -7,21 +7,27 @@ import java.io.File;
 import java.io.IOException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.TimeZone;
+import java.util.TreeSet;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import java.util.Map.Entry;
+import java.util.Set;
 
 import gov.noaa.pmel.dashboard.datatype.CastSet;
 import gov.noaa.pmel.dashboard.datatype.CharDashDataType;
 import gov.noaa.pmel.dashboard.datatype.DashDataType;
 import gov.noaa.pmel.dashboard.datatype.DoubleDashDataType;
 import gov.noaa.pmel.dashboard.datatype.IntDashDataType;
+import gov.noaa.pmel.dashboard.datatype.KnownDataTypes;
 import gov.noaa.pmel.dashboard.datatype.StringDashDataType;
 import gov.noaa.pmel.dashboard.server.DashboardServerUtils;
 import gov.noaa.pmel.dashboard.shared.DashboardUtils;
@@ -85,8 +91,56 @@ public class ProfileDsgFile extends DsgNcFile {
 	// sample_latitude(n_obs)
 	// sample_longitude(n_obs)
 	
+//// QC'd Variables
+//	CTD_salinity
+//	CTD_Sal_QC
+//	Bottle_salt
+//	Bottle_Salt_QC
+//	CTD_oxygen (µmol/kg)
+//	CTD_oxygen_QC
+//	Bottle_oxygen (µmol/kg)
+//	Bottle_oxygen_QC
+//	Silicate (µmol/kg)
+//	Silicate_QC
+//	Nitrate (µmol/kg)
+//	Nitrate_QC
+//	Nitrite (µmol/kg)
+//	Nitrite_QC
+//	Phosphate (µmol/kg)
+//	Phosphate_QC
+//	Ammonium (µmol/kg)
+//	Ammonium_QC
+//	Nutrients_QC
+//	Nutrient_analysis_temperature
+//	DIC (µmol/kg)
+//	DIC_QC
+//	Alkalinity (µmol/kg)
+//	Alkalinity_QC
+//	pH_TOT@25
+//	pH_TOT@25_QC
+//	pH_TMP
+//	Carbonate ion
+//	Carbonate_ion_QC
+	
+	private static final String[] qcd_vars = {
+		"ctd_salinity",
+		"salinity",
+		"ctd_oxygen",
+		"oxygen",
+		"silicate",
+		"nitrate",
+		"nitrite",
+		"phosphate",
+		"ammonium",
+		"inorganic_carbon",
+		"alkalinity",
+		"ph_total",
+		"carbonate_ion"
+	};
 	
 	private static final String SAMPLES_PER_CAST_NAME = "rowCount";
+
+	private static final String QC_VARNAME_EXTENSION = "_qc";
 	
 	enum TimeFormat {
 		tf_8601Z("yyyy-mm-dd'T'hh:mm:ssZ"),
@@ -261,6 +315,8 @@ public class ProfileDsgFile extends DsgNcFile {
 		ncfile.flush();
 	}
 		
+	private Map<String, DashDataType<?>> qcCols = new HashMap<>();
+	
 	private void addObservationVariables(NetcdfFileWriter ncfile) {
 		addSampleTimeVariable(ncfile, _dataDimList);
 		addSampleLocationVariables(ncfile, _dataDimList);
@@ -268,6 +324,10 @@ public class ProfileDsgFile extends DsgNcFile {
 		for (DashDataType<?> dtype : dsgVariableTypes) {
 			if ( excludeType(dtype)) {
 				logger.debug("Skipping excluded column: " + dtype);
+				continue;
+			}
+			if ( dtype.isQCType()) {
+				qcCols.put(dtype.getVarName(), dtype);
 				continue;
 			}
 			DashDataType<?> dataCol =  _stdUser.findDataColumn(dtype.getVarName());
@@ -278,6 +338,40 @@ public class ProfileDsgFile extends DsgNcFile {
 			Variable var = addVariableFor(ncfile, dtype, ElemCategory.DATA);
 			logger.debug("Added data variable " + var);
 		}
+	}
+	
+	private void addQcFlagVariables(NetcdfFileWriter ncfile, KnownDataTypes dataTypes) {
+		for (String qcdVar : qcd_vars) {
+			DashDataType<?> dataCol =  _stdUser.findDataColumn(qcdVar);
+			if ( dataCol == null ) {
+				logger.info("No data column found for " + qcdVar+". Skipping QC variable.");
+				continue;
+			}
+			String qcName = qcdVar + QC_VARNAME_EXTENSION;
+			if ( qcCols.containsKey(qcName)) {
+				qcCols.remove(qcName);
+			} else {
+				System.out.println("Need to add column for :" + qcName);
+			}
+			DashDataType<?> qcCol =  _stdUser.findDataColumn(qcName);
+			if ( qcCol == null ) {
+				System.out.println("No column found for " + qcName + ". Adding one.");
+				qcCol = dataTypes.getDataType(qcName);
+			}
+			if ( qcCol == null ) {
+				System.out.println("No datatype found for " + qcName + ". Skipping.");
+				continue;
+			}
+			Variable var = addVariableFor(ncfile, qcCol, ElemCategory.DATA);
+			logger.debug("Added qc variable " + var);
+		}
+		if ( ! qcCols.isEmpty()) {
+			for (DashDataType<?> qcCol : qcCols.values()) {
+				Variable var = addVariableFor(ncfile, qcCol, ElemCategory.DATA);
+				logger.debug("Added qc variable " + var);
+			}
+		}
+		
 	}
 		
 	private boolean excludeType(DashDataType<?> dtype) {
@@ -420,6 +514,12 @@ public class ProfileDsgFile extends DsgNcFile {
 	@Override
 	public void create(DsgMetadata metaData, StdDataArray fileData) 
 			throws IllegalArgumentException, IOException, InvalidRangeException, IllegalAccessException {
+		throw new IllegalStateException("Not implemented");
+	}
+		
+	@Override
+	public void create(DsgMetadata metaData, StdUserDataArray fileData, KnownDataTypes dataTypes) 
+			throws IllegalArgumentException, IOException, InvalidRangeException, IllegalAccessException {
 		if ( metaData == null )
 			throw new IllegalArgumentException("no metadata given");
 		metadata = metaData;
@@ -441,6 +541,7 @@ public class ProfileDsgFile extends DsgNcFile {
 			addMetadataVariables(ncfile);
 			addProfileVariables(ncfile);
 			addObservationVariables(ncfile);
+			addQcFlagVariables(ncfile, dataTypes);
 
 			ncfile.create();
 
@@ -549,7 +650,10 @@ public class ProfileDsgFile extends DsgNcFile {
 	}
 	protected DataType dataTypeFor(DashDataType<?> dashType) {
 		String dataTypeName = dashType.getDataClassName().toLowerCase();
-		switch (dataTypeName) {
+		return dataTypeFor(dataTypeName);
+	}
+	protected DataType dataTypeFor(String dataTypeName) {
+		switch (dataTypeName.toLowerCase()) {
 			case "double":
 				return DataType.DOUBLE;
 			case "integer":

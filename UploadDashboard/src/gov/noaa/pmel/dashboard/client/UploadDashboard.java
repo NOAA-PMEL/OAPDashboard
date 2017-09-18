@@ -6,6 +6,7 @@ import java.util.List;
 import java.util.Map;
 
 import com.google.gwt.core.client.EntryPoint;
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.Style;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
@@ -18,9 +19,10 @@ import com.google.gwt.user.client.ui.Button;
 import com.google.gwt.user.client.ui.HTML;
 import com.google.gwt.user.client.ui.PopupPanel;
 import com.google.gwt.user.client.ui.RootLayoutPanel;
-import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.UIObject;
 import com.google.gwt.user.client.ui.VerticalPanel;
+
+import gov.noaa.pmel.dashboard.shared.PreviewPlotImage;
 
 public class UploadDashboard implements EntryPoint, ValueChangeHandler<String> {
 
@@ -51,6 +53,7 @@ public class UploadDashboard implements EntryPoint, ValueChangeHandler<String> {
 	// Column widths in em's
 	static final double CHECKBOX_COLUMN_WIDTH = 2.5;
 	static final double NARROW_COLUMN_WIDTH = 5.0;
+	static final double SELECT_COLUMN_WIDTH = 6.2;
 	static final double NORMAL_COLUMN_WIDTH = 9.0;
 	static final double FILENAME_COLUMN_WIDTH = 16.0;
 
@@ -62,6 +65,7 @@ public class UploadDashboard implements EntryPoint, ValueChangeHandler<String> {
 
 	// Color for row numbers
 	static final String ROW_NUMBER_COLOR = "#666666";
+	private static final String UPLOAD_DASHBOARD_SERVER_NAME = "OAPUploadDashboard";
 
 	// Singleton instance of this object
 	private static UploadDashboard singleton = null;
@@ -126,9 +130,10 @@ public class UploadDashboard implements EntryPoint, ValueChangeHandler<String> {
 		}
 		popups.clear();
 	}
-	public static void showPreviewImage(final CompositeWithUsername page, String imgName, String imgUrl) {
+	public static void showPreviewImage(final CompositeWithUsername page, PreviewPlotImage imgInfo, String imgUrl) {
 		final WindowBox dd = new WindowBox(true,  true);
-		dd.setText(imgName);
+		dd.addStyleName("popupPreviewDialogBox");
+		dd.setText(imgInfo.imageTitle);
 		HTML html = new HTML(buildImagePopupHtml(imgUrl));
 		VerticalPanel mainPanel = new VerticalPanel();
 		mainPanel.add(html);
@@ -320,6 +325,18 @@ public class UploadDashboard implements EntryPoint, ValueChangeHandler<String> {
 			return;
 		singleton.historyHandlerReg.removeHandler();
 		singleton.historyHandlerReg = null;
+	}
+
+	public static String getBaseUrl() {
+		String baseUrl = GWT.getHostPageBaseURL();
+		if ( ! baseUrl.endsWith("/")) {
+			baseUrl += "/";
+		}
+		String appName = UPLOAD_DASHBOARD_SERVER_NAME;
+//		if ( baseUrl.indexOf(appName) == -1 ) {
+			baseUrl += appName + "/";
+//		}
+		return baseUrl;
 	}
 
 }

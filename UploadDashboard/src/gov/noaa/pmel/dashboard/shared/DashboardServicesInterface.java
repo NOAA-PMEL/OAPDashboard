@@ -3,6 +3,7 @@
  */
 package gov.noaa.pmel.dashboard.shared;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Set;
@@ -256,9 +257,14 @@ public interface DashboardServicesInterface extends RemoteService {
 	 * 		if authentication failed, or
 	 * 		if the appropriate content for the OME could not be found
 	 */
-	String getOmeXmlPath(String username, String datasetId, 
-			String previousId) throws IllegalArgumentException;
+	// XXX NOT USED
+	// XXX TODO: OME_FILENAME check
+//	String (String username, String datasetId, 
+//			String previousId) throws IllegalArgumentException;
 
+	MetadataPreviewInfo getMetadataPreviewInfo(String username, String datasetId)
+			throws NotFoundException, IllegalArgumentException;
+			
 	/**
 	 * Requests that the preview images for a dataset be generated.
 	 * 

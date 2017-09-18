@@ -6,7 +6,13 @@ package gov.noaa.pmel.dashboard.server;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FilenameFilter;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.attribute.BasicFileAttributeView;
+import java.nio.file.attribute.BasicFileAttributes;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -22,7 +28,6 @@ import com.google.gwt.user.server.rpc.RemoteServiceServlet;
 
 import gov.noaa.pmel.dashboard.actions.DatasetChecker;
 import gov.noaa.pmel.dashboard.actions.DatasetModifier;
-import gov.noaa.pmel.dashboard.actions.OADSMetadata;
 import gov.noaa.pmel.dashboard.datatype.DashDataType;
 import gov.noaa.pmel.dashboard.datatype.KnownDataTypes;
 import gov.noaa.pmel.dashboard.dsg.StdUserDataArray;
@@ -30,17 +35,23 @@ import gov.noaa.pmel.dashboard.handlers.DataFileHandler;
 import gov.noaa.pmel.dashboard.handlers.MetadataFileHandler;
 import gov.noaa.pmel.dashboard.handlers.PreviewPlotsHandler;
 import gov.noaa.pmel.dashboard.handlers.UserFileHandler;
+import gov.noaa.pmel.dashboard.oads.DashboardOADSMetadata;
+import gov.noaa.pmel.dashboard.oads.OADSMetadata;
 import gov.noaa.pmel.dashboard.shared.DashboardDataset;
 import gov.noaa.pmel.dashboard.shared.DashboardDatasetData;
 import gov.noaa.pmel.dashboard.shared.DashboardDatasetList;
 import gov.noaa.pmel.dashboard.shared.DashboardMetadata;
-import gov.noaa.pmel.dashboard.shared.DashboardOADSMetadata;
 import gov.noaa.pmel.dashboard.shared.DashboardServicesInterface;
 import gov.noaa.pmel.dashboard.shared.DashboardUtils;
 import gov.noaa.pmel.dashboard.shared.DataColumnType;
+import gov.noaa.pmel.dashboard.shared.FileInfo;
+import gov.noaa.pmel.dashboard.shared.MetadataPreviewInfo;
+import gov.noaa.pmel.dashboard.shared.NotFoundException;
+import gov.noaa.pmel.dashboard.shared.PreviewPlotImage;
 import gov.noaa.pmel.dashboard.shared.PreviewPlotResponse;
 import gov.noaa.pmel.dashboard.shared.ADCMessageList;
 import gov.noaa.pmel.dashboard.shared.TypesDatasetDataPair;
+import gov.noaa.pmel.dashboard.util.xml.XmlUtils;
 
 /**
  * Implementation of DashboardServicesInterface
@@ -67,6 +78,11 @@ public class DashboardServices extends RemoteServiceServlet implements Dashboard
 			// Probably null pointer exception - leave username null
 		}
 		logger.info("logging out user " + username);
+		try {
+			request.logout();
+		} catch ( Exception ex ) {
+			logger.error("request.logout failed: " + ex);
+		}
 		HttpSession session = request.getSession(false);
 		try {
 			session.invalidate();
@@ -74,12 +90,6 @@ public class DashboardServices extends RemoteServiceServlet implements Dashboard
 			// Log but otherwise ignore this error
 			logger.error("session.invalidate failed: " + ex.getMessage());
 		}
-		try {
-			request.logout();
-		} catch ( Exception ex ) {
-			logger.error("request.logout failed: " + ex.getMessage());
-		}
-
 		logger.info("logged out " + username);
 	}
 
@@ -240,15 +250,16 @@ public class DashboardServices extends RemoteServiceServlet implements Dashboard
 
 		// Get the current metadata documents for the cruise
 		MetadataFileHandler mdataHandler = configStore.getMetadataFileHandler();
-		if ( DashboardUtils.OME_FILENAME.equals(deleteFilename) ) {
+		// XXX TODO: OME_FILENAME check
+		if ( DashboardUtils.metadataFilename(datasetId).equals(deleteFilename) ) {
 			// Remove the OME XML stub file
 			if ( ! Boolean.TRUE.equals(dataset.isEditable()) ) 
-				throw new IllegalArgumentException("Cannot delete the OME metadata for a submitted dataset");
+				throw new IllegalArgumentException("Cannot delete the metadata for a submitted dataset");
 		}
-		else if ( DashboardUtils.PI_OME_FILENAME.equals(deleteFilename) ) {
-			// No more PI-provided OME metadata for this cruise
-			dataset.setOmeTimestamp(null);
-		}
+//		else if ( DashboardUtils.PI_OME_FILENAME.equals(deleteFilename) ) {
+//			// No more PI-provided OME metadata for this cruise
+//			dataset.setMdTimestamp(null);
+//		}
 		else {
 			// Directly modify the additional documents list in this dataset
 			TreeSet<String> addlDocs = dataset.getAddlDocs();
@@ -431,7 +442,9 @@ public class DashboardServices extends RemoteServiceServlet implements Dashboard
 		// Update the user-specific data column names to types, units, and missing values 
 		configStore.getUserFileHandler().updateUserDataColumnTypes(dataset, username);
 		DashboardOADSMetadata mdata = OADSMetadata.extractOADSMetadata(stdArray);
-		configStore.getMetadataFileHandler().saveAsOadsXmlDoc(mdata, "Initial Auto-extraction");
+		configStore.getMetadataFileHandler().saveAsOadsXmlDoc(mdata, 
+		                                                      DashboardUtils.autoExtractedMdFilename(datasetId), 
+		                                                      "Initial Auto-extraction");
 		
 		// ??? Is this possible at this point for a user to be editing another user's dataset ?
 		if ( ! username.equals(dataset.getOwner()) )
@@ -527,47 +540,79 @@ public class DashboardServices extends RemoteServiceServlet implements Dashboard
 		return scMsgList;
 	}
 
+	// XXX NOT USED
+	// XXX TODO: OME_FILENAME check
+//	@Override
+//	public String getOmeXmlPath(String pageUsername, String datasetId, 
+//			String previousId) throws IllegalArgumentException {
+//		// Get the dashboard data store and current username, and validate that username
+//		if ( ! validateRequest(pageUsername) ) 
+//			throw new IllegalArgumentException("Invalid user request");
+//		MetadataFileHandler metadataHandler = configStore.getMetadataFileHandler();
+//
+//		if ( ! previousId.isEmpty() ) {
+//			// Read the OME XML contents for the previous dataset 
+//			// XXX TODO: OME_FILENAME check
+//			DashboardMetadata mdata = metadataHandler.getMetadataInfo(previousId, DashboardUtils.OME_FILENAME);
+//			DashboardOmeMetadata updatedOmeMData = new DashboardOmeMetadata(mdata, metadataHandler);
+//			// Reset the ID and related fields to that for this dataset
+//			updatedOmeMData.changeDatasetID(datasetId);
+//			// Read the OME XML contents currently saved for activeExpocode
+//			mdata = metadataHandler.getMetadataInfo(datasetId, DashboardUtils.OME_FILENAME);
+//			DashboardOmeMetadata origOmeMData = new DashboardOmeMetadata(mdata, metadataHandler);
+//			// Create the merged OME and save the results
+//			DashboardOmeMetadata mergedOmeMData = origOmeMData.mergeModifiable(updatedOmeMData);
+//			metadataHandler.saveAsOmeXmlDoc(mergedOmeMData, "Merged OME of " + previousId + 
+//															" into OME of " + datasetId);
+//		}
+//
+//		// return the absolute path to the OME.xml for activeExpcode
+//		File omeFile = metadataHandler.getMetadataFile(datasetId, DashboardUtils.OME_FILENAME);
+//		return omeFile.getAbsolutePath();
+//	}
+	
 	@Override
-	public String getOmeXmlPath(String pageUsername, String datasetId, 
-			String previousId) throws IllegalArgumentException {
-		// Get the dashboard data store and current username, and validate that username
+	public MetadataPreviewInfo getMetadataPreviewInfo(String pageUsername, String datasetId)
+		throws NotFoundException, IllegalArgumentException {
 		if ( ! validateRequest(pageUsername) ) 
 			throw new IllegalArgumentException("Invalid user request");
-		MetadataFileHandler metadataHandler = configStore.getMetadataFileHandler();
-
-		if ( ! previousId.isEmpty() ) {
-			// Read the OME XML contents for the previous dataset 
-			DashboardMetadata mdata = metadataHandler.getMetadataInfo(previousId, DashboardUtils.OME_FILENAME);
-			DashboardOmeMetadata updatedOmeMData = new DashboardOmeMetadata(mdata, metadataHandler);
-			// Reset the ID and related fields to that for this dataset
-			updatedOmeMData.changeDatasetID(datasetId);
-			// Read the OME XML contents currently saved for activeExpocode
-			mdata = metadataHandler.getMetadataInfo(datasetId, DashboardUtils.OME_FILENAME);
-			DashboardOmeMetadata origOmeMData = new DashboardOmeMetadata(mdata, metadataHandler);
-			// Create the merged OME and save the results
-			DashboardOmeMetadata mergedOmeMData = origOmeMData.mergeModifiable(updatedOmeMData);
-			metadataHandler.saveAsOmeXmlDoc(mergedOmeMData, "Merged OME of " + previousId + 
-															" into OME of " + datasetId);
+		try {
+			MetadataPreviewInfo preview = new MetadataPreviewInfo();
+			String xml = null;
+			File mdFile = OADSMetadata.getMetadataFile(datasetId);
+			if ( !mdFile.exists()) {
+				mdFile = OADSMetadata.getExtractedMetadataFile(datasetId);
+			}
+			if ( !mdFile.exists()) {
+				throw new FileNotFoundException("No metadata file found for " + datasetId);
+			}
+			Date fileModTime = new Date(mdFile.lastModified());
+			Path fPath = mdFile.toPath();
+			BasicFileAttributes attr = Files.getFileAttributeView(fPath, BasicFileAttributeView.class).readAttributes();
+			Date fileCreateTime = new Date(attr.creationTime().toMillis());
+			FileInfo mdFileInfo = new FileInfo(mdFile.getName(), fileModTime, fileCreateTime, mdFile.length());
+			preview.setMetadataFileInfo(mdFileInfo);
+			xml = OADSMetadata.getMetadataXml(datasetId, mdFile);
+			String html = XmlUtils.asHtml(xml);
+			preview.setMetadataPreview(html);
+			return preview;
+		} catch (FileNotFoundException ex) {
+			throw new NotFoundException(ex.getMessage(), ex);
+		} catch (IOException ex) {
+			throw new IllegalArgumentException(ex);
 		}
-
-		// return the absolute path to the OME.xml for activeExpcode
-		File omeFile = metadataHandler.getMetadataFile(datasetId, DashboardUtils.OME_FILENAME);
-		return omeFile.getAbsolutePath();
 	}
 
 	@Override
 	public PreviewPlotResponse buildPreviewImages(String pageUsername, String datasetId, 
-												  String timetag, boolean firstCall) throws IllegalArgumentException {
+												  String timetag, boolean force) throws IllegalArgumentException {
 		// Get the dashboard data store and current username, and validate that username
 		if ( ! validateRequest(pageUsername) ) 
 			throw new IllegalArgumentException("Invalid user request");
 
-		logger.debug(datasetId+" @ " + timetag + " first:"+ firstCall);
-		logger.info(datasetId+" @ " + timetag + " first:"+ firstCall);
-		logger.warn(datasetId+" @ " + timetag + " first:"+ firstCall);
-		logger.error(datasetId+" @ " + timetag + " first:"+ firstCall);
+		logger.debug(datasetId+" @ " + timetag + " force:"+ force);
 		
-		boolean generatePlots = checkNeedToGeneratePlots(datasetId);
+		boolean generatePlots = force || checkNeedToGeneratePlots(datasetId);
 		
 		// Generate the preview plots for this dataset
 		// TODO: refactor so starts this in a separate thread when firstCall is true and 
@@ -576,7 +621,7 @@ public class DashboardServices extends RemoteServiceServlet implements Dashboard
 		if ( generatePlots ) {
 			configStore.getPreviewPlotsHandler().createPreviewPlots(datasetId, timetag);
 		}
-		List<List<String>> plots = configStore.getPreviewPlotsHandler().getPreviewPlots(datasetId);
+		List<List<PreviewPlotImage>> plots = configStore.getPreviewPlotsHandler().getPreviewPlots(datasetId);
 		return new PreviewPlotResponse(plots, true);
 	}
 
@@ -600,6 +645,11 @@ public class DashboardServices extends RemoteServiceServlet implements Dashboard
 		File dataFile = dfh.datasetDataFile(datasetId);
 		long dataTime = dataFile.lastModified();
 		if ( dataTime > plotsTime ) {
+			return true;
+		}
+		File dataInfoFile = configStore.getDataFileHandler().datasetInfoFile(datasetId);
+		long infoTime = dataInfoFile.lastModified();
+		if ( infoTime > plotsTime ) {
 			return true;
 		}
 		

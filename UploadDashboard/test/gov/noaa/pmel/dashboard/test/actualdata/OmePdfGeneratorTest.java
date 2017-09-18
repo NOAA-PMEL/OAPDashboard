@@ -38,7 +38,7 @@ public class OmePdfGeneratorTest {
 		MetadataFileHandler metaHandler = confStore.getMetadataFileHandler();
 		OmePdfGenerator omePdfGenerator = confStore.getOmePdfGenerator();
 		for ( String expo : EXPOCODE_ARRAY ) {
-			File pdfFile = metaHandler.getMetadataFile(expo, DashboardUtils.PI_OME_PDF_FILENAME);
+			File pdfFile = metaHandler.getMetadataFile(expo, DashboardUtils.metadataFilename(expo, ".pdf"));
 			assertNotNull( pdfFile );
 			// Make sure the PDF file does not exist, then generate it
 			pdfFile.delete();

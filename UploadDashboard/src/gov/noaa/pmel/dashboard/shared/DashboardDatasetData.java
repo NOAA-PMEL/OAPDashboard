@@ -122,7 +122,7 @@ public class DashboardDatasetData extends DashboardDataset implements Serializab
 				"    owner=" + owner +  ";\n" + 
 				"    datasetId=" + datasetId +  ";\n" + 
 				"    dataCheckStatus=" + dataCheckStatus + ";\n" + 
-				"    omeTimestamp=" + omeTimestamp + ";\n" + 
+				"    omeTimestamp=" + mdTimestamp + ";\n" + 
 				"    addlDocs=" + addlDocs.toString() + ";\n" + 
 				"    submitStatus=" + submitStatus + ";\n" + 
 				"    archiveStatus=" + archiveStatus + ";\n" + 

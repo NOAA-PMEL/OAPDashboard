@@ -15,27 +15,29 @@ import com.google.gwt.user.client.rpc.IsSerializable;
  */
 public class PreviewPlotResponse implements Serializable, IsSerializable {
 	
+	private static final long serialVersionUID = 5360711782787243232L;
+
 	private boolean finished;
 	
-	private List<List<String>> tabs;
+	private List<List<PreviewPlotImage>> tabs;
 
 	@SuppressWarnings("unused") // for GWT
 	private PreviewPlotResponse() {
-		tabs = new ArrayList<List<String>>();
+		tabs = new ArrayList<List<PreviewPlotImage>>();
 	}
 	
-	public PreviewPlotResponse(List<List<String>>plotTabs, boolean isFinished) {
+	public PreviewPlotResponse(List<List<PreviewPlotImage>>plotTabs, boolean isFinished) {
 		finished = isFinished;
-		tabs = plotTabs != null ? plotTabs : new ArrayList<List<String>>();
+		tabs = plotTabs != null ? plotTabs : new ArrayList<List<PreviewPlotImage>>();
 	}
 	public boolean isFinished() { return finished; }
-	public List<List<String>> getPlotTabs() {
+	public List<List<PreviewPlotImage>> getPlotTabs() {
 		return tabs;
 	}
 	
 	public void setFinished(boolean isFinished) { finished = isFinished; }
-	public void setPlotTabs(List<List<String>> plotTabs) { tabs = plotTabs; }
-	public void addPlotTab(List<String> tab) {
+	public void setPlotTabs(List<List<PreviewPlotImage>> plotTabs) { tabs = plotTabs; }
+	public void addPlotTab(List<PreviewPlotImage> tab) {
 		tabs.add(tab);
 	}
 }

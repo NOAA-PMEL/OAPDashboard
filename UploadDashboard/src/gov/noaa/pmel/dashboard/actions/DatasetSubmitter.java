@@ -17,8 +17,9 @@ import gov.noaa.pmel.dashboard.handlers.DataFileHandler;
 import gov.noaa.pmel.dashboard.handlers.DatabaseRequestHandler;
 import gov.noaa.pmel.dashboard.handlers.DsgNcFileHandler;
 import gov.noaa.pmel.dashboard.handlers.MetadataFileHandler;
+import gov.noaa.pmel.dashboard.oads.DashboardOADSMetadata;
+import gov.noaa.pmel.dashboard.oads.OADSMetadata;
 import gov.noaa.pmel.dashboard.server.DashboardConfigStore;
-import gov.noaa.pmel.dashboard.server.DashboardOmeMetadata;
 import gov.noaa.pmel.dashboard.shared.DashboardDataset;
 import gov.noaa.pmel.dashboard.shared.DashboardDatasetData;
 import gov.noaa.pmel.dashboard.shared.DashboardMetadata;
@@ -102,16 +103,19 @@ public class DatasetSubmitter {
 
 			if ( Boolean.TRUE.equals(dataset.isEditable()) ) {
 				try {
-					// Get the OME metadata for this dataset
-					DashboardMetadata omeInfo = metadataHandler.getMetadataInfo(datasetId, DashboardUtils.OME_FILENAME);
-					if ( ! version.equals(omeInfo.getVersion()) ) {
-						omeInfo.setVersion(version);
-						metadataHandler.saveMetadataInfo(omeInfo, "Update metadata version number to " + 
+					// Get the metadata for this dataset
+					// XXX TODO: OME_FILENAME check
+					DashboardMetadata mdata = metadataHandler.getMetadataInfo(datasetId, DashboardUtils.metadataFilename(datasetId));
+					if ( ! version.equals(mdata.getVersion()) ) {
+						mdata.setVersion(version);
+						metadataHandler.saveMetadataInfo(mdata, "Update metadata version number to " + 
 								version + " with submission of " + datasetId, false);
 					}
-					DashboardOmeMetadata omeMData = new DashboardOmeMetadata(omeInfo, metadataHandler);
-					DsgMetadata dsgMData = omeMData.createDsgMetadata();
-					dsgMData.setVersion(version);
+					
+					// XXX TODO: OME_FILENAME check
+//					DashboardOmeMetadata omeMData = new DashboardOmeMetadata(omeInfo, metadataHandler);
+//					DsgMetadata dsgMData = omeMData.createDsgMetadata();
+//					dsgMData.setVersion(version);
 
 					// Standardize the data
 					// TODO: update the metadata with data-derived values
@@ -122,6 +126,11 @@ public class DatasetSubmitter {
 						continue;
 					}
 
+					// XXX TODO: OME_FILENAME check
+					DashboardOADSMetadata oadsMd = OADSMetadata.getCurrentDatasetMetadata(mdata, metadataHandler);
+					DsgMetadata dsgMData = oadsMd.createDsgMetadata();
+					dsgMData.setVersion(version);
+					
 					// Generate the NetCDF DSG file, enhanced by Ferret
 					logger.debug("Generating the full-data DSG file for " + datasetId);
 					dsgHandler.saveDatasetDsg(dsgMData, standardized);
@@ -131,6 +140,7 @@ public class DatasetSubmitter {
 //					logger.debug("Generating the decimated-data DSG file for " + datasetId);
 //					dsgHandler.decimateDatasetDsg(datasetId);
 				} catch (Exception ex) {
+					ex.printStackTrace();
 					errorMsgs.add(datasetId + ": unacceptable; " + ex.getMessage());
 					continue;
 				}
@@ -204,6 +214,7 @@ public class DatasetSubmitter {
 				try {
 					filesBundler.sendOrigFilesBundle(datasetId, commitMsg, userRealName, userEmail);
 				} catch (Exception ex) {
+					ex.printStackTrace();
 					errorMsgs.add("Failed to submit request for immediate archival of " + 
 							datasetId + ": " + ex.getMessage());
 					continue;

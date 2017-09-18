@@ -12,19 +12,33 @@
 				<g:InlineLabel addStyleNames="{style.titlepagelabel}" ui:field="titleLabel" />
 				<g:Label addStyleNames="{style.titlereset}" />
 			</g:FlowPanel>
-			<g:HTML addStyleNames="{style.introhtml}" ui:field="introHtml" />
-			<g:FormPanel ui:field="uploadForm">
+			<g:HorizontalPanel>
 				<g:FlowPanel>
-					<g:FileUpload name="metadataupload" addStyleNames="{style.uploadfile}" ui:field="omeUpload" />
-					<g:Hidden name="timestamp" ui:field="timestampToken" /> 
-					<g:Hidden name="datasetids" ui:field="datasetIdsToken" />
-					<g:Hidden name="ometoken" ui:field="omeToken" />
+					<g:HTML addStyleNames="{style.introhtml}" ui:field="introHtml" />
+					<g:HTML addStyleNames="{style.introhtml}" ui:field="metadataFileInfoHtml" />
+					<g:FormPanel ui:field="uploadForm">
+						<g:FlowPanel>
+							<g:FileUpload name="metadataupload" addStyleNames="{style.uploadfile}" ui:field="mdUpload" />
+							<g:Hidden name="timestamp" ui:field="timestampField" /> 
+							<g:Hidden name="datasetids" ui:field="datasetIdsField" />
+						</g:FlowPanel>
+					</g:FormPanel>
+					<g:FlowPanel addStyleNames="{style.horizontalbuttonpanel}">
+						<g:Button addStyleNames="{style.horizontalbutton}" ui:field="uploadButton" />
+						<g:Button addStyleNames="{style.horizontalbutton}" ui:field="doneButton" />
+					</g:FlowPanel>
 				</g:FlowPanel>
-			</g:FormPanel>
-			<g:FlowPanel addStyleNames="{style.horizontalbuttonpanel}">
-				<g:Button addStyleNames="{style.horizontalbutton}" ui:field="uploadButton" />
-				<g:Button addStyleNames="{style.horizontalbutton}" ui:field="cancelButton" />
-			</g:FlowPanel>
+				<g:VerticalPanel>
+					<g:FlowPanel>
+						<g:Button addStyleNames="{style.downloadButton}" ui:field="downloadButton" />
+<!--						<g:InlineHyperlink addStyleNames="{style.titlelogoutbutton}" ui:field="downloadLink" />  -->
+						<g:InlineLabel addStyleNames="{style.previewTitle}" ui:field="previewTitle" /> 
+					</g:FlowPanel>
+					<g:ScrollPanel addStyleNames="{style.metadataPreviewScroll}">
+						<g:HTML ui:field="filePreviewPanel" addStyleNames="{style.metadataPreview}"/>
+					</g:ScrollPanel>
+				</g:VerticalPanel>
+			</g:HorizontalPanel>
 		</g:FlowPanel>
 	</g:ScrollPanel>
 

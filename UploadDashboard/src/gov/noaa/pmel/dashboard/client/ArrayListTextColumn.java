@@ -97,13 +97,15 @@ import gov.noaa.pmel.dashboard.shared.QCFlag.Severity;
 	}
 	@Override
 	public void render(Cell.Context ctx, ArrayList<String> obj, SafeHtmlBuilder sb) {
-		Integer rowIdx = ctx.getIndex();
+		int rowIdx = ctx.getIndex();
 		ADCMessage msg = rowMsgMap.get(rowIdx);
 		boolean addedTitle = false;
+		String title = "[ " + (rowIdx+1) +" ]";
 		if ( msg != null ) {
-			sb.appendHtmlConstant("<div title=\"" + msg.getDetailedComment() + "\">");
-			addedTitle = true;
+			title += " " + msg.getDetailedComment();
 		}
+		sb.appendHtmlConstant("<div title=\"" + title + "\">");
+		addedTitle = true;
 		if ( colNum == 0 ) {
 			sb.appendHtmlConstant("<div style=\"color:" + 
 					UploadDashboard.ROW_NUMBER_COLOR + ";text-align:right\">");

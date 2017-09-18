@@ -84,22 +84,23 @@ public class AddAllMetadata {
 						continue;
 					}
 					// Clear the OME upload timestamp and create a new list of supplemental documents
-					dataset.setOmeTimestamp(null);
+					dataset.setMdTimestamp(null);
 					TreeSet<String> addlDocs = new TreeSet<String>();
 					// Add all existing metadata documents for this dataset
 					for ( DashboardMetadata mdata : metaHandler.getMetadataFiles(datasetId) ) {
-						if ( mdata.getFilename().equals(DashboardUtils.OME_FILENAME) ) {
-							// Ignore the OME.xml stub
-							;
+						// XXX TODO: OME_FILENAME check
+						if ( mdata.getFilename().equals(DashboardUtils.metadataFilename(mdata.getDatasetId())) ) {
+//							// Ignore the OME.xml stub
+//							;
+//						}
+//						else if ( mdata.getFilename().equals(DashboardUtils.PI_OME_FILENAME) ) {
+//							// PI-provided OME.xml file - set the OME upload timestamp
+							dataset.setMdTimestamp(mdata.getUploadTimestamp());
 						}
-						else if ( mdata.getFilename().equals(DashboardUtils.PI_OME_FILENAME) ) {
-							// PI-provided OME.xml file - set the OME upload timestamp
-							dataset.setOmeTimestamp(mdata.getUploadTimestamp());
-						}
-						else {
+//						else {
 							// Add the "filename ; timestamp" additional document string
 							addlDocs.add(mdata.getAddlDocsTitle());
-						}
+//						}
 					}
 					dataset.setAddlDocs(addlDocs);
 					// Save the updated dataset informations

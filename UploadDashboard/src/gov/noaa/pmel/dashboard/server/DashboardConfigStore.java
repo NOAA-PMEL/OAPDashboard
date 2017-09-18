@@ -300,6 +300,8 @@ public class DashboardConfigStore {
 					" value specified in " + configFile.getPath() + "\n" + 
 					ex.getMessage() + "\n" + CONFIG_FILE_INFO_MSG);
 		}
+		
+		if ( !startMonitors ) { svnUsername = null; }
 
 		// Read the SVN password; can be blank or not given
 		String svnPassword = "";
@@ -329,7 +331,7 @@ public class DashboardConfigStore {
 		}
 
 		try {
-			propVal = configProps.getProperty(METADATA_TYPES_PROPS_FILE_TAG);
+			propVal = getFilePathProperty(configProps, METADATA_TYPES_PROPS_FILE_TAG, appConfigDir);
 			if ( propVal == null )
 				throw new IllegalArgumentException("value not defined");
 			propVal = propVal.trim();
@@ -386,7 +388,7 @@ public class DashboardConfigStore {
 		// Read the user files directory name
 		try {
 			propVal = getFilePathProperty(configProps, USER_FILES_DIR_NAME_TAG, appConfigDir);
-			userFileHandler = new UserFileHandler(propVal, svnUsername, 
+			userFileHandler = new UserFileHandler(propVal, startMonitors ? svnUsername : null, 
 					svnPassword, colNamesToTypesFilename, knownUserDataTypes);
 		} catch ( Exception ex ) {
 			throw new IOException("Invalid " + USER_FILES_DIR_NAME_TAG + 
@@ -640,6 +642,11 @@ public class DashboardConfigStore {
 			baseDir = tryProperty("CATALINA_BASE");
 		}
 		if ( baseDir == null ) {
+			baseDir = tryProperty("CATALINA_HOME");
+		}
+		if ( baseDir == null ) {
+			System.out.println("*** ENV:\n"+System.getenv());
+			System.out.println("*** PROPS:\n"+System.getProperties());
 			throw new PropertyNotFoundException("Document config root not found.");
 		}
 		if ( ! baseDir.endsWith(File.separator)) {
@@ -704,7 +711,8 @@ public class DashboardConfigStore {
 	 */
 	public static DashboardConfigStore get(boolean startMonitors) throws IOException {
 		synchronized(SINGLETON_SYNC_OBJECT) {
-			if ( (singleton != null) && singleton.needToRestart ) {
+			if ( (singleton != null) && 
+				 (singleton.needToRestart || (startMonitors && singleton.watcherThread == null ))) {
 				singleton.stopMonitors();
 				singleton = null;
 			}
@@ -747,7 +755,7 @@ public class DashboardConfigStore {
 		// Stop the configuration watcher
 		cancelWatch();
 	}
-
+	
 	/**
 	 * Monitors the configuration files for the current DashboardConfigStore 
 	 * singleton object.  If a configuration file has changed, sets 
@@ -833,7 +841,9 @@ public class DashboardConfigStore {
 	 */
 	private void cancelWatch() {
 		try {
-			watcher.close();
+			if ( watcher != null ) {
+				watcher.close();
+			}
 			// Only the thread modifies the value of watcher
 		} catch (Exception ex) {
 			// Might be NullPointerException

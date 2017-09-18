@@ -35,6 +35,7 @@ import gov.noaa.pmel.dashboard.client.UploadDashboard.PagesEnum;
 import gov.noaa.pmel.dashboard.shared.DashboardDatasetList;
 import gov.noaa.pmel.dashboard.shared.DashboardServicesInterface;
 import gov.noaa.pmel.dashboard.shared.DashboardServicesInterfaceAsync;
+import gov.noaa.pmel.dashboard.shared.PreviewPlotImage;
 import gov.noaa.pmel.dashboard.shared.PreviewPlotResponse;
 
 /**
@@ -56,23 +57,20 @@ public class DatasetPreviewPage extends CompositeWithUsername {
 			"Plots of the dataset: ";
 
 	private static final String REFRESH_TEXT = "Refresh plots";
-	private static final String REFRESH_HOVER_HELP = "Refresh the display the generated plots";
-	private static final String DISMISS_TEXT = "Done";
+	private static final String REFRESH_HOVER_HELP = "Regenerate the plot images";
+	private static final String DONE_TEXT = "Done";
 
 	private static final String PLOT_GENERATION_FAILURE_HTML = "<b>Problems generating the plot previews</b>";
 
 	private static final String TAB0_TEXT = "Overview";
-	private static final String TAB1_TEXT = "General";
+	private static final String TAB1_TEXT = "Profiles";
 	private static final String TAB2_TEXT = "BioGeoChem";
 	private static final String TAB3_TEXT = "Nutrients +";
 
-	private static final String REFRESH_HELP_ADDENDUM = 
-			" -- if plots do not show after awhile, try pressing the '" + REFRESH_TEXT + "' button given below this image.";
-
 	private static final String TAB0_ALT_TEXT = "Overview plots";
-	private static final String TAB1_ALT_TEXT = "latitude versus longitude";
-	private static final String TAB2_ALT_TEXT = "latitude, longitude versus time";
-	private static final String TAB3_ALT_TEXT = "sample number (row number) versus time";
+	private static final String TAB1_ALT_TEXT = "Plots vs depth";
+	private static final String TAB2_ALT_TEXT = "Property-property plots";
+	private static final String TAB3_ALT_TEXT = "Measured nutrients vs depth";
 
 	public static final String LAT_VS_LON_IMAGE_NAME = "lat_vs_lon";
 	public static final String LAT_LON_IMAGE_NAME = "lat_lon";
@@ -92,7 +90,7 @@ public class DatasetPreviewPage extends CompositeWithUsername {
 	@UiField Button logoutButton;
 	@UiField HTML introHtml;
 	@UiField Button refreshButton;
-	@UiField Button dismissButton;
+	@UiField Button doneButton;
 	
 //	@UiField ResizeLayoutPanel resizePanel;
 	@UiField TabLayoutPanel tabsPanel;
@@ -106,11 +104,11 @@ public class DatasetPreviewPage extends CompositeWithUsername {
 	@UiField HTML tab2Html;
 	@UiField HTML tab3Html;
 
-	List<List<String>> availablePlots;
+	List<List<PreviewPlotImage>> availablePlots;
 	List<FlowPanel> tabPanels = new ArrayList<FlowPanel>();
 	List<List<Image>> tabImages = new ArrayList<List<Image>>();
 	
-	String expocode;
+	String datasetId;
 	String timetag;
 	AsyncCallback<PreviewPlotResponse> checkStatusCallback;
 
@@ -126,7 +124,7 @@ public class DatasetPreviewPage extends CompositeWithUsername {
 		singleton = this;
 
 		setUsername(null);
-		expocode = "";
+		datasetId = "";
 		// Callback when generating plots
 		checkStatusCallback = new AsyncCallback<PreviewPlotResponse>() {
 			@Override
@@ -139,10 +137,10 @@ public class DatasetPreviewPage extends CompositeWithUsername {
 					}
 					availablePlots = plotResponse.getPlotTabs();
 					// Refresh this page to get the new image(s)
-					singleton.resetImageUrls(true);
+					singleton.resetImageUrls();
 					if ( ! isDone ) {
 						// More images to be generated - inquire again
-						service.buildPreviewImages(getUsername(), singleton.expocode, 
+						service.buildPreviewImages(getUsername(), singleton.datasetId, 
 								singleton.timetag, false, checkStatusCallback);
 					}
 				}
@@ -152,8 +150,8 @@ public class DatasetPreviewPage extends CompositeWithUsername {
 				logger.log(Level.FINE, "Get Preview failure", ex);
 				if ( UploadDashboard.isCurrentPage(singleton) ) {
 					UploadDashboard.showAutoCursor();
-					singleton.resetImageUrls(false);
 					UploadDashboard.showFailureMessage(PLOT_GENERATION_FAILURE_HTML, ex);
+					singleton.clearTabImages();
 				}
 			}
 		};
@@ -163,7 +161,7 @@ public class DatasetPreviewPage extends CompositeWithUsername {
 
 		refreshButton.setText(REFRESH_TEXT);
 		refreshButton.setTitle(REFRESH_HOVER_HELP);
-		dismissButton.setText(DISMISS_TEXT);
+		doneButton.setText(DONE_TEXT);
 
 		// Set the HTML for the tabs
 		tab0Html.setHTML(TAB0_TEXT);
@@ -181,16 +179,6 @@ public class DatasetPreviewPage extends CompositeWithUsername {
 		tabPanels.add(tab1Panel);
 		tabPanels.add(tab2Panel);
 		tabPanels.add(tab3Panel);
-		
-		// Set text alternative for the images
-//		latVsLonImage.setAltText(TAB1_ALT_TEXT + REFRESH_HELP_ADDENDUM);
-//		latLonImage.setAltText(TAB2_ALT_TEXT + REFRESH_HELP_ADDENDUM);
-//		sampleVsTimeImage.setAltText(TAB3_ALT_TEXT + REFRESH_HELP_ADDENDUM);
-
-		// Set hover helps for the images
-//		latVsLonImage.setTitle(TAB1_ALT_TEXT);
-//		latLonImage.setTitle(TAB2_ALT_TEXT);
-//		sampleVsTimeImage.setTitle(TAB3_ALT_TEXT);
 	}
 
 	/**
@@ -202,8 +190,9 @@ public class DatasetPreviewPage extends CompositeWithUsername {
 		if ( singleton == null )
 			singleton = new DatasetPreviewPage();
 		UploadDashboard.updateCurrentPage(singleton);
-		singleton.updatePreviewPlots(cruiseList.keySet().iterator().next(), 
-									 cruiseList.getUsername());
+		String datasetId = cruiseList.keySet().iterator().next(); 
+		singleton.updatePreviewPlots(datasetId,
+									 cruiseList.getUsername(), false);
 		History.newItem(PagesEnum.PREVIEW_DATASET.name(), false);
 	}
 
@@ -229,23 +218,21 @@ public class DatasetPreviewPage extends CompositeWithUsername {
 	 * @param username
 	 * 		user requesting these plots 
 	 */
-	private void updatePreviewPlots(String expocode, String username) {
+	private void updatePreviewPlots(String expoCode, String username, boolean force) {
 		// Update the username
 		setUsername(username);
 		userInfoLabel.setText(WELCOME_INTRO + getUsername());
 
-		if ( expocode != null )
-			this.expocode = expocode.trim().toUpperCase();
-		else
-			this.expocode = "";
-		introHtml.setHTML(INTRO_HTML_PROLOGUE + SafeHtmlUtils.htmlEscape(this.expocode));
+		if ( expoCode == null ) { throw new IllegalArgumentException("Null dataset id"); }
+		this.datasetId = expoCode;
+		introHtml.setHTML(INTRO_HTML_PROLOGUE + SafeHtmlUtils.htmlEscape(this.datasetId));
 //		if ( this.expocode.length() > 11 ) { // WTF?
 			// Tell the server to generate the preview plots
 			UploadDashboard.showWaitCursor();
 			DateTimeFormat formatter = DateTimeFormat.getFormat("MMddHHmmss");
 			this.timetag = formatter.format(new Date(), TimeZone.createTimeZone(0));
-			service.buildPreviewImages(getUsername(), this.expocode, 
-										this.timetag, true, checkStatusCallback);
+			service.buildPreviewImages(getUsername(), this.datasetId, 
+										this.timetag, force, checkStatusCallback);
 //		}
 		// Set the URLs for the images.
 		resetImageUrls();
@@ -264,30 +251,23 @@ public class DatasetPreviewPage extends CompositeWithUsername {
 	 */
 	private void resetImageUrls() {
 		String imagePrefix;
-		String imageSuffix;
 		// XXX This should really come from the server...
-		imagePrefix = "preview/plots/" + expocode.substring(0,4) + "/";
+		imagePrefix = "preview/plots/" + datasetId.substring(0,4) + "/";
 		clearTabImages();
 		if ( availablePlots == null || availablePlots.isEmpty()) {
-			String url = "images/loadingCircleSpinner.gif";
-			Image img = new Image(url);
-			img.setStyleName("loadingimage");
-			List<Image> tab0Images = new ArrayList<>();
-			tab0Images.add(img);
-			tab0Panel.add(img);
-			tabImages.add(tab0Images);
-			tabsPanel.selectTab(0);
+			showLoadingImg();
 		} else {
 			int tab = 0;
 			Image img = null;
 			String noCache="?ts=" + System.currentTimeMillis();
-			for (List<String> tabImageFileNames : availablePlots) {
+			for (List<PreviewPlotImage> tabImageFileNames : availablePlots) {
 				List<Image> tabXimages = new ArrayList<Image>(); // tabImages.get(tab);
 				tabImages.add(tabXimages);
 				FlowPanel tabPanel = tabPanels.get(tab);
-				for (final String imageName : tabImageFileNames) {
-					String url = imagePrefix + imageName + noCache;
+				for (final PreviewPlotImage imageInfo : tabImageFileNames) {
+					String url = imagePrefix + imageInfo.fileName + noCache;
 					img = new Image(url);
+					img.setTitle(imageInfo.imageTitle);
 					img.addDomHandler(new DoubleClickHandler() {
 						@Override
 						public void onDoubleClick(DoubleClickEvent event) {
@@ -296,12 +276,10 @@ public class DatasetPreviewPage extends CompositeWithUsername {
 							Object oSource = event.getSource();
 							Image image = (Image)oSource;
 							String iSrc = image.getUrl();
-							UploadDashboard.showPreviewImage(singleton, imageName, iSrc);
+							UploadDashboard.showPreviewImage(singleton, imageInfo, iSrc);
 						}
 
 					}, DoubleClickEvent.getType());
-//					img.addClickHandler(imageClicked);
-//					img.setPixelSize(imageSize, imageSize);
 					img.setStyleName("plotsimage");
 					tabPanel.add(img);
 					tabXimages.add(img);
@@ -312,6 +290,17 @@ public class DatasetPreviewPage extends CompositeWithUsername {
 				}
 			}
 		}
+	}
+
+	private void showLoadingImg() {
+		String url = "images/loadingCircleSpinner.gif";
+		Image img = new Image(url);
+		img.setStyleName("loadingimage");
+		List<Image> tab0Images = new ArrayList<>();
+		tab0Images.add(img);
+		tab0Panel.add(img);
+		tabImages.add(tab0Images);
+		tabsPanel.selectTab(0);
 	}
 
 	private void clearTabImages() {
@@ -327,14 +316,22 @@ public class DatasetPreviewPage extends CompositeWithUsername {
 		tabImages.clear();
 	}
 
-	private void resetImageUrls(boolean successful) {
-		resetImageUrls();
+	private void resetImageUrls(boolean forceRebuild) {
+		if ( forceRebuild ) {
+			clearTabImages();
+			availablePlots.clear();
+			updatePreviewPlots(datasetId, getUsername(), forceRebuild);
+		} else {
+			resetImageUrls();
+		}
 	}
 	
 	@UiHandler("refreshButton")
 	void refreshOnClick(ClickEvent event) {
-		// Reload the images by setting the URLs again
-		resetImageUrls();
+		// Forces a regeneration of the preview images.
+		availablePlots = null;
+		UploadDashboard.closePreviews(this);
+		resetImageUrls(true);
 	}
 
 	@UiHandler("logoutButton")
@@ -342,7 +339,7 @@ public class DatasetPreviewPage extends CompositeWithUsername {
 		DashboardLogoutPage.showPage();
 	}
 
-	@UiHandler("dismissButton")
+	@UiHandler("doneButton")
 	void cancelOnClick(ClickEvent event) {
 		availablePlots = null;
 		UploadDashboard.closePreviews(this);

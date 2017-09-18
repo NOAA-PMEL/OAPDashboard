@@ -70,7 +70,7 @@ public class DashboardOmeMetadata extends DashboardMetadata {
 			MetadataFileHandler mdataHandler) throws IllegalArgumentException {
 		// Initialize to an empty OME metadata document with the standard OME filename
 		super();
-		filename = DashboardUtils.OME_FILENAME;
+		filename = DashboardUtils.metadataFilename(mdata.getDatasetId());
 
 		if ( mdata == null )
 			throw new IllegalArgumentException("No metadata file given");
@@ -122,7 +122,7 @@ public class DashboardOmeMetadata extends DashboardMetadata {
 	public DashboardOmeMetadata(String expo, String timestamp, Document omeDoc) 
 											throws IllegalArgumentException {
 		super();
-		filename = DashboardUtils.OME_FILENAME;
+		filename = DashboardUtils.metadataFilename(expo);
 		datasetId = DashboardServerUtils.checkDatasetID(expo);
 		// Use the setter in case of null
 		setUploadTimestamp(timestamp);
@@ -153,7 +153,7 @@ public class DashboardOmeMetadata extends DashboardMetadata {
 	 */
 	public DashboardOmeMetadata(OmeMetadata omeMeta, String timestamp, String owner, String version) {
 		super();
-		filename = DashboardUtils.OME_FILENAME;
+		filename = DashboardUtils.metadataFilename(omeMeta.getExpocode());
 		datasetId = DashboardServerUtils.checkDatasetID(omeMeta.getExpocode());
 		setUploadTimestamp(timestamp);
 		setOwner(owner);

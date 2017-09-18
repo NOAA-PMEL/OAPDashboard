@@ -269,6 +269,7 @@ public class DatasetListPage extends CompositeWithUsername {
 	@UiField Label titleLabel;
 	@UiField InlineLabel userInfoLabel;
 	@UiField Button logoutButton;
+	
 	@UiField Button uploadButton;
 	@UiField Button viewDataButton;
 	@UiField Button metadataButton;
@@ -1103,7 +1104,7 @@ public class DatasetListPage extends CompositeWithUsername {
 		columnSortHandler.setComparator(dataCheckColumn, 
 				DashboardDataset.dataCheckComparator);
 		columnSortHandler.setComparator(metadataColumn, 
-				DashboardDataset.omeTimestampComparator);
+				DashboardDataset.mdTimestampComparator);
 		columnSortHandler.setComparator(addlDocsColumn, 
 				DashboardDataset.addlDocsComparator);
 		columnSortHandler.setComparator(versionColumn, 
@@ -1356,10 +1357,10 @@ public class DatasetListPage extends CompositeWithUsername {
 				new Column<DashboardDataset,String> (new ClickableTextCell()) {
 			@Override
 			public String getValue(DashboardDataset cruise) {
-				String omeTimestamp = cruise.getOmeTimestamp();
-				if ( omeTimestamp.isEmpty() )
-					omeTimestamp = NO_METADATA_STATUS_STRING;
-				return omeTimestamp;
+				String mdTimestamp = cruise.getMdTimestamp();
+				if ( mdTimestamp.isEmpty() )
+					mdTimestamp = NO_METADATA_STATUS_STRING;
+				return mdTimestamp;
 			}
 			@Override
 			public void render(Cell.Context ctx, DashboardDataset cruise, 
@@ -1598,7 +1599,7 @@ public class DatasetListPage extends CompositeWithUsername {
 		for ( DashboardDataset cruise : checkSet.values() ) {
 			// At this time, just check that some metadata file exists
 			// and do not worry about the contents
-			if ( cruise.getOmeTimestamp().isEmpty() &&
+			if ( cruise.getMdTimestamp().isEmpty() &&
 				 cruise.getAddlDocs().isEmpty() ) {
 				errMsg += "<li>" + 
 						SafeHtmlUtils.htmlEscape(cruise.getDatasetId()) + "</li>";

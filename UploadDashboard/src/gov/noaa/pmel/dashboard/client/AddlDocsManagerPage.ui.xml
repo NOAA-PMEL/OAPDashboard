@@ -21,7 +21,7 @@
 							ui:field="docUpload" />
 					<g:Hidden name="timestamp" ui:field="timestampToken" /> 
 					<g:Hidden name="datasetids" ui:field="datasetIdsToken" />
-					<g:Hidden name="ometoken" ui:field="omeToken" />
+					<g:Hidden name="supplemental" ui:field="supplementalFlag" />
 				</g:FlowPanel>
 			</g:FormPanel>
 			<g:FlowPanel addStyleNames="{style.horizontalbuttonpanel}">

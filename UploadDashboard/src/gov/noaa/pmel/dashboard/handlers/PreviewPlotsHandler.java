@@ -24,6 +24,7 @@ import gov.noaa.pmel.dashboard.server.DashboardConfigStore;
 import gov.noaa.pmel.dashboard.server.DashboardServerUtils;
 import gov.noaa.pmel.dashboard.shared.DashboardDatasetData;
 import gov.noaa.pmel.dashboard.shared.DashboardUtils;
+import gov.noaa.pmel.dashboard.shared.PreviewPlotImage;
 
 
 public class PreviewPlotsHandler {
@@ -261,8 +262,8 @@ public class PreviewPlotsHandler {
 		}
 	}
 
-	public List<List<String>> getPreviewPlots(String datasetId) {
-		List<List<String>> plotTabs = new ArrayList<>();
+	public List<List<PreviewPlotImage>> getPreviewPlots(String datasetId) {
+		List<List<PreviewPlotImage>> plotTabs = new ArrayList<>();
 		String stdId = DashboardServerUtils.checkDatasetID(datasetId);
 		String cruisePlotsDirname = getDatasetPreviewPlotsDir(stdId).getPath();
 		File cruisePlotsDir = new File(cruisePlotsDirname);
@@ -272,10 +273,10 @@ public class PreviewPlotsHandler {
 				return name.endsWith(".gif") || name.endsWith(".png");
 			}
 		})));
-		HashMap<String, String> plotNameMap = buildNameMap(plotFiles);
+		HashMap<String, PreviewPlotImage> plotNameMap = buildNameMap(plotFiles);
 		
 		logger.debug("Overview---");
-		List<String> tabList = getOverviewPlots(plotNameMap, datasetId);
+		List<PreviewPlotImage> tabList = getOverviewPlots(plotNameMap, datasetId);
 		plotTabs.add(tabList);
 		logger.debug("General---");
 		tabList = getGeneralPlots(plotNameMap, datasetId);
@@ -301,18 +302,19 @@ public class PreviewPlotsHandler {
 		return plotTabs;
 	}
 
-	private HashMap<String, String> buildNameMap(ArrayList<String> plotFiles) {
-		HashMap<String, String> nameMap = new HashMap<>();
+	private HashMap<String, PreviewPlotImage> buildNameMap(ArrayList<String> plotFiles) {
+		HashMap<String, PreviewPlotImage> nameMap = new HashMap<>();
 		for (String file : plotFiles) {
 			String name = file.substring(0, file.lastIndexOf('.'));
-			nameMap.put(name, file);
+			PreviewPlotImage ppi = new PreviewPlotImage(file);
+			nameMap.put(name, ppi);
 		}
 		return nameMap;
 	}
 
-	private static boolean checkAddAndRemove(String plotName, Map<String, String>plotsMap, List<String>plotsList) {
+	private static boolean checkAddAndRemove(String plotName, Map<String, PreviewPlotImage>plotsMap, List<PreviewPlotImage> plotList) {
 		if ( plotsMap.containsKey(plotName)) {
-			plotsList.add(plotsMap.get(plotName));
+			plotList.add(plotsMap.get(plotName));
 			plotsMap.remove(plotName);
 			logger.debug(plotName);
 			return true;
@@ -321,68 +323,77 @@ public class PreviewPlotsHandler {
 		}
 		return false;
 	}
-	private static List<String> getOverviewPlots(HashMap<String, String> plotNameMap, String datasetId) {
-		List<String> plotList = new ArrayList<>();
-		String plotName = datasetId+"_map";
+	private static String plotName(String datasetId, String... vars) {
+		StringBuilder bldr = new StringBuilder(datasetId);
+		String concat = "_";
+		for (String var : vars) {
+			bldr.append(concat).append(var);
+			concat+="_";
+		}
+		return bldr.toString();
+	}
+	private static List<PreviewPlotImage> getOverviewPlots(HashMap<String, PreviewPlotImage> plotNameMap, String datasetId) {
+		List<PreviewPlotImage> plotList = new ArrayList<>();
+		String plotName = plotName(datasetId,"map");
 		checkAddAndRemove(plotName, plotNameMap, plotList);
-		plotName = datasetId + "_time_show_time";
+		plotName = plotName(datasetId, "time", "show_time");
 		checkAddAndRemove(plotName, plotNameMap, plotList);
-		plotName = datasetId + "_ctd_pressure_sample_depth";
+		plotName = plotName(datasetId, "ctd_pressure", "sample_depth");
 		checkAddAndRemove(plotName, plotNameMap, plotList);
 		return plotList;
 	}
 
-	private static List<String> getGeneralPlots(HashMap<String, String> plotNameMap, String datasetId) {
-		List<String> plotList = new ArrayList<>();
+	private static List<PreviewPlotImage> getGeneralPlots(HashMap<String, PreviewPlotImage> plotNameMap, String datasetId) {
+		List<PreviewPlotImage> plotList = new ArrayList<>();
 		String pressureDepth = "ctd_pressure";
-		String plotName = datasetId+"_ctd_temperature_ctd_pressure";
+		String plotName = plotName(datasetId, "ctd_temperature", "ctd_pressure");
 		if ( ! checkAddAndRemove(plotName, plotNameMap, plotList)) {
-			plotName = datasetId+"_ctd_temperature_sample_depth";
+			plotName = plotName(datasetId, "ctd_temperature", "sample_depth");
 			if ( checkAddAndRemove(plotName, plotNameMap, plotList)) {
 				pressureDepth = "sample_depth";
 			}
 		}
-		plotName = datasetId+"_ctd_salinity_"+pressureDepth+"";
+		plotName = plotName(datasetId, "ctd_salinity", pressureDepth);
 		checkAddAndRemove(plotName, plotNameMap, plotList);
-		plotName = datasetId+"_ctd_oxygen_"+pressureDepth+"";
+		plotName = plotName(datasetId, "ctd_oxygen", pressureDepth);
 		checkAddAndRemove(plotName, plotNameMap, plotList);
-		plotName = datasetId+"_inorganic_carbon_"+pressureDepth+"";
+		plotName = plotName(datasetId, "inorganic_carbon", pressureDepth);
 		checkAddAndRemove(plotName, plotNameMap, plotList);
-		plotName = datasetId+"_alkalinity_"+pressureDepth+"";
+		plotName = plotName(datasetId, "alkalinity", pressureDepth);
 		checkAddAndRemove(plotName, plotNameMap, plotList);
-		plotName = datasetId+"_ctd_temperature_ctd_salinity";
+		plotName = plotName(datasetId, "ctd_temperature", "ctd_salinity");
 		checkAddAndRemove(plotName, plotNameMap, plotList);
-		plotName = datasetId+"_ctd_density_"+pressureDepth+"";
+		plotName = plotName(datasetId, "ctd_density", pressureDepth);
 		checkAddAndRemove(plotName, plotNameMap, plotList);
 		return plotList;
 	}
 	
-	private List<String> getBioGeoChemPlots(HashMap<String, String> plotNameMap, String datasetId) {
-		List<String> plotList = new ArrayList<>();
-		String plotName = datasetId+"_ctd_salinity_alkalinity";
+	private List<PreviewPlotImage> getBioGeoChemPlots(HashMap<String,PreviewPlotImage> plotNameMap, String datasetId) {
+		List<PreviewPlotImage> plotList = new ArrayList<>();
+		String plotName = plotName(datasetId, "ctd_salinity", "alkalinity");
 		checkAddAndRemove(plotName, plotNameMap, plotList);
-		plotName = datasetId+"_ctd_oxygen_inorganic_carbon";
+		plotName = plotName(datasetId, "ctd_oxygen", "inorganic_carbon");
 		checkAddAndRemove(plotName, plotNameMap, plotList);
-		plotName = datasetId+"_nitrate_inorganic_carbon";
+		plotName = plotName(datasetId, "nitrate", "inorganic_carbon");
 		checkAddAndRemove(plotName, plotNameMap, plotList);
-		plotName = datasetId+"_nitrate_alkalinity";
+		plotName = plotName(datasetId, "nitrate", "alkalinity");
 		checkAddAndRemove(plotName, plotNameMap, plotList);
-		plotName = datasetId+"_nitrate_ph_total";
+		plotName = plotName(datasetId, "nitrate", "ph_total");
 		checkAddAndRemove(plotName, plotNameMap, plotList);
-		plotName = datasetId+"_ph_total_inorganic_carbon";
+		plotName = plotName(datasetId, "ph_total", "inorganic_carbon");
 		checkAddAndRemove(plotName, plotNameMap, plotList);
-		plotName = datasetId+"_ph_total_alkalinity";
+		plotName = plotName(datasetId, "ph_total", "alkalinity");
 		checkAddAndRemove(plotName, plotNameMap, plotList);
-		plotName = datasetId+"_alkalinity_inorganic_carbon";
+		plotName = plotName(datasetId, "alkalinity", "inorganic_carbon");
 		checkAddAndRemove(plotName, plotNameMap, plotList);
-		plotName = datasetId+"_oxygen_ctd_oxygen";
+		plotName = plotName(datasetId, "oxygen", "ctd_oxygen");
 		checkAddAndRemove(plotName, plotNameMap, plotList);
 		
 		return plotList;
 	}
 
-	private static List<String> getRemainingPlots(HashMap<String, String> plotNameMap, String datasetId) {
-		List<String> plotList = new ArrayList<>(plotNameMap.values());
+	private static List<PreviewPlotImage> getRemainingPlots(HashMap<String, PreviewPlotImage> plotNameMap, String datasetId) {
+		List<PreviewPlotImage> plotList = new ArrayList<>(plotNameMap.values());
 		logger.debug(plotList);
 		return plotList;
 	}
