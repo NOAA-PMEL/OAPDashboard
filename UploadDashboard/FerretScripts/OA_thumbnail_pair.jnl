@@ -3,7 +3,7 @@
 ! connecting the data from each profile.
 
 
-define symbol plotname = ($fnamepath)_($1)_($2).($plotextn)
+define symbol plotname = ($fnamepath)_($1)__($2).($plotextn)
 
 ! Check for existence of requested variables, make a blank plot
 ! if one or both are missing. Below we will also test for valid

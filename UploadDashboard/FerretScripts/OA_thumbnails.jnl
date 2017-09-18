@@ -24,7 +24,7 @@ IF ($PROGRAM_NAME"0|PyFerret>1|*>0") THEN
    define symbol plotextn = png
 endif
 
-set window/siz=0.4
+set window/siz=0.5
 cancel mode logo
 
 
