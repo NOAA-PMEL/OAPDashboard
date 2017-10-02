@@ -121,8 +121,13 @@ public class DatasetChecker {
 		// Generate array of standardized data objects
 		StdUserDataArray stdUserData = new StdUserDataArray(dataset, knownUserDataTypes);
 
+		if ( ! stdUserData.hasRequiredColumns()) {
+			msgHandler.processCheckerMessages(dataset, stdUserData);
+			throw new IllegalArgumentException("Dataset is missing required columns. See messages for details.");
+		}
+		
 		// Check for missing lon/lat/depth/time 
-		Double[] sampleTimes = stdUserData.checkMissingLonLatDepthTime();
+		boolean timesAreOk = stdUserData.checkMissingLonLatDepthTime();
 
 		// Bounds check the standardized data values
 		stdUserData.checkBounds();
@@ -137,7 +142,10 @@ public class DatasetChecker {
 		// IMPORTANT: DO THIS ONLY AFTER ALL DATA CHECKS HAVE BEEN COMPLETED!
 		// INCLUDING processing the CheckerMessages (since that pulls in User QC flags.)
 		// Reorder the data as best possible
-		stdUserData.reorderData(sampleTimes);
+		if ( timesAreOk ) {
+			Double[] sampleTimes = stdUserData.getSampleTimes();
+			stdUserData.reorderData(sampleTimes);
+		}
 		
 		// Get the indices values the PI marked as bad.
 		boolean hasCriticalError = false;
@@ -223,7 +231,11 @@ public class DatasetChecker {
 			System.err.println("No castID column found.");	// XXX TODO Return an Error or Warning message?
 			return;
 		}
-		CastChecker cc = new CastChecker(stdData);
-		cc.checkCastConsistency();
+		try {
+			CastChecker cc = new CastChecker(stdData);
+			cc.checkCastConsistency();
+		} catch (Exception ex) {
+			ex.printStackTrace();
+		}
 	}
 }

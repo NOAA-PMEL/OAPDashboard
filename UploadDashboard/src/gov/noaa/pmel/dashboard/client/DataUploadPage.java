@@ -28,6 +28,7 @@ import com.google.gwt.user.client.ui.InlineLabel;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.ListBox;
 import com.google.gwt.user.client.ui.RadioButton;
+import com.google.gwt.user.client.ui.TextBox;
 import com.google.gwt.user.client.ui.Widget;
 
 import gov.noaa.pmel.dashboard.client.UploadDashboard.PagesEnum;
@@ -64,7 +65,8 @@ public class DataUploadPage extends CompositeWithUsername {
 			"</ul>" +
 			"The data of each a sample will be associated with the " +
 			"dataset ID created from the name given in this column " +
-			"(keeping only letters, which are capitalized, and numbers).</p>";
+			"(keeping only letters, which are capitalized, and numbers).</p>" + 
+			"<p>You may specify an alternate column name under Advanced Options.</p>";
 
 	private static final String MORE_HELP_HTML = 
 			"<p>The first few lines of a comma-separated upload datafile " + 
@@ -109,8 +111,8 @@ public class DataUploadPage extends CompositeWithUsername {
 			"<li>Use UTF-16 only if you know your file is encoded in that format, " +
 			"but be aware that only Western European characters can be " +
 			"properly handled.</li>" +
-			"<li>Use the Window encoding only for files produced by older " +
-			"Window programs. </li>" +
+			"<li>Use the Windows encoding only for files produced by older " +
+			"Windows programs. </li>" +
 			"<li>The preview button will show the beginning of the file as it will " +
 			"be seen by the dashboard using the given encoding.</li>" +
 			"</ul>";
@@ -183,6 +185,7 @@ public class DataUploadPage extends CompositeWithUsername {
 	@UiField Hidden actionToken;
 	@UiField Hidden encodingToken;
 	@UiField Hidden formatToken;
+	@UiField Hidden datasetIdColName;
 	@UiField CaptionPanel settingsCaption;
 	@UiField RadioButton commaRadio;
 	@UiField RadioButton semicolonRadio;
@@ -193,6 +196,8 @@ public class DataUploadPage extends CompositeWithUsername {
 	@UiField ListBox encodingListBox;
 	@UiField Button previewButton;
 	@UiField HTML previewHtml;
+	@UiField Label datasetColNameLabel;
+	@UiField TextBox datasetColName;
 	@UiField RadioButton createRadio;
 	@UiField RadioButton appendRadio;
 	@UiField RadioButton overwriteRadio;
@@ -238,7 +243,7 @@ public class DataUploadPage extends CompositeWithUsername {
 			}
 		}
 
-		clearTokens();
+		clearTokens(true);
 
 		settingsCaption.setCaptionText(SETTINGS_CAPTION_TEXT);
 
@@ -259,6 +264,12 @@ public class DataUploadPage extends CompositeWithUsername {
 		appendRadio.setValue(false, false);
 		overwriteRadio.setValue(false, false);
 
+		String DATASET_ID_TT_TEXT = "Name of column specifying dataset ID. Only necessary if non-standard.";
+		datasetColNameLabel.setText("Dataset ID Column Name:");
+		datasetColName.getElement().setPropertyString("placeholder", "dataset ID column name");
+		datasetColNameLabel.setTitle(DATASET_ID_TT_TEXT);
+		datasetColName.setTitle(DATASET_ID_TT_TEXT);
+		
 		submitButton.setText(SUBMIT_TEXT);
 		cancelButton.setText(CANCEL_TEXT);
 
@@ -281,7 +292,7 @@ public class DataUploadPage extends CompositeWithUsername {
 			singleton = new DataUploadPage();
 		singleton.setUsername(username);
 		singleton.userInfoLabel.setText(WELCOME_INTRO + singleton.getUsername());
-		singleton.clearTokens();
+		singleton.clearTokens(true);
 		singleton.previewHtml.setHTML(NO_PREVIEW_HTML_MSG);
 		singleton.encodingListBox.setSelectedIndex(2);
 		singleton.advancedPanel.setOpen(false);
@@ -329,11 +340,15 @@ public class DataUploadPage extends CompositeWithUsername {
 	/**
 	 * Clears the values of the Hidden tokens on the page.
 	 */
-	private void clearTokens() {
+	private void clearTokens(boolean clearIdColumn) {
 		timestampToken.setValue("");
 		actionToken.setValue("");
 		encodingToken.setValue("");
 		formatToken.setValue(""); 
+		if (clearIdColumn) {
+			datasetIdColName.setValue("");
+			datasetColName.setValue(null);
+		}
 	}
 
 	@UiHandler("logoutButton")
@@ -402,6 +417,7 @@ public class DataUploadPage extends CompositeWithUsername {
 			assignTokens(DashboardUtils.APPEND_DATASETS_REQUEST_TAG);
 		else 
 			assignTokens(DashboardUtils.NEW_DATASETS_REQUEST_TAG);
+		datasetIdColName.setValue(datasetColName.getValue());
 		uploadForm.submit();
 	}
 
@@ -420,8 +436,8 @@ public class DataUploadPage extends CompositeWithUsername {
 
 	@UiHandler("uploadForm")
 	void uploadFormOnSubmitComplete(SubmitCompleteEvent event) {
-		clearTokens();
-		processResultMsg(event.getResults());
+		boolean wasSuccess = processResultMsg(event.getResults());
+		clearTokens(wasSuccess);
 		UploadDashboard.showAutoCursor();
 	}
 
@@ -431,11 +447,11 @@ public class DataUploadPage extends CompositeWithUsername {
 	 * @param resultMsg
 	 * 		message returned from the upload of a dataset
 	 */
-	private void processResultMsg(String resultMsg) {
+	private boolean processResultMsg(String resultMsg) {
 		// Check the returned results
 		if ( resultMsg == null ) {
 			UploadDashboard.showMessage(UNEXPLAINED_FAIL_MSG);
-			return;
+			return false;
 		}
 		String[] splitMsgs = resultMsg.trim().split("\n");
 
@@ -459,7 +475,7 @@ public class DataUploadPage extends CompositeWithUsername {
 			previewMsg += "</pre>";
 			advancedPanel.setOpen(true);
 			previewHtml.setHTML(previewMsg);
-			return;
+			return false;
 		}
 
 		ArrayList<String> cruiseIDs = new ArrayList<String>();
@@ -514,6 +530,8 @@ public class DataUploadPage extends CompositeWithUsername {
 			}
 		}
 
+		boolean wasCompleteSuccess = errMsgs.size() == 0;
+		
 		// Display any error messages from the upload
 		if ( errMsgs.size() > 0 ) {
 			String errors = "";
@@ -529,6 +547,7 @@ public class DataUploadPage extends CompositeWithUsername {
 			DatasetListPage.resortTable();
 			DataColumnSpecsPage.showPage(getUsername(), cruiseIDs);
 		}
+		return wasCompleteSuccess;
 	}
 
 }

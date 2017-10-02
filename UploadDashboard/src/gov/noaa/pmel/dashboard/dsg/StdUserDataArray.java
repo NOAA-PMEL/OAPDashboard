@@ -6,9 +6,9 @@ package gov.noaa.pmel.dashboard.dsg;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
+import java.util.SortedSet;
 import java.util.TreeSet;
 
-import gov.noaa.pmel.dashboard.data.sanity.CastChecker;
 import gov.noaa.pmel.dashboard.datatype.CharDashDataType;
 import gov.noaa.pmel.dashboard.datatype.DashDataType;
 import gov.noaa.pmel.dashboard.datatype.DoubleDashDataType;
@@ -38,6 +38,9 @@ public class StdUserDataArray extends StdDataArray {
 			"inconstistent number of data values";
 
 	private String datasetId;
+	
+	private Integer expoIdx = null;
+	private String expoCode = null;
 	
 	private String[] userColNames;
 	private String[] userUnits;
@@ -256,11 +259,13 @@ public class StdUserDataArray extends StdDataArray {
 	 * 		specification of sample time, or may contain null values if there 
 	 * 		were problems computing the sample time
 	 */
-	public Double[] checkMissingLonLatDepthTime() {
+	public boolean checkMissingLonLatDepthTime() {
+		boolean isOk = true;
 		try {
 			Double[] longitudes = getSampleLongitudes();
 			for (int rowIdx = 0; rowIdx < numSamples; rowIdx++) {
 				if ( longitudes[rowIdx] == null ) {
+					isOk = false;
 					ADCMessage msg = new ADCMessage();
 					msg.setSeverity(Severity.CRITICAL);
 					msg.setRowIndex(rowIdx);
@@ -273,6 +278,7 @@ public class StdUserDataArray extends StdDataArray {
 				}
 			}
 		} catch ( Exception ex ) {
+			isOk = false;
 			ADCMessage msg = new ADCMessage();
 			msg.setSeverity(Severity.CRITICAL);
 			String comment = "no longitude column";
@@ -285,6 +291,7 @@ public class StdUserDataArray extends StdDataArray {
 			Double[] latitudes = getSampleLatitudes();
 			for (int rowIdx = 0; rowIdx < numSamples; rowIdx++) {
 				if ( latitudes[rowIdx] == null ) {
+					isOk = false;
 					ADCMessage msg = new ADCMessage();
 					msg.setSeverity(Severity.CRITICAL);
 					msg.setRowIndex(rowIdx);
@@ -297,6 +304,7 @@ public class StdUserDataArray extends StdDataArray {
 				}
 			}
 		} catch ( Exception ex ) {
+			isOk = false;
 			ADCMessage msg = new ADCMessage();
 			msg.setSeverity(Severity.CRITICAL);
 			String comment = "no latitude column";
@@ -309,6 +317,7 @@ public class StdUserDataArray extends StdDataArray {
 			Double[] depths = getSampleDepths();
 			for (int rowIdx = 0; rowIdx < numSamples; rowIdx++) {
 				if ( depths[rowIdx] == null ) {
+					isOk = false;
 					ADCMessage msg = new ADCMessage();
 					msg.setSeverity(Severity.CRITICAL);
 					msg.setRowIndex(rowIdx);
@@ -321,6 +330,7 @@ public class StdUserDataArray extends StdDataArray {
 				}
 			}
 		} catch ( Exception ex ) {
+			isOk = false;
 			ADCMessage msg = new ADCMessage();
 			msg.setSeverity(Severity.CRITICAL);
 			String comment = "no sample depth column";
@@ -334,6 +344,7 @@ public class StdUserDataArray extends StdDataArray {
 			times = getSampleTimes();
 			for (int rowIdx = 0; rowIdx < numSamples; rowIdx++) {
 				if ( times[rowIdx] == null ) {
+					isOk = false;
 					ADCMessage msg = new ADCMessage();
 					msg.setSeverity(Severity.CRITICAL);
 					msg.setRowIndex(rowIdx);
@@ -344,6 +355,8 @@ public class StdUserDataArray extends StdDataArray {
 				}
 			}
 		} catch ( Exception ex ) {
+			isOk = false;
+			ex.printStackTrace();
 			ADCMessage msg = new ADCMessage();
 			msg.setSeverity(Severity.CRITICAL);
 			String comment = "incomplete columns specifying sample date/time";
@@ -352,7 +365,7 @@ public class StdUserDataArray extends StdDataArray {
 			stdMsgList.add(msg);
 		}
 
-		return times;
+		return isOk;
 	}
 
 	/**
@@ -676,6 +689,14 @@ public class StdUserDataArray extends StdDataArray {
 		return (Character) stdObjects[sampleIdx][woceAutocheckIndex];
 	}
 
+	public boolean hasCriticalError() {
+		for (ADCMessage msg : stdMsgList) {
+			if (Severity.CRITICAL.equals(msg.getSeverity())) {
+				return true;
+			}
+		}
+		return false;
+	}
 	/**
 	 * Set the WOCE_AUTOCHECK flag for a data sample (row).
 	 * 
@@ -768,6 +789,100 @@ public class StdUserDataArray extends StdDataArray {
 
 	public String getDatasetId() {
 		return datasetId;
+	}
+
+//	public String getExpoCode() {
+//		if ( expoCode == null ) {
+//			expoCode = findExpoCode();
+//		}
+//		return expoCode;
+//	}
+//
+//	public void setExpoCode(String expoCode) {
+//		this.expoCode = expoCode;
+//	}
+//	
+//	private String findExpoCode() {
+//		if ( expoIdx == null ) {
+//			expoIdx = lookForDataColumnIndex("expocode");
+//		}
+//		if ( expoIdx != null ) {
+//			return (String)getStdVal(0, expoIdx.intValue());
+//		} else {
+//			return generateExpoCode();
+//		}
+//	}
+//	private synchronized String generateExpoCode() {
+//		if (expoCode != null) { return expoCode; }
+//		String code = null;
+//		Integer shipCodeIdx = lookForDataColumnIndex("platform_code");
+//		if ( shipCodeIdx == null ) {
+//			throw new IllegalStateException("No platform_code column found to generate expocode.");
+//		}
+//		String shipCode = (String)getStdVal(0, shipCodeIdx.intValue());
+//		Double[] times = getSampleTimes();
+//		SortedSet<Double> orderedTimes = new TreeSet<>(Arrays.asList(times));
+//		Double firstObs = orderedTimes.first();
+//		Date firstObsDate = new Date((long)(firstObs.doubleValue()*1000));
+//		String dateStr = DashboardServerUtils.formatUTC(firstObsDate, DashboardServerUtils.EXPO_DATE);
+//		code = shipCode+dateStr;
+//		return code;
+//	}
+
+	public boolean hasRequiredColumns() {
+		boolean gotem = true;
+		if ( ! hasDate()) {
+			gotem = false;
+			ADCMessage msg = new ADCMessage();
+			msg.setSeverity(Severity.CRITICAL);
+			msg.setGeneralComment("missing column");
+			msg.setDetailedComment("The dataset does not identify the sample Date.");
+			addStandardizationMessage(msg);
+		}
+		if ( ! hasTime()) {
+			gotem = false;
+			ADCMessage msg = new ADCMessage();
+			msg.setSeverity(Severity.CRITICAL);
+			msg.setGeneralComment("missing column");
+			msg.setDetailedComment("The dataset does not identify the sample Time.");
+			addStandardizationMessage(msg);
+		}
+		if ( ! hasDataColumn(DashboardServerUtils.LATITUDE.getStandardName())) {
+			gotem = false;
+			ADCMessage msg = new ADCMessage();
+			msg.setSeverity(Severity.CRITICAL);
+			msg.setGeneralComment("missing column");
+			msg.setDetailedComment("The dataset does not identify the cast Latitude.");
+			addStandardizationMessage(msg);
+		}
+		if ( ! hasDataColumn(DashboardServerUtils.LONGITUDE.getStandardName())) {
+			gotem = false;
+			ADCMessage msg = new ADCMessage();
+			msg.setSeverity(Severity.CRITICAL);
+			msg.setGeneralComment("missing column");
+			msg.setDetailedComment("The dataset does not identify the cast Longitude.");
+			addStandardizationMessage(msg);
+		}
+		if ( ! ( hasDataColumn(DashboardServerUtils.SAMPLE_DEPTH.getStandardName()) || 
+				 hasDataColumn("water_pressure"))) {
+			gotem = false;
+			ADCMessage msg = new ADCMessage();
+			msg.setSeverity(Severity.CRITICAL);
+			msg.setGeneralComment("missing column");
+			msg.setDetailedComment("The dataset does not identify either the sample Depth or Pressure.");
+			addStandardizationMessage(msg);
+		}
+//		if ( ! ( hasDataColumn(DashboardServerUtils.EXPO_CODE.getStandardName()) || 
+//				 hasDataColumn(DashboardServerUtils.PLATFORM_CODE.getStandardName()))) {
+//			gotem = false;
+//			ADCMessage msg = new ADCMessage();
+//			msg.setSeverity(Severity.CRITICAL);
+//			msg.setGeneralComment("missing column");
+//			msg.setDetailedComment("The dataset must identify either the Platform Code or the Cruise Expocode.");
+//			addStandardizationMessage(msg);
+//		}
+		
+		return gotem;
 	}
 	
 }

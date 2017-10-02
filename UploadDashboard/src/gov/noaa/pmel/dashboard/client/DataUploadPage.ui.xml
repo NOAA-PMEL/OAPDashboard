@@ -20,6 +20,7 @@
 					<g:Hidden name="dataaction" ui:field="actionToken" />
 					<g:Hidden name="dataencoding" ui:field="encodingToken" />
 					<g:Hidden name="dataformat" ui:field="formatToken" />
+					<g:Hidden name="datasetIdColName" ui:field="datasetIdColName" />
 				</g:FlowPanel>
 			</g:FormPanel>
 			<g:CaptionPanel addStyleNames="{style.settingscaptionpanel}" ui:field="settingsCaption">
@@ -43,6 +44,8 @@
 					<g:DisclosurePanel addStyleNames="{style.advancedoptionspanel}" ui:field="advancedPanel">
 						<g:header>Advanced Options</g:header>
 						<g:FlowPanel>
+							<g:Label addStyleNames="{style.labeledlistlabel}" ui:field="datasetColNameLabel"/>
+							<g:TextBox ui:field="datasetColName"/>
 							<g:HTML addStyleNames="{style.introhtml}" ui:field="advancedHtml"/>
 							<g:FlowPanel addStyleNames="{style.labeledlistpanel}">
 								<g:Label addStyleNames="{style.labeledlistlabel}" ui:field="encodingLabel" />

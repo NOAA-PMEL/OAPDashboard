@@ -215,8 +215,8 @@ public class StdDataArray {
 	 * 		if any sample longitude, latitude, sample depth is missing, or
 	 * 		if any sample time cannot be computed.
 	 */
-	public StdDataArray(StdUserDataArray userStdData, 
-			KnownDataTypes dataFileTypes) throws IllegalArgumentException {
+	public StdDataArray(StdDataArray userStdData, 
+						KnownDataTypes dataFileTypes) throws IllegalArgumentException {
 		// StdUserDataArray has to have data columns, but could be missing the data values
 		numSamples = userStdData.getNumSamples();
 		if ( numSamples <= 0 )
@@ -666,16 +666,24 @@ public class StdDataArray {
 			// Standard format of the date is yyyy-MM-dd
 			// Standard format of time string is HH:mm:ss.SSS
 			for (int j = 0; j < numSamples; j++) {
-				try {
-					String[] ymd = ((String) stdObjects[j][dateIndex]).split("-");
+//				try {
+					String stdYMD = (String) stdObjects[j][dateIndex];
+					if ( DashboardUtils.isEmptyNull(stdYMD)) {
+						throw new IllegalStateException("Invalid (empty or null) date string");
+					}
+					String[] ymd = stdYMD.split("-");
 					if ( ymd.length != 3 )
-						throw new Exception();
+						throw new IllegalStateException("Invalid date string: "+ stdYMD);
 					int year = Integer.parseInt(ymd[0]);
 					int month = Integer.parseInt(ymd[1]);
 					int day = Integer.parseInt(ymd[2]);
-					String[] hms = ((String) stdObjects[j][timeOfDayIndex]).split(":");
+					String stdHMS = (String) stdObjects[j][timeOfDayIndex];
+					if ( DashboardUtils.isEmptyNull(stdHMS)) {
+						throw new IllegalStateException("Invalid (empty or null) time string");
+					}
+					String[] hms = stdHMS.split(":");
 					if ( hms.length != 3 )
-						throw new Exception();
+						throw new IllegalStateException("Invalid time string: "+ stdHMS);
 					int hour = Integer.parseInt(hms[0]);
 					int min = Integer.parseInt(hms[1]);
 					Double value = Double.parseDouble(hms[2]);
@@ -686,9 +694,9 @@ public class StdDataArray {
 					cal.set(year, GregorianCalendar.JANUARY+month-1, day, hour, min, sec);
 					cal.set(GregorianCalendar.MILLISECOND, millisec);
 					sampleTimes[j] = Double.valueOf( cal.getTimeInMillis() / 1000.0 );
-				} catch ( Exception ex ) {
-					sampleTimes[j] = null;
-				}
+//				} catch ( Exception ex ) {
+//					sampleTimes[j] = null;
+//				}
 			}
 		}
 		else if ( isUsableIndex(dateIndex) && isUsableIndex(hourOfDayIndex) && 
@@ -791,6 +799,16 @@ public class StdDataArray {
 		return isUsableIndex(sampleDepthIndex);
 	}
 
+	public boolean hasDate() {
+		return isUsableIndex(timestampIndex) || isUsableIndex(dateIndex) ||
+			 ( isUsableIndex(yearIndex) && isUsableIndex(monthOfYearIndex) && isUsableIndex(dayOfMonthIndex));
+	}
+	
+	public boolean hasTime() {
+		return isUsableIndex(timestampIndex) || isUsableIndex(timeOfDayIndex) ||
+			 ( isUsableIndex(hourOfDayIndex) && isUsableIndex(minuteOfHourIndex));
+	}
+	
 	/**
 	 * @return
 	 * 		if there is a valid {@link DashboardServerUtils#YEAR} data column

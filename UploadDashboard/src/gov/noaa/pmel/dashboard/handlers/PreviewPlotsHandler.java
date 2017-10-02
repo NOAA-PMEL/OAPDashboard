@@ -262,7 +262,7 @@ public class PreviewPlotsHandler {
 		}
 	}
 
-	public List<List<PreviewPlotImage>> getPreviewPlots(String datasetId) {
+	public List<List<PreviewPlotImage>> getPreviewPlots(final String datasetId) {
 		List<List<PreviewPlotImage>> plotTabs = new ArrayList<>();
 		String stdId = DashboardServerUtils.checkDatasetID(datasetId);
 		String cruisePlotsDirname = getDatasetPreviewPlotsDir(stdId).getPath();
@@ -270,7 +270,7 @@ public class PreviewPlotsHandler {
 		ArrayList<String> plotFiles = new ArrayList<>(Arrays.asList(cruisePlotsDir.list(new FilenameFilter() {
 			@Override
 			public boolean accept(File dir, String name) {
-				return name.endsWith(".gif") || name.endsWith(".png");
+				return name.startsWith(datasetId) && name.endsWith(".gif") || name.endsWith(".png");
 			}
 		})));
 		HashMap<String, PreviewPlotImage> plotNameMap = buildNameMap(plotFiles);

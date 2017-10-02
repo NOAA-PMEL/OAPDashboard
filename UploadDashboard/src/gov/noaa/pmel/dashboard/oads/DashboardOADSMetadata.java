@@ -36,20 +36,24 @@ import lombok.EqualsAndHashCode;
 @JsonRootName(value="metadata")
 @XmlRootElement(name="metadata")
 @XmlAccessorType(XmlAccessType.NONE)
-@XmlType(propOrder={"expoCode", "submissionDateString", "_submitter", "_startDate", "_endDate", 
+@XmlType(propOrder={"_expocode", "_cruiseId", "submissionDateString", "_submitter", "_startDate", "_endDate", 
 					"_westernBound", "_easternBound", "_northernBound", "_southernBound", "_variables"
 					})
 @EqualsAndHashCode(callSuper=true)
 public @Data class DashboardOADSMetadata extends DashboardMetadata  implements Serializable, IsSerializable {
 
-	@XmlElement(name="datasetId")
-	public String getExpoCode() { return super.getDatasetId(); }
+	@XmlElement(name="expocode")
+	private String _expocode;
+	
+	@XmlElement(name="cruiseID")
+	private String _cruiseId;
 	
 //	private Date _submissionDate;
 	@JsonGetter("submissiondate")
 	@XmlElement(name="submissiondate")
 	public String getSubmissionDateString() {  return super.getUploadTimestamp(); }
 	public void setSubmissionDateString(String uploadTimeString) { super.setUploadTimestamp(uploadTimeString); }
+	
 	@JsonProperty("datasubmitter")
 	@XmlElement(name="datasubmitter")
 	private Person _submitter;

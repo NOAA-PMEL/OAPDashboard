@@ -95,7 +95,11 @@ public class DashboardServerUtils {
 	 */
 	public static final StringDashDataType DATASET_ID = new StringDashDataType("dataset_id", 
 			50.0, "dataset ID", "unique ID for this dataset", false, DashboardUtils.NO_UNITS, 
-			null, IDENTIFIER_CATEGORY, null, null, null, null, null);
+			"dataset_id", IDENTIFIER_CATEGORY, null, null, null, null, null);
+
+	public static final StringDashDataType EXPO_CODE = new StringDashDataType("expocode", 
+			50.0, "expo code", "unique ID for cruise", false, DashboardUtils.NO_UNITS, 
+			"expocode", IDENTIFIER_CATEGORY, null, null, null, null, null);
 
 	/**
 	 * Consecutive numbering of the samples after merging and ordering.
@@ -123,6 +127,8 @@ public class DashboardServerUtils {
 	public static final StringDashDataType NISKIN = new StringDashDataType(DashboardUtils.NISKIN, 
 			"niskin", IDENTIFIER_CATEGORY, null, null, null, null, null);
 	
+	public static final StringDashDataType PLATFORM_CODE = new StringDashDataType(DashboardUtils.PLATFORM_CODE, 
+			"platform_code", PLATFORM_CATEGORY, null, null, null, null, null);
 	public static final StringDashDataType PLATFORM_NAME = new StringDashDataType(DashboardUtils.PLATFORM_NAME, 
 			"platform_name", PLATFORM_CATEGORY, null, null, null, null, null);
 	public static final StringDashDataType PLATFORM_TYPE = new StringDashDataType(DashboardUtils.PLATFORM_TYPE, 
@@ -169,7 +175,7 @@ public class DashboardServerUtils {
 	public static final DoubleDashDataType LATITUDE = new DoubleDashDataType(DashboardUtils.LATITUDE, 
 			"latitude", LOCATION_CATEGORY, "degrees_north", "-90.0", null, null, "90.0");
 	public static final DoubleDashDataType SAMPLE_DEPTH = new DoubleDashDataType(DashboardUtils.SAMPLE_DEPTH, 
-			"depth", BATHYMETRY_CATEGORY, "meters", "0.0", null, null, "16000");
+			"sample_depth", BATHYMETRY_CATEGORY, "meters", "0.0", null, null, "16000");
 
 	/**
 	 * Date and time of the measurement
@@ -391,11 +397,16 @@ public class DashboardServerUtils {
 	}
 
 	public static final String UTC_FORMAT = "yyyy-mm-dd hh:mm:ss z";
+	public static final String EXPO_DATE = "yyyymmdd";
 
-	public static String formatUTC(Date date) {
-		SimpleDateFormat sdf = new SimpleDateFormat(UTC_FORMAT);
+	public static String formatUTC(Date date, String format) {
+		SimpleDateFormat sdf = new SimpleDateFormat(format);
 		sdf.setTimeZone(TimeZone.getTimeZone("UTC"));
 		return sdf.format(date);
+	}
+		
+	public static String formatUTC(Date date) {
+		return formatUTC(date, UTC_FORMAT);
 	}
 
 }

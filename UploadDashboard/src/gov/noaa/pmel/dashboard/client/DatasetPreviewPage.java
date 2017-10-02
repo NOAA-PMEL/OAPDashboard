@@ -319,7 +319,9 @@ public class DatasetPreviewPage extends CompositeWithUsername {
 	private void resetImageUrls(boolean forceRebuild) {
 		if ( forceRebuild ) {
 			clearTabImages();
-			availablePlots.clear();
+			if ( availablePlots != null ) {
+				availablePlots.clear();
+			}
 			updatePreviewPlots(datasetId, getUsername(), forceRebuild);
 		} else {
 			resetImageUrls();

@@ -501,6 +501,9 @@ public abstract class DashDataType<T extends Comparable<T>> implements Comparabl
 	@SuppressWarnings("unchecked")
 	@Override
 	public int compareTo(DashDataType<?> other) {
+		if ( this == other ) {
+			return 0;
+		}
 		// This first check should be all that is needed
 		int result = sortOrder.compareTo(other.sortOrder);
 		if ( result != 0 )

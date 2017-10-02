@@ -288,6 +288,8 @@ public class DatasetListPage extends CompositeWithUsername {
 	private Button[] selectSet;
 	private Button[] singleSet;
 	
+	private Header<String> selectHeader;
+	
 	private ListDataProvider<DashboardDataset> listProvider;
 	private DashboardAskPopup askDeletePopup;
 	private DashboardAskPopup askRemovePopup;
@@ -546,6 +548,8 @@ public class DatasetListPage extends CompositeWithUsername {
 			throw new RuntimeException("Unexpected option given the setDatasetSelection: " + option);
 		}
 		updateAvailableButtons();
+		Object key = selectHeader.getKey();
+		((SelectionCell)selectHeader.getCell()).setViewData(key, SELECTION_OPTION_LABEL);
 		datasetsGrid.setRowCount(providerList.size());
 		datasetsGrid.setVisibleRange(0, providerList.size());
 		// Make sure the table is sorted according to the last specification
@@ -996,7 +1000,7 @@ public class DatasetListPage extends CompositeWithUsername {
 	 * to be populated using {@link #updateDatasets(DashboardDatasetList)}.
 	 */
 	private void buildDatasetListTable() {
-		Header<String> selectHeader = buildSelectionHeader();
+		selectHeader = buildSelectionHeader();
 
 		// Create the columns for this table
 		TextColumn<DashboardDataset> rowNumColumn = buildRowNumColumn();
@@ -1175,7 +1179,7 @@ public class DatasetListPage extends CompositeWithUsername {
 				SUBMITTED_SELECTION_OPTION, 
 				PUBLISHED_SELECTION_OPTION, 
 				CLEAR_SELECTION_OPTION));
-		Header<String> selectHeader = new Header<String>(selectHeaderCell) {
+		selectHeader = new Header<String>(selectHeaderCell) {
 			@Override
 			public String getValue() {
 				return SELECTION_OPTION_LABEL;

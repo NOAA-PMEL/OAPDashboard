@@ -441,10 +441,13 @@ public class DashboardServices extends RemoteServiceServlet implements Dashboard
 				datasetId + " updated by " + username);
 		// Update the user-specific data column names to types, units, and missing values 
 		configStore.getUserFileHandler().updateUserDataColumnTypes(dataset, username);
-		DashboardOADSMetadata mdata = OADSMetadata.extractOADSMetadata(stdArray);
-		configStore.getMetadataFileHandler().saveAsOadsXmlDoc(mdata, 
-		                                                      DashboardUtils.autoExtractedMdFilename(datasetId), 
-		                                                      "Initial Auto-extraction");
+		
+		if ( ! stdArray.hasCriticalError()) {
+			DashboardOADSMetadata mdata = OADSMetadata.extractOADSMetadata(stdArray);
+			configStore.getMetadataFileHandler().saveAsOadsXmlDoc(mdata, 
+			                                                      DashboardUtils.autoExtractedMdFilename(datasetId), 
+			                                                      "Initial Auto-extraction");
+		}
 		
 		// ??? Is this possible at this point for a user to be editing another user's dataset ?
 		if ( ! username.equals(dataset.getOwner()) )
@@ -469,6 +472,7 @@ public class DashboardServices extends RemoteServiceServlet implements Dashboard
 		tddp.setDatasetData(dataset);
 		
 		// So we can show the error message on the page.
+		// XXX TODO: ??? can't we get these from the stdArray ?
 		ADCMessageList msgs = getDataMessages(pageUsername, datasetId);
 		if ( msgs != null ) {
 			tddp.setMsgList(msgs);
@@ -531,12 +535,11 @@ public class DashboardServices extends RemoteServiceServlet implements Dashboard
 			scMsgList = configStore.getCheckerMsgHandler().getCheckerMessages(datasetId);
 		} catch (Exception ex) {
 			logger.info("No messages for dataset id " + datasetId);
-			return null;
-//			throw new IllegalArgumentException("The automated data checker has never been run on dataset " + datasetId);
+			scMsgList = new ADCMessageList();
+//			throw new IllegalArgumentException("The automated data checker has not been run on dataset " + datasetId);
 		}
 		scMsgList.setUsername(username);
-		logger
-			  .info("returned automated data checker messages for " + datasetId + " for " + username);
+		logger.info("returned automated data checker messages for " + datasetId + " for " + username);
 		return scMsgList;
 	}
 
@@ -637,7 +640,7 @@ public class DashboardServices extends RemoteServiceServlet implements Dashboard
 				return name.startsWith(datasetId);
 			}
 		});
-		if ( plots == null || plots.length == 0 ) { 
+		if ( plots == null || plots.length < 10 ) { 
 			return true; 
 		}
 		long plotsTime = plotsDir.lastModified();

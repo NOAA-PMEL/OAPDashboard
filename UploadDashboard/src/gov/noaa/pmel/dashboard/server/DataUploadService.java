@@ -83,6 +83,7 @@ public class DataUploadService extends HttpServlet {
 		String dataFormat = null;
 		String encoding = null;
 		String action = null;
+		String datasetIdColName = null;
 		List<FileItem> datafiles = null;
 		try {
 			Map<String,List<FileItem>> paramMap = datafileUpload.parseParameterMap(request);
@@ -107,6 +108,11 @@ public class DataUploadService extends HttpServlet {
 				itemList = paramMap.get("dataformat");
 				if ( (itemList != null) && (itemList.size() == 1) ) {
 					dataFormat = itemList.get(0).getString();
+				}
+	
+				itemList = paramMap.get("datasetIdColName");
+				if ( (itemList != null) && (itemList.size() == 1) ) {
+					datasetIdColName = itemList.get(0).getString();
 				}
 	
 				datafiles = paramMap.get("datafiles");
@@ -211,7 +217,7 @@ public class DataUploadService extends HttpServlet {
 			TreeMap<String,DashboardDatasetData> datasetsMap;
 			String filename = item.getName();
 			try ( BufferedReader cruiseReader = new BufferedReader( new InputStreamReader(item.getInputStream(), encoding)); ) {
-				datasetsMap = datasetHandler.createDatasetsFromInput(cruiseReader, dataFormat, username, filename, timestamp);
+				datasetsMap = datasetHandler.createDatasetsFromInput(cruiseReader, dataFormat, username, filename, timestamp, datasetIdColName);
 			} catch (Exception ex) {
 				// Mark as a failed file, and go on to the next
 				messages.add(DashboardUtils.INVALID_FILE_HEADER_TAG + " " + filename);

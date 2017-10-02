@@ -539,8 +539,7 @@ public class MetadataFileHandler extends VersionedFileHandler {
 	 * 		if dataset ID or metaname is invalid, or
 	 * 		if there were problems reading from the properties file
 	 */
-	public DashboardMetadata getMetadataInfo(String datasetId, String metaname) 
-											throws IllegalArgumentException {
+	public DashboardMetadata getMetadataInfo(String datasetId, String metaname) throws IllegalArgumentException {
 		// Get the full path filename of the metadata file
 		File metadataFile = getMetadataFile(datasetId, metaname);
 		// Read the properties associated with this metadata document
@@ -553,8 +552,6 @@ public class MetadataFileHandler extends VersionedFileHandler {
 			} finally {
 				propsReader.close();
 			}
-		} catch ( FileNotFoundException ex ) {
-			return null;
 		} catch ( IOException ex ) {
 			throw new IllegalArgumentException(ex);
 		}
@@ -829,6 +826,13 @@ public class MetadataFileHandler extends VersionedFileHandler {
 
 	public void saveAsOadsXmlDoc(DashboardOADSMetadata mdata, String fileName, String message) {
 		File mdataFile = getMetadataFile(mdata.getDatasetId(), fileName);
+		File parentDir = mdataFile.getParentFile();
+		if ( !parentDir.exists()) {
+			parentDir.mkdirs();
+			if ( !parentDir.exists()) {
+				throw new IllegalStateException("Unable to create metadata directory.");
+			}
+		}
 
 		// Save the XML document to the metadata document file
 		try {

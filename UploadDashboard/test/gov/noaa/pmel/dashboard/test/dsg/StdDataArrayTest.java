@@ -355,11 +355,12 @@ public class StdDataArrayTest {
 		StdUserDataArray stdUserData = new StdUserDataArray(dataset, KNOWN_USER_TYPES);
 		assertEquals(numRows, stdUserData.getNumSamples());
 		assertEquals(4, stdUserData.getStandardizationMessages().size());
-		Double[] sampleTimes = stdUserData.checkMissingLonLatDepthTime();
-		assertNotNull( sampleTimes );
+		boolean timesAreOk = stdUserData.checkMissingLonLatDepthTime();
+		assertTrue( timesAreOk );
 		// Should not have added any extra messages
 		assertEquals(4, stdUserData.getStandardizationMessages().size());
 
+		Double[] sampleTimes = stdUserData.getSampleTimes();
 		stdUserData.reorderData(sampleTimes);
 
 		// Everything should be back in the original order (which was ordered in time)

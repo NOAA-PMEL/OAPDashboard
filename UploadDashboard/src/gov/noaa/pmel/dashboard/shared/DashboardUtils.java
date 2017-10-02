@@ -162,7 +162,7 @@ public class DashboardUtils {
 
 	/** Formats for time-of-day */
 	public static final ArrayList<String> TIME_OF_DAY_UNITS = 
-			new ArrayList<String>(Arrays.asList("hh:mm:ss"));
+			new ArrayList<String>(Arrays.asList("hh:mm:ss","hh:mm"));
 
 	/** Units for day-of-year (value of the first day of the year) */
 	public static final ArrayList<String> DAY_OF_YEAR_UNITS = 
@@ -214,8 +214,14 @@ public class DashboardUtils {
 	public static final DataColumnType DATASET_NAME = new DataColumnType("dataset_name", 
 			100.0, "cruise/dataset name", "unique name for this dataset", true, NO_UNITS);
 
+	public static final DataColumnType EXPO_CODE = new DataColumnType("expocode", 
+			100.0, "expo code", "expocode for the cruise", false, NO_UNITS);
+
+	public static final DataColumnType PLATFORM_CODE = new DataColumnType("platform_code", 
+			101.0, "platform code", "platform code", false, NO_UNITS);
+
 	public static final DataColumnType PLATFORM_NAME = new DataColumnType("platform_name", 
-			101.0, "platform name", "platform name", false, NO_UNITS);
+			101.5, "platform name", "platform name", false, NO_UNITS);
 
 	public static final DataColumnType PLATFORM_TYPE = new DataColumnType("platform_type", 
 			102.0, "platform type", "platform type", false, NO_UNITS);

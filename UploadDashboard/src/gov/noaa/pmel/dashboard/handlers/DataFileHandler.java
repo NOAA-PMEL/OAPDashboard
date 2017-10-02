@@ -256,7 +256,8 @@ public class DataFileHandler extends VersionedFileHandler {
 	 */
 	public TreeMap<String,DashboardDatasetData> createDatasetsFromInput(
 			BufferedReader dataReader, String dataFormat, String owner, 
-			String filename, String timestamp) throws IOException {
+			String filename, String timestamp, 
+			String datasetIdColName) throws IOException {
 		char spacer;
 		if ( DashboardUtils.TAB_FORMAT_TAG.equals(dataFormat) ) {
 			spacer = '\t';
@@ -367,18 +368,25 @@ public class DataFileHandler extends VersionedFileHandler {
 					} catch ( IOException ex ) {
 						throw new IOException("Unexpected failure to get the dashboard configuration");
 					}
-					configStore.getUserFileHandler().assignDataColumnTypes(fakeDataset);
+					configStore.getUserFileHandler().assignDataColumnTypes(fakeDataset, datasetIdColName);
 					columnTypes = fakeDataset.getDataColTypes();
 					int k = 0;
 					for ( DataColumnType dtype : columnTypes ) {
-						if ( DashboardServerUtils.DATASET_NAME.typeNameEquals(dtype) ) {
+						if ( ( ! DashboardUtils.isEmptyNull(datasetIdColName) && columnNames.get(k).equalsIgnoreCase(datasetIdColName)) ||
+								DashboardServerUtils.DATASET_NAME.typeNameEquals(dtype) ) {
 							datasetNameColIdx = k;
 							break;
-						}
+						} 
+						
 						k++;
 					}
-					if ( datasetNameColIdx < 0 )
-						throw new IOException("Dataset name column not found");
+					if ( datasetNameColIdx < 0 ) {
+						String msg = "Dataset name column not found";
+						if ( ! DashboardUtils.isEmptyNull(datasetIdColName)) {
+							msg += ": " + datasetIdColName;
+						}
+						throw new IOException(msg);
+					}
 
 					// Get the version to record in the datasets
 					version = configStore.getUploadVersion();
@@ -404,8 +412,8 @@ public class DataFileHandler extends VersionedFileHandler {
 				String datasetId = DashboardServerUtils.getDatasetIDFromName(datasetName);
 				if ( (datasetId.length() < DashboardServerUtils.MIN_DATASET_ID_LENGTH) ||
 					 (datasetId.length() > DashboardServerUtils.MAX_DATASET_ID_LENGTH) ) 
-					throw new IOException("Invalid dataset ID \"" + datasetId + 
-							"\" from dataset name \"" + datasetName + "\"");
+					throw new IOException("Invalid dataset ID \"" + datasetId + "\" from dataset name \"" + 
+										   datasetName + "\" at record number: " + dataParser.getRecordNumber());
 
 				DashboardDatasetData dataset = datasetsMap.get(datasetId);
 				if ( dataset == null ) {

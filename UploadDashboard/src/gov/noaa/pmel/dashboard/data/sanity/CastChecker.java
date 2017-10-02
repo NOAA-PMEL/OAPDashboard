@@ -292,7 +292,10 @@ public class CastChecker {
 									" Found [" + lats[prevRowIdx] + ", " + lons[prevRowIdx] + "] " +
 									" and [" + lats[nextRowIdx] + ", " + lons[nextRowIdx] + "] " ;
 				ADCMessage amsg = new ADCMessage();
-				amsg.setSeverity(Severity.ERROR); 
+				Severity severity = Math.abs(lats[prevRowIdx].doubleValue() - lats[nextRowIdx].doubleValue()) > 0.1 ? 
+										Severity.ERROR : 
+										Severity.WARNING;
+				amsg.setSeverity(severity); 
 				amsg.setRowIndex(nextRowIdx);
 				amsg.setColIndex(latCol);
 				amsg.setColName("latitude");
@@ -310,7 +313,10 @@ public class CastChecker {
 									" Found [" + lats[prevRowIdx] + ", " + lons[prevRowIdx] + "] " +
 									" and [" + lats[nextRowIdx] + ", " + lons[nextRowIdx] + "] " ;
 				ADCMessage amsg = new ADCMessage();
-				amsg.setSeverity(Severity.ERROR);
+				Severity severity = Math.abs(lons[prevRowIdx].doubleValue() - lons[nextRowIdx].doubleValue()) > 0.1 ? 
+										Severity.ERROR : 
+										Severity.WARNING;
+				amsg.setSeverity(severity); 
 				amsg.setRowIndex(nextRowIdx);
 				amsg.setColIndex(lonCol);
 				amsg.setColName("longitude");

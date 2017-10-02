@@ -48,6 +48,8 @@ import ucar.nc2.NetcdfFileWriter.Version;
  */
 public class ProfileDsgFile extends DsgNcFile {
 
+	private static final long serialVersionUID = -7178421505101183090L;
+
 	private static Logger logger = LogManager.getLogger("ProfileDsgFile");
 	
 	private static enum ElemCategory {
@@ -246,6 +248,7 @@ public class ProfileDsgFile extends DsgNcFile {
 		ncfile.addGroupAttribute(null, new Attribute("creation_date", formatUTC(System.currentTimeMillis())));
 		ncfile.addGroupAttribute(null, new Attribute("history", DSG_VERSION));
 		ncfile.addGroupAttribute(null, new Attribute("id", _stdUser.getDatasetId()));
+		ncfile.addGroupAttribute(null, new Attribute("dataset_id", _stdUser.getDatasetId()));
 		addMetadataAttributes(ncfile);
 	}
 	
@@ -628,7 +631,7 @@ public class ProfileDsgFile extends DsgNcFile {
 	private Collection<DashDataType<?>> getDataVariablesToWriteToDsgFile() {
 //		String[] varNames = new String[] { // "cast", "cruise", "time", "latitude", "longitude",
 //											"date",
-//											"ctd_pressure", "depth", "ctd_temperature", 
+//											"ctd_pressure", "sample_depth", "ctd_temperature", 
 //											"ctd_salinity", "ctd_oxygen", "ctd_flouride",
 //											"bottle_oxygen", "nitrite", "nitrate", "phosphate", "ammonia",
 //											"alkalinity", "carbon", "pH" };

@@ -131,7 +131,7 @@ public class ADCMessage implements Serializable, IsSerializable {
 	public void setLongitude(Double longitude) {
 		if ( (longitude == null) ||  longitude.isInfinite() || longitude.isNaN() ||
 			 (longitude < -540.0) || (longitude > 540.0) )
-			this.longitude = DashboardUtils.FP_MISSING_VALUE;
+			this.longitude = Double.NaN;
 		else
 			this.longitude = longitude;
 	}
@@ -153,7 +153,7 @@ public class ADCMessage implements Serializable, IsSerializable {
 	public void setLatitude(Double latitude) {
 		if ( (latitude == null) || latitude.isInfinite() || latitude.isNaN() || 
 			 (latitude < -90.0) || (latitude > 90.0) )
-			this.latitude = DashboardUtils.FP_MISSING_VALUE;
+			this.latitude = Double.NaN;
 		else
 			this.latitude = latitude;
 	}

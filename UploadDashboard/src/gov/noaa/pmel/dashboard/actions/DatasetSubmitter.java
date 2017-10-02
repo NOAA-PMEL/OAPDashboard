@@ -3,6 +3,7 @@
  */
 package gov.noaa.pmel.dashboard.actions;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashSet;
@@ -101,7 +102,8 @@ public class DatasetSubmitter {
 			boolean changed = false;
 			String commitMsg = "Dataset " + datasetId;
 
-			if ( Boolean.TRUE.equals(dataset.isEditable()) ) {
+			File dsgFile = dsgHandler.getDsgNcFile(datasetId);
+			if ( Boolean.TRUE.equals(dataset.isEditable()) || ! dsgFile.exists() ) {
 				try {
 					// Get the metadata for this dataset
 					// XXX TODO: OME_FILENAME check
@@ -127,7 +129,7 @@ public class DatasetSubmitter {
 					}
 
 					// XXX TODO: OME_FILENAME check
-					DashboardOADSMetadata oadsMd = OADSMetadata.getCurrentDatasetMetadata(mdata, metadataHandler);
+					DashboardOADSMetadata oadsMd = OADSMetadata.extractOADSMetadata(standardized);
 					DsgMetadata dsgMData = oadsMd.createDsgMetadata();
 					dsgMData.setVersion(version);
 					
@@ -135,10 +137,6 @@ public class DatasetSubmitter {
 					logger.debug("Generating the full-data DSG file for " + datasetId);
 					dsgHandler.saveDatasetDsg(dsgMData, standardized);
 
-// Apparently don't need to decimate these OA data.
-//					// Generate the decimated-data DSG file from the full-data DSG file
-//					logger.debug("Generating the decimated-data DSG file for " + datasetId);
-//					dsgHandler.decimateDatasetDsg(datasetId);
 				} catch (Exception ex) {
 					ex.printStackTrace();
 					errorMsgs.add(datasetId + ": unacceptable; " + ex.getMessage());

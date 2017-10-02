@@ -415,6 +415,9 @@ public class UserFileHandler extends VersionedFileHandler {
 	 * 		is invalid.
 	 */
 	public void assignDataColumnTypes(DashboardDataset dataset) throws IllegalArgumentException {
+		assignDataColumnTypes(dataset, null);
+	}
+	public void assignDataColumnTypes(DashboardDataset dataset, String datasetIdColName) throws IllegalArgumentException {
 		// Copy the default maps of data column names to types and units
 		HashMap<String,DataColumnType> userColNamesToTypes = 
 				new HashMap<String,DataColumnType>(defaultColNamesToTypes);
@@ -424,12 +427,32 @@ public class UserFileHandler extends VersionedFileHandler {
 			addDataColumnNames(userColNamesToTypes, propsFile);
 		ArrayList<String> userColNames = dataset.getUserColNames();
 		ArrayList<DataColumnType> colTypes = new ArrayList<DataColumnType>(userColNames.size());
+		String userDsIdColKey = "";
+		if ( !DashboardUtils.isEmptyNull(datasetIdColName)) {
+			userDsIdColKey = DashboardServerUtils.getKeyForName(datasetIdColName);
+		}
 		// Go through the column names to assign these lists
 		for ( String colName : userColNames ) {
 			String key = DashboardServerUtils.getKeyForName(colName);
-			DataColumnType thisColType = userColNamesToTypes.get(key);
-			if ( thisColType == null )
+			DataColumnType thisColType = null;
+			if ( DashboardUtils.isEmptyNull(datasetIdColName)) {
+				thisColType = userColNamesToTypes.get(key);
+			} else {
+				if ( datasetIdColName.equalsIgnoreCase(colName) || 
+					 userDsIdColKey.equalsIgnoreCase(key)) {
+					thisColType = DashboardUtils.DATASET_NAME;
+				} else {
+					thisColType = userColNamesToTypes.get(key);
+					// If a datasetId column was specified (which it is on this branch), 
+					// don't accept the default ones.
+					if ( DashboardUtils.DATASET_NAME.typeNameEquals(thisColType)) {
+						thisColType = null;
+					}
+				}
+			}
+			if ( thisColType == null ) {
 				thisColType = DashboardUtils.UNKNOWN;
+			}
 			colTypes.add(thisColType.duplicate());
 		}
 		dataset.setDataColTypes(colTypes);

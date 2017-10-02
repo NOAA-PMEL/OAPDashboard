@@ -514,20 +514,19 @@ public class TimestampConverter extends ValueConverter<String> {
 						pieces[1] = valueString.substring(2, 4);
 						pieces[2] = valueString.substring(4);
 					}
-					else if ( (idx < 0) && (valueString.length() == 4) ) {
+					else if ( (idx < 0) && (valueString.length() <= 4) ) {
 						pieces = new String[2];
-						pieces[0] = valueString.substring(0, 2);
-						pieces[1] = valueString.substring(2, 4);
-					}
-					else
-						throw new Exception();
+						int hend = valueString.length()-2;
+						pieces[0] = hend > 0 ? valueString.substring(0, hend) : "0";
+						pieces[1] = valueString.substring(hend, valueString.length());
+					} else
+						throw new Exception("Invalid Time String: " + valueString + " - Does not match \"hh:mm:ss\"");
 				}
 				hour = Integer.valueOf(pieces[0]);
 				minute = Integer.valueOf(pieces[1]);
 				if ( pieces.length == 3 ) {
 					second = Double.valueOf(pieces[2]);
-				}
-				else {
+				} else {
 					second = 0.0;
 				}
 			} catch ( Exception ex ) {
@@ -535,14 +534,14 @@ public class TimestampConverter extends ValueConverter<String> {
 				minute = -1;
 				second = -1.0;
 			}
-		}
-		else {
+		} else {
 			throw new IllegalArgumentException("conversion from \"" + fromUnit + "\" is not supported");
 		}
 		if ( (hour == null) || (hour < 0) || (hour >= 24) || 
 			 (minute == null) || (minute < 0) || (minute >= 60) || 
-			 (second == null) || second.isNaN() || (second < 0.0) || (second >= 60.0) )
+			 (second == null) || second.isNaN() || (second < 0.0) || (second >= 60.0) ) {
 			throw new IllegalArgumentException("invalid time value");
+		}
 		String stdVal = String.format("%02d:%02d:%05.3f", hour, minute, second);
 		return stdVal;
 	}

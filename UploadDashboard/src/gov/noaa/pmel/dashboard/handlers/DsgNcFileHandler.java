@@ -182,12 +182,8 @@ public class DsgNcFileHandler {
 	 */
 	public void saveDatasetDsg(DsgMetadata metadata, 
 	                           StdUserDataArray stdUserData) throws IllegalArgumentException {
-//			DashboardDatasetData dataset) throws IllegalArgumentException {
 		// Get the location and name for the NetCDF DSG file
 		DsgNcFile dsgFile = getDsgNcFile(stdUserData.getDatasetId());
-
-		// Convert the data strings into the appropriate type
-//		StdUserDataArray stdUserData = new StdUserDataArray(dataset, knownUserDataTypes);
 
 		// Create the NetCDF DSG file
 		try {
@@ -199,17 +195,6 @@ public class DsgNcFileHandler {
 					dsgFile.getName() + "\n    " + ex.getMessage(), ex);
 		}
 
-		if ( false ) {
-		// Call Ferret to add the computed variables to the NetCDF DSG file
-		SocatTool tool = new SocatTool(ferretConfig);
-		ArrayList<String> scriptArgs = new ArrayList<String>(1);
-		scriptArgs.add(dsgFile.getPath());
-		tool.init(scriptArgs, stdUserData.getDatasetId(), FerretConfig.Action.COMPUTE);
-		tool.run();
-		if ( tool.hasError() )
-			throw new IllegalArgumentException("Failure adding computed variables: " + 
-					tool.getErrorMessage());
-		}
 	}
 
 	/**
