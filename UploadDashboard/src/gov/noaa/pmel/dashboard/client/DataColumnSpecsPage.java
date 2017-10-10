@@ -372,25 +372,18 @@ public class DataColumnSpecsPage extends CompositeWithUsername {
 	Integer scrollToCol = null;
 	
 	private void updateScroll() {
-		if ( scrollToRow != null ) {
-			int rowIdx = scrollToRow.intValue();
-			int colIdx = scrollToCol != null ? scrollToCol.intValue() : 0;
-			TableRowElement row = dataGrid.getRowElement(rowIdx);
-			TableCellElement cell = row.getCells().getItem(colIdx);
-			cell.scrollIntoView();
-//			int cellTop = dgScroll.getVerticalScrollPosition();
-//			int cellLeft = dgScroll.getHorizontalScrollPosition();
-//			int cellHeight = cell.getScrollHeight();
-//			int cellWidth = cell.getScrollWidth();
-//			GWT.log("idx:"+rowIdx+", top:"+cellTop+", left:"+cellLeft+", hght:"+cellHeight);
-////			cell.setScrollTop(cellTop - ( 2 * cellHeight ));
-////			cell.setScrollLeft(cellLeft + ( 2 * cellWidth ));
-//			int rowPos = rowIdx * cellHeight;
-//			dgScroll.setVerticalScrollPosition(22);
-//			dgScroll.setHorizontalScrollPosition(42);
-		}
-		scrollToRow = null;
-		scrollToCol = null;
+	    try {
+			if ( scrollToRow != null ) {
+				int rowIdx = scrollToRow.intValue();
+				int colIdx = scrollToCol != null ? scrollToCol.intValue() : 0;
+				TableRowElement row = dataGrid.getRowElement(rowIdx);
+				TableCellElement cell = row.getCells().getItem(colIdx);
+				cell.scrollIntoView();
+			}
+	    } finally {
+			scrollToRow = null;
+			scrollToCol = null;
+	    }
 		
 //		TableCellElement idCol = row.getCells().getItem(0);
 //		String id = String.valueOf(idCol.getInnerText());
@@ -423,12 +416,7 @@ public class DataColumnSpecsPage extends CompositeWithUsername {
 			public void onSuccess(TypesDatasetDataPair cruiseSpecs) {
 				if ( cruiseSpecs != null ) {
 					UploadDashboard.updateCurrentPage(singleton);
-					singleton.knownUserTypes.clear();
-					if ( cruiseSpecs.getAllKnownTypes() != null )
-						singleton.knownUserTypes.addAll(cruiseSpecs.getAllKnownTypes());
-					singleton.updateDatasetMessages(cruiseSpecs.getMsgList());
-					singleton.updateDatasetMessages(cruiseSpecs.getDatasetData());
-					singleton.updateDatasetColumnSpecs(cruiseSpecs.getDatasetData());
+					singleton.updateCruiseSpecs(cruiseSpecs);
 					History.newItem(PagesEnum.IDENTIFY_COLUMNS.name(), false);
 				}
 				else {
@@ -450,7 +438,18 @@ public class DataColumnSpecsPage extends CompositeWithUsername {
 		});
 	}
 
-	/**
+	protected void updateCruiseSpecs(TypesDatasetDataPair cruiseSpecs) {
+		knownUserTypes.clear();
+		if ( cruiseSpecs.getAllKnownTypes() != null )
+			knownUserTypes.addAll(cruiseSpecs.getAllKnownTypes());
+		updateDatasetMessages(cruiseSpecs.getMsgList());
+		updateDatasetMessages(cruiseSpecs.getDatasetData());
+		updateDatasetColumnSpecs(cruiseSpecs.getDatasetData());
+		scrollToCol = null;
+		scrollToRow = null;
+    }
+
+    /**
 	 * Redisplays the last version of this page if the username
 	 * associated with this page matches the given username.
 	 */
@@ -482,10 +481,16 @@ public class DataColumnSpecsPage extends CompositeWithUsername {
 		int showRowIdx = rowNumber == null || rowNumber.equals(DashboardUtils.INT_MISSING_VALUE) ? 
 								0 : rowNumber.intValue() - 1;
 		int pageSize = gridPager.getPageSize();
+		int nPages = gridPager.getPageCount();
 		int showPage = showRowIdx / pageSize;
 		int pageRow = showRowIdx > pageSize ? showRowIdx % pageSize : showRowIdx;
+		int pageMaxIdx = pageSize - 1;
+		if ( showPage == nPages - 1) {
+			int totalRows = dataGrid.getRowCount();
+			pageMaxIdx = ( totalRows % pageSize ) - 1;
+		}
 		if ( pageRow > 6 ) {
-			pageRow = Math.min(pageRow+4, pageSize-1);
+			pageRow = Math.min(pageRow+4, pageMaxIdx);
 		}
 		if ( showColumnIdx > 5 ) {
 			showColumnIdx = Math.min(showColumnIdx+2, cruiseDataCols.size());
