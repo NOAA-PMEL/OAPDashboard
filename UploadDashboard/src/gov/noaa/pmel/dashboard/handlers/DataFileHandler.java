@@ -13,6 +13,7 @@ import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Properties;
 import java.util.TreeMap;
 import java.util.TreeSet;
@@ -26,6 +27,7 @@ import org.tmatesoft.svn.core.SVNException;
 
 import gov.noaa.pmel.dashboard.datatype.DashDataType;
 import gov.noaa.pmel.dashboard.datatype.KnownDataTypes;
+import gov.noaa.pmel.dashboard.dsg.StdUserDataArray;
 import gov.noaa.pmel.dashboard.oads.DashboardOADSMetadata;
 import gov.noaa.pmel.dashboard.server.DashboardConfigStore;
 import gov.noaa.pmel.dashboard.server.DashboardServerUtils;
@@ -45,6 +47,9 @@ public class DataFileHandler extends VersionedFileHandler {
 
 	private static final String INFO_FILENAME_EXTENSION = ".properties";
 	private static final String DATA_FILENAME_EXTENSION = ".tsv";
+	private static final String ARCHIVE_FILENAME_EXTENSION = ".csv";
+	private static final String COMMA = ",";
+	private static final String TAB = "\t";
 	private static final String DATA_OWNER_ID = "dataowner";
 	private static final String VERSION_ID = "version";
 	private static final String UPLOAD_FILENAME_ID = "uploadfilename";
@@ -126,6 +131,15 @@ public class DataFileHandler extends VersionedFileHandler {
 		return dataFile;
 	}
 
+	public File archiveDataFile(String datasetId) throws IllegalArgumentException {
+		// Check and standardize the dataset ID
+		String upperExpo = DashboardServerUtils.checkDatasetID(datasetId);
+		// Create the file with the full path name of the properties file
+		File parentDir = new File(DashboardConfigStore.getTempDir(), upperExpo.substring(0,4));
+		File dataFile = new File(parentDir, upperExpo + ARCHIVE_FILENAME_EXTENSION);
+		return dataFile;
+	}
+	
 	/**
 	 * Searches all existing datasets and returns the dataset IDs of those that
 	 * match the given dataset ID containing wildcards and/or regular expressions.
@@ -688,7 +702,7 @@ public class DataFileHandler extends VersionedFileHandler {
 				boolean first = true;
 				for ( String name : dataset.getUserColNames() ) {
 					if ( ! first )
-						dataline += "\t";
+						dataline += TAB;
 					else
 						first = false;
 					dataline += name;
@@ -700,7 +714,7 @@ public class DataFileHandler extends VersionedFileHandler {
 					first = true;
 					for ( String datum : datarow ) {
 						if ( ! first )
-							dataline += "\t";
+							dataline += TAB;
 						else
 							first = false;
 						dataline += datum;
@@ -725,6 +739,95 @@ public class DataFileHandler extends VersionedFileHandler {
 			throw new IllegalArgumentException("Problems committing updated dataset data for " + 
 							datasetId + ": " + ex.getMessage());
 		}
+	}
+
+	public File saveArchiveDataFile(DashboardDatasetData datasetData, List<String> columns) 
+	        throws IllegalArgumentException, IOException 
+	{
+		StdUserDataArray stdData = DashboardConfigStore.get(false)
+			                            .getDashboardDatasetChecker()
+			                            .standardizeDataset(datasetData, null);
+		return saveArchiveDataFile(stdData, datasetData, columns);
+	}
+	
+	public File saveArchiveDataFile(StdUserDataArray stdData, DashboardDatasetData datasetData, List<String> columns)  {
+		// Get the dataset data filename
+		String datasetId = stdData.getDatasetId();
+		File dataFile = archiveDataFile(datasetId);
+		// Create the directory tree for this file if it does not exist
+		File parentFile = dataFile.getParentFile();
+		if ( ! parentFile.exists() ) {
+			parentFile.mkdirs();
+		}
+		else {
+			// Delete the messages file (for old data) if it exists
+			DashboardConfigStore configStore;
+			try {
+				configStore = DashboardConfigStore.get(false);
+			} catch ( IOException ex ) {
+				throw new IllegalArgumentException("Unexpected failure to get the dashboard configuration");
+			}
+			configStore.getCheckerMsgHandler().deleteMsgsFile(datasetId);
+		}
+
+		// Save the data to the data file
+		try {
+		    String spacer = "";
+			PrintWriter writer = new PrintWriter(dataFile);
+			try {
+			    String[] userColumns = stdData.getUserColumnNames();
+			    List<DashDataType<?>> dataTypes = stdData.getDataTypes();
+			    List<Integer> columnIndexes = new ArrayList<>();
+				// The data column headers
+				String dataline = "";
+				int idx = 0;
+				for ( String usrName : userColumns ) {
+			        DashDataType<?> colType = dataTypes.get(idx);
+				    if ( columns.contains(usrName)) {
+				        columnIndexes.add(idx);
+					    dataline += spacer;
+					    spacer = COMMA;
+				        String stdName = colType.getStandardName();
+				        if ( stdName.equals(DashboardUtils.STRING_MISSING_VALUE)) {
+				            stdName = usrName ;
+				        } else if ( colType.hasUnits()) {
+				            stdName += " ("+ colType.getUnits().get(0) + ")";
+				        }
+						dataline += stdName;
+				    }
+					idx += 1;
+				}
+				writer.println(dataline);
+				// The data measurements (rows of data)
+				for (int rowIdx = 0; rowIdx < stdData.getNumSamples(); rowIdx ++ ) {
+					spacer = "";
+					dataline = "";
+					int originalRow = stdData.getOriginalRowIndex(rowIdx);
+					if ( originalRow < 0 || originalRow >= stdData.getNumSamples()) {
+					    originalRow = 0; // XXX
+					}
+					for ( Integer colInt : columnIndexes ) {
+					    int colIdx = colInt.intValue();
+					    DashDataType<?> colType = stdData.getDataTypes().get(colIdx);
+					    Object rawValue = stdData.isStandardized(colIdx) ? 
+						                    String.valueOf(stdData.getStdVal(rowIdx, colIdx)) :
+						                    datasetData.getDataValues().get(originalRow).get(colIdx);
+					    String datum = String.valueOf(DashboardUtils.isEmptyNullOrNull(rawValue) ? colType.missingValue() : rawValue);
+					    dataline += spacer;
+					    spacer = COMMA;
+						dataline += datum;
+					}
+					writer.println(dataline);
+				}
+			} finally {
+				writer.close();
+			}
+		} catch ( IOException ex ) {
+			throw new IllegalArgumentException("Problems writing dataset data for " + 
+					datasetId + " to " + dataFile.getPath() + ": " + ex.getMessage());
+		}
+
+		return dataFile;
 	}
 
 	/**
@@ -940,7 +1043,7 @@ public class DataFileHandler extends VersionedFileHandler {
 		// If they exist, delete the DSG files and notify ERDDAP
 		DsgNcFileHandler dsgHandler = configStore.getDsgNcFileHandler();
 		if ( dsgHandler.deleteCruise(datasetId) )
-			dsgHandler.flagErddap(true, true);
+			dsgHandler.flagErddap(true);
 
 		// If it exists, delete the messages file
 		configStore.getCheckerMsgHandler().deleteMsgsFile(datasetId);

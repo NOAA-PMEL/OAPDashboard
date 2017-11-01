@@ -214,4 +214,8 @@ public class CharDashDataType extends DashDataType<Character> {
 		return "Char" + super.toString();
 	}
 
+	@Override
+	public Character missingValue() {
+	    return DashboardUtils.CHAR_MISSING_VALUE;
+	}
 }

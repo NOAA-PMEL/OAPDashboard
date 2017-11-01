@@ -39,9 +39,6 @@ public class StdUserDataArray extends StdDataArray {
 
 	private String datasetId;
 	
-	private Integer expoIdx = null;
-	private String expoCode = null;
-	
 	private String[] userColNames;
 	private String[] userUnits;
 	private String[] userMissVals;
@@ -544,6 +541,10 @@ public class StdUserDataArray extends StdDataArray {
 		return Boolean.TRUE.equals(standardized[idx]);
 	}
 
+	public boolean isStandardized(int columnIdx) {
+	    return Boolean.TRUE.equals(standardized[columnIdx]);
+	}
+	
 	/**
 	 * Get the standard value object for the specified value (column index) 
 	 * of the specified sample (row index).
@@ -598,6 +599,9 @@ public class StdUserDataArray extends StdDataArray {
 		if ( (stdTypeColumnName == null) || "".equals(stdTypeColumnName.trim()))
 			throw new NoSuchFieldException("data column name is invalid: " + stdTypeColumnName);
 		int columnIdx = findDataColumnIndex(stdTypeColumnName);
+		if ( columnIdx == -1 ) {
+		    throw new NoSuchFieldException("No standard type found for " + stdTypeColumnName);
+		}
 		Object[] values = new Object[numSamples];
 		for (int row = 0; row < numSamples; row++ ) {
 			values[row] = getStdVal(row, columnIdx);
@@ -618,6 +622,9 @@ public class StdUserDataArray extends StdDataArray {
 		}
 		return columnIdx;
 	}
+	public String[] getUserColumnNames() {
+	    return userColNames;
+	}
 	public String getUserColumnTypeName(int colIdx) {
 		return userColNames[colIdx];
 	}
@@ -635,6 +642,16 @@ public class StdUserDataArray extends StdDataArray {
 		}
 		return null;
 	}
+	/**
+	 * Find the index of the column whose type matches the requested name.  Type name matching is based on
+	 * gov.noaa.pmel.dashboard.datatype.DashDataType.typeNameEquals()
+	 * 
+	 * @see gov.noaa.pmel.dashboard.datatype.DashDataType#typeNameEquals(String)
+	 * 
+	 * @param varName The type name of the column to be found.
+	 * @return The 0-based index of the column matching the requested name, or -1 if not found.
+	 * @throws NoSuchFieldException
+	 */
 	public int findDataColumnIndex(String varName) throws NoSuchFieldException {
 		int columnIdx = -1;
 		for (int i = 0; i < numDataCols; i++ ) {
@@ -643,9 +660,9 @@ public class StdUserDataArray extends StdDataArray {
 				break;
 			}
 		}
-		if ( columnIdx == -1 ) {
-			throw new NoSuchFieldException("No standard type found for " + varName);
-		}
+//		if ( columnIdx == -1 ) {
+//			throw new NoSuchFieldException("No standard type found for " + varName);
+//		}
 		return columnIdx;
 	}
 
@@ -884,5 +901,10 @@ public class StdUserDataArray extends StdDataArray {
 		
 		return gotem;
 	}
+
+    public int getOriginalRowIndex(int rowIdx) {
+        int sampleNo = ((Integer)getStdVal(rowIdx, numDataCols-2)).intValue();
+        return sampleNo -1;
+    }
 	
 }

@@ -14,7 +14,7 @@
 				<g:Label addStyleNames="{style.titlereset}" />
 			</g:FlowPanel>
 			<g:HTML addStyleNames="{style.introhtml}" ui:field="introHtml" />
-			<g:FlowPanel addStyleNames="{style.optionsborderpanel}">
+<!-- 			<g:FlowPanel addStyleNames="{style.optionsborderpanel}">
 				<g:HTML addStyleNames="{style.optionsintro}" ui:field="archivePlanHtml" />
 				<g:FlowPanel addStyleNames="{style.optionpanel}">
 					<g:RadioButton addStyleNames="{style.optionradiobutton}" 
@@ -38,9 +38,13 @@
 				</g:FlowPanel>
 				<g:HTML addStyleNames="{style.optionaddninfo}" ui:field="ownerAddnHtml" />
 			</g:FlowPanel>
-			<g:FlowPanel addStyleNames="{style.agreepanel}">
+ -->			
+ 			<g:FlowPanel addStyleNames="{style.agreepanel}">
+ 			<!-- 
 				<g:CheckBox addStyleNames="{style.agreecheckbox}" ui:field="agreeShareCheckBox" />
 				<g:Anchor addStyleNames="{style.optioninfoanchor}" ui:field="agreeShareInfoAnchor" />
+ 			 -->
+ 			 <g:InlineHTML>Submit the above dataset(s) for second level QC?</g:InlineHTML>
 			</g:FlowPanel>
 			<g:FlowPanel addStyleNames="{style.horizontalbuttonpanel}">
 				<g:Button addStyleNames="{style.horizontalbutton}" ui:field="submitButton" />

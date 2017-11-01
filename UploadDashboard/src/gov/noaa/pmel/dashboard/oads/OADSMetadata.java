@@ -109,7 +109,7 @@ public class OADSMetadata {
 		oads.northernBound(gtExtents.latExtents.maxValue);
 		oads.southernBound(gtExtents.latExtents.minValue);
 		oads.startDate(new Date((long)(1000*gtExtents.timeExtents.minValue)));
-		oads.endDate(new Date((long)(1000*gtExtents.timeExtents.minValue)));
+		oads.endDate(new Date((long)(1000*gtExtents.timeExtents.maxValue)));
 		Set<String> addVars = new HashSet<>();
 		for (String varname : requiredVars ) {
 			try {
@@ -207,7 +207,7 @@ public class OADSMetadata {
 			e.printStackTrace();
 		}
 	}
-	public static void main(String[] args) {
+	public static void __main(String[] args) {
 		try {
 //			String dataFilesDirName = "/Users/kamb/tomcat/7/content/OAPUploadDashboard/CruiseFiles";
 			String configDir = "/Users/kamb/tomcat/7";
@@ -223,6 +223,16 @@ public class OADSMetadata {
 			System.out.println(xml);
 			File outfile = new File(datasetId+"_OADS.xml");
 			OADSMetadata.writeToFile(oads, outfile);
+		} catch (Exception e) {
+			e.printStackTrace();
+			// TODO: handle exception
+		}
+	}
+	public static void main(String[] args) {
+		try {
+			File file = new File("/Users/kamb/tomcat/7/content/OAPUploadDashboard/MetadataDocs/33RO/33RO20100308/33RO20100308_OADS.xml");
+			DashboardOADSMetadata omd = OADSMetadata.readOadsXml(file);
+			System.out.println(omd);
 		} catch (Exception e) {
 			e.printStackTrace();
 			// TODO: handle exception

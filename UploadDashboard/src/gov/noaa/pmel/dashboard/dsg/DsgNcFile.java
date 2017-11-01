@@ -51,9 +51,9 @@ public abstract class DsgNcFile extends File {
 	public static DsgNcFile createTrajectoryFile(File parent, String filename) {
 		return new TrajectoryDsgFile(parent,filename);
 	}
-	public static DsgNcFile createProfileFile(String filename) {
-		return new ProfileDsgFile(filename);
-	}
+//	public static DsgNcFile createProfileFile(String filename) {
+//		return new ProfileDsgFile(filename);
+//	}
 	public static DsgNcFile createProfileFile(File parent, String filename) {
 		return new ProfileDsgFile(parent,filename);
 	}

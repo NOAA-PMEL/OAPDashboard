@@ -82,7 +82,6 @@ public class DashboardConfigStore {
 	private static final String SMTP_USERNAME_TAG = "SMTPUsername";
 	private static final String SMTP_PASSWORD_TAG = "SMTPPassword";
 	private static final String ERDDAP_DSG_FLAG_FILE_NAME_TAG = "ErddapDsgFlagFile";
-	private static final String ERDDAP_DEC_DSG_FLAG_FILE_NAME_TAG = "ErddapDecDsgFlagFile"; 
 	private static final String USER_TYPES_PROPS_FILE_TAG = "UserTypesFile";
 	private static final String METADATA_TYPES_PROPS_FILE_TAG = "MetadataTypesFile";
 	private static final String DATA_TYPES_PROPS_FILE_TAG = "DataTypesFile";
@@ -114,7 +113,6 @@ public class DashboardConfigStore {
 			SMTP_USERNAME_TAG + "=username.for.smtp \n" +
 			SMTP_PASSWORD_TAG + "=password.for.smtp \n" +
 			ERDDAP_DSG_FLAG_FILE_NAME_TAG + "=/Some/ERDDAP/Flag/Filename/For/DSG/Update \n" +
-			ERDDAP_DEC_DSG_FLAG_FILE_NAME_TAG + "=/Some/ERDDAP/Flag/Filename/For/DecDSG/Update \n" +
 			USER_TYPES_PROPS_FILE_TAG + "=/Path/To/User/Uploaded/Data/Types/PropsFile \n" +
 			METADATA_TYPES_PROPS_FILE_TAG + "=/Path/To/File/Metadata/Types/PropsFile \n" +
 			DATA_TYPES_PROPS_FILE_TAG + "=/Path/To/File/Data/Types/PropsFile \n" +
@@ -522,15 +520,6 @@ public class DashboardConfigStore {
 					" value specified in " + configFile.getPath() + "\n" + 
 					ex.getMessage() + "\n" + CONFIG_FILE_INFO_MSG);
 		}
-		String decDsgFileDirName;
-		try {
-			decDsgFileDirName = getFilePathProperty(configProps, DEC_DSG_NC_FILES_DIR_NAME_TAG, appConfigDir);
-		    itsLogger.info("Decimated DSG directory = " + decDsgFileDirName);
-		} catch ( Exception ex ) {
-			throw new IOException("Invalid " + DEC_DSG_NC_FILES_DIR_NAME_TAG + 
-					" value specified in " + configFile.getPath() + "\n" + 
-					ex.getMessage() + "\n" + CONFIG_FILE_INFO_MSG);
-		}
 		String erddapDsgFlagFileName;
 		try {
 			erddapDsgFlagFileName = getFilePathProperty(configProps, ERDDAP_DSG_FLAG_FILE_NAME_TAG, appConfigDir);
@@ -540,19 +529,9 @@ public class DashboardConfigStore {
 					" value specified in " + configFile.getPath() + "\n" + 
 					ex.getMessage() + "\n" + CONFIG_FILE_INFO_MSG);
 		}
-		String erddapDecDsgFlagFileName;
 		try {
-			erddapDecDsgFlagFileName = getFilePathProperty(configProps, ERDDAP_DEC_DSG_FLAG_FILE_NAME_TAG, appConfigDir);
-		    itsLogger.info("ERDDAP decimated DSG flag file = " + erddapDecDsgFlagFileName);
-		} catch ( Exception ex ) {
-			throw new IOException("Invalid " + ERDDAP_DEC_DSG_FLAG_FILE_NAME_TAG + 
-					" value specified in " + configFile.getPath() + "\n" + 
-					ex.getMessage() + "\n" + CONFIG_FILE_INFO_MSG);
-		}
-		try {
-			dsgNcFileHandler = new DsgNcFileHandler(dsgFileDirName, decDsgFileDirName,
-					erddapDsgFlagFileName, erddapDecDsgFlagFileName, ferretConf, 
-					knownUserDataTypes, knownMetadataTypes, knownDataFileTypes);
+			dsgNcFileHandler = new DsgNcFileHandler(dsgFileDirName, erddapDsgFlagFileName, ferretConf, 
+			                                        knownUserDataTypes, knownMetadataTypes, knownDataFileTypes);
 		} catch ( Exception ex ) {
 			throw new IOException(ex);
 		}
@@ -1091,6 +1070,20 @@ public class DashboardConfigStore {
 			return "";
 		}
 		return DashboardUtils.passhashFromPlainText(username, passSpicedHash);
+	}
+
+	private static File tmpDir;
+	public static File getTempDir() {
+	    if ( tmpDir == null ) {
+	        tmpDir = new File("/var/tmp/oap"); // XXX
+	        if ( !tmpDir.exists()) {
+	            tmpDir.mkdir();
+	        }
+	        if ( ! ( tmpDir.exists() && tmpDir.canWrite())) {
+	            throw new IllegalStateException("Unable to create or write to temp dir:"+tmpDir.getAbsolutePath());
+	        }
+	    }
+	    return tmpDir;
 	}
 
 }

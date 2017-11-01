@@ -396,9 +396,18 @@ public class DashboardServerUtils {
 		return distanceBase;
 	}
 
-	public static final String UTC_FORMAT = "yyyy-mm-dd hh:mm:ss z";
+	public static final String FORMAT_TIME_DEFAULT = "yyyy-mm-dd hh:mm:ss z";
 	public static final String EXPO_DATE = "yyyymmdd";
 
+	public static String formatTime(Date date) {
+	    return formatTime(date, FORMAT_TIME_DEFAULT);
+	}
+	
+	public static String formatTime(Date date, String format) {
+		SimpleDateFormat sdf = new SimpleDateFormat(format);
+		return sdf.format(date);
+	}
+	    
 	public static String formatUTC(Date date, String format) {
 		SimpleDateFormat sdf = new SimpleDateFormat(format);
 		sdf.setTimeZone(TimeZone.getTimeZone("UTC"));
@@ -406,7 +415,7 @@ public class DashboardServerUtils {
 	}
 		
 	public static String formatUTC(Date date) {
-		return formatUTC(date, UTC_FORMAT);
+		return formatUTC(date, FORMAT_TIME_DEFAULT);
 	}
 
 }

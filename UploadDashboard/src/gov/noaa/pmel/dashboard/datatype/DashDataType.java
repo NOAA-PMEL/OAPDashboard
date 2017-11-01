@@ -193,6 +193,8 @@ public abstract class DashDataType<T extends Comparable<T>> implements Comparabl
 	 * 		if the string representation cannot be interpreted
 	 */
 	public abstract T dataValueOf(String strRepr) throws IllegalArgumentException;
+	
+	public abstract T missingValue();
 
 	/**
 	 * Returns a value converter to interpreting string representations to data 
@@ -1037,4 +1039,7 @@ public abstract class DashDataType<T extends Comparable<T>> implements Comparabl
 		return false;
 	}
 
+	public boolean hasUnits() {
+	    return units.size() > 0 && ! units.equals(DashboardUtils.NO_UNITS);
+	}
 }

@@ -8,7 +8,9 @@ import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Date;
+import java.util.List;
 import java.util.Properties;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
@@ -25,8 +27,11 @@ import javax.mail.internet.MimeBodyPart;
 import javax.mail.internet.MimeMessage;
 import javax.mail.internet.MimeMultipart;
 
+import gov.noaa.pmel.dashboard.dsg.StdUserDataArray;
 import gov.noaa.pmel.dashboard.server.DashboardConfigStore;
 import gov.noaa.pmel.dashboard.server.DashboardServerUtils;
+import gov.noaa.pmel.dashboard.shared.DashboardDataset;
+import gov.noaa.pmel.dashboard.shared.DashboardDatasetData;
 import gov.noaa.pmel.dashboard.shared.DashboardMetadata;
 import gov.noaa.pmel.dashboard.shared.DashboardUtils;
 
@@ -138,13 +143,12 @@ public class ArchiveFilesBundler extends VersionedFileHandler {
 		String stdId = DashboardServerUtils.checkDatasetID(datasetId);
 		// Create 
 		File parentFile = new File(filesDir, stdId.substring(0,4));
-		if ( ! parentFile.isDirectory() ) {
-			if ( parentFile.exists() )
-				throw new IllegalArgumentException(
-						"File exists but is not a directory: " + parentFile.getPath());
-			if ( ! parentFile.mkdir() )
-				throw new IllegalArgumentException(
-						"Problems creating the directory: " + parentFile.getPath());
+		if ( parentFile.exists() ) {
+			if ( ! parentFile.isDirectory() ) {
+				throw new IllegalArgumentException( "File exists but is not a directory: " + parentFile.getPath());
+			}
+		} else if ( ! parentFile.mkdirs() ) {
+				throw new IllegalArgumentException( "Problems creating the directory: " + parentFile.getPath());
 		}
 		// Generate the full path filename for this cruise metadata
 		File bundleFile = new File(parentFile, stdId + BUNDLE_NAME_EXTENSION);
@@ -211,7 +215,7 @@ public class ArchiveFilesBundler extends VersionedFileHandler {
 			// do include the (dataset)/PI_OME.xml 
 			String filename = mdata.getFilename();
 			// XXX TODO: OME_FILENAME check
-			if ( ! filename.equals(DashboardUtils.metadataFilename(mdata.getDatasetId())) ) {
+			if ( ! filename.equals(DashboardUtils.autoExtractedMdFilename(mdata.getDatasetId())) ) {
 				addlDocs.add(metadataHandler.getMetadataFile(stdId, filename));
 			}
 		}
@@ -225,9 +229,9 @@ public class ArchiveFilesBundler extends VersionedFileHandler {
 		try {
 			copyFileToBundle(zipOut, dataFile);
 			infoMsg += "    " + dataFile.getName() + "\n";
-			File oadsMetaFile = metadataHandler.getMetadataFile(stdId);
-			copyFileToBundle(zipOut, oadsMetaFile);
-			infoMsg += "    " + oadsMetaFile.getName() + "\n";
+//			File oadsMetaFile = metadataHandler.getMetadataFile(stdId);
+//			copyFileToBundle(zipOut, oadsMetaFile);
+//			infoMsg += "    " + oadsMetaFile.getName() + "\n";
 			for ( File metaFile : addlDocs ) {
 				copyFileToBundle(zipOut, metaFile);
 				infoMsg += "    " + metaFile.getName() + "\n";
@@ -356,6 +360,184 @@ public class ArchiveFilesBundler extends VersionedFileHandler {
 		infoMsg += "\n";
 		return infoMsg;
 	}
+	
+	public File createAndSendArchiveFilesBundle(String datasetId, List<String> columnsList, 
+	                                              String message, String userRealName, String userEmail) 
+	        throws IllegalArgumentException, IOException 
+	{
+		if ( (toEmails == null) || (toEmails.length == 0) )
+			throw new IllegalArgumentException("no archival email address");
+		if ( (ccEmails == null) || (ccEmails.length == 0) )
+			throw new IllegalArgumentException("no cc email address");
+		if ( (userRealName == null) || userRealName.isEmpty() ) 
+			throw new IllegalArgumentException("no user name");
+		if ( (userEmail == null) || userEmail.isEmpty() )
+			throw new IllegalArgumentException("no user email address");
+		
+		String stdId = DashboardServerUtils.checkDatasetID(datasetId);
+		
+		File archiveDataFile = createArchiveDataFile(stdId, columnsList);
+		File bundleFile = createArchiveFilesBundle(stdId, archiveDataFile);
+		
+       // If userRealName is "nobody" and userEmail is "nobody@nowhere" then skip the email
+        if ( DashboardServerUtils.NOMAIL_USER_REAL_NAME.equals(userRealName) && 
+             DashboardServerUtils.NOMAIL_USER_EMAIL.equals(userEmail) ) {
+            return bundleFile; // "Data files archival bundle created but not emailed";
+        }
+
+		sendArchiveBundle(stdId, bundleFile, userRealName, userEmail);
+	    return bundleFile;
+	}
+	
+    private File createArchiveDataFile(String stdId, List<String> columnsList) throws IOException {
+		DashboardConfigStore cfgStore = DashboardConfigStore.get(false);
+		DataFileHandler dataFiler = cfgStore.getDataFileHandler();
+		DashboardDatasetData dd = dataFiler.getDatasetDataFromFiles(stdId, 0, -1);
+		File archiveDataFile = dataFiler.saveArchiveDataFile(dd, columnsList);
+		return archiveDataFile;
+	}
+	
+	private File createArchiveFilesBundle(String stdId, File dataFile) 
+			throws IllegalArgumentException, IOException {
+		
+		DashboardConfigStore configStore = DashboardConfigStore.get(false);
+        MetadataFileHandler metadataHandler = configStore.getMetadataFileHandler();
+		ArrayList<File> addlDocs = new ArrayList<File>();
+		for ( DashboardMetadata mdata : metadataHandler.getMetadataFiles(stdId) ) {
+			String filename = mdata.getFilename();
+			if ( ! filename.equals(DashboardUtils.autoExtractedMdFilename(mdata.getDatasetId())) ) {
+				addlDocs.add(metadataHandler.getMetadataFile(stdId, filename));
+			}
+		}
+		if ( addlDocs.isEmpty() )
+			throw new IOException("No metadata/supplemental documents for " + stdId);
+
+		File bundleFile = getBundleFile(stdId);
+		ZipOutputStream zipOut = new ZipOutputStream(new FileOutputStream(bundleFile));
+		copyFileToBundle(zipOut, dataFile);
+		for ( File metaFile : addlDocs ) {
+			copyFileToBundle(zipOut, metaFile);
+//				infoMsg += "    " + metaFile.getName() + "\n";
+		}
+		zipOut.close();
+		return bundleFile;
+	}
+
+	private void sendArchiveBundle(String stdId, File bundleFile, String userRealName, String userEmail) throws IOException {
+        // Create a Session for sending out the email
+        Properties props = System.getProperties();
+        if ( debugIt )
+            props.setProperty("mail.debug", "true");
+        props.setProperty("mail.transport.protocol", "smtp");
+        if ( (smtpHost != null) && ! smtpHost.isEmpty() )
+            props.put("mail.smtp.host", smtpHost);
+        else
+            props.put("mail.smtp.host", "localhost");
+        if ( (smtpPort != null) && ! smtpPort.isEmpty() )
+            props.put("mail.smtp.port", smtpPort);
+        Session sessn;
+        if ( auth != null ) {
+            props.put("mail.smtp.auth", "true");
+            props.put("mail.smtp.ssl.enable", "true");
+            props.put("mail.smtp.starttls.enable", "true");
+            props.put("mail.smtp.starttls.required", "true");
+            sessn = Session.getInstance(props, new Authenticator() {
+                @Override
+                protected PasswordAuthentication getPasswordAuthentication() {
+                    return auth;
+                }
+            });
+        }
+        else {
+            sessn = Session.getInstance(props, null);
+        }
+
+        // Parse all the email addresses, add the user's email as the first cc'd address
+        InternetAddress[] ccAddresses = new InternetAddress[ccEmails.length + 1];
+        try {
+            ccAddresses[0] = new InternetAddress(userEmail);
+        } catch (MessagingException ex) {
+            String errmsg = getMessageExceptionMsgs(ex);
+            throw new IllegalArgumentException("Invalid user email address: " + errmsg, ex);
+        }
+        for (int k = 0; k < ccEmails.length; k++) {
+            try {
+                ccAddresses[k+1] = new InternetAddress(ccEmails[k]);
+            } catch (MessagingException ex) {
+                String errmsg = getMessageExceptionMsgs(ex);
+                throw new IllegalArgumentException("Invalid 'CC:' email address: " + errmsg, ex);
+            }
+        }
+        InternetAddress[] toAddresses = new InternetAddress[toEmails.length];
+        for (int k = 0; k < toEmails.length; k++) {
+            try {
+                toAddresses[k] = new InternetAddress(toEmails[k]);
+            } catch (MessagingException ex) {
+                String errmsg = getMessageExceptionMsgs(ex);
+                throw new IllegalArgumentException("Invalid 'To:' email address: " + errmsg, ex);
+            }
+        }
+
+        // Create the email message with the renamed zip attachment
+        MimeMessage msg = new MimeMessage(sessn);
+        try {
+            msg.setHeader("X-Mailer", "ArchiveFilesBundler");
+            msg.setSubject(EMAIL_SUBJECT_MSG_START + stdId +
+                    EMAIL_SUBJECT_MSG_MIDDLE + userRealName);
+            msg.setSentDate(new Date());
+            // Set the addresses
+            // Mark as sent from the second cc'd address (the dashboard's);
+            // the first cc address is the user and any others are purely supplemental
+            msg.setFrom(ccAddresses[1]);
+            msg.setReplyTo(ccAddresses);
+            msg.setRecipients(Message.RecipientType.TO, toAddresses);
+            msg.setRecipients(Message.RecipientType.CC, ccAddresses);
+            // Create the text message part
+            MimeBodyPart textMsgPart = new MimeBodyPart();
+            textMsgPart.setText(EMAIL_MSG_START + stdId + EMAIL_MSG_MIDDLE + userRealName + EMAIL_MSG_END);
+            // Create the attachment message part
+            MimeBodyPart attMsgPart = new MimeBodyPart();
+            attMsgPart.attachFile(bundleFile);
+            attMsgPart.setFileName(bundleFile.getName() + MAILED_BUNDLE_NAME_ADDENDUM);
+            // Create and add the multipart document to the message
+            Multipart mp = new MimeMultipart();
+            mp.addBodyPart(textMsgPart);
+            mp.addBodyPart(attMsgPart);
+            msg.setContent(mp);
+            // Update the headers
+            msg.saveChanges();
+        } catch (MessagingException ex) {
+            String errmsg = getMessageExceptionMsgs(ex);
+            throw new IllegalArgumentException("Unexpected problems creating the archival request email: " + errmsg, ex);
+        }
+
+        // Send the email
+        try {
+            Transport.send(msg);
+        } catch (MessagingException ex) {
+            String errmsg = getMessageExceptionMsgs(ex);
+            throw new IllegalArgumentException("Problems sending the archival request email: " + errmsg, ex);
+        }
+
+    }
+
+//	public static void main(String[] args) {
+//        try {
+//            List<String> columnsList = Arrays.asList(new String[] {
+//                    "cruise",
+//                    "Date",
+//                    "Time",
+//                    "Longitude",
+//                    "Latitude",
+//                    "CTD OXY (umol/kg)"
+//            });
+//            File archiveFile = createArchiveDataFile("prism022008", columnsList);
+//            System.out.println(archiveFile.getAbsolutePath());
+//        } catch (Exception ex) {
+//            ex.printStackTrace();
+//            // TODO: handle exception
+//        }
+//    }
 
 	/**
 	 * Returns all messages in a possibly-nested MessagingException. 

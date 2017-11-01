@@ -674,6 +674,23 @@ public class DashboardServices extends RemoteServiceServlet implements Dashboard
 	}
 
 	@Override
+	public void submitDatasetsToArchive(String pageUsername, List<String> datasetIds, List<String> columnsList, 
+	                                    String archiveStatus, String timestamp, boolean repeatSend) 
+	         throws IllegalArgumentException {
+		// Get the dashboard data store and current username, and validate that username
+		if ( ! validateRequest(pageUsername) ) 
+			throw new IllegalArgumentException("Invalid user request");
+
+		logger.info("archiving datasets " + datasetIds.toString() + 
+				" submitted by " + username);
+		
+		// Submit the datasets to Archive
+		configStore.getDashboardDatasetSubmitter().archiveDatasets(datasetIds, columnsList,
+																	archiveStatus, timestamp, 
+																	repeatSend, username);
+	}
+
+	@Override
 	public void suspendDatasets(String pageUsername, Set<String> idsSet, String timestamp) throws IllegalArgumentException {
 		logger.debug("Suspending dataset ids " + idsSet);
 		// Get the dashboard data store and current username, and validate that username

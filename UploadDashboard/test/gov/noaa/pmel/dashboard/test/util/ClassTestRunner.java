@@ -19,7 +19,11 @@ public class ClassTestRunner {
 	 */
 	public static void main(String[] args) {
 		
-		String classUnderTestName = "gov.noaa.pmel.dashboard.datatype.CastSet";
+		String classUnderTestName = 
+//		        "gov.noaa.pmel.dashboard.datatype.CastSet";
+		        "gov.noaa.pmel.dashboard.actions.DatasetSubmitter";
+//		        "gov.noaa.pmel.dashboard.server.EditFlagsService";
+//				"gov.noaa.pmel.dashboard.handlers.ArchiveFilesBundler";
 		try {
 			if ( System.getProperty("CATALINA_BASE") == null ) {
 				System.setProperty("CATALINA_BASE", DEFAULT_CATALINA_BASE);

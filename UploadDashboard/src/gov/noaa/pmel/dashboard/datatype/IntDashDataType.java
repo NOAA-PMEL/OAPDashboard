@@ -220,4 +220,8 @@ public class IntDashDataType extends DashDataType<Integer> {
 		return "Int" + super.toString();
 	}
 
+	@Override
+	public Integer missingValue() {
+	    return DashboardUtils.INT_MISSING_VALUE;
+	}
 }

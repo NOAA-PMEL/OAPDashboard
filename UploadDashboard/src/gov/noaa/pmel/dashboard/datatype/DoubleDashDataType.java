@@ -241,4 +241,9 @@ public class DoubleDashDataType extends DashDataType<Double> {
 		return "Double" + super.toString();
 	}
 
+	@Override
+	public Double missingValue() {
+	    return DashboardUtils.FP_MISSING_VALUE;
+	}
+
 }

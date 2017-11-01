@@ -12,6 +12,7 @@ import gov.noaa.pmel.dashboard.datatype.IntDashDataType;
 import gov.noaa.pmel.dashboard.datatype.KnownDataTypes;
 import gov.noaa.pmel.dashboard.datatype.StringDashDataType;
 import gov.noaa.pmel.dashboard.server.DashboardServerUtils;
+import gov.noaa.pmel.dashboard.shared.DashboardMetadata;
 import gov.noaa.pmel.dashboard.shared.DashboardUtils;
 
 /**
@@ -120,7 +121,7 @@ public class DsgMetadata {
 
 	/**
 	 * @param datasetId 
-	 * 		the dataset ID to set; always successful
+	 * 		the dataset id to set; always successful
 	 */
 	public void setDatasetId(String datasetId) {
 		valuesMap.put(DashboardServerUtils.DATASET_ID, datasetId);
@@ -146,6 +147,17 @@ public class DsgMetadata {
 		valuesMap.put(DashboardServerUtils.DATASET_NAME, datasetName);
 	}
 
+	public String getExpoCode() {
+		String value = (String) valuesMap.get(DashboardServerUtils.EXPO_CODE);
+		if ( value == null )
+			value = DashboardUtils.STRING_MISSING_VALUE;
+		return value;
+	}
+	
+	public void setExpoCode(String expoCode) {
+		valuesMap.put(DashboardServerUtils.EXPO_CODE, expoCode);
+	}
+	
 	/**
 	 * @return
 	 * 		the platform name; 
@@ -470,6 +482,11 @@ public class DsgMetadata {
 			repr += "    " + entry.getKey().getVarName() + "=\"" + entry.getValue() + "\"\n";
 		repr += "]";
 		return repr;
+	}
+
+	public static DsgMetadata extractFrom(DashboardMetadata mdata) {
+		// TODO Auto-generated method stub
+		return null;
 	}
 
 }

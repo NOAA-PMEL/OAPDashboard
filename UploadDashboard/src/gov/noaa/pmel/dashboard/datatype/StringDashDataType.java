@@ -221,4 +221,8 @@ public class StringDashDataType extends DashDataType<String> {
 		return "String" + super.toString();
 	}
 
+	@Override
+	public String missingValue() {
+	    return DashboardUtils.STRING_MISSING_VALUE;
+	}
 }

@@ -6,7 +6,7 @@
 	<ui:style src="FullWidth.css" />
 
 	<g:ScrollPanel addStyleNames="{style.fullpagecontainer}">
-		<g:FlowPanel>
+		<g:FlowPanel addStyleNames="{style.fullpagecontainer}">
 			<g:FlowPanel addStyleNames="{style.titlemainpanel}">
 				<g:Button addStyleNames="{style.titlelogoutbutton}" ui:field="logoutButton" />
 				<g:InlineLabel addStyleNames="{style.titleuserlabel}" ui:field="userInfoLabel" />
@@ -23,6 +23,7 @@
 						<g:Button addStyleNames="{style.cruisepanelbutton}" ui:field="addlDocsButton" />
 						<g:Button addStyleNames="{style.cruisepanelbutton}" ui:field="reviewButton" />
 						<g:Button addStyleNames="{style.cruisepanelbutton}" ui:field="qcSubmitButton" />
+						<g:Button addStyleNames="{style.cruisepanelbutton}" ui:field="archiveSubmitButton" />
 						<g:Button addStyleNames="{style.cruisepanelbutton}" ui:field="suspendDatasetButton" />
 						<g:Label addStyleNames="{style.cruisebuttonpanelseparator}" ui:field="firstSeparator" />
 						<g:Button addStyleNames="{style.cruisepanelbutton}" ui:field="showDatasetButton" />

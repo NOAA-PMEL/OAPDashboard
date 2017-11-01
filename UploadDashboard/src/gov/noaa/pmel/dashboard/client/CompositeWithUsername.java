@@ -12,6 +12,9 @@ import com.google.gwt.user.client.ui.Composite;
  */
 public class CompositeWithUsername extends Composite {
 
+	public static final String WELCOME_INTRO = "Logged in as ";
+	public static final String LOGOUT_TEXT = "Logout";
+	
 	private String username = "";
 
 	/**

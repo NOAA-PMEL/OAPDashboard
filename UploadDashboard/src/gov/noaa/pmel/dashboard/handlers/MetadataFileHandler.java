@@ -93,7 +93,13 @@ public class MetadataFileHandler extends VersionedFileHandler {
 			throw new IllegalArgumentException("Invalid metadate file name " + uploadName);
 		// Generate the full path filename for this metadata file
 		File grandParentDir = new File(filesDir, stdId.substring(0,4));
+		if ( !grandParentDir.exists()) {
+		    grandParentDir.mkdirs();
+		}
 		File parentDir = new File(grandParentDir, stdId);
+		if ( !parentDir.exists()) {
+		    parentDir.mkdir();
+		}
 		File metadataFile = new File(parentDir, basename);
 		return metadataFile;
 	}
@@ -552,6 +558,8 @@ public class MetadataFileHandler extends VersionedFileHandler {
 			} finally {
 				propsReader.close();
 			}
+		} catch ( FileNotFoundException fex ) {
+		    return null;
 		} catch ( IOException ex ) {
 			throw new IllegalArgumentException(ex);
 		}

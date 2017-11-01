@@ -36,11 +36,9 @@ import gov.noaa.pmel.dashboard.shared.DashboardUtils;
  * 
  * @author Karl Smith
  */
-public class SubmitForQCPage extends CompositeWithUsername {
+public class SubmitForQCPage extends CompositeWithUsername implements DataSubmissionPage {
 
-	private static final String TITLE_TEXT = "Submit Datasets for QC / Manage Archival";
-	private static final String WELCOME_INTRO = "Logged in as ";
-	private static final String LOGOUT_TEXT = "Logout";
+	private static final String TITLE_TEXT = "Submit Datasets for QC";
 	private static final String MORE_INFO_TEXT = "more ...";
 
 	private static final String INTRO_HTML_PROLOGUE =
@@ -129,9 +127,6 @@ public class SubmitForQCPage extends CompositeWithUsername {
 			"You must select an archival option for the uploaded data and metadata " +
 			"files before the dataset(s) can be submitted for QC.";
 
-	private static final String SUBMIT_FAILURE_MSG = 
-			"Unexpected failure with submitting datasets for QC: ";
-
 	private static final String SUBMIT_TEXT = "OK";
 	private static final String CANCEL_TEXT = "Cancel";
 
@@ -148,18 +143,18 @@ public class SubmitForQCPage extends CompositeWithUsername {
 	@UiField InlineLabel userInfoLabel;
 	@UiField Button logoutButton;
 	@UiField HTML introHtml;
-	@UiField HTML archivePlanHtml;
-	@UiField RadioButton laterRadio;
-	@UiField Anchor laterInfoAnchor;
-	@UiField HTML laterAddnHtml;
-	@UiField RadioButton nowRadio;
-	@UiField Anchor nowInfoAnchor;
-	@UiField HTML nowAddnHtml;
-	@UiField RadioButton ownerRadio;
-	@UiField Anchor ownerInfoAnchor;
-	@UiField HTML ownerAddnHtml;
-	@UiField CheckBox agreeShareCheckBox;
-	@UiField Anchor agreeShareInfoAnchor;
+//	@UiField HTML archivePlanHtml;
+//	@UiField RadioButton laterRadio;
+//	@UiField Anchor laterInfoAnchor;
+//	@UiField HTML laterAddnHtml;
+//	@UiField RadioButton nowRadio;
+//	@UiField Anchor nowInfoAnchor;
+//	@UiField HTML nowAddnHtml;
+//	@UiField RadioButton ownerRadio;
+//	@UiField Anchor ownerInfoAnchor;
+//	@UiField HTML ownerAddnHtml;
+//	@UiField CheckBox agreeShareCheckBox;
+//	@UiField Anchor agreeShareInfoAnchor;
 	@UiField Button submitButton;
 	@UiField Button cancelButton;
 
@@ -189,25 +184,25 @@ public class SubmitForQCPage extends CompositeWithUsername {
 		titleLabel.setText(TITLE_TEXT);
 		logoutButton.setText(LOGOUT_TEXT);
 
-		archivePlanHtml.setHTML(ARCHIVE_PLAN_INTRO);
-
-		laterRadio.setText(ARCHIVE_LATER_TEXT);
-		laterInfoAnchor.setText(MORE_INFO_TEXT);
-		laterAddnHtml.setHTML(ARCHIVE_LATER_ADDN_HTML);
-		laterArchivePopup = null;
-
-		nowRadio.setText(ARCHIVE_NOW_TEXT);
-		nowInfoAnchor.setText(MORE_INFO_TEXT);
-		nowAddnHtml.setHTML(ARCHIVE_NOW_ADDN_HTML);
-		nowInfoPopup = null;
-
-		ownerRadio.setText(OWNER_ARCHIVE_TEXT);
-		ownerInfoAnchor.setText(MORE_INFO_TEXT);
-		ownerAddnHtml.setHTML(OWNER_ARCHIVE_ADDN_HTML);
+//		archivePlanHtml.setHTML(ARCHIVE_PLAN_INTRO);
+//
+//		laterRadio.setText(ARCHIVE_LATER_TEXT);
+//		laterInfoAnchor.setText(MORE_INFO_TEXT);
+//		laterAddnHtml.setHTML(ARCHIVE_LATER_ADDN_HTML);
+//		laterArchivePopup = null;
+//
+//		nowRadio.setText(ARCHIVE_NOW_TEXT);
+//		nowInfoAnchor.setText(MORE_INFO_TEXT);
+//		nowAddnHtml.setHTML(ARCHIVE_NOW_ADDN_HTML);
+//		nowInfoPopup = null;
+//
+//		ownerRadio.setText(OWNER_ARCHIVE_TEXT);
+//		ownerInfoAnchor.setText(MORE_INFO_TEXT);
+//		ownerAddnHtml.setHTML(OWNER_ARCHIVE_ADDN_HTML);
 		ownerArchivePopup = null;
 
-		agreeShareCheckBox.setText(AGREE_SHARE_TEXT);
-		agreeShareInfoAnchor.setText(MORE_INFO_TEXT);
+//		agreeShareCheckBox.setText(AGREE_SHARE_TEXT);
+//		agreeShareInfoAnchor.setText(MORE_INFO_TEXT);
 		agreeSharePopup = null;
 
 		resubmitAskPopup = null;
@@ -314,31 +309,31 @@ public class SubmitForQCPage extends CompositeWithUsername {
 		introHtml.setHTML(introMsg);
 
 		// Check the appropriate radio button
-		int numDatasets = cruises.size();
-		if ( numDelay == numDatasets ) {
-			// All "with next release", so keep that setting
-			laterRadio.setValue(true, true);
-		}
-		else if ( numCdiac == numDatasets ) {
-			// All "sent for archival", so keep that setting
-			nowRadio.setValue(true, true);
-		}
-		else if ( numOwner == numDatasets ) {
-			// All "owner will archive", so keep that setting
-			ownerRadio.setValue(true, true);
-		}
-		else {
-			// A mix, so unset all and make the user decide
-			laterRadio.setValue(false, true);
-			nowRadio.setValue(false, true);
-			ownerRadio.setValue(false, true);
-		}
+//		int numDatasets = cruises.size();
+//		if ( numDelay == numDatasets ) {
+//			// All "with next release", so keep that setting
+//			laterRadio.setValue(true, true);
+//		}
+//		else if ( numCdiac == numDatasets ) {
+//			// All "sent for archival", so keep that setting
+//			nowRadio.setValue(true, true);
+//		}
+//		else if ( numOwner == numDatasets ) {
+//			// All "owner will archive", so keep that setting
+//			ownerRadio.setValue(true, true);
+//		}
+//		else {
+//			// A mix, so unset all and make the user decide
+//			laterRadio.setValue(false, true);
+//			nowRadio.setValue(false, true);
+//			ownerRadio.setValue(false, true);
+//		}
 
 		// Unselect the agree-to-share check box
-		agreeShareCheckBox.setValue(false, true);
+//		agreeShareCheckBox.setValue(false, true);
 
 		// Reset the focus on the agree-to-share check box
-		agreeShareCheckBox.setFocus(true);
+//		agreeShareCheckBox.setFocus(true);
 	}
 
 	@UiHandler("logoutButton")
@@ -346,57 +341,57 @@ public class SubmitForQCPage extends CompositeWithUsername {
 		DashboardLogoutPage.showPage();
 	}
 
-	@UiHandler({"laterRadio","ownerRadio"})
-	void radioOnClick(ClickEvent event) {
-		// If there is a cruise sent to CDIAC, warn if another selection is made
-		if ( hasSentDataset ) {
-			UploadDashboard.showMessage(ALREADY_ARCHIVED_HTML);
-		}
-	}
+//	@UiHandler({"laterRadio","ownerRadio"})
+//	void radioOnClick(ClickEvent event) {
+//		// If there is a cruise sent to CDIAC, warn if another selection is made
+//		if ( hasSentDataset ) {
+//			UploadDashboard.showMessage(ALREADY_ARCHIVED_HTML);
+//		}
+//	}
+//
+//	@UiHandler("laterInfoAnchor")
+//	void laterInfoOnClick(ClickEvent event) {
+//		// Create the popup only when needed and if it does not exist
+//		if ( laterArchivePopup == null ) {
+//			laterArchivePopup = new DashboardInfoPopup();
+//			laterArchivePopup.setInfoMessage(ARCHIVE_LATER_INFO_HTML);
+//		}
+//		// Show the popup over the info anchor
+//		laterArchivePopup.showRelativeTo(laterInfoAnchor);
+//	}
+//
+//	@UiHandler("nowInfoAnchor")
+//	void nowInfoOnClick(ClickEvent event) {
+//		// Create the popup only when needed and if it does not exist
+//		if ( nowInfoPopup == null ) {
+//			nowInfoPopup = new DashboardInfoPopup();
+//			nowInfoPopup.setInfoMessage(ARCHIVE_NOW_INFO_HTML);
+//		}
+//		// Show the popup over the info anchor
+//		nowInfoPopup.showRelativeTo(nowInfoAnchor);
+//	}
+//
+//	@UiHandler("ownerInfoAnchor")
+//	void ownerInfoOnClick(ClickEvent event) {
+//		// Create the popup only when needed and if it does not exist
+//		if ( ownerArchivePopup == null ) {
+//			ownerArchivePopup = new DashboardInfoPopup();
+//			ownerArchivePopup.setInfoMessage(OWNER_ARCHIVE_INFO_HTML);
+//		}
+//		// Show the popup over the info anchor
+//		ownerArchivePopup.showRelativeTo(ownerInfoAnchor);
+//	}
 
-	@UiHandler("laterInfoAnchor")
-	void laterInfoOnClick(ClickEvent event) {
-		// Create the popup only when needed and if it does not exist
-		if ( laterArchivePopup == null ) {
-			laterArchivePopup = new DashboardInfoPopup();
-			laterArchivePopup.setInfoMessage(ARCHIVE_LATER_INFO_HTML);
-		}
-		// Show the popup over the info anchor
-		laterArchivePopup.showRelativeTo(laterInfoAnchor);
-	}
-
-	@UiHandler("nowInfoAnchor")
-	void nowInfoOnClick(ClickEvent event) {
-		// Create the popup only when needed and if it does not exist
-		if ( nowInfoPopup == null ) {
-			nowInfoPopup = new DashboardInfoPopup();
-			nowInfoPopup.setInfoMessage(ARCHIVE_NOW_INFO_HTML);
-		}
-		// Show the popup over the info anchor
-		nowInfoPopup.showRelativeTo(nowInfoAnchor);
-	}
-
-	@UiHandler("ownerInfoAnchor")
-	void ownerInfoOnClick(ClickEvent event) {
-		// Create the popup only when needed and if it does not exist
-		if ( ownerArchivePopup == null ) {
-			ownerArchivePopup = new DashboardInfoPopup();
-			ownerArchivePopup.setInfoMessage(OWNER_ARCHIVE_INFO_HTML);
-		}
-		// Show the popup over the info anchor
-		ownerArchivePopup.showRelativeTo(ownerInfoAnchor);
-	}
-
-	@UiHandler("agreeShareInfoAnchor")
-	void agreeShareInfoOnClick(ClickEvent event) {
-		// Create the popup only when needed and if it does not exist
-		if ( agreeSharePopup == null ) {
-			agreeSharePopup = new DashboardInfoPopup();
-			agreeSharePopup.setInfoMessage(AGREE_SHARE_INFO_HTML);
-		}
-		// Show the popup over the info anchor
-		agreeSharePopup.showRelativeTo(agreeShareInfoAnchor);
-	}
+//	@UiHandler("agreeShareInfoAnchor")
+//	void agreeShareInfoOnClick(ClickEvent event) {
+//		// Create the popup only when needed and if it does not exist
+//		if ( agreeSharePopup == null ) {
+//			agreeSharePopup = new DashboardInfoPopup();
+//			agreeSharePopup.setInfoMessage(AGREE_SHARE_INFO_HTML);
+//		}
+//		// Show the popup over the info anchor
+//		agreeSharePopup.showRelativeTo(agreeShareInfoAnchor);
+//	}
 
 	@UiHandler("cancelButton")
 	void cancelOnClick(ClickEvent event) {
@@ -406,37 +401,39 @@ public class SubmitForQCPage extends CompositeWithUsername {
 
 	@UiHandler("submitButton")
 	void submitOnClick(ClickEvent event) {
-		if ( ! agreeShareCheckBox.getValue() ) {
-			UploadDashboard.showMessageAt(AGREE_SHARE_REQUIRED_MSG, agreeShareCheckBox);
-			return;
-		}
-		if ( hasSentDataset && nowRadio.getValue() ) {
-			// Asking to submit to CDIAC now, but has a cruise already sent
-			if ( resubmitAskPopup == null ) {
-				resubmitAskPopup = new DashboardAskPopup(YES_RESEND_TEXT, 
-						NO_CANCEL_TEXT, new AsyncCallback<Boolean>() {
-					@Override
-					public void onSuccess(Boolean okay) {
-						// Continue setting the archive status (and thus, 
-						// sending the request to CDIAC) only if user okays it
-						if ( okay ) {
-							continueSubmit();
-						}
-					}
-					@Override
-					public void onFailure(Throwable ex) {
-						// Never called
-						;
-					}
-				});
-			}
-			resubmitAskPopup.askQuestion(REARCHIVE_QUESTION);
-		}
-		else {
-			// Either no cruises sent to CDIAC, or not a send to CDIAC now request. 
-			// Continue setting the archive status.
-			continueSubmit();
-		}
+//	    Boolean isChecked = agreeShareCheckBox.getValue();
+//		if ( ! isChecked ) {
+//			UploadDashboard.showMessageAt(AGREE_SHARE_REQUIRED_MSG, agreeShareCheckBox);
+//			return;
+//		}
+//		if ( hasSentDataset && nowRadio.getValue() ) {
+//			// Asking to submit to CDIAC now, but has a cruise already sent
+//			if ( resubmitAskPopup == null ) {
+//				resubmitAskPopup = new DashboardAskPopup(YES_RESEND_TEXT, 
+//						NO_CANCEL_TEXT, new AsyncCallback<Boolean>() {
+//					@Override
+//					public void onSuccess(Boolean okay) {
+//						// Continue setting the archive status (and thus, 
+//						// sending the request to CDIAC) only if user okays it
+//						if ( okay ) {
+//							continueSubmit();
+//						}
+//					}
+//					@Override
+//					public void onFailure(Throwable ex) {
+//						// Never called
+//						;
+//					}
+//				});
+//			}
+//			resubmitAskPopup.askQuestion(REARCHIVE_QUESTION);
+//		}
+//		else {
+//			// Either no cruises sent to CDIAC, or not a send to CDIAC now request. 
+//			// Continue setting the archive status.
+//			continueSubmit();
+//		}
+		continueSubmit();
 	}
 
 	/**
@@ -445,23 +442,25 @@ public class SubmitForQCPage extends CompositeWithUsername {
 	void continueSubmit() {
 		String localTimestamp = DateTimeFormat.getFormat("yyyy-MM-dd HH:mm Z").format(new Date());
 		String archiveStatus;
-		if ( laterRadio.getValue() ) {
-			// Archive with the next release
-			archiveStatus = DashboardUtils.ARCHIVE_STATUS_WITH_NEXT_RELEASE;
-		}
-		else if ( nowRadio.getValue() ) {
-			// Archive now
-			archiveStatus = DashboardUtils.ARCHIVE_STATUS_SENT_FOR_ARCHIVAL;
-		}
-		else if ( ownerRadio.getValue() ) {
-			// Owner will archive
-			archiveStatus = DashboardUtils.ARCHIVE_STATUS_OWNER_TO_ARCHIVE;
-		}
-		else {
-			// Archive option not selected - fail
-			UploadDashboard.showMessageAt(ARCHIVE_PLAN_REQUIRED_MSG, archivePlanHtml);
-			return;
-		}
+//		if ( laterRadio.getValue() ) {
+//			// Archive with the next release
+//			archiveStatus = DashboardUtils.ARCHIVE_STATUS_WITH_NEXT_RELEASE;
+//		}
+//		else if ( nowRadio.getValue() ) {
+//			// Archive now
+//			archiveStatus = DashboardUtils.ARCHIVE_STATUS_SENT_FOR_ARCHIVAL;
+//		}
+//		else if ( ownerRadio.getValue() ) {
+//			// Owner will archive
+//			archiveStatus = DashboardUtils.ARCHIVE_STATUS_OWNER_TO_ARCHIVE;
+//		}
+//		else {
+//			// Archive option not selected - fail
+//			UploadDashboard.showMessageAt(ARCHIVE_PLAN_REQUIRED_MSG, archivePlanHtml);
+//			return;
+//		}
+		
+		archiveStatus = DashboardUtils.ARCHIVE_STATUS_OWNER_TO_ARCHIVE; // XXX Remove
 
 		boolean repeatSend = true;
 		// Submit the dataset
@@ -478,7 +477,7 @@ public class SubmitForQCPage extends CompositeWithUsername {
 			public void onFailure(Throwable ex) {
 				// Failure, so show fail message
 				// But still go back to the cruise list page since some may have succeeded
-				UploadDashboard.showFailureMessage(SUBMIT_FAILURE_MSG, ex);
+				UploadDashboard.showFailureMessage(SUBMIT_FAILURE_MSG_START + " for QC: ", ex);
 				DatasetListPage.showPage();
 				UploadDashboard.showAutoCursor();
 			}

@@ -6,7 +6,9 @@ package gov.noaa.pmel.dashboard.actions;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Date;
 import java.util.HashSet;
+import java.util.List;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -21,6 +23,7 @@ import gov.noaa.pmel.dashboard.handlers.MetadataFileHandler;
 import gov.noaa.pmel.dashboard.oads.DashboardOADSMetadata;
 import gov.noaa.pmel.dashboard.oads.OADSMetadata;
 import gov.noaa.pmel.dashboard.server.DashboardConfigStore;
+import gov.noaa.pmel.dashboard.server.DashboardServerUtils;
 import gov.noaa.pmel.dashboard.shared.DashboardDataset;
 import gov.noaa.pmel.dashboard.shared.DashboardDatasetData;
 import gov.noaa.pmel.dashboard.shared.DashboardMetadata;
@@ -91,7 +94,6 @@ public class DatasetSubmitter {
 			boolean repeatSend, String submitter) throws IllegalArgumentException {
 
 		HashSet<String> ingestIds = new HashSet<String>();
-		HashSet<String> archiveIds = new HashSet<String>();
 		ArrayList<String> errorMsgs = new ArrayList<String>();
 		for ( String datasetId : idsSet ) {
 			// Get the dataset with data since almost always submitting for QC
@@ -153,17 +155,17 @@ public class DatasetSubmitter {
 				ingestIds.add(datasetId);
 			}
 
-			if ( archiveStatus.equals(DashboardUtils.ARCHIVE_STATUS_SENT_FOR_ARCHIVAL) && 
-				 ( repeatSend || dataset.getArchiveDate().isEmpty() ) ) {
-				// Queue the request to send (or re-send) the data and metadata for archival
-				archiveIds.add(datasetId);
-			}
-			else if ( ! archiveStatus.equals(dataset.getArchiveStatus()) ) {
-				// Update the archive status now
-				dataset.setArchiveStatus(archiveStatus);
-				changed = true;
-				commitMsg += " archive status '" + archiveStatus + "'"; 
-			}
+//			if ( archiveStatus.equals(DashboardUtils.ARCHIVE_STATUS_SENT_FOR_ARCHIVAL) && 
+//				 ( repeatSend || dataset.getArchiveDate().isEmpty() ) ) {
+//				// Queue the request to send (or re-send) the data and metadata for archival
+//				archiveIds.add(datasetId);
+//			}
+//			else if ( ! archiveStatus.equals(dataset.getArchiveStatus()) ) {
+//				// Update the archive status now
+//				dataset.setArchiveStatus(archiveStatus);
+//				changed = true;
+//				commitMsg += " archive status '" + archiveStatus + "'"; 
+//			}
 
 			if ( changed ) {
 				// Commit this update of the dataset properties
@@ -184,10 +186,26 @@ public class DatasetSubmitter {
 
 		// notify ERDDAP of new/updated dataset
 		if ( ! ingestIds.isEmpty() )
-			dsgHandler.flagErddap(true, true);
+			dsgHandler.flagErddap(true);
 
+		// If any dataset submit had errors, return the error messages
+		// TODO: do this in a return message, not an IllegalArgumentException
+		if ( errorMsgs.size() > 0 ) {
+			StringBuilder sb = new StringBuilder();
+			for ( String msg : errorMsgs ) { 
+				sb.append(msg);
+				sb.append("\n");
+			}
+			throw new IllegalArgumentException(sb.toString());
+		}
+	}
+
+	public void archiveDatasets(List<String> datasetIds, List<String> columnsList, String archiveStatus, 
+	                            String timestamp, boolean repeatSend, String submitter) {
+		ArrayList<String> errorMsgs = new ArrayList<String>();
+		
 		// Send dataset data and metadata for archival where user requested immediate archival
-		if ( ! archiveIds.isEmpty() ) {
+		if ( ! datasetIds.isEmpty() ) {
 			String userRealName;
 			try {
 				userRealName = databaseHandler.getReviewerRealname(submitter);
@@ -206,25 +224,28 @@ public class DatasetSubmitter {
 			if ( (userEmail == null) || userEmail.isEmpty() )
 				throw new IllegalArgumentException("Unknown e-mail address for user " + submitter);
 
-			for ( String datasetId : archiveIds ) {
+			for ( String datasetId : datasetIds ) {
+			    String thisStatus = archiveStatus;
 				String commitMsg = "Immediate archival of dataset " + datasetId + " requested by " + 
 						userRealName + " (" + userEmail + ") at " + timestamp;
 				try {
-					filesBundler.sendOrigFilesBundle(datasetId, commitMsg, userRealName, userEmail);
+					// filesBundler.sendOrigFilesBundle(datasetId, commitMsg, userRealName, userEmail);
+					File archiveBundle = filesBundler.createAndSendArchiveFilesBundle(datasetId, columnsList, commitMsg, userRealName, userEmail);
+					thisStatus = "Submitted " + DashboardServerUtils.formatTime(new Date());
 				} catch (Exception ex) {
 					ex.printStackTrace();
 					errorMsgs.add("Failed to submit request for immediate archival of " + 
 							datasetId + ": " + ex.getMessage());
-					continue;
+					thisStatus = "Submission Failed";
+//					continue;
 				}
 				// When successful, update the archived timestamp
 				DashboardDataset cruise = dataHandler.getDatasetFromInfoFile(datasetId);
-				cruise.setArchiveStatus(archiveStatus);
+				cruise.setArchiveStatus(thisStatus);
 				cruise.setArchiveDate(timestamp);
 				dataHandler.saveDatasetInfoToFile(cruise, commitMsg);
 			}
 		}
-
 		// If any dataset submit had errors, return the error messages
 		// TODO: do this in a return message, not an IllegalArgumentException
 		if ( errorMsgs.size() > 0 ) {
@@ -235,6 +256,17 @@ public class DatasetSubmitter {
 			}
 			throw new IllegalArgumentException(sb.toString());
 		}
+
 	}
 
+	public static void main(String[] args) {
+        try {
+            DatasetSubmitter ds = DashboardConfigStore.get(false).getDashboardDatasetSubmitter();
+            ArrayList<String> ids = new ArrayList<String>() {{ add("PRISM082008"); }};
+            ds.submitDatasets(ids, null, new Date().toString(), false, "lkamb");
+        } catch (Exception ex) {
+            ex.printStackTrace();
+            // TODO: handle exception
+        }
+    }
 }

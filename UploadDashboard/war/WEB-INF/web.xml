@@ -46,6 +46,15 @@
 		<url-pattern>/OAPUploadDashboard/MetadataDownloadService/*</url-pattern>
 	</servlet-mapping>
 
+	<servlet>
+		<servlet-name>EditQcFlagsServlet</servlet-name>
+		<servlet-class>gov.noaa.pmel.dashboard.server.EditFlagsService</servlet-class>
+	</servlet>
+	<servlet-mapping>
+		<servlet-name>EditQcFlagsServlet</servlet-name>
+		<url-pattern>/DashboardUpdateService/EditFlags/*</url-pattern>
+	</servlet-mapping>
+
 <!-- Not currently necessary, as we are using container-managed auth.
 	<filter>
 		<filter-name>AuthenticateFilter</filter-name>
@@ -56,6 +65,15 @@
 		<url-pattern>/OAPUploadDashboard/*</url-pattern>
 	</filter-mapping>
   -->
+	<security-constraint>
+		<web-resource-collection>
+			<web-resource-name>DashboardServices</web-resource-name>
+			<url-pattern>/DashboardUpdateService/*</url-pattern>
+			<http-method>GET</http-method>
+			<http-method>POST</http-method>
+		</web-resource-collection>
+	</security-constraint>
+	
 	<security-constraint>
 		<web-resource-collection>
 			<web-resource-name>OAP Dashboard</web-resource-name>

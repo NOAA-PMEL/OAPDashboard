@@ -6,6 +6,7 @@ package gov.noaa.pmel.dashboard.shared;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 import java.util.TreeSet;
 
@@ -312,6 +313,9 @@ public interface DashboardServicesInterface extends RemoteService {
 			String archiveStatus, String localTimestamp, boolean repeatSend)
 					throws IllegalArgumentException;
 
+	void submitDatasetsToArchive(String username, List<String> datasetIds, List<String> columnNames,
+								 String archiveStatus, String localTimestamp, boolean repeatSend)
+			throws IllegalArgumentException;
 	/**
 	 * Suspend a dataset from Quality Control.  This allows a user to remove a dataset
 	 * from the Quality Control process to allow further changes or resubmission to

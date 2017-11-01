@@ -5,6 +5,7 @@ package gov.noaa.pmel.dashboard.shared;
 
 import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 import java.util.TreeSet;
 
@@ -322,6 +323,10 @@ public interface DashboardServicesInterfaceAsync {
 	void submitDatasetsForQC(String username, HashSet<String> cruiseExpocodes, 
 			String archiveStatus, String localTimestamp, boolean repeatSend,
 			AsyncCallback<Void> callback);
+
+	void submitDatasetsToArchive(String username, List<String> _submitDatasetIds, List<String> _submitColumnList, 
+	                             String archiveStatus, String localTimestamp, boolean repeatSend, 
+	                             AsyncCallback<Void> asyncCallback);
 
 	/**
 	 * Suspend a dataset from Quality Control.  This allows a user to remove a dataset

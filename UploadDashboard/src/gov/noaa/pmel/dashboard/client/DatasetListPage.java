@@ -60,6 +60,11 @@ import gov.noaa.pmel.dashboard.shared.DashboardUtils;
  */
 public class DatasetListPage extends CompositeWithUsername {
 
+	private static enum SubmitFor {
+		QC,
+		ARCHIVE
+	}
+	
 	private static final String TITLE_TEXT = "My Datasets";
 	private static final String WELCOME_INTRO = "Logged in as ";
 	private static final String LOGOUT_TEXT = "Logout";
@@ -85,6 +90,10 @@ public class DatasetListPage extends CompositeWithUsername {
 	private static final String QC_SUBMIT_TEXT = "Submit for QC";
 	private static final String QC_SUBMIT_HOVER_HELP =
 			"submit the selected datasets for quality control assessment";
+
+	private static final String ARCHIVE_SUBMIT_TEXT = "Submit to Archive";
+	private static final String ARCHIVE_SUBMIT_HOVER_HELP =
+			"submit selected dataset to permanent data archive";
 
 	private static final String SUSPEND_TEXT = "Suspend Dataset";
 	private static final String SUSPEND_HOVER_HELP =
@@ -276,8 +285,9 @@ public class DatasetListPage extends CompositeWithUsername {
 	@UiField Button addlDocsButton;
 	@UiField Button reviewButton;
 	@UiField Button qcSubmitButton;
+	@UiField Button archiveSubmitButton;
 	@UiField Button suspendDatasetButton;
-	@UiField Label firstSeparator;
+//	@UiField Label firstSeparator;
 	@UiField Button showDatasetButton;
 	@UiField Button hideDatasetButton;
 	@UiField Button changeOwnerButton;
@@ -346,6 +356,9 @@ public class DatasetListPage extends CompositeWithUsername {
 		qcSubmitButton.setText(QC_SUBMIT_TEXT);
 		qcSubmitButton.setTitle(QC_SUBMIT_HOVER_HELP);
 
+		archiveSubmitButton.setText(ARCHIVE_SUBMIT_TEXT);
+		archiveSubmitButton.setTitle(ARCHIVE_SUBMIT_HOVER_HELP);
+
 		suspendDatasetButton.setText(SUSPEND_TEXT);
 		suspendDatasetButton.setTitle(SUSPEND_HOVER_HELP);
 
@@ -375,6 +388,7 @@ public class DatasetListPage extends CompositeWithUsername {
 			addlDocsButton,
 			reviewButton,
 			qcSubmitButton,
+			archiveSubmitButton,
 			suspendDatasetButton,
 			hideDatasetButton,
 			changeOwnerButton,
@@ -386,6 +400,7 @@ public class DatasetListPage extends CompositeWithUsername {
 //			addlDocsButton,
 			reviewButton,
 //			qcSubmitButton,
+//			archiveSubmitButton,
 //			suspendDatasetButton,
 //			hideDatasetButton,
 //			changeOwnerButton,
@@ -761,7 +776,25 @@ public class DatasetListPage extends CompositeWithUsername {
 		checkSet.clear();
 		checkSet.putAll(datasetsSet);
 		checkSet.setUsername(getUsername());
-		checkDatasetsForSubmitting();
+		checkDatasetsForSubmitting(SubmitFor.QC);
+	}
+
+	@UiHandler("archiveSubmitButton")
+	void archiveSubmitOnClick(ClickEvent event) {
+		if ( ! getSelectedDatasets(false) ) {
+			UploadDashboard.showMessage(
+					ARCHIVED_DATASETS_SELECTED_ERR_START + FOR_QC_SUBMIT_ERR_END);
+			return;
+		}
+		if ( datasetsSet.size() == 0 ) {
+			UploadDashboard.showMessage(
+					NO_DATASET_SELECTED_ERR_START + FOR_QC_SUBMIT_ERR_END);
+			return;
+		}
+		checkSet.clear();
+		checkSet.putAll(datasetsSet);
+		checkSet.setUsername(getUsername());
+		checkDatasetsForSubmitting(SubmitFor.ARCHIVE);
 	}
 
 	@UiHandler("suspendDatasetButton")
@@ -1010,7 +1043,7 @@ public class DatasetListPage extends CompositeWithUsername {
 		Column<DashboardDataset,String> dataCheckColumn = buildDataCheckColumn();
 		Column<DashboardDataset,String> metadataColumn = buildMetadataColumn();
 		Column<DashboardDataset,String> addlDocsColumn = buildAddnDocsColumn();
-		TextColumn<DashboardDataset> versionColumn = buildVersionColumn();
+//		TextColumn<DashboardDataset> versionColumn = buildVersionColumn();
 		Column<DashboardDataset,String> qcStatusColumn = buildQCStatusColumn();
 		Column<DashboardDataset,String> archiveStatusColumn = buildArchiveStatusColumn();
 		TextColumn<DashboardDataset> filenameColumn = buildFilenameColumn();
@@ -1029,8 +1062,8 @@ public class DatasetListPage extends CompositeWithUsername {
 				SafeHtmlUtils.fromSafeConstant(METADATA_COLUMN_NAME));
 		datasetsGrid.addColumn(addlDocsColumn, 
 				SafeHtmlUtils.fromSafeConstant(ADDL_DOCS_COLUMN_NAME));
-		datasetsGrid.addColumn(versionColumn,
-				SafeHtmlUtils.fromSafeConstant(VERSION_COLUMN_NAME));
+//		datasetsGrid.addColumn(versionColumn,
+//				SafeHtmlUtils.fromSafeConstant(VERSION_COLUMN_NAME));
 		datasetsGrid.addColumn(qcStatusColumn, 
 				SafeHtmlUtils.fromSafeConstant(SUBMITTED_COLUMN_NAME));
 		datasetsGrid.addColumn(archiveStatusColumn, 
@@ -1063,8 +1096,8 @@ public class DatasetListPage extends CompositeWithUsername {
 		datasetsGrid.setColumnWidth(addlDocsColumn, 
 				UploadDashboard.FILENAME_COLUMN_WIDTH, Style.Unit.EM);
 		minTableWidth += UploadDashboard.FILENAME_COLUMN_WIDTH;
-		datasetsGrid.setColumnWidth(versionColumn,
-				UploadDashboard.NARROW_COLUMN_WIDTH, Style.Unit.EM);
+//		datasetsGrid.setColumnWidth(versionColumn,
+//				UploadDashboard.NARROW_COLUMN_WIDTH, Style.Unit.EM);
 		minTableWidth += UploadDashboard.NARROW_COLUMN_WIDTH;
 		datasetsGrid.setColumnWidth(qcStatusColumn, 
 				UploadDashboard.NORMAL_COLUMN_WIDTH, Style.Unit.EM);
@@ -1092,7 +1125,7 @@ public class DatasetListPage extends CompositeWithUsername {
 		dataCheckColumn.setSortable(true);
 		metadataColumn.setSortable(true);
 		addlDocsColumn.setSortable(true);
-		versionColumn.setSortable(true);
+//		versionColumn.setSortable(true);
 		qcStatusColumn.setSortable(true);
 		archiveStatusColumn.setSortable(true);
 		filenameColumn.setSortable(true);
@@ -1111,8 +1144,8 @@ public class DatasetListPage extends CompositeWithUsername {
 				DashboardDataset.mdTimestampComparator);
 		columnSortHandler.setComparator(addlDocsColumn, 
 				DashboardDataset.addlDocsComparator);
-		columnSortHandler.setComparator(versionColumn, 
-				DashboardDataset.versionComparator);
+//		columnSortHandler.setComparator(versionColumn, 
+//				DashboardDataset.versionComparator);
 		columnSortHandler.setComparator(qcStatusColumn, 
 				DashboardDataset.qcStatusComparator);
 		columnSortHandler.setComparator(archiveStatusColumn, 
@@ -1233,7 +1266,7 @@ public class DatasetListPage extends CompositeWithUsername {
 		}
 	}
 			
-	private void enableButtons(Button[] enableSet) {
+	private static void enableButtons(Button[] enableSet) {
 		for (Button button : enableSet) {
 			String tt = button.getTitle();
 			int idx = tt.lastIndexOf("**");
@@ -1245,7 +1278,7 @@ public class DatasetListPage extends CompositeWithUsername {
 		}
 	}
 
-	private void disableButtons(Button[] disableSet, String msg) {
+	private static void disableButtons(Button[] disableSet, String msg) {
 		for (Button button : disableSet) {
 			button.setTitle(msg+button.getTitle());
 			button.setEnabled(false);
@@ -1494,7 +1527,7 @@ public class DatasetListPage extends CompositeWithUsername {
 					checkSet.clear();
 					checkSet.setUsername(getUsername());
 					checkSet.put(cruise.getDatasetId(), cruise);
-					checkDatasetsForSubmitting();
+					checkDatasetsForSubmitting(SubmitFor.QC);
 				}
 			}
 		});
@@ -1542,7 +1575,7 @@ public class DatasetListPage extends CompositeWithUsername {
 					checkSet.clear();
 					checkSet.setUsername(getUsername());
 					checkSet.put(cruise.getDatasetId(), cruise);
-					checkDatasetsForSubmitting();
+					checkDatasetsForSubmitting(SubmitFor.ARCHIVE);
 				}
 			}
 		});
@@ -1596,7 +1629,7 @@ public class DatasetListPage extends CompositeWithUsername {
 	 * issues, continues submitting for QC by calling 
 	 * {@link SubmitForQCPage#showPage(java.util.HashSet)}.
 	 */
-	private void checkDatasetsForSubmitting() {
+	private void checkDatasetsForSubmitting(final SubmitFor to) {
 		// Check if the cruises have metadata documents
 		String errMsg = NO_METADATA_HTML_PROLOGUE;
 		boolean cannotSubmit = false;
@@ -1662,12 +1695,12 @@ public class DatasetListPage extends CompositeWithUsername {
 					public void onSuccess(Boolean okay) {
 						// Only proceed if yes; ignore if no or null
 						if ( okay )
-							SubmitForQCPage.showPage(checkSet);
+							submitDatasets(checkSet, to);
+//							SubmitForQCPage.showPage(checkSet);
 					}
 					@Override
 					public void onFailure(Throwable ex) {
 						// Never called
-						;
 					}
 				});
 			}
@@ -1675,7 +1708,19 @@ public class DatasetListPage extends CompositeWithUsername {
 			return;
 		}
 		// No problems; continue on
-		SubmitForQCPage.showPage(checkSet);
+		submitDatasets(checkSet, to);
+//		SubmitForQCPage.showPage(checkSet);
+	}
+
+	private void submitDatasets(DashboardDatasetList submitSet, SubmitFor to) {
+		switch (to) {
+			case QC:
+				SubmitForQCPage.showPage(submitSet);
+				break;
+			case ARCHIVE:
+				SubmitToArchivePage.showPage(submitSet);
+				break;
+		}
 	}
 
 	private void checkDatasetsForSuspension() {

@@ -222,11 +222,11 @@ public class CheckerMessageHandler {
 					warnCnt.put(summary, cnt);
 				}
 			}
-			for ( Entry<String,Integer> sumCnt : warnCnt.entrySet() ) {
+			for ( Entry<String,Integer> sumCnt : errorCnt.entrySet() ) {
 				msgsWriter.println(MSG_SUMMARY_MSG_KEY + MSG_KEY_VALUE_SEP  + 
 						sumCnt.getValue() + " errors of type: " + sumCnt.getKey());
 			}
-			for ( Entry<String,Integer> sumCnt : errorCnt.entrySet() ) {
+			for ( Entry<String,Integer> sumCnt : warnCnt.entrySet() ) {
 				msgsWriter.println(MSG_SUMMARY_MSG_KEY + MSG_KEY_VALUE_SEP + 
 						sumCnt.getValue() + " warnings of type: " + sumCnt.getKey());
 			}
@@ -307,31 +307,37 @@ public class CheckerMessageHandler {
 				msgsWriter.println(DashboardUtils.encodeStringArrayList(mappings));
 
 				// Create the QC flag for this message.
-				if ( rowNum != null ) {
+//				if ( rowNum != null ) {
+				Integer rowIdx = rowNum != null ? rowNum.intValue()-1 : null;
+				Integer colIdx = colNumber != null ? colNumber.intValue()-1 : null;
 					if ( Severity.CRITICAL.equals(severity) ||
 						 Severity.ERROR.equals(severity) ) {
 						QCFlag flag;
-						if ( colNumber != null )
+//						if ( colNumber != null )
 							flag = new QCFlag(woceFlagName, DashboardServerUtils.WOCE_BAD, 
-									Severity.ERROR, colNumber-1, rowNum-1);
-						else
-							flag = new QCFlag(woceFlagName, DashboardServerUtils.WOCE_BAD, 
-									Severity.ERROR, null, rowNum-1);
+									Severity.ERROR, colIdx, rowIdx);
+//						else
+//							flag = new QCFlag(woceFlagName, DashboardServerUtils.WOCE_BAD, 
+//									Severity.ERROR, null, rowNum-1);
 						woceFlags.add(flag);
-						stdUserData.setWoceAutocheck(rowNum-1, DashboardServerUtils.WOCE_BAD);
+						if ( rowIdx != null ) {
+							stdUserData.setWoceAutocheck(rowIdx, DashboardServerUtils.WOCE_BAD);
+						}
 					}
 					else if ( Severity.WARNING.equals(severity) ) {
 						QCFlag flag;
-						if ( colNumber != null && colNumber > 0 )
+//						if ( colNumber != null && colNumber > 0 )
 							flag = new QCFlag(woceFlagName, DashboardServerUtils.WOCE_QUESTIONABLE, 
-									Severity.WARNING, colNumber-1, rowNum-1);
-						else
-							flag = new QCFlag(woceFlagName, DashboardServerUtils.WOCE_QUESTIONABLE, 
-									Severity.WARNING, null, rowNum-1);
+									Severity.WARNING, colIdx, rowIdx);
+//						else
+//							flag = new QCFlag(woceFlagName, DashboardServerUtils.WOCE_QUESTIONABLE, 
+//									Severity.WARNING, null, rowNum-1);
 						woceFlags.add(flag);
-						stdUserData.setWoceAutocheck(rowNum-1, DashboardServerUtils.WOCE_QUESTIONABLE);
+						if ( rowIdx != null ) {
+							stdUserData.setWoceAutocheck(rowIdx, DashboardServerUtils.WOCE_QUESTIONABLE);
+						}
 					}
-				}
+//				}
 			}
 
 			dataset.setCheckerFlags(woceFlags);

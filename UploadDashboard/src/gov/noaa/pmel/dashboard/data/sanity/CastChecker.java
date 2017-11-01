@@ -61,6 +61,7 @@ public class CastChecker {
 		Double lastLon = null;
 		Double lastTime = null;
 		String lastId = null;
+		checkForDuplicateCastIds(_dataset, _casts);
 		for (CastSet cast : _casts) {
 			logger.debug("Cast " + cast.id() + " time " + new Date((long)(cast.expectedTime()*1000)));
 			if ( cast.indeces().size() == 1 ) {
@@ -80,7 +81,27 @@ public class CastChecker {
 			lastId = cast.id();
 		}
 	}
-	private static List<CastSet> orderCasts(List<CastSet>casts) {
+	private static void checkForDuplicateCastIds(StdUserDataArray dataset, List<CastSet> casts) {
+	    Set<String> ids = new TreeSet<>();
+	    for (CastSet cs : casts) {
+	        String cid = cs.id();
+	        if (ids.contains(cid)) {
+	            addDupIdMsg(dataset, cid);
+	        } else {
+	            ids.add(cid);
+	        }
+	    }
+    }
+
+    private static void addDupIdMsg(StdUserDataArray dataset, String cid) {
+		ADCMessage msg = new ADCMessage();
+		msg.setSeverity(Severity.ERROR);
+		msg.setGeneralComment("Duplicate cast ID");
+		msg.setDetailedComment("Cast ID " + cid + " occurs more than once.");
+		dataset.addStandardizationMessage(msg);
+    }
+
+    private static List<CastSet> orderCasts(List<CastSet>casts) {
 		Comparator<CastSet> comp = new Comparator<CastSet>() {
 			@Override
 			public int compare(CastSet o1, CastSet o2) {

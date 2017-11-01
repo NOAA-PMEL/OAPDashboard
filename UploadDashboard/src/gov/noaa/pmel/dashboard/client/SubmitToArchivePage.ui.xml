@@ -1,0 +1,53 @@
+<!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
+<ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
+	xmlns:g="urn:import:com.google.gwt.user.client.ui" xmlns:cell="urn:import:com.google.gwt.user.cellview.client">
+
+	<ui:style src="FullWidth.css" />
+	
+	<g:DockLayoutPanel unit="EM">
+		<g:north size="6">
+			<g:FlowPanel>
+				<g:FlowPanel addStyleNames="{style.titlepanel}">
+					<g:Button addStyleNames="{style.titlelogoutbutton}"
+						ui:field="logoutButton" />
+					<g:InlineLabel addStyleNames="{style.titleuserlabel}"
+						ui:field="userInfoLabel" />
+					<g:InlineLabel addStyleNames="{style.titlepagelabel}"
+						ui:field="titleLabel" />
+					<g:Label addStyleNames="{style.titlereset}" />
+				</g:FlowPanel>
+				<g:HTML addStyleNames="{style.introhtml}" ui:field="introHtml" />
+			</g:FlowPanel>
+		</g:north>
+		<g:west size="8">
+			<g:FlowPanel addStyleNames="{style.sideSelectionPanel}">
+				<g:InlineLabel addStyleNames="{style.sideSelectionLabel}">Select:</g:InlineLabel>
+				<g:VerticalPanel addStyleNames="{style.sideSelector}">
+					<g:RadioButton ui:field="select_none" name="columnSelectionGroup" addStyleNames="{style.sideSelectionRadio}">None</g:RadioButton>
+					<!--
+					<g:RadioButton ui:field="select_min" name="columnSelectionGroup" addStyleNames="{style.sideSelectionRadio}">Minimal</g:RadioButton>
+					<g:RadioButton ui:field="select_req" name="columnSelectionGroup" addStyleNames="{style.sideSelectionRadio}">Required</g:RadioButton>
+					<g:RadioButton ui:field="select_user" name="columnSelectionGroup" addStyleNames="{style.sideSelectionRadio}">User</g:RadioButton>
+					-->
+					<g:RadioButton ui:field="select_std" name="columnSelectionGroup" addStyleNames="{style.sideSelectionRadio}">Standard</g:RadioButton>
+					<g:RadioButton ui:field="select_all" name="columnSelectionGroup" addStyleNames="{style.sideSelectionRadio}">All</g:RadioButton>
+				</g:VerticalPanel>
+			</g:FlowPanel>
+		</g:west>
+		<g:center>
+			<g:ScrollPanel addStyleNames="{style.mainContentScroll}">
+<!--						<cell:DataGrid addStyleNames="{style.cruiselistgrid}" ui:field="datasetsGrid" />  -->
+				<g:VerticalPanel ui:field="columnsPanel">
+				</g:VerticalPanel>
+			</g:ScrollPanel>
+		</g:center>
+		<g:south size="6">
+			<g:FlowPanel addStyleNames="{style.horizontalbuttonpanel}">
+				<g:Button addStyleNames="{style.horizontalbutton}"
+					ui:field="submitButton" />
+				<g:Button addStyleNames="{style.horizontalbutton}"
+					ui:field="cancelButton" />
+			</g:FlowPanel>
+		</g:south>
+	</g:DockLayoutPanel>
+</ui:UiBinder>

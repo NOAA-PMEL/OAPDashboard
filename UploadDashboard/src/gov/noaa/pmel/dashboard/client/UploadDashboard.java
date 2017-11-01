@@ -46,6 +46,8 @@ public class UploadDashboard implements EntryPoint, ValueChangeHandler<String> {
 		PREVIEW_DATASET,
 		/** History tag for SubmitForQCPage */
 		SUBMIT_FOR_QC,
+		/** History tag for SubmitToArchivePage */
+		SUBMIT_TO_ARCHIVE,
 		/** History tag for DashboardLogoutPage */
 		LOGOUT
 	}
@@ -229,6 +231,11 @@ public class UploadDashboard implements EntryPoint, ValueChangeHandler<String> {
 		singleton.currentPage = newPage;
 		if ( singleton.currentPage != null )
 			RootLayoutPanel.get().add(singleton.currentPage);
+	}
+	
+	public static void updateCurrentPage(String username, CompositeWithUsername newPage) {
+	    newPage.setUsername(username);
+	    updateCurrentPage(newPage);
 	}
 
 	/**

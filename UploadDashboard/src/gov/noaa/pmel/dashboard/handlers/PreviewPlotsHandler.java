@@ -191,19 +191,19 @@ public class PreviewPlotsHandler {
 					datasetId + ": " + ex.getMessage(), ex);
 		}
 
-		boolean DO_COMPUTED_VARS = false;
-		if ( DO_COMPUTED_VARS ) {
-			log.debug("adding computed variables to preview DSG file " + dsgFile.getPath());
-			// Call Ferret to add the computed variables to the preview DSG file
-			SocatTool tool = new SocatTool(ferretConfig);
-			ArrayList<String> scriptArgs = new ArrayList<String>(1);
-			scriptArgs.add(dsgFile.getPath());
-			tool.init(scriptArgs, stdId, FerretConfig.Action.COMPUTE);
-			tool.run();
-			if ( tool.hasError() )
-				throw new IllegalArgumentException("Failure adding computed variables to the preview DSG file for " + 
-						datasetId + ": " + tool.getErrorMessage());
-		}
+//		boolean DO_COMPUTED_VARS = false;
+//		if ( DO_COMPUTED_VARS ) {
+//			log.debug("adding computed variables to preview DSG file " + dsgFile.getPath());
+//			// Call Ferret to add the computed variables to the preview DSG file
+//			SocatTool tool = new SocatTool(ferretConfig);
+//			ArrayList<String> scriptArgs = new ArrayList<String>(1);
+//			scriptArgs.add(dsgFile.getPath());
+//			tool.init(scriptArgs, stdId, FerretConfig.Action.COMPUTE);
+//			tool.run();
+//			if ( tool.hasError() )
+//				throw new IllegalArgumentException("Failure adding computed variables to the preview DSG file for " + 
+//						datasetId + ": " + tool.getErrorMessage());
+//		}
 
 		log.debug("generating preview plots for " + dsgFile.getPath());
 

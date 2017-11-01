@@ -128,13 +128,6 @@ public class RegenerateDsgs {
 				; // Ignore
 			}
 
-			try {
-				// Regenerate the decimated-data DSG file 
-				dsgHandler.decimateDatasetDsg(stdId);
-			} catch ( Exception ex ) {
-				throw new IllegalArgumentException("Problems regenerating the decimated-data DSG files for " + 
-							stdId + ": " + ex.getMessage());
-			}
 		}
 		return updateIt;		
 	}
@@ -143,7 +136,7 @@ public class RegenerateDsgs {
 	 * Flag ERDDAP that the full-data and decimated-data DSG files have changed
 	 */
 	public void flagErddap() {
-		dsgHandler.flagErddap(true, true);
+		dsgHandler.flagErddap(true);
 	}
 
 	/**

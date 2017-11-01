@@ -342,12 +342,13 @@ public class DataColumnSpecsPage extends CompositeWithUsername {
 				pu.addDomHandler(new DoubleClickHandler() {
 					@Override
 					public void onDoubleClick(DoubleClickEvent event) {
-						Integer row = pu.row;
-						Integer col = pu.col;
+					    PopupMsg puSrc = (PopupMsg)event.getSource();
+						Integer row = puSrc.row;
+						Integer col = puSrc.col;
 						if ( col != null ) { 
 							setView(row, col);
 						}
-						pu.setVisible(false);
+						puSrc.setVisible(false);
 					}
 				}, DoubleClickEvent.getType());
 				pu.setPopupPosition(left, top);

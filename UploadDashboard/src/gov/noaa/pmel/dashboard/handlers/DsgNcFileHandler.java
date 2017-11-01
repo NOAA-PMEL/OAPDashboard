@@ -37,15 +37,34 @@ public class DsgNcFileHandler {
 	private static final String DSG_FILE_SUFFIX = ".nc";
 
 	private File dsgFilesDir;
-	private File decDsgFilesDir;
 	private File erddapDsgFlagFile;
-	private File erddapDecDsgFlagFile;
 	private FerretConfig ferretConfig;
 	private KnownDataTypes knownUserDataTypes;
 	private KnownDataTypes knownMetadataTypes;
 	private KnownDataTypes knownDataFileTypes;
 	private WatchService watcher;
 
+	public DsgNcFileHandler(String dsgFilesDirName, String erddapDsgFlagFileName) {
+	    this(dsgFilesDirName, erddapDsgFlagFileName, null, null);
+	}
+	public DsgNcFileHandler(String dsgFilesDirName, String erddapDsgFlagFileName, 
+	                        String decDsgFilesDirName, String erddapDecDsgFlagFileName) {
+		dsgFilesDir = new File(dsgFilesDirName);
+		if ( ! dsgFilesDir.isDirectory() )
+			throw new IllegalArgumentException(dsgFilesDirName + " is not a directory");
+		erddapDsgFlagFile = new File(erddapDsgFlagFileName);
+		File parentDir = erddapDsgFlagFile.getParentFile();
+		if ( (parentDir == null) || ! parentDir.isDirectory() )
+			throw new IllegalArgumentException("parent directory of " + 
+					erddapDsgFlagFile.getPath() + " is not valid");
+	}
+	public DsgNcFileHandler(String dsgFilesDirName, String erddapDsgFlagFileName, 
+	                        String decDsgFilesDirName, String erddapDecDsgFlagFileName,
+	                        String dummy1, String dummy2, KnownDataTypes knownDataFileTypes) {
+		this(dsgFilesDirName, erddapDsgFlagFileName, decDsgFilesDirName, erddapDecDsgFlagFileName);
+        this.knownDataFileTypes = knownDataFileTypes;
+
+	}
 	/**
 	 * Handles storage and retrieval of full and decimated NetCDF 
 	 * discrete geometry files under the given directories.
@@ -54,9 +73,6 @@ public class DsgNcFileHandler {
 	 * 		name of the directory for the full NetCDF DSG files
 	 * @param decDsgFilesDirName
 	 * 		name of the directory for the decimated NetCDF DSG files
-	 * @param erddapDsgFlagFileName
-	 * 		name of the flag file to create to notify ERDDAP 
-	 * 		of updates to the full NetCDF DSG files
 	 * @param erddapDecDsgFlagFileName
 	 * 		name of the flag file to create to notify ERDDAP 
 	 * 		of updates to the decimated NetCDF DSG files
@@ -66,26 +82,11 @@ public class DsgNcFileHandler {
 	 * 		if the specified DSG directories, or the parent directories
 	 * 		of the ERDDAP flag files, do not exist or are not directories
 	 */
-	public DsgNcFileHandler(String dsgFilesDirName, String decDsgFilesDirName,
-			String erddapDsgFlagFileName, String erddapDecDsgFlagFileName, 
+	public DsgNcFileHandler(String dsgFilesDirName, String erddapDsgFlagFileName, 
 			FerretConfig ferretConf, KnownDataTypes knownUserDataTypes, 
 			KnownDataTypes knownMetadataTypes, KnownDataTypes knownDataFileTypes) {
-		dsgFilesDir = new File(dsgFilesDirName);
-		if ( ! dsgFilesDir.isDirectory() )
-			throw new IllegalArgumentException(dsgFilesDirName + " is not a directory");
-		decDsgFilesDir = new File(decDsgFilesDirName);
-		if ( ! decDsgFilesDir.isDirectory() )
-			throw new IllegalArgumentException(decDsgFilesDirName + " is not a directory");
-		erddapDsgFlagFile = new File(erddapDsgFlagFileName);
-		File parentDir = erddapDsgFlagFile.getParentFile();
-		if ( (parentDir == null) || ! parentDir.isDirectory() )
-			throw new IllegalArgumentException("parent directory of " + 
-					erddapDsgFlagFile.getPath() + " is not valid");
-		erddapDecDsgFlagFile = new File(erddapDecDsgFlagFileName);
-		parentDir = erddapDecDsgFlagFile.getParentFile();
-		if ( (parentDir == null) || ! parentDir.isDirectory() )
-			throw new IllegalArgumentException("parent directory of " + 
-					erddapDecDsgFlagFile.getPath() + " is not valid");
+	    this(dsgFilesDirName, erddapDsgFlagFileName);
+	    
 		ferretConfig = ferretConf;
 		this.knownUserDataTypes = knownUserDataTypes;
 		this.knownMetadataTypes = knownMetadataTypes;
@@ -134,38 +135,6 @@ public class DsgNcFileHandler {
 	}
 
 	/**
-	 * Generates the decimated NetCDF DSG abstract file for a dataset.
-	 * Creates the parent subdirectory if it does not exist.
-	 * The {@link DsgNcFile#create} and {@link DsgNcFile#updateWoceFlags} 
-	 * methods should not be used with the decimated data file; the actual 
-	 * decimated DSG file is created using {@link #decimateDatasetDsg(String)}.
-	 * 
-	 * @param datasetId
-	 * 		ID of the dataset
-	 * @return
-	 * 		decimated NetCDF DSG abstract file for the dataset
-	 * @throws IllegalArgumentException
-	 * 		if the dataset ID is invalid
-	 */
-	public DsgNcFile getDecDsgNcFile(String datasetId) throws IllegalArgumentException {
-		// Check and standardize the dataset ID
-		String stdId = DashboardServerUtils.checkDatasetID(datasetId);
-		// Make sure the parent directory exists
-		File parentDir = new File(decDsgFilesDir, stdId.substring(0,4));
-		if ( parentDir.exists() ) {
-			if ( ! parentDir.isDirectory() ) {
-				throw new IllegalArgumentException("Parent subdirectory exists but is not a directory: " +
-						parentDir.getPath());
-			}
-		}
-		else if ( ! parentDir.mkdirs() ) {
-			throw new IllegalArgumentException("Unable to create the new subdirectory " + 
-					parentDir.getPath());
-		}
-		return DsgNcFile.createProfileFile(parentDir, stdId + DSG_FILE_SUFFIX);
-	}
-
-	/**
 	 * Saves the DsgMetadata and data into a new full-data NetCDF DSG file.  
 	 * After successful creation of the DSG file, ERDDAP will need to be notified 
 	 * of changes to the DSG files.  This notification is not done in this 
@@ -198,41 +167,6 @@ public class DsgNcFileHandler {
 	}
 
 	/**
-	 * Generates the decimated-data NetCDF DSG file from the full-data 
-	 * NetCDF DSG file.  After successful creation of the decimated DSG file, 
-	 * ERDDAP will need to be notified of changes to the decimated DSG files. 
-	 * This notification is not done in this routine so that a single 
-	 * notification event can be made after multiple modifications.
-	 * 
-	 * @param datasetId
-	 * 		generate the decimated-data DSG file for the dataset with this ID
-	 * @throws IllegalArgumentException
-	 * 		if there are problems reading the full-data DSG file, or
-	 * 		if there are problems creating or writing the decimated-data DSG file
-	 */
-	public void decimateDatasetDsg(String datasetId) throws IllegalArgumentException {
-		// Get the location and name of the full DSG file
-		File dsgFile = getDsgNcFile(datasetId);
-		if ( ! dsgFile.canRead() )
-			throw new IllegalArgumentException(
-					"Full DSG file for " + datasetId + " is not readable");
-
-		// Get the location and name for the decimated DSG file
-		File decDsgFile = getDecDsgNcFile(datasetId);
-
-		// Call Ferret to create the decimated DSG file from the full DSG file
-		SocatTool tool = new SocatTool(ferretConfig);
-		ArrayList<String> scriptArgs = new ArrayList<String>(2);
-		scriptArgs.add(dsgFile.getPath());
-		scriptArgs.add(decDsgFile.getPath());
-		tool.init(scriptArgs, datasetId, FerretConfig.Action.DECIMATE);
-		tool.run();
-		if ( tool.hasError() )
-			throw new IllegalArgumentException("Failure decimating the full DSG file: " + 
-					tool.getErrorMessage());
-	}
-
-	/**
 	 * Appropriately renames any DSG and decimated DSG files, if they exist, 
 	 * for a change in dataset ID.  Changes the dataset ID in the DSG files.
 	 * 
@@ -254,11 +188,6 @@ public class DsgNcFileHandler {
 		if ( newDsgFile.exists() )
 			throw new IllegalArgumentException(
 					"DSG file for " + oldId + " already exist");
-
-		DsgNcFile newDecDsgFile = getDecDsgNcFile(newId);
-		if ( newDecDsgFile.exists() )
-			throw new IllegalArgumentException(
-					"Decimated DSG file for " + oldId + " already exist");
 
 		DsgNcFile oldDsgFile = getDsgNcFile(oldId);
 		if ( oldDsgFile.exists() )  {
@@ -283,17 +212,14 @@ public class DsgNcFileHandler {
 				if ( tool.hasError() )
 					throw new IllegalArgumentException(newId + 
 							": Failure adding computed variables: " + tool.getErrorMessage());
-				// Re-create the decimated-data DSG file 
-				decimateDatasetDsg(newId);
 				// Delete the old DSG and decimated-data DSG files
 				oldDsgFile.delete();
-				getDecDsgNcFile(oldId).delete();
 			} catch ( Exception ex ) {
 				throw new IOException(ex);
 			}
 
 			// Tell ERDDAP there are changes
-			flagErddap(true, true);
+			flagErddap(true);
 		}
 
 	}
@@ -322,13 +248,6 @@ public class DsgNcFileHandler {
 						datasetId);
 			fileDeleted = true;
 		}
-		File decDsgFile = getDecDsgNcFile(datasetId);
-		if ( decDsgFile.exists() ) {
-			if ( ! decDsgFile.delete() )
-				throw new IllegalArgumentException("Unable to delete the decimated DSG file for " + 
-						datasetId);
-			fileDeleted = true;
-		}
 		return fileDeleted;
 	}
 
@@ -342,14 +261,10 @@ public class DsgNcFileHandler {
 	 * @return
 	 * 		true if successful
 	 */
-	public boolean flagErddap(boolean flagDsg, boolean flagDecDsg) {
+	public boolean flagErddap(boolean flagDsg) {
 		try {
 			if ( flagDsg ) {
 				FileOutputStream touchFile = new FileOutputStream(erddapDsgFlagFile);
-				touchFile.close();
-			}
-			if ( flagDecDsg ) {
-				FileOutputStream touchFile = new FileOutputStream(erddapDecDsgFlagFile);
 				touchFile.close();
 			}
 		} catch (IOException ex) {

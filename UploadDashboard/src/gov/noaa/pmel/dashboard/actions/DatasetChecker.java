@@ -12,6 +12,8 @@ import gov.noaa.pmel.dashboard.datatype.KnownDataTypes;
 import gov.noaa.pmel.dashboard.dsg.DsgMetadata;
 import gov.noaa.pmel.dashboard.dsg.StdUserDataArray;
 import gov.noaa.pmel.dashboard.handlers.CheckerMessageHandler;
+import gov.noaa.pmel.dashboard.handlers.DataFileHandler;
+import gov.noaa.pmel.dashboard.server.DashboardConfigStore;
 import gov.noaa.pmel.dashboard.shared.DashboardDatasetData;
 import gov.noaa.pmel.dashboard.shared.DashboardUtils;
 import gov.noaa.pmel.dashboard.shared.QCFlag;
@@ -168,7 +170,7 @@ public class DatasetChecker {
 		}
 		// Get the indices of data rows the automated data checker 
 		// found having errors not not detected by the PI.
-		List<Integer> errRows = new ArrayList<Integer>();
+		List<Integer> errRows = new ArrayList<>();
 		for ( QCFlag wtype : dataset.getCheckerFlags() ) {
 			if ( Severity.CRITICAL.equals(wtype.getSeverity()) ) {
 				hasCriticalError = true;
@@ -238,4 +240,18 @@ public class DatasetChecker {
 			ex.printStackTrace();
 		}
 	}
+	
+	public static void main(String[] args) {
+        try {
+            DashboardConfigStore cfg = DashboardConfigStore.get(false);
+            DataFileHandler dfh = cfg.getDataFileHandler();
+            DashboardDatasetData dataset = dfh.getDatasetDataFromFiles("PRISM082008", 0, -1);
+            DatasetChecker dc = cfg.getDashboardDatasetChecker();
+            StdUserDataArray std = dc.standardizeDataset(dataset, null);
+            System.out.println(std);
+        } catch (Exception ex) {
+            ex.printStackTrace();
+            // TODO: handle exception
+        }
+    }
 }

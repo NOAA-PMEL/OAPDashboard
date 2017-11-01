@@ -42,6 +42,8 @@ import lombok.EqualsAndHashCode;
 @EqualsAndHashCode(callSuper=true)
 public @Data class DashboardOADSMetadata extends DashboardMetadata  implements Serializable, IsSerializable {
 
+    private static final String DEFAULT_ORGANIZATION = "NOAA/Pacific Marine Environmental Laboratory";
+    
 	@XmlElement(name="expocode")
 	private String _expocode;
 	
@@ -234,7 +236,7 @@ public @Data class DashboardOADSMetadata extends DashboardMetadata  implements S
 		}
 		String allOrgs = orgGroup.toString().trim();
 		if ( allOrgs.isEmpty() )
-			allOrgs = "unassigned";
+			allOrgs = DEFAULT_ORGANIZATION;
 		scMData.setOrganizationName(allOrgs);
 
 		return scMData;

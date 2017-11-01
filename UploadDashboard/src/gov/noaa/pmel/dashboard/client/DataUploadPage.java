@@ -199,7 +199,7 @@ public class DataUploadPage extends CompositeWithUsername {
 	@UiField Label datasetColNameLabel;
 	@UiField TextBox datasetColName;
 	@UiField RadioButton createRadio;
-	@UiField RadioButton appendRadio;
+//	@UiField RadioButton appendRadio;
 	@UiField RadioButton overwriteRadio;
 	@UiField Button submitButton;
 	@UiField Button cancelButton;
@@ -256,12 +256,12 @@ public class DataUploadPage extends CompositeWithUsername {
 
 		createRadio.setText(CREATE_TEXT);
 		createRadio.setTitle(CREATE_HOVER_HELP);
-		appendRadio.setText(APPEND_TEXT);
-		appendRadio.setTitle(APPEND_HOVER_HELP);
+//		appendRadio.setText(APPEND_TEXT);
+//		appendRadio.setTitle(APPEND_HOVER_HELP);
 		overwriteRadio.setText(OVERWRITE_TEXT);
 		overwriteRadio.setTitle(OVERWRITE_HOVER_HELP);
 		createRadio.setValue(true, false);
-		appendRadio.setValue(false, false);
+//		appendRadio.setValue(false, false);
 		overwriteRadio.setValue(false, false);
 
 		String DATASET_ID_TT_TEXT = "Name of column specifying dataset ID. Only necessary if non-standard.";
@@ -413,8 +413,8 @@ public class DataUploadPage extends CompositeWithUsername {
 		}
 		if ( overwriteRadio.getValue() )
 			assignTokens(DashboardUtils.OVERWRITE_DATASETS_REQUEST_TAG);
-		else if ( appendRadio.getValue() )
-			assignTokens(DashboardUtils.APPEND_DATASETS_REQUEST_TAG);
+//		else if ( appendRadio.getValue() )
+//			assignTokens(DashboardUtils.APPEND_DATASETS_REQUEST_TAG);
 		else 
 			assignTokens(DashboardUtils.NEW_DATASETS_REQUEST_TAG);
 		datasetIdColName.setValue(datasetColName.getValue());

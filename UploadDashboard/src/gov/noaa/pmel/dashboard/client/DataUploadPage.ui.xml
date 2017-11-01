@@ -36,8 +36,10 @@
 					<g:FlowPanel addStyleNames="{style.settingsradiopanel}">
 						<g:RadioButton addStyleNames="{style.settingsradiobutton}"
 								name="actionRadioGroup" ui:field="createRadio" />
+<!--						
 						<g:RadioButton addStyleNames="{style.settingsradiobutton}"
 								name="actionRadioGroup" ui:field="appendRadio" />
+-->
 						<g:RadioButton addStyleNames="{style.settingsradiobutton}"
 								name="actionRadioGroup" ui:field="overwriteRadio" />
 					</g:FlowPanel>
