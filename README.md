@@ -1,6 +1,15 @@
 # OAPDashboard
 The Upload Dashboard for the Ocean Acidification Project.
 
+This project is derived from the Upload Dashboard of the
+Surface Ocean Carbon Atlas (SOCAT) Project.  The link to
+the SOCAT Upload Dashboard is maintained so as to easily
+incorporate updates from that project.  However, this
+dashboard will diverge from the SOCAT dashboard as this
+project incorporates profile data, trajectory-profile data,
+more data types, and different requirements on uploaded
+data.
+
 #### Legal Disclaimer
 *This repository is a software product and is not official communication 
 of the National Oceanic and Atmospheric Administration (NOAA), or the 
@@ -14,15 +23,6 @@ or imply their endorsement, recommendation, or favoring by the DOC.
 The DOC seal and logo, or the seal and logo of a DOC bureau, shall not 
 be used in any manner to imply endorsement of any commercial product 
 or activity by the DOC or the United States Government.*
-
-This project is derived from the Upload Dashboard of the
-Surface Ocean Carbon Atlas (SOCAT) Project.  The link to
-the SOCAT Upload Dashboard is maintained so as to easily
-incorporate updates from that project.  However, this
-dashboard will diverge from the SOCAT dashboard as this
-project incorporates profile data, trajectory-profile data,
-more data types, and different requirements on uploaded
-data.
 
 
 ## Building the war file
