@@ -27,6 +27,12 @@
 						<g:Button addStyleNames="{style.horizontalbutton}" ui:field="uploadButton" />
 						<g:Button addStyleNames="{style.horizontalbutton}" ui:field="doneButton" />
 					</g:FlowPanel>
+					<g:FlowPanel>
+						<g:Anchor addStyleNames="{style.leftLink}" 
+								  title="Open the OAP Metadata Editor in a separate window."
+								  href="https://www.pmel.noaa.gov/sdig/oap/" 
+								  target="blank">Open the OAP Metadata Editor.</g:Anchor>
+					</g:FlowPanel>
 				</g:FlowPanel>
 				<g:VerticalPanel>
 					<g:FlowPanel>
