@@ -908,7 +908,7 @@ public class StdDataArray {
 		int idx = 0;
 		for (DashDataType<?> colType : colTypes) {
 			String colName = colType.getVarName();
-			if ( colName.equalsIgnoreCase(dataColStdName)) {
+			if ( colType.typeNameEquals(dataColStdName)) {
 				columnIdx = new Integer(idx);
 				break;
 			}
