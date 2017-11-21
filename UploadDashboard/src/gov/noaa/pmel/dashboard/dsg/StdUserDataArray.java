@@ -310,23 +310,29 @@ public class StdUserDataArray extends StdDataArray {
 			stdMsgList.add(msg);
 		}
 
-		try {
-			Double[] depths = getSampleDepths();
-			for (int rowIdx = 0; rowIdx < numSamples; rowIdx++) {
-				if ( depths[rowIdx] == null ) {
-					isOk = false;
-					ADCMessage msg = new ADCMessage();
-					msg.setSeverity(Severity.CRITICAL);
-					msg.setRowIndex(rowIdx);
-					msg.setColIndex(sampleDepthIndex);
-					msg.setColName(userColNames[sampleDepthIndex]);
-					String comment = "missing sample depth";
-					msg.setGeneralComment(comment);
-					msg.setDetailedComment(comment);
-					stdMsgList.add(msg);
+	    DashDataType<?> pressureColumn = findDataColumn("water_pressure");
+	    DashDataType<?> depthColumn = findDataColumn("sample_depth");
+	    if ( depthColumn != null ) {
+			try {
+				Double[] depths = getSampleDepths();
+				for (int rowIdx = 0; rowIdx < numSamples; rowIdx++) {
+					if ( depths[rowIdx] == null ) {
+						isOk = pressureColumn != null;
+						ADCMessage msg = new ADCMessage();
+						msg.setSeverity(pressureColumn == null ? Severity.ERROR : Severity.WARNING);
+						msg.setRowIndex(rowIdx);
+						msg.setColIndex(sampleDepthIndex);
+						msg.setColName(userColNames[sampleDepthIndex]);
+						String comment = "missing sample depth";
+						msg.setGeneralComment(comment);
+						msg.setDetailedComment(comment);
+						stdMsgList.add(msg);
+					}
 				}
+			} catch ( Exception ex ) {
+			    ex.printStackTrace();
 			}
-		} catch ( Exception ex ) {
+		} else if ( pressureColumn == null ) {
 			isOk = false;
 			ADCMessage msg = new ADCMessage();
 			msg.setSeverity(Severity.CRITICAL);

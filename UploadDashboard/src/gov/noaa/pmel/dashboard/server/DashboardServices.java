@@ -667,7 +667,7 @@ public class DashboardServices extends RemoteServiceServlet implements Dashboard
 			throw new IllegalArgumentException("Invalid user request");
 
 		// Submit the datasets for QC and possibly send to be archived
-		configStore.getDashboardDatasetSubmitter().submitDatasets(idsSet, 
+		configStore.getDashboardDatasetSubmitter().submitDatasetsForQC(idsSet, 
 				archiveStatus, timestamp, repeatSend, username);
 		logger.info("datasets " + idsSet.toString() + 
 				" submitted by " + username);

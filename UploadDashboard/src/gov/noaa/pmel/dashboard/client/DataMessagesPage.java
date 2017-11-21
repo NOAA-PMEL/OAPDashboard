@@ -61,6 +61,7 @@ public class DataMessagesPage extends CompositeWithUsername {
 	private static final String LATITUDE_COLUMN_NAME = "Lat.";
 	private static final String EXPLANATION_COLUMN_NAME = "Explanation";
 
+	private static final String CRITICAL_SEVERITY_TEXT = "Critical";
 	private static final String ERROR_SEVERITY_TEXT = "Error";
 	private static final String WARNING_SEVERITY_TEXT = "Warning";
 	private static final String UNKNOWN_SEVERITY_TEXT = "Unknown";
@@ -342,6 +343,9 @@ public class DataMessagesPage extends CompositeWithUsername {
 					return WARNING_SEVERITY_TEXT;
 				if ( severity == Severity.ERROR )
 					return ERROR_SEVERITY_TEXT;
+				if ( severity == Severity.CRITICAL ) {
+				    return CRITICAL_SEVERITY_TEXT;
+				}
 				return UNKNOWN_SEVERITY_TEXT;
 			}
 		};

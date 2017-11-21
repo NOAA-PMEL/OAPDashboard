@@ -98,7 +98,7 @@ public class DataColumnSpecsPage extends CompositeWithUsername {
 	private static final String NO_LATITUDE_ERROR_MSG =
 			"No data column has been identified as the latitude";
 	private static final String NO_DEPTH_ERROR_MSG =
-			"No data column has been identified as the sample depth";
+			"No data column has been identified as the sample pressure or depth";
 	private static final String NO_TIMESTAMP_ERROR_MSG =
 			"No data columns have been identified which provide " +
 			"the date and time of each measurement";
@@ -798,7 +798,7 @@ public class DataColumnSpecsPage extends CompositeWithUsername {
 		// latitude given?
 		boolean hasLatitude = false;
 		// sample depth given?
-		boolean hasDepth = false;
+		boolean hasPressureOrDepth = false;
 		// date/time given?
 		boolean hasYear = false;
 		boolean hasMonth = false;
@@ -874,8 +874,9 @@ public class DataColumnSpecsPage extends CompositeWithUsername {
 			else if ( DashboardUtils.LATITUDE.typeNameEquals(colType) ) {
 				hasLatitude = true;
 			}
-			else if ( DashboardUtils.SAMPLE_DEPTH.typeNameEquals(colType) ) {
-				hasDepth = true;
+			else if ( DashboardUtils.SAMPLE_DEPTH.typeNameEquals(colType) ||
+			          DashboardUtils.CTD_PRESSURE.typeNameEquals(colType)) {
+				hasPressureOrDepth = true;
 			}
 			k++;
 		}
@@ -907,7 +908,7 @@ public class DataColumnSpecsPage extends CompositeWithUsername {
 			UploadDashboard.showMessage(NO_LATITUDE_ERROR_MSG);
 			return;
 		}
-		if ( ! hasDepth ) {
+		if ( ! hasPressureOrDepth ) {
 			// no sample depth - error
 			UploadDashboard.showMessage(NO_DEPTH_ERROR_MSG);
 			return;

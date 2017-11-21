@@ -192,6 +192,9 @@ public class DashboardUtils {
 	public static final ArrayList<String> DEPTH_UNITS = 
 			new ArrayList<String>(Arrays.asList("meters"));
 
+	/** Unit of pressure */
+	public static final ArrayList<String> PRESSURE_UNITS = 
+			new ArrayList<String>(Arrays.asList("decibars"));
 
 	/**
 	 * UNASSIGNED needs to be respecified as one of the (other) data column types.
@@ -254,8 +257,11 @@ public class DashboardUtils {
 	public static final DataColumnType LATITUDE = new DataColumnType("latitude", 
 			302.0, "latitude", "sample latitude", true, LATITUDE_UNITS);
 
+	public static final DataColumnType CTD_PRESSURE = new DataColumnType("ctd_pressure", 
+			303.0, "CTD pressure", "CTD pressure", true, PRESSURE_UNITS);
+
 	public static final DataColumnType SAMPLE_DEPTH = new DataColumnType("sample_depth", 
-			303.0, "sample depth", "sample depth", true, DEPTH_UNITS);
+			304.0, "sample depth", "sample depth", true, DEPTH_UNITS);
 
 	/**
 	 * Date and time of the measurement

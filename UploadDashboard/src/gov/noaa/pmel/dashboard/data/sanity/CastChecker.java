@@ -398,18 +398,19 @@ public class CastChecker {
 			logger.info("Cast of one. Not doing cast depth check.");
 			return;
 		}
-		Double[] depths = stda.getSampleDepths();
 		Integer depthCol = stda.lookForDataColumnIndex("sample_depth");
 		if ( depthCol == null ) {
 			logger.warn("No sample depth column.  Aborting cast depth checking.");
 			return;
 		}
+        Double[] depths = stda.getSampleDepths();
 						 
 		Set<Double> checkDepths = new HashSet<>();
 		for (int check = 0; check < castRows.size(); check++) {
 			int checkRow = castRows.get(check).intValue();
 			Double depth = depths[checkRow];
-			if ( ! checkDepths.add(depth)) {
+			if ( depth != null &&    // missing depths are reported in StdUserDataArray.checkMissingLatLonDepthTime() // ! XXX
+			     ! checkDepths.add(depth)) {
 				String genlComment = "Duplicate depths in cast.";
 				String detailMsg =  "Duplicate depths in cast " + cs.toString() + " at row " + (checkRow + 1); 
 				ADCMessage amsg = new ADCMessage();
@@ -442,8 +443,12 @@ public class CastChecker {
 			return;
 		}
 		Double[] depths = stda.getSampleDepths();
-		double d0 = depths[castRows.get(0).intValue()].doubleValue(); 
-		double d1 = getNextDepth(d0,castRows,depths);
+		if ( hasMissingDepths(depths)) {
+		    logger.warn("Dataset has missing depth values.  No pressure-depth correlation done.");
+		    return;
+		}
+		Double d0 = depths[castRows.get(0).intValue()]; // .doubleValue(); 
+		Double d1 = getNextDepth(d0,castRows,depths);
 		boolean isDesc = d1 > d0;
 		double lastPressure = ((Double)stda.getStdVal(castRows.get(0), pressureIdx)).doubleValue();
 		double lastDepth = depths[castRows.get(0)].doubleValue();
@@ -491,7 +496,16 @@ public class CastChecker {
 			lastPressure = pressure;
 		}
 	}
-	private static double getNextDepth(double d0, List<Integer> castRows, Double[] depths) {
+	private boolean hasMissingDepths(Double[] depths) {
+	    for (Double d : depths) {
+	        if ( d == null ) {
+	            return true;
+	        }
+	    }
+        return false;
+    }
+
+    private static double getNextDepth(double d0, List<Integer> castRows, Double[] depths) {
 		double next = d0;
 		for (Integer row : castRows) {
 			double dd = depths[row.intValue()].doubleValue();
