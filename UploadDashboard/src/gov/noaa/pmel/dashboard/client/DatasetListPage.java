@@ -169,7 +169,7 @@ public class DatasetListPage extends CompositeWithUsername {
 			"The following datasets do not have appropriate metadata: <ul>";
 	private static final String NO_METADATA_HTML_EPILOGUE = 
 			"</ul> Appropriate metadata needs to be uploaded " +
-			"for these datasets before submitting them for QC or archival. ";
+			"for these datasets before submitting them for archival. ";
 	private static final String CANNOT_SUBMIT_HTML_PROLOGUE = 
 			"The following datasets have not been checked, or have very " +
 			"serious errors detected by the automated data checker: <ul>";
@@ -1636,8 +1636,9 @@ public class DatasetListPage extends CompositeWithUsername {
 		for ( DashboardDataset cruise : checkSet.values() ) {
 			// At this time, just check that some metadata file exists
 			// and do not worry about the contents
-			if ( cruise.getMdTimestamp().isEmpty() &&
-				 cruise.getAddlDocs().isEmpty() ) {
+			if ( to.equals(SubmitFor.ARCHIVE) &&
+			        cruise.getMdTimestamp().isEmpty() &&
+					cruise.getAddlDocs().isEmpty() ) {
 				errMsg += "<li>" + 
 						SafeHtmlUtils.htmlEscape(cruise.getDatasetId()) + "</li>";
 				cannotSubmit = true;

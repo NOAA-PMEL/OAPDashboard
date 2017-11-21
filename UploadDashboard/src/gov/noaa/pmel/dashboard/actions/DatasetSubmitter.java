@@ -90,7 +90,7 @@ public class DatasetSubmitter {
 	 * 		if the DSG files cannot be created, or
 	 * 		if there was a problem saving the updated dataset information (including archive status)
 	 */
-	public void submitDatasets(Collection<String> idsSet, String archiveStatus, String timestamp, 
+	public void submitDatasetsForQC(Collection<String> idsSet, String archiveStatus, String timestamp, 
 			boolean repeatSend, String submitter) throws IllegalArgumentException {
 
 		HashSet<String> ingestIds = new HashSet<String>();
@@ -109,8 +109,9 @@ public class DatasetSubmitter {
 				try {
 					// Get the metadata for this dataset
 					// XXX TODO: OME_FILENAME check
+				    // XXX TODO: log submission
 					DashboardMetadata mdata = metadataHandler.getMetadataInfo(datasetId, DashboardUtils.metadataFilename(datasetId));
-					if ( ! version.equals(mdata.getVersion()) ) {
+					if ( mdata != null && ! version.equals(mdata.getVersion()) ) {
 						mdata.setVersion(version);
 						metadataHandler.saveMetadataInfo(mdata, "Update metadata version number to " + 
 								version + " with submission of " + datasetId, false);
@@ -263,7 +264,7 @@ public class DatasetSubmitter {
         try {
             DatasetSubmitter ds = DashboardConfigStore.get(false).getDashboardDatasetSubmitter();
             ArrayList<String> ids = new ArrayList<String>() {{ add("PRISM082008"); }};
-            ds.submitDatasets(ids, null, new Date().toString(), false, "lkamb");
+            ds.submitDatasetsForQC(ids, null, new Date().toString(), false, "lkamb");
         } catch (Exception ex) {
             ex.printStackTrace();
             // TODO: handle exception
