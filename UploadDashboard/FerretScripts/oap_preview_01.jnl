@@ -1,3 +1,5 @@
+! oap_preview_01.jnl
+!
 ! Map with trajectory track
 
 GO oap_preview_setup ($infile_dsg) 1

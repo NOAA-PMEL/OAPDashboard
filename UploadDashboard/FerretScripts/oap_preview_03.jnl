@@ -1,3 +1,5 @@
+! oap_preview_03.jnl
+!
 ! Sample number vs time
 
 go oap_preview_setup ($infile_dsg) 3
