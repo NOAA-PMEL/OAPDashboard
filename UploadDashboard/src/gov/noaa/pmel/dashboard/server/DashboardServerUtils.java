@@ -176,6 +176,8 @@ public class DashboardServerUtils {
 			"latitude", LOCATION_CATEGORY, "degrees_north", "-90.0", null, null, "90.0");
 	public static final DoubleDashDataType SAMPLE_DEPTH = new DoubleDashDataType(DashboardUtils.SAMPLE_DEPTH, 
 			"sample_depth", BATHYMETRY_CATEGORY, "meters", "0.0", null, null, "16000");
+	public static final DoubleDashDataType CTD_PRESSURE = new DoubleDashDataType(DashboardUtils.CTD_PRESSURE, 
+			"sample_pressure", BATHYMETRY_CATEGORY, "decibars", "0.0", null, null, "16000");
 
 	/**
 	 * Date and time of the measurement

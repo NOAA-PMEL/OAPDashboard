@@ -195,7 +195,7 @@ public abstract class DsgNcFile extends File {
 			throw new IllegalArgumentException("no longitude data column");
 		if ( ! stddata.hasLatitude() )
 			throw new IllegalArgumentException("no latitude data column");
-		if ( ! stddata.hasSampleDepth() )
+		if ( ! ( stddata.hasSampleDepth() || stddata.hasSamplePressure() ))
 			throw new IllegalArgumentException("no sample depth data column");
 		if ( ! stddata.hasYear() )
 			throw new IllegalArgumentException("no year data column");

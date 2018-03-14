@@ -1,0 +1,94 @@
+#!/bin/bash
+#
+# This script makes all the changes necessary to add a user to the SADashboard
+# Tomcat db users and roles, OAPDashboard user files, etc.
+
+# 
+# dunkel:
+#	mysql:
+#		database: oapdashboard
+#			table:	TomcatUsers
+#				username, password
+#			table:	Roles
+#				role, description
+#			table: TomcatRoles
+#				user_dbid, username, role_dbid, userrole
+#		database: OAPFlags
+#			table: Reviewers
+#				username, realname, email
+#
+#	tomcat:
+#		NOT USING: TomcatRoles.xml
+#		using MySQL
+#	
+#	dashboard:
+#		~kamb/tomcat/70/content/OAPUploadDashboard/config/OAPUploadDashboard.properties
+#			RoleFor_[user_name]=[Admin|User(?)]
+
+# OA_FILE=~kamb/tomcat/70/content/OAPUploadDashboard/config/OAPUploadDashboard.properties
+OA_FILE=~kamb/tomcat/7/content/OAPUploadDashboard/config/OAPUploadDashboard.properties
+DASH_DB=oapdashboard
+FLAG_DB=OAPFlags
+OA_USER_ROLE=oapdashboarduser
+
+usage() {
+	echo add_user [username] [real name] [email]
+}
+
+
+echo args $#  $@
+
+
+if [ $# != 3 ] ; then
+	usage
+	exit
+fi
+
+username=$1
+realname=$2
+email=$3
+
+echo -n "Please enter user password: "
+read -s user_passwd
+echo
+echo -n "MySQL Password: "
+read -s ms_passwd
+echo
+
+echo username: $username
+echo Real Name: $realname
+echo user email: $email
+echo -n "Is this correct? [yN] "
+read yesno
+
+if [ "y" != "$yesno" ] ; then
+	echo exiting
+	exit
+fi
+
+if [ -e $OA_FILE ] ; then
+	exists=`grep $username $OA_FILE`
+	if [ $exists ] ; then
+		echo $username already added to OA config file as: $exists
+	else
+		echo "RoleFor_"${username}"=Admin" >> $OA_FILE
+	fi
+else
+	echo "OA config file not found: " + $OA_FILE
+fi
+
+SQL_FILE=add_user-tomcat.sql
+
+echo "use $DASH_DB;" > $SQL_FILE
+echo "insert into TomcatUsers ( username, password ) values ( '$username', '$user_passwd' );" >> $SQL_FILE
+echo "insert into TomcatRoles ( user_dbid, username, role_dbid, userrole ) values ("\
+"(select db_id from TomcatUsers where username = '${username}'), '${username}', "\
+"(select db_id from Roles where role='$OA_USER_ROLE'), '$OA_USER_ROLE');" >> $SQL_FILE
+
+echo "use $FLAG_DB;" >> $SQL_FILE
+echo "insert into Reviewers ( username, realname, email ) values ( '$username', '$realname', '$email' );" >> $SQL_FILE
+
+mysql -u scientist --password=$ms_passwd < $SQL_FILE
+
+rm $SQL_FILE
+

@@ -36,6 +36,7 @@ public class StdDataArray {
 	protected int longitudeIndex;
 	protected int latitudeIndex;
 	protected int sampleDepthIndex;
+	protected int samplePressureIndex;
 	protected int castIdIndex;
 	protected int timestampIndex;
 	protected int dateIndex;
@@ -364,6 +365,7 @@ public class StdDataArray {
 		longitudeIndex = DashboardUtils.INT_MISSING_VALUE;
 		latitudeIndex = DashboardUtils.INT_MISSING_VALUE;
 		sampleDepthIndex = DashboardUtils.INT_MISSING_VALUE;
+		samplePressureIndex = DashboardUtils.INT_MISSING_VALUE;
 		castIdIndex = DashboardUtils.INT_MISSING_VALUE;
 		timestampIndex = DashboardUtils.INT_MISSING_VALUE;
 		dateIndex = DashboardUtils.INT_MISSING_VALUE;
@@ -383,6 +385,8 @@ public class StdDataArray {
 				latitudeIndex = k;
 			else if ( DashboardServerUtils.SAMPLE_DEPTH.typeNameEquals(dataTypes[k]) )
 				sampleDepthIndex = k;
+			else if ( DashboardServerUtils.CTD_PRESSURE.typeNameEquals(dataTypes[k]) )
+				samplePressureIndex = k;
 			else if ( DashboardServerUtils.STATION_CAST.typeNameEquals(dataTypes[k]))
 				castIdIndex = k;
 			else if ( DashboardServerUtils.TIMESTAMP.typeNameEquals(dataTypes[k]) )
@@ -798,6 +802,10 @@ public class StdDataArray {
 	public boolean hasSampleDepth() {
 		return isUsableIndex(sampleDepthIndex);
 	}
+
+    public boolean hasSamplePressure() {
+        return isUsableIndex(samplePressureIndex);
+    }
 
 	public boolean hasDate() {
 		return isUsableIndex(timestampIndex) || isUsableIndex(dateIndex) ||
