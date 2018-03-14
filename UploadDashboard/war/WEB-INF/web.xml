@@ -56,31 +56,15 @@
 	</servlet-mapping>
 
 <!-- Not currently necessary, as we are using container-managed auth.
-  -->
 	<filter>
-		<filter-name>LoginVerifier1</filter-name>
-		<filter-class>gov.noaa.pmel.dashboard.server.LoginVerifier</filter-class>
-        <init-param>
-            <param-name>name</param-name>
-            <param-value>one</param-value>
-        </init-param>
+		<filter-name>AuthenticateFilter</filter-name>
+		<filter-class>gov.noaa.pmel.dashboard.server.AuthenticateFilter</filter-class>
 	</filter>
 	<filter-mapping>
-		<filter-name>LoginVerifier1</filter-name>
-		<url-pattern>/*</url-pattern>
+		<filter-name>AuthenticateFilter</filter-name>
+		<url-pattern>/OAPUploadDashboard/*</url-pattern>
 	</filter-mapping>
-    <filter>
-		<filter-name>LoginVerifier2</filter-name>
-		<filter-class>gov.noaa.pmel.dashboard.server.LoginVerifier</filter-class>
-        <init-param>
-            <param-name>name</param-name>
-            <param-value>two</param-value>
-        </init-param>
-	</filter>
-	<filter-mapping>
-		<filter-name>LoginVerifier2</filter-name>
-		<url-pattern>/*</url-pattern>
-	</filter-mapping>
+  -->
 	<security-constraint>
 		<web-resource-collection>
 			<web-resource-name>DashboardServices</web-resource-name>
@@ -90,7 +74,6 @@
 		</web-resource-collection>
 	</security-constraint>
 	
-    <!--
 	<security-constraint>
 		<web-resource-collection>
 			<web-resource-name>OAP Dashboard</web-resource-name>
@@ -103,15 +86,13 @@
 		<auth-constraint>
 			<role-name>oapdashboarduser</role-name>
 		</auth-constraint>
-          -->
 		<!--
 		<user-data-constraint>
 			<transport-guarantee>CONFIDENTIAL</transport-guarantee>
 		</user-data-constraint>
-	</security-constraint>
 		  -->
+	</security-constraint>
 
-<!--
 	<login-config>
 		<auth-method>FORM</auth-method>
 		<realm-name>oapdashboarduser</realm-name>
@@ -125,7 +106,7 @@
 		<description>OAP Dashboard User</description>
 		<role-name>oapdashboarduser</role-name>
 	</security-role>
-  -->
+
 	<!-- Default page to serve -->
 	<welcome-file-list>
 		<welcome-file>OAPUploadDashboard.html</welcome-file>
