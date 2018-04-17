@@ -13,18 +13,23 @@
 			</g:FlowPanel>
 			<g:HTML addStyleNames="{style.introhtml}" ui:field="introHtml" />
 			<g:Anchor addStyleNames="{style.morehelpanchor}" ui:field="moreHelpAnchor" />
+                        <g:InlineLabel addStyleNames="{style.featureTypeSelectorLabel}">Please Select Observation Type:</g:InlineLabel>
+            <g:ListBox addStyleNames="{style.featureTypeSelectBox}" ui:field="featureTypeSelector"/>
+            <g:Anchor addStyleNames="{style.featureTypeHelpAnchor}" ui:field="featureTypeHelpAnchor" />
 			<g:FormPanel ui:field="uploadForm">
 				<g:FlowPanel>
-					<g:HTML addStyleNames="{style.uploadfile}" ui:field="dataUpload" />
+                    <g:FileUpload name="dataUpload" addStyleNames="{style.uploadfile}" ui:field="fileUpload" />
 					<g:Hidden name="timestamp" ui:field="timestampToken" /> 
 					<g:Hidden name="dataaction" ui:field="actionToken" />
 					<g:Hidden name="dataencoding" ui:field="encodingToken" />
 					<g:Hidden name="dataformat" ui:field="formatToken" />
 					<g:Hidden name="datasetIdColName" ui:field="datasetIdColName" />
+                    <g:Hidden name="featureType" ui:field="featureTypeToken"/>
 				</g:FlowPanel>
 			</g:FormPanel>
 			<g:CaptionPanel addStyleNames="{style.settingscaptionpanel}" ui:field="settingsCaption">
 				<g:FlowPanel>
+<!--						
 					<g:FlowPanel addStyleNames="{style.settingsradiopanel}">
 						<g:RadioButton addStyleNames="{style.settingsradiobutton}" 
 								name="formatRadioGroup" ui:field="commaRadio" />
@@ -33,6 +38,8 @@
 						<g:RadioButton addStyleNames="{style.settingsradiobutton}" 
 								name="formatRadioGroup" ui:field="tabRadio" />
 					</g:FlowPanel>
+-->
+                    <g:FlowPanel ui:field="featureTypeSpecificContentPanel"></g:FlowPanel>
 					<g:FlowPanel addStyleNames="{style.settingsradiopanel}">
 						<g:RadioButton addStyleNames="{style.settingsradiobutton}"
 								name="actionRadioGroup" ui:field="createRadio" />

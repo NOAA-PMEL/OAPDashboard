@@ -1,0 +1,21 @@
+<!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
+<ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
+             xmlns:g="urn:import:com.google.gwt.user.client.ui">
+    <ui:style src="Widgets.css" />
+
+        <g:FlowPanel>
+            <g:FlowPanel addStyleNames="{style.settingsradiopanel}">
+                <g:RadioButton addStyleNames="{style.settingsradiobutton}" 
+                        name="commonFormatRadioGroup" ui:field="commaRadio" />
+                <g:RadioButton addStyleNames="{style.settingsradiobutton}" 
+                        name="commonFormatRadioGroup" ui:field="semicolonRadio" />
+                <g:RadioButton addStyleNames="{style.settingsradiobutton}" 
+                        name="commonFormatRadioGroup" ui:field="tabRadio" />
+            </g:FlowPanel>
+            <g:FlowPanel>
+    			<g:Label addStyleNames="{style.labeledlistlabel}" ui:field="datasetColNameLabel"/>
+    			<g:TextBox ui:field="datasetColName"/>
+            </g:FlowPanel>
+        </g:FlowPanel>
+
+</ui:UiBinder>

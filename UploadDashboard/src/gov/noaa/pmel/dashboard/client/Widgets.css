@@ -1,0 +1,35 @@
+@CHARSET "UTF-8";
+
+unspec_dataset_id {
+	margin: 2em 0em;
+}
+.labeledlistpanel {
+	display: block;
+	margin-top: 0.5em;
+	margin-bottom: 0.5em;
+}
+.labeledlistlabel {
+	display: inline;
+	font-size: 100%;
+	margin-left: 2em;
+	margin-right: 0.5em;
+}
+.labeledlistbox {
+	display: inline;
+	font-size: 100%;
+	margin-left: 0.5em;
+}
+.settingsradiopanel {
+	display: block;
+	margin: 0em;
+	border-bottom-style: groove;
+	border-width: 2px;
+	border-color: #CCCCCC;
+}
+.settingsradiobutton {
+	display: block;
+	margin-top: 1em;
+	margin-bottom: 1em;
+	margin-left: 2em;
+	margin-right: 1em;
+}

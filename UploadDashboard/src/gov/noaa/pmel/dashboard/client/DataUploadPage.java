@@ -8,6 +8,9 @@ import java.util.Date;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.Element;
+import com.google.gwt.dom.client.SelectElement;
+import com.google.gwt.event.dom.client.ChangeEvent;
+import com.google.gwt.event.dom.client.ChangeHandler;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.i18n.shared.DateTimeFormat;
 import com.google.gwt.safehtml.shared.SafeHtmlUtils;
@@ -19,6 +22,7 @@ import com.google.gwt.user.client.ui.Anchor;
 import com.google.gwt.user.client.ui.Button;
 import com.google.gwt.user.client.ui.CaptionPanel;
 import com.google.gwt.user.client.ui.DisclosurePanel;
+import com.google.gwt.user.client.ui.FileUpload;
 import com.google.gwt.user.client.ui.FormPanel;
 import com.google.gwt.user.client.ui.FormPanel.SubmitCompleteEvent;
 import com.google.gwt.user.client.ui.FormPanel.SubmitEvent;
@@ -27,12 +31,13 @@ import com.google.gwt.user.client.ui.Hidden;
 import com.google.gwt.user.client.ui.InlineLabel;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.ListBox;
+import com.google.gwt.user.client.ui.Panel;
 import com.google.gwt.user.client.ui.RadioButton;
-import com.google.gwt.user.client.ui.TextBox;
 import com.google.gwt.user.client.ui.Widget;
 
 import gov.noaa.pmel.dashboard.client.UploadDashboard.PagesEnum;
 import gov.noaa.pmel.dashboard.shared.DashboardUtils;
+import gov.noaa.pmel.dashboard.shared.FeatureType;
 
 /**
  * Page for uploading new or updated cruise data files.
@@ -42,11 +47,10 @@ import gov.noaa.pmel.dashboard.shared.DashboardUtils;
 public class DataUploadPage extends CompositeWithUsername {
 
 	private static final String TITLE_TEXT = "Upload Data Files";
-	private static final String WELCOME_INTRO = "Logged in as ";
-	private static final String LOGOUT_TEXT = "Logout";
 	private static final String MORE_HELP_TEXT = "more help...";
 
-	private static final String UPLOAD_FILE_DESCRIPTION_HTML = 
+	// private static final String UPLOAD_FILE_DESCRIPTION_HTML = 
+	private static final String UPLOAD_FILE_INTRO_HTML = 
 			"<p>A data file for upload has the general format: " +
 			"<ul style=\"list-style-type:none\">" +
 			"  <li>a header line of data column names,</li>" +
@@ -98,10 +102,6 @@ public class DataUploadPage extends CompositeWithUsername {
 
 	private static final String SETTINGS_CAPTION_TEXT = "Settings";
 
-	private static final String COMMA_FORMAT_TEXT = "file contains comma-separated values";
-	private static final String SEMICOLON_FORMAT_TEXT = "file contains semicolon-separated values";
-	private static final String TAB_FORMAT_TEXT = "file contains tab-separated values";
-
 	private static final String ADVANCED_HTML_MSG = 
 			"Select a character set encoding for this file." +
 			"<ul>" +
@@ -138,6 +138,8 @@ public class DataUploadPage extends CompositeWithUsername {
 	private static final String SUBMIT_TEXT = "Upload";
 	private static final String CANCEL_TEXT = "Cancel";
 
+	private static final String SELECT_FEATURE_TYPE_MSG = 
+            "Please select observation type.";
 	private static final String NO_FILE_ERROR_MSG = 
 			"Please select a data file to upload";
 	private static final String UNEXPLAINED_FAIL_MSG = 
@@ -173,31 +175,30 @@ public class DataUploadPage extends CompositeWithUsername {
 
 	private static DashboardDatasetUploadPageUiBinder uiBinder = 
 			GWT.create(DashboardDatasetUploadPageUiBinder.class);
-
+   
+    @UiField ListBox featureTypeSelector;
+    @UiField Panel featureTypeSpecificContentPanel;
+    @UiField Hidden featureTypeToken;
+    
+//    @UiField HTML featureTypeDisplay;
+    
 	@UiField InlineLabel titleLabel;
 	@UiField InlineLabel userInfoLabel;
 	@UiField Button logoutButton;
 	@UiField HTML introHtml;
 	@UiField Anchor moreHelpAnchor;
 	@UiField FormPanel uploadForm;
-	@UiField HTML dataUpload;
+    @UiField FileUpload fileUpload;
 	@UiField Hidden timestampToken;
 	@UiField Hidden actionToken;
 	@UiField Hidden encodingToken;
-	@UiField Hidden formatToken;
-	@UiField Hidden datasetIdColName;
 	@UiField CaptionPanel settingsCaption;
-	@UiField RadioButton commaRadio;
-	@UiField RadioButton semicolonRadio;
-	@UiField RadioButton tabRadio;
 	@UiField DisclosurePanel advancedPanel;
 	@UiField HTML advancedHtml;
 	@UiField Label encodingLabel;
 	@UiField ListBox encodingListBox;
 	@UiField Button previewButton;
 	@UiField HTML previewHtml;
-	@UiField Label datasetColNameLabel;
-	@UiField TextBox datasetColName;
 	@UiField RadioButton createRadio;
 //	@UiField RadioButton appendRadio;
 	@UiField RadioButton overwriteRadio;
@@ -209,6 +210,8 @@ public class DataUploadPage extends CompositeWithUsername {
 
 	// Singleton instance of this page
 	private static DataUploadPage singleton = null;
+    private FeatureTypeFields _featureTypeFields = null;
+    private FeatureType selectedType = FeatureType.UNSPECIFIED;
 
 	/**
 	 * Creates an empty cruise upload page.  Do not call this 
@@ -221,20 +224,75 @@ public class DataUploadPage extends CompositeWithUsername {
 
 		setUsername(null);
 
+//        contentFrame = new Frame();
+//        contentPanel.add(contentFrame);
+        featureTypeSelector.addItem("-- Observation Type --");
+//      featureTypeSelector.addItem("Timeseries");
+      featureTypeSelector.addItem("Trajectory (Underway)", FeatureType.TRAJECTORY.name());
+      featureTypeSelector.addItem("Profile", FeatureType.PROFILE.name());
+      featureTypeSelector.addItem("Profile Timeseries (Mooring)", FeatureType.PROFILE_TIMESERIES.name());
+      featureTypeSelector.addItem("Unspecified", FeatureType.UNSPECIFIED.name());
+      featureTypeSelector.getElement().<SelectElement>cast().getOptions().getItem(0).setDisabled(true); // Please select...
+      featureTypeSelector.getElement().<SelectElement>cast().getOptions().getItem(3).setDisabled(true); // Mooring
+      featureTypeSelector.addChangeHandler(new ChangeHandler() {
+          @Override
+          public void onChange(ChangeEvent event) {
+              if ( _featureTypeFields != null ) {
+                  featureTypeSpecificContentPanel.remove(_featureTypeFields);
+              }
+              if ( featureTypeSelector.getSelectedIndex() > 0 ) {
+                  featureTypeSelector.removeStyleName("missingInfoItem");
+//                  featureTypeDisplay.setText("Submitting " + featureTypeSelector.getSelectedItemText() + " files.");
+              } else {
+//                  featureTypeDisplay.setText("");
+              }
+
+              selectedType = FeatureType.valueOf(featureTypeSelector.getSelectedValue());
+              switch ( selectedType ) {
+                  case TIMESERIES:
+                      break;
+                  case UNSPECIFIED:
+                      _featureTypeFields = new UnspecifiedUploadFeatureFields();
+                      break;
+                  case PROFILE_TIMESERIES:
+                      break;
+                  case PROFILE:
+                  case TRAJECTORY:
+                  case TRAJECTORY_PROFILE:
+                      _featureTypeFields = new CommonFeatureFields();
+                      break;
+                  default:
+                      _featureTypeFields = null;
+                      break;
+              }
+              if ( _featureTypeFields != null ) {
+                  featureTypeSpecificContentPanel.add(_featureTypeFields);
+              }
+          }
+      });
 		titleLabel.setText(TITLE_TEXT);
 		logoutButton.setText(LOGOUT_TEXT);
-		introHtml.setHTML(UPLOAD_FILE_DESCRIPTION_HTML);
+		introHtml.setHTML(UPLOAD_FILE_INTRO_HTML);
 		moreHelpAnchor.setText(MORE_HELP_TEXT);
 		moreHelpPopup = null;
 
 		uploadForm.setEncoding(FormPanel.ENCODING_MULTIPART);
 		uploadForm.setMethod(FormPanel.METHOD_POST);
 		uploadForm.setAction(GWT.getModuleBaseURL() + "DataUploadService");
+        fileUpload.getElement().setAttribute("multiple", "multiple");
+        fileUpload.addChangeHandler(new ChangeHandler() {
+            @Override
+            public void onChange(ChangeEvent event) {
+                String files = fileUpload.getFilename(); // getInputFileNames(uploadElement);
+                boolean fileSelected = files != null && files.length() > 0;
+                submitButton.setEnabled(fileSelected);
+            }
+        });
+        uploadElement = fileUpload.getElement();
 		// Create the HTML5 multiple-file upload in the HTML <div>
-		dataUpload.setHTML("<input type=\"file\" name=\"datafiles\" " +
-				"id=\"datafiles\" style=\"width: 100%;\" multiple />");
+//		dataUpload.setHTML("<input type=\"file\" name=\"datafiles\" " + "id=\"datafiles\" style=\"width: 100%;\" multiple />");
 		// Get the multiple file input element within the HTML <div>
-		uploadElement = dataUpload.getElement();
+//		uploadElement = dataUpload.getElement();
 		for (int k = 0; k < uploadElement.getChildCount(); k++) {
 			Element childElem = (Element) uploadElement.getChild(k);
 			if ( "datafiles".equals(childElem.getId()) ) {
@@ -247,13 +305,6 @@ public class DataUploadPage extends CompositeWithUsername {
 
 		settingsCaption.setCaptionText(SETTINGS_CAPTION_TEXT);
 
-		commaRadio.setText(COMMA_FORMAT_TEXT);
-		semicolonRadio.setText(SEMICOLON_FORMAT_TEXT);
-		tabRadio.setText(TAB_FORMAT_TEXT);
-		commaRadio.setValue(true, false);
-		semicolonRadio.setValue(false, false);
-		tabRadio.setValue(false, false);
-
 		createRadio.setText(CREATE_TEXT);
 		createRadio.setTitle(CREATE_HOVER_HELP);
 //		appendRadio.setText(APPEND_TEXT);
@@ -264,13 +315,8 @@ public class DataUploadPage extends CompositeWithUsername {
 //		appendRadio.setValue(false, false);
 		overwriteRadio.setValue(false, false);
 
-		String DATASET_ID_TT_TEXT = "Name of column specifying dataset ID. Only necessary if non-standard.";
-		datasetColNameLabel.setText("Dataset ID Column Name:");
-		datasetColName.getElement().setPropertyString("placeholder", "dataset ID column name");
-		datasetColNameLabel.setTitle(DATASET_ID_TT_TEXT);
-		datasetColName.setTitle(DATASET_ID_TT_TEXT);
-		
 		submitButton.setText(SUBMIT_TEXT);
+        submitButton.setEnabled(false); // files and feature type must be selected.
 		cancelButton.setText(CANCEL_TEXT);
 
 		advancedHtml.setHTML(ADVANCED_HTML_MSG);
@@ -320,21 +366,17 @@ public class DataUploadPage extends CompositeWithUsername {
 	 * @param requestAction
 	 * 		action to request (value to assign to the actionToken)
 	 */
-	private void assignTokens(String requestAction) {
+	private void assignTolkiens(String requestAction) {
 		String localTimestamp = DateTimeFormat.getFormat("yyyy-MM-dd HH:mm Z").format(new Date());
 		String encoding = KNOWN_ENCODINGS[encodingListBox.getSelectedIndex()];
-		String format;
-		if ( commaRadio.getValue() )
-			format = DashboardUtils.COMMA_FORMAT_TAG;
-		else if ( semicolonRadio.getValue() )
-			format = DashboardUtils.SEMICOLON_FORMAT_TAG;
-		else
-			format = DashboardUtils.TAB_FORMAT_TAG;
-		
 		timestampToken.setValue(localTimestamp);
 		actionToken.setValue(requestAction);
 		encodingToken.setValue(encoding);
-		formatToken.setValue(format); 
+        featureTypeToken.setValue(selectedType.name());
+        
+		if ( _featureTypeFields != null ) {
+		    _featureTypeFields.setFormFields((Panel)uploadForm.getWidget());
+		}
 	}
 
 	/**
@@ -344,10 +386,8 @@ public class DataUploadPage extends CompositeWithUsername {
 		timestampToken.setValue("");
 		actionToken.setValue("");
 		encodingToken.setValue("");
-		formatToken.setValue(""); 
-		if (clearIdColumn) {
-			datasetIdColName.setValue("");
-			datasetColName.setValue(null);
+		if ( _featureTypeFields != null ) {
+		    _featureTypeFields.clearFormFields((Panel)uploadForm.getWidget());
 		}
 	}
 
@@ -367,6 +407,12 @@ public class DataUploadPage extends CompositeWithUsername {
 		}
 		moreHelpPopup.showCentered();
 	}
+    @UiHandler("featureTypeSelector")
+    void dataTypeSelectorOnClick(ClickEvent event) {
+//        Window.alert(String.valueOf(event));
+//        ListBox selector = (ListBox)event.getSource();
+//        Window.alert(String.valueOf(selector));
+    }
 
 	/**
 	 * @param input
@@ -400,24 +446,28 @@ public class DataUploadPage extends CompositeWithUsername {
 			UploadDashboard.showMessage(NO_FILE_ERROR_MSG);
 			return;
 		}
-		assignTokens(DashboardUtils.PREVIEW_REQUEST_TAG);
+		assignTolkiens(DashboardUtils.PREVIEW_REQUEST_TAG);
 		uploadForm.submit();
 	}
 
 	@UiHandler("submitButton") 
-	void createButtonOnClick(ClickEvent event) {
+	void submitButtonOnClick(ClickEvent event) {
 		String namesString = getInputFileNames(uploadElement).trim();
 		if (  namesString.isEmpty() ) {
 			UploadDashboard.showMessage(NO_FILE_ERROR_MSG);
 			return;
 		}
+        if ( featureTypeSelector.getSelectedIndex() <= 0 ) {
+            featureTypeSelector.addStyleName("missingInfoItem");
+			UploadDashboard.showMessage(SELECT_FEATURE_TYPE_MSG);
+			return;
+        }
 		if ( overwriteRadio.getValue() )
-			assignTokens(DashboardUtils.OVERWRITE_DATASETS_REQUEST_TAG);
+			assignTolkiens(DashboardUtils.OVERWRITE_DATASETS_REQUEST_TAG);
 //		else if ( appendRadio.getValue() )
 //			assignTokens(DashboardUtils.APPEND_DATASETS_REQUEST_TAG);
 		else 
-			assignTokens(DashboardUtils.NEW_DATASETS_REQUEST_TAG);
-		datasetIdColName.setValue(datasetColName.getValue());
+			assignTolkiens(DashboardUtils.NEW_DATASETS_REQUEST_TAG);
 		uploadForm.submit();
 	}
 
