@@ -1,0 +1,22 @@
+<!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
+<ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
+             xmlns:g="urn:import:com.google.gwt.user.client.ui" 
+             xmlns:cell="urn:import:com.google.gwt.user.cellview.client">
+
+	<ui:style src="FullWidth.css" />
+    
+    <g:HTMLPanel addStyleNames="{style.pagefooter}">
+        <a href="http://www.noaa.gov" title="The National Oceanographic and Atmospheric Administration">NOAA</a>
+        &nbsp;|&nbsp;
+        <a href="http://www.research.noaa.gov/" title="Department of Commerce &gt; NOAA &gt; Office of Oceanic and Atmospheric Research">OAR</a>
+        &nbsp;|&nbsp;
+        <a href="http://www.pmel.noaa.gov" title="">PMEL</a>
+        &nbsp;|&nbsp;
+        <a href="http://www.noaa.gov/privacy.html" title="" target="_blank">Privacy Policy</a>
+        &nbsp;|&nbsp;
+        <a href="http://www.noaa.gov/disclaimer.html" target="_blank" title="">Disclaimer</a>
+        &nbsp;|&nbsp;
+        <a href="/accessibility">Accessibility</a>
+    </g:HTMLPanel>
+        
+</ui:UiBinder>

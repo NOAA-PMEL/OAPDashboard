@@ -292,8 +292,8 @@ public class DashboardServerUtils {
 		if ( cleanID.length() > MAX_DATASET_ID_LENGTH )
 			throw new IllegalArgumentException("Dataset ID too long");
 		String upperID = getDatasetIDFromName(cleanID);
-		if ( upperID.length() != cleanID.length() )
-			throw new IllegalArgumentException("Invalid characters in the dataset ID");
+//		if ( upperID.length() != cleanID.length() )
+//			throw new IllegalArgumentException("Invalid characters in the dataset ID"); XXX
 		return upperID;
 	}
 

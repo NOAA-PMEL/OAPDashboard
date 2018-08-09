@@ -34,4 +34,10 @@
 	<source path='client' />
 	<source path='shared' />
 
+<!--This is supposed to allow automatic use of OapAsyncCallback, but I didn't see that happening.
+    <generate-with
+        class="gov.noaa.pmel.dashboard.server.util.OapRpcProxyGenerator">
+        <when-type-assignable class="com.google.gwt.user.client.rpc.RemoteService" />
+    </generate-with>
+  -->
 </module>

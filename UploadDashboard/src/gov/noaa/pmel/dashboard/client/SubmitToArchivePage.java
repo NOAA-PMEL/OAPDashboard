@@ -68,9 +68,7 @@ public class SubmitToArchivePage extends CompositeWithUsername implements DataSu
 //	@UiField RadioButton select_user;
 	@UiField RadioButton select_all;
 
-	@UiField Button logoutButton;
-	@UiField InlineLabel userInfoLabel;
-	@UiField InlineLabel titleLabel;
+	@UiField ApplicationHeaderTemplate header;
 	
 	private String _datasetId;
 	private List<String> _submitIdsList;
@@ -96,15 +94,13 @@ public class SubmitToArchivePage extends CompositeWithUsername implements DataSu
 		setupHandlers();
 		buildGrid();
 		
-		logoutButton.setText(LOGOUT_TEXT);
-		logoutButton.setTitle(LOGOUT_TEXT);
 		
 		cancelButton.setText("Cancel");
 		cancelButton.setTitle("Cancel");
 		submitButton.setText("Submit");
 		submitButton.setTitle("Submit");
 		
-		titleLabel.setText("Submit Datasets for Archving");
+		header.titleLabel.setText("Submit Datasets for Archving");
 		introHtml.setHTML("Select Columns to Submit to Archive: <br/>");
 		
 		_allCBoxes = new ArrayList<>();
@@ -140,7 +136,7 @@ public class SubmitToArchivePage extends CompositeWithUsername implements DataSu
 				case STANDARD:
 					setSelection(getColumns(SELECT.STANDARD), true);
 					break;
-//				case USER:
+//				case User:
 //					break;
 				case ALL:
 					setAll();
@@ -199,7 +195,7 @@ public class SubmitToArchivePage extends CompositeWithUsername implements DataSu
 			case STANDARD:
 				columns.addAll(stdSet);
 				break;
-//			case USER:
+//			case User:
 //				columns.addAll(userSet);
 //				break;
 			case ALL:
@@ -276,7 +272,7 @@ public class SubmitToArchivePage extends CompositeWithUsername implements DataSu
 	        return;
 	    }
 		_datasetId = dataset.getDatasetId();
-		userInfoLabel.setText(WELCOME_INTRO + getUsername());
+		header.userInfoLabel.setText(WELCOME_INTRO + getUsername());
 		
 		columnsPanel.clear();
 		_allCBoxes.clear();
@@ -417,11 +413,4 @@ public class SubmitToArchivePage extends CompositeWithUsername implements DataSu
 			}
 		}
 	}
-
-	@UiHandler("logoutButton")
-	void logoutOnClick(ClickEvent event) {
-		DashboardLogoutPage.showPage();
-	}
-
-
 }

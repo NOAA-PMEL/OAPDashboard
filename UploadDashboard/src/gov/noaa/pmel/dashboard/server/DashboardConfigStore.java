@@ -27,13 +27,14 @@ import org.jdom2.Document;
 import org.jdom2.Element;
 import org.jdom2.input.SAXBuilder;
 
-import com.googlecode.gwt.crypto.bouncycastle.DataLengthException;
-import com.googlecode.gwt.crypto.bouncycastle.InvalidCipherTextException;
 import com.googlecode.gwt.crypto.client.TripleDesCipher;
 
 import gov.noaa.pmel.dashboard.actions.DatasetChecker;
 import gov.noaa.pmel.dashboard.actions.DatasetSubmitter;
 import gov.noaa.pmel.dashboard.actions.OmePdfGenerator;
+import gov.noaa.pmel.dashboard.actions.checker.OpaqueDatasetChecker;
+import gov.noaa.pmel.dashboard.actions.checker.ProfileDatasetChecker;
+import gov.noaa.pmel.dashboard.actions.checker.TrajectoryDatasetChecker;
 import gov.noaa.pmel.dashboard.datatype.DashDataType;
 import gov.noaa.pmel.dashboard.datatype.KnownDataTypes;
 import gov.noaa.pmel.dashboard.ferret.FerretConfig;
@@ -47,6 +48,7 @@ import gov.noaa.pmel.dashboard.handlers.PreviewPlotsHandler;
 import gov.noaa.pmel.dashboard.handlers.RawUploadFileHandler;
 import gov.noaa.pmel.dashboard.handlers.UserFileHandler;
 import gov.noaa.pmel.dashboard.shared.DashboardUtils;
+import gov.noaa.pmel.dashboard.shared.FeatureType;
 
 /**
  * Reads and holds the Dashboard configuration details
@@ -62,6 +64,9 @@ public class DashboardConfigStore {
 		public PropertyNotFoundException(String message) { super(message); }
 	}
 		
+    public static final String METADATA_EDITOR_URL = "metadata_editor.url";
+    public static final String METADATA_EDITOR_POST_ENDPOINT = "metadata_editor.post.url";
+    
 	private static final String ENCRYPTION_KEY_NAME_TAG = "EncryptionKey";
 	private static final String ENCRYPTION_SALT_NAME_TAG = "EncryptionSalt";
 	private static final String UPLOAD_VERSION_NAME_TAG = "UploadVersion";
@@ -135,6 +140,7 @@ public class DashboardConfigStore {
 	private HashMap<String,DashboardUserInfo> userInfoMap;
 	private String uploadVersion;
 	private String qcVersion;
+    private File appContentDir;
 	private UserFileHandler userFileHandler;
 	private DataFileHandler dataFileHandler;
 	private RawUploadFileHandler rawUploadFileHandler;
@@ -143,15 +149,17 @@ public class DashboardConfigStore {
 	private ArchiveFilesBundler archiveFilesBundler;
 	private DsgNcFileHandler dsgNcFileHandler;
 	private FerretConfig ferretConf;
-	private DatasetChecker datasetChecker;
+	private OpaqueDatasetChecker opaqueDatasetChecker;
+	private ProfileDatasetChecker profileDatasetChecker;
+	private TrajectoryDatasetChecker trajectoryDatasetChecker;
 	private DatabaseRequestHandler databaseRequestHandler;
 	private PreviewPlotsHandler plotsHandler;
 	private DatasetSubmitter datasetSubmitter;
-	private OmePdfGenerator omePdfGenerator;
 	private KnownDataTypes knownUserDataTypes;
 	private KnownDataTypes knownMetadataTypes;
 	private KnownDataTypes knownDataFileTypes;
 
+	private Properties configProps;
 	private HashSet<File> filesToWatch;
 	private Thread watcherThread;
 	private WatchService watcher;
@@ -197,23 +205,23 @@ public class DashboardConfigStore {
 				throw new IOException("Unable to obtain the upload dashboard server name");
 		}
 		String appContentDirPath = baseDir + "content" + File.separator + serverAppName + File.separator;
-		String appConfigDirPath = appContentDirPath + "config" + File.separator;
-		File appConfigDir = new File(appConfigDirPath);
+        appContentDir = new File(appContentDirPath);
+		File appConfigDir = new File(appContentDir, "config");
 		if ( !appConfigDir.exists() || !appConfigDir.isDirectory() || !appConfigDir.canRead()) {
 			throw new IllegalStateException("Problem with app config dir: " + appConfigDir.getAbsoluteFile());
 		}
 
 		// Configure the log4j2 logger
-		System.setProperty("log4j.configurationFile", appConfigDirPath + "log4j2.properties");
+		System.setProperty("log4j.configurationFile", appConfigDir.getPath() + "/log4j.properties");
 		itsLogger = LogManager.getLogger(serverAppName);
 
 		// Record configuration files that should be monitored for changes 
 		filesToWatch = new HashSet<File>();
 
 		// Read the properties from the standard configuration file
-		Properties configProps = new Properties();
 		File configFile = new File(appConfigDir, serverAppName + ".properties");
 		filesToWatch.add(configFile);
+    	configProps = new Properties();
 		try ( FileReader reader = new FileReader(configFile); ) {
 			configProps.load(reader);
 		} catch ( Exception ex ) {
@@ -549,7 +557,9 @@ public class DashboardConfigStore {
 		}
 
 		// SanityChecker initialization from this same properties file 
-		datasetChecker = new DatasetChecker(knownUserDataTypes, checkerMsgHandler);
+		opaqueDatasetChecker = new OpaqueDatasetChecker();
+		profileDatasetChecker = new ProfileDatasetChecker(knownUserDataTypes, checkerMsgHandler);
+		trajectoryDatasetChecker = new TrajectoryDatasetChecker(knownUserDataTypes, checkerMsgHandler);
 
 		String previewDirname = getPreviewDirName(baseDir, serverAppName);
 
@@ -558,8 +568,8 @@ public class DashboardConfigStore {
 				previewDirname + "/plots", this);
 
 		// Create the OME XML to PDF generator
-		omePdfGenerator = new OmePdfGenerator(appConfigDir, 
-				metadataFileHandler, dataFileHandler);
+//		omePdfGenerator = new OmePdfGenerator(appConfigDir, 
+//				metadataFileHandler, dataFileHandler);
 
 		// The DatasetSubmitter uses the various handlers just created
 		datasetSubmitter = new DatasetSubmitter(this);
@@ -606,6 +616,16 @@ public class DashboardConfigStore {
 		}
 	}
 
+    public String getProperty(String propertyName) {
+        return getProperty(propertyName, null);
+    }
+    public String getProperty(String propertyName, String defaultValue) {
+        String propertyValue = defaultValue;
+        if ( configProps.containsKey(propertyName)) {
+            propertyValue = (String)configProps.get(propertyName);
+        }
+        return propertyValue;
+    }
 	private String getPreviewDirName(String baseDir, String serverAppName) {
 		
 		String dirname = tryProperty("PREVIEW_DIR");
@@ -706,6 +726,14 @@ public class DashboardConfigStore {
 		}
 		return singleton;
 	}
+
+    /**
+     * @return
+     * @throws IOException 
+     */
+    public static DashboardConfigStore get() throws IOException {
+        return get(false);
+    }
 
 	/**
 	 * Shuts down the handlers and monitors associated with the current singleton 
@@ -923,6 +951,24 @@ public class DashboardConfigStore {
 	 * 		the checker for dataset data and metadata
 	 */
 	public DatasetChecker getDashboardDatasetChecker() {
+        return getDashboardDatasetChecker(FeatureType.PROFILE); // XXX should either be not allowed or UNSPECIFIED
+	}
+    
+	public DatasetChecker getDashboardDatasetChecker(FeatureType featureType) {
+		DatasetChecker datasetChecker;
+        switch (featureType) {
+            case OPAQUE:
+                datasetChecker = opaqueDatasetChecker;
+                break;
+            case PROFILE:
+                datasetChecker = profileDatasetChecker;
+                break;
+            case TRAJECTORY:
+                datasetChecker = trajectoryDatasetChecker;
+                break;
+            default:
+                throw new IllegalStateException("No checker available for observation type: " + featureType.name());
+        }
 		return datasetChecker;
 	}
 
@@ -953,10 +999,10 @@ public class DashboardConfigStore {
 	/**
 	 * @return
 	 * 		the OME XML to PDF generator
-	 */
 	public OmePdfGenerator getOmePdfGenerator() {
 		return omePdfGenerator;
 	}
+	 */
 
 	/**
 	 * @return
@@ -1051,7 +1097,7 @@ public class DashboardConfigStore {
 		return userInfo.isAdmin();
 	}
 
-	/**
+	/*-* This is not used anywhere.
 	 * Generates an further encrypted password hash 
 	 * from the given username and initially encrypted password
 	 * @param username
@@ -1060,7 +1106,6 @@ public class DashboardConfigStore {
 	 * 		initially encrypted password to use
 	 * @return
 	 * 		further encrypted password, or an empty string on failure
-	 */
 	public String spicedHash(String username, String passhash) {
 		String passSpicedHash;
 		try {
@@ -1071,6 +1116,7 @@ public class DashboardConfigStore {
 		}
 		return DashboardUtils.passhashFromPlainText(username, passSpicedHash);
 	}
+	 */
 
 	private static File tmpDir;
 	public static File getTempDir() {
@@ -1085,5 +1131,27 @@ public class DashboardConfigStore {
 	    }
 	    return tmpDir;
 	}
+
+    /**
+     * @return the root dir of the application-managed content.
+     */
+    public File getAppContentDir() {
+        return appContentDir;
+    }
+
+//    public void addUser(String username, String name) throws IllegalStateException {
+//        DashboardUserInfo userInfo = userInfoMap.get(username);
+//        if ( userInfo != null ) {
+//            String msg = "User " + username + " already exists in ConfigStore.";
+//            throw new IllegalStateException(msg);
+//        }
+//    }
+//    public void removeUser(String username) throws IllegalStateException {
+//        DashboardUserInfo userInfo = userInfoMap.get(username);
+//        if ( userInfo == null ) {
+//            String msg = "User " + username + " does not exist in ConfigStore.";
+//            throw new IllegalStateException(msg);
+//        }
+//    }
 
 }

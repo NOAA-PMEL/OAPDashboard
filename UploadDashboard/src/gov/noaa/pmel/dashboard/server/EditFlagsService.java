@@ -25,7 +25,7 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonParseException;
 import com.google.gson.JsonParser;
 
-import gov.noaa.pmel.dashboard.actions.DatasetChecker;
+import gov.noaa.pmel.dashboard.actions.checker.ProfileDatasetChecker;
 import gov.noaa.pmel.dashboard.datatype.DashDataType;
 import gov.noaa.pmel.dashboard.dsg.DsgMetadata;
 import gov.noaa.pmel.dashboard.dsg.StdUserDataArray;
@@ -211,7 +211,7 @@ public class EditFlagsService extends HttpServlet {
     public static void main(String[] args) {
         try {
             EditFlagsService efs = new EditFlagsService();
-            File updateMsgFile = new File("/Users/kamb/neo-work/oap_qc_las/data/test/editFlagsX.json");
+            File updateMsgFile = new File("/Users/kamb/oxy-work/oap_qc_las/data/test/editFlagsX.json");
             String updateMsg = FileUtils.readFileToString(updateMsgFile);
             JsonObject updateJson = (JsonObject) new JsonParser().parse(updateMsg);
             UpdateBundle update = processJsonMsg(updateJson);

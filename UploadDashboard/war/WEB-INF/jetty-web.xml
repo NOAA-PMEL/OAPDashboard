@@ -2,15 +2,16 @@
 <!DOCTYPE Configure PUBLIC "-//Jetty//Configure//EN" "http://www.eclipse.org/jetty/configure.dtd">
 
 <Configure class="org.eclipse.jetty.webapp.WebAppContext">
-<!--
+    <Set name="contextPath">/oap</Set> 
 	<Get name="securityHandler">
 		<Set name="loginService">
 			<New class="org.eclipse.jetty.security.JDBCLoginService">
 				<Set name="name">JDBC Login Realm</Set>
-				<Set name="config">/Users/kamb/neo-work/oap-git/OAPDashboard/UploadDashboard/war/WEB-INF/jettydbcRealm.properties
+				<Set name="config">/Users/kamb/oxy-work/oap-git/OAPDashboard/UploadDashboard/war/WEB-INF/jettydbcRealm.properties
 				</Set>
 			</New>
 		</Set>
 	</Get>
-     --> 
+<!--
+     -->
 </Configure>

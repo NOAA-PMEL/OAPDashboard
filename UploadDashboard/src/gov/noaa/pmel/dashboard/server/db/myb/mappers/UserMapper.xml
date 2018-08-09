@@ -1,0 +1,364 @@
+<?xml version='1.0' encoding='UTF-8' ?>
+<!DOCTYPE mapper PUBLIC '-//mybatis.org//DTD Mapper 3.0//EN'
+  'http://mybatis.org/dtd/mybatis-3-mapper.dtd'>
+
+<mapper namespace='gov.noaa.pmel.dashboard.server.db.myb.mappers.UserMapper'>
+
+
+	<sql id="USERS_TABLE_NAME">users</sql>
+	<sql id="AUTH_TABLE_NAME">tomcatusers</sql>
+	<sql id="ROLES_TABLE_NAME">tomcatroles</sql>
+	<resultMap type="User" extends="gnpt.db.DbMapper.DbItemMap" id="UserMap">
+	<!--
+	  -->
+		<constructor>
+			<idArg column="db_id" javaType="java.lang.Long"/>
+			<arg column="create_time" javaType="java.util.Date"/>
+			<arg column="modified_time" javaType="java.util.Date"/>
+			<arg column="username" javaType="java.lang.String"/>
+			<arg column="last_login" javaType="java.util.Date"/>
+			<arg column="first_name" javaType="java.lang.String" />
+			<arg column="last_name" javaType="java.lang.String" />
+			<arg column="email" javaType="java.lang.String" />
+			<!-- arg column="last_changed" javaType="java.util.Date"/> -->
+			<!--arg column="auth_string" javaType="java.lang.String" />  -->
+		</constructor>
+		<result property="_username" column="username"/>
+		<result property="_firstName" column="first_name"/>
+		<result property="_lastName" column="last_name"/>
+		<result property="_email" column="email"/>
+		<result property="_lastLogin" column="last_login"/>
+        <!--
+		<result property="_lastPasswordChange" column="last_changed" />
+		<result property="_authString" column="auth_string" />
+         --> 
+	</resultMap>
+	
+	<sql id="insertFrag">insert into <include refid="USERS_TABLE_NAME"/> </sql>
+	<sql id="updateFrag">update <include refid="USERS_TABLE_NAME"/> set </sql>
+	<sql id="empty"> </sql>
+	<sql id="param1">#{param1}</sql>
+	<sql id="param2">#{param2}</sql>
+	<sql id="dbColumn">db_id</sql>
+	<sql id="dbColumn_c">db_id,</sql>
+	<sql id="dbField">#{_dbId}</sql>
+	<sql id="dbField_c">#{_dbId},</sql>
+    <sql id="usernameField">#{_username}</sql>
+	<sql id="modColumn">modified_time,</sql>
+	<sql id="modField">#{_modifiedTime},</sql>
+	<sql id="equalsFrag"> = </sql>
+	<sql id="valuesFrag"> values </sql>
+	<sql id="now"> now() </sql>
+	<sql id="select_next_id"> select nextval('users_db_id_seq'::regclass) </sql>
+	<sql id="pg_select_next_id"> select nextval('#{seq_name}'::regclass) </sql>
+	<sql id="my_select_next_id"> 
+	   select AUTO_INCREMENT 
+        FROM information_schema.TABLES
+        WHERE TABLE_SCHEMA = "#{database_name}"
+        AND TABLE_NAME = "#{table_name}"
+	</sql>
+	
+	<sql id="myParameterizedInsert">
+		<include refid="${insert_or_update}"/> (
+			<include refid="${db_col}"/>
+			modified_time,
+			username,
+			last_login,
+			first_name,
+			last_name,
+			email
+		) <include refid="${assignment_values}"/> (
+			<include refid="${db_field}"/>
+			now(),
+			#{_username},
+			#{_lastLogin},
+			#{_firstName},
+			#{_lastName},
+			#{_email}
+		)
+	</sql>
+	<sql id="myParameterizedUpdate">
+		<include refid="${insert_or_update}"/> 
+			modified_time = now(),
+			username = #{_username},
+			last_login = #{_lastLogin},
+			first_name = #{_firstName},
+			last_name = #{_lastName},
+			email = #{_email}
+	</sql>
+	<sql id="pgParameterizedInsertOrUpdate">
+		<include refid="${insert_or_update}"/> (
+			<include refid="${db_col}"/>
+			modified_time,
+			username,
+			last_login,
+			first_name,
+			last_name,
+			email
+		) <include refid="${assignment_values}"/> (
+			<include refid="${db_field}"/>
+			now(),
+			#{_username},
+			#{_lastLogin},
+			#{_firstName},
+			#{_lastName},
+			#{_email}
+		)
+	</sql>
+	
+    <sql id="insertUserGeneratedId">
+		<include refid="pgParameterizedInsertOrUpdate">
+			<property name="insert_or_update" value="insertFrag"/>
+			<property name="db_col" value="empty"/>
+			<property name="mod_col" value="empty"/>
+			<property name="assignment_values" value="valuesFrag"/>
+			<property name="db_field" value="empty"/>
+			<property name="mod_field" value="empty"/>
+		</include>
+    </sql>
+    
+	<insert id="insertUserOnly" parameterType="User" useGeneratedKeys="true" keyProperty="_dbId" keyColumn="db_id">
+        <include refid="insertUserGeneratedId"/>
+	</insert>
+	
+	<sql id="insertUserWithAssignedDbId" >
+		<include refid="pgParameterizedInsertOrUpdate">
+			<property name="insert_or_update" value="insertFrag"/>
+			<property name="db_col" value="dbColumn_c"/>
+			<property name="mod_col" value="empty"/>
+			<property name="assignment_values" value="valuesFrag"/>
+			<property name="db_field" value="dbField_c"/>
+			<property name="mod_field" value="empty"/>
+		</include>
+	</sql>
+	
+    <insert id="addAccessRole">
+        insert into <include refid="ROLES_TABLE_NAME"/> (username, user_dbid, userrole, role_dbid) 
+        values ( 
+            #{param1},
+            (select db_id from <include refid="AUTH_TABLE_NAME"/> where username = #{param1} ), 
+             #{param2},
+            (select db_id from roles where role = #{param2} )
+         ) 
+    </insert>
+    <delete id="removeAccessRole">
+        delete from <include refid="ROLES_TABLE_NAME"/> 
+        where username = #{param1} and userrole = #{param2}
+    </delete>
+	
+	<update id="updateUser" parameterType="User" >
+        <if test="_databaseId == 'mysql'">
+    		<include refid="myParameterizedUpdate">
+    			<property name="insert_or_update" value="updateFrag"/>
+    			<property name="db_col" value="empty"/>
+    			<property name="mod_col" value="modColumn"/>
+    			<property name="assignment_values" value="equalsFrag"/>
+    			<property name="db_field" value="empty"/>
+    			<property name="mod_field" value="now"/>
+    		</include>
+        </if>
+        <if test="_databaseId == 'postgresql'">
+    		<include refid="pgParameterizedInsertOrUpdate">
+    			<property name="insert_or_update" value="updateFrag"/>
+    			<property name="db_col" value="empty"/>
+    			<property name="mod_col" value="modColumn"/>
+    			<property name="assignment_values" value="equalsFrag"/>
+    			<property name="db_field" value="empty"/>
+    			<property name="mod_field" value="now"/>
+    		</include>
+        </if>
+		where db_id = #{_dbId}
+	</update>
+	
+	<sql id="fieldParams">
+		#{_dbId}, #{_username}, #{_authString}
+	</sql>
+	<sql id="numberedParams">
+		#{param1}, #{param2}
+	</sql>
+	<sql id="insertUserAuthSql">
+		insert into  <include refid="AUTH_TABLE_NAME"/> (
+			db_id,
+            username,
+			password
+		) values (
+			<include refid="${paramNames}"/>
+		)
+	</sql>
+	<sql id="insertUserAuthSqlX">
+		insert into user_auth (
+			db_id,
+			auth_string
+		) values (
+			<include refid="${paramNames}"/>
+		)
+	</sql>
+	
+	<insert id="insertUserAuth" >
+		<include refid="insertUserAuthSql">
+			<property name="paramNames" value="numberedParams"/>
+		</include>
+	</insert>
+	
+			<!--select nextval('users_db_id_seq'::regclass)  -->
+	<insert id="insertNewUser" parameterType="NewUser"
+			useGeneratedKeys="true" keyProperty="_dbId" keyColumn="db_id">  
+            <!-- 
+		<selectKey keyProperty="_dbId" resultType="int" order="BEFORE">
+            <include refid="select_next_id" /> ;
+		</selectKey> -->
+		<include refid="insertUserGeneratedId"/> ;
+	</insert>
+    <insert id="addAuthUser" parameterType="NewUser">
+		<include refid="insertUserAuthSql">
+			<property name="paramNames" value="fieldParams"/>
+		</include>
+    </insert>
+	
+    <insert id="insertReviewer" >
+        insert into reviewers (username, realname, email)
+        values ( #{param1}, #{param2}, #{param3} )
+    </insert>
+    <delete id="deleteReviewer">
+        delete from reviewers where username = #{username}
+    </delete>
+	
+	<insert id="insertNewUserX" parameterType="User">
+			<!-- useGeneratedKeys="true" keyProperty="_dbId" keyColumn="db_id">   -->
+		<selectKey keyProperty="_dbId" resultType="int" order="BEFORE">
+            <include refid="select_next_id" /> ;
+		</selectKey>
+		<include refid="insertUserWithAssignedDbId"/> ;
+        <!--
+		<include refid="insertUserAuthSql">
+			<property name="paramNames" value="fieldParams"/>
+		</include>
+        -->
+	</insert>
+	
+	<insert id="insertNewUserWithAssignedId" parameterType="User">
+		<include refid="insertUserWithAssignedDbId"/> ;
+        <!--
+		<include refid="insertUserAuthSql">
+			<property name="paramNames" value="fieldParams"/>
+		</include>
+         --> 
+	</insert>
+	
+	<sql id="select_all">select <include refid="USERS_TABLE_NAME"/>.* from <include refid="USERS_TABLE_NAME"/> </sql>
+	
+	<!-- remove ua.auth_string as auth_string  -->
+	<sql id="select_full_profile">select u.*, ua.modified_time as last_changed, null as auth_string from <include refid="USERS_TABLE_NAME"/> u, user_auth ua </sql>
+	<sql id="select_user">select u.* from  <include refid="USERS_TABLE_NAME"/>  u </sql>
+	
+	<select id="retrieveAll" resultMap="UserMap">
+		<include refid="select_full_profile"/>  where u.db_id = ua.db_id
+	</select>
+	<select id="retrieveByUserId" parameterType="int" resultMap="UserMap">
+		<include refid="select_full_profile"/> where u.db_id = #{_userId} and u.db_id = ua.db_id
+	</select>
+	<select id="retrieveByUsername" parameterType="String" resultMap="UserMap">
+		<include refid="select_user"/> where username = #{_username} <!--and u.db_id = ua.db_id  -->
+	</select>
+	
+	<!--
+	<select id="retrieveFullUserProfileByUsername" parameterType="String" resultMap="FullUserProfileMap">
+		<include refid="select_full_profile"/> where u.username = #{_username} and u.db_id = ua.db_id
+	</select>
+	
+	<update id="updateUser" parameterType="User" >
+		update users set 
+			_modified_time = now(),
+			username = #{_username},
+			last_login = #{_lastLogin},
+			first_name = #{_firstName},
+			last_name = #{_lastName},
+			email = #{_email}
+		where db_id = #{_dbId}
+	</update> 
+	 -->
+	<update id="updateUserAuth" >
+		update user_auth set
+			modified_time = now(),
+			auth_string = #{param2,javaType=String}
+		where db_id = #{param1,javaType=int}
+	</update>
+	
+	<update id="updateLastLogin" parameterType="int" >
+		update users set
+			last_login = now()
+		where db_id = #{userId}
+	</update>
+	
+	<select id="retrieveHashByUsername" resultType="String">
+			select ua.auth_string from users u, user_auth ua
+			where u.username = #{username} and u.db_id = ua.db_id
+	</select>
+	
+	<select id="retrieveHashByUserId" resultType="String">
+			select ua.auth_string from user_auth ua
+			where ua.db_id = #{id}
+	</select>
+	
+	<!--
+	<select id="authenticateUser" resultType="boolean">
+		select (
+			select count(*) from users u, user_auth ua
+			where u.username = #{param1}
+			and u.db_id = ua.db_id
+			and ua.auth_string = #{param2}
+		) = 0 as valid
+	</select>
+	  -->
+	  
+	<sql id="deleteUserByIdSql">
+		delete from  <include refid="USERS_TABLE_NAME"/>  where db_id = <include refid="${paramName}"/>
+	</sql>
+	<sql id="deleteUserByUsernameSql">
+		delete from  <include refid="USERS_TABLE_NAME"/>  where username = <include refid="${paramName}"/>
+	</sql>
+	<sql id="deleteUserAuth-tomcat">
+		delete from  <include refid="AUTH_TABLE_NAME"/>  where username = <include refid="${paramName}"/>
+	</sql>
+	<sql id="deleteUserAuth">
+		delete from  <include refid="AUTH_TABLE_NAME"/>  where db_id = <include refid="${paramName}"/>
+	</sql>
+
+<!-- TomcatUsers does not have FK on dbId !!! -->
+	<sql id="trickyDeleteSql">
+		delete from  <include refid="AUTH_TABLE_NAME"/>  where db_id = ( select db_id from users where username = #{_username} ) ; 
+		delete from  <include refid="USERS_TABLE_NAME"/>  where username = #{_username}
+	</sql>
+	
+	<delete id="trickyDelete" parameterType="String">
+		<include refid="trickyDeleteSql"/>
+	</delete>
+	<delete id="deleteUser" parameterType="User">
+		<include refid="deleteUserByIdSql">
+			<property name="paramName" value="dbField"/>
+		</include> ;
+		<include refid="deleteUserAuth-tomcat"> 
+			<property name="paramName" value="usernameField"/>
+		</include>
+	</delete>
+	
+	<delete id="deleteUserByDbId" >
+		<include refid="deleteUserByIdSql">
+			<property name="paramName" value="param1"/>
+		</include> ;
+		<include refid="deleteUserAuth">
+			<property name="paramName" value="param1"/>
+		</include>
+	</delete>
+	
+	<delete id="deleteUserByUsername" >
+		<include refid="deleteUserByUsernameSql">
+			<property name="paramName" value="param1"/>
+		</include> 
+        ;
+		<include refid="deleteUserAuth-tomcat"> 
+			<property name="paramName" value="param1"/>
+		</include>
+	</delete>
+	
+</mapper>

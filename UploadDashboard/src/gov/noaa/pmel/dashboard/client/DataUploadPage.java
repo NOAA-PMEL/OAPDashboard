@@ -100,6 +100,9 @@ public class DataUploadPage extends CompositeWithUsername {
 			"  <li>Atlantis 20-01B, 19042012, 19:10:42, 12.617, -59.216, ...</li>" +
 			"</ul></p>";
 
+	private static final String FEATURE_TYPE_HELP_ANCHOR_TEXT = "Help about Observation types.";
+	private static final String FEATURE_TYPE_HELP_HTML = "Help about Feature / Observation types.";
+	
 	private static final String SETTINGS_CAPTION_TEXT = "Settings";
 
 	private static final String ADVANCED_HTML_MSG = 
@@ -179,6 +182,7 @@ public class DataUploadPage extends CompositeWithUsername {
     @UiField ListBox featureTypeSelector;
     @UiField Panel featureTypeSpecificContentPanel;
     @UiField Hidden featureTypeToken;
+    @UiField Anchor featureTypeHelpAnchor;
     
 //    @UiField HTML featureTypeDisplay;
     
@@ -206,6 +210,7 @@ public class DataUploadPage extends CompositeWithUsername {
 	@UiField Button cancelButton;
 
 	private DashboardInfoPopup moreHelpPopup;
+    private DashboardInfoPopup featureTypeHelpPopup;
 	private Element uploadElement;
 
 	// Singleton instance of this page
@@ -228,13 +233,13 @@ public class DataUploadPage extends CompositeWithUsername {
 //        contentPanel.add(contentFrame);
         featureTypeSelector.addItem("-- Observation Type --");
 //      featureTypeSelector.addItem("Timeseries");
-      featureTypeSelector.addItem("Trajectory (Underway)", FeatureType.TRAJECTORY.name());
-      featureTypeSelector.addItem("Profile", FeatureType.PROFILE.name());
-      featureTypeSelector.addItem("Profile Timeseries (Mooring)", FeatureType.PROFILE_TIMESERIES.name());
-      featureTypeSelector.addItem("Unspecified", FeatureType.UNSPECIFIED.name());
-      featureTypeSelector.getElement().<SelectElement>cast().getOptions().getItem(0).setDisabled(true); // Please select...
-      featureTypeSelector.getElement().<SelectElement>cast().getOptions().getItem(3).setDisabled(true); // Mooring
-      featureTypeSelector.addChangeHandler(new ChangeHandler() {
+        featureTypeSelector.addItem("Trajectory (Underway)", FeatureType.TRAJECTORY.name());
+        featureTypeSelector.addItem("Profile", FeatureType.PROFILE.name());
+        featureTypeSelector.addItem("Profile Timeseries (Mooring)", FeatureType.PROFILE_TIMESERIES.name());
+        featureTypeSelector.addItem("Other", FeatureType.OPAQUE.name());
+        featureTypeSelector.getElement().<SelectElement>cast().getOptions().getItem(0).setDisabled(true); // Please select...
+        featureTypeSelector.getElement().<SelectElement>cast().getOptions().getItem(3).setDisabled(true); // Mooring
+        featureTypeSelector.addChangeHandler(new ChangeHandler() {
           @Override
           public void onChange(ChangeEvent event) {
               if ( _featureTypeFields != null ) {
@@ -248,15 +253,18 @@ public class DataUploadPage extends CompositeWithUsername {
               }
 
               selectedType = FeatureType.valueOf(featureTypeSelector.getSelectedValue());
+              GWT.log("Selecting type " + selectedType.name());
               switch ( selectedType ) {
                   case TIMESERIES:
                       break;
-                  case UNSPECIFIED:
-                      _featureTypeFields = new UnspecifiedUploadFeatureFields();
+                  case OPAQUE:
+                      _featureTypeFields = new OpaqueUploadFeatureFields();
                       break;
                   case PROFILE_TIMESERIES:
                       break;
                   case PROFILE:
+                      _featureTypeFields = new ProfileFeatureFields();
+                      break;
                   case TRAJECTORY:
                   case TRAJECTORY_PROFILE:
                       _featureTypeFields = new CommonFeatureFields();
@@ -269,7 +277,10 @@ public class DataUploadPage extends CompositeWithUsername {
                   featureTypeSpecificContentPanel.add(_featureTypeFields);
               }
           }
-      });
+        });
+        featureTypeHelpAnchor.setText(FEATURE_TYPE_HELP_ANCHOR_TEXT);
+        featureTypeHelpPopup = null;
+        
 		titleLabel.setText(TITLE_TEXT);
 		logoutButton.setText(LOGOUT_TEXT);
 		introHtml.setHTML(UPLOAD_FILE_INTRO_HTML);
@@ -279,7 +290,7 @@ public class DataUploadPage extends CompositeWithUsername {
 		uploadForm.setEncoding(FormPanel.ENCODING_MULTIPART);
 		uploadForm.setMethod(FormPanel.METHOD_POST);
 		uploadForm.setAction(GWT.getModuleBaseURL() + "DataUploadService");
-        fileUpload.getElement().setAttribute("multiple", "multiple");
+//        fileUpload.getElement().setAttribute("multiple", "multiple");
         fileUpload.addChangeHandler(new ChangeHandler() {
             @Override
             public void onChange(ChangeEvent event) {
@@ -338,7 +349,7 @@ public class DataUploadPage extends CompositeWithUsername {
 			singleton = new DataUploadPage();
 		singleton.setUsername(username);
 		singleton.userInfoLabel.setText(WELCOME_INTRO + singleton.getUsername());
-		singleton.clearTokens(true);
+		singleton.clearTokens(false);
 		singleton.previewHtml.setHTML(NO_PREVIEW_HTML_MSG);
 		singleton.encodingListBox.setSelectedIndex(2);
 		singleton.advancedPanel.setOpen(false);
@@ -386,6 +397,9 @@ public class DataUploadPage extends CompositeWithUsername {
 		timestampToken.setValue("");
 		actionToken.setValue("");
 		encodingToken.setValue("");
+        if ( clearIdColumn ) {
+            uploadForm.reset();
+        }
 		if ( _featureTypeFields != null ) {
 		    _featureTypeFields.clearFormFields((Panel)uploadForm.getWidget());
 		}
@@ -407,6 +421,16 @@ public class DataUploadPage extends CompositeWithUsername {
 		}
 		moreHelpPopup.showCentered();
 	}
+    @UiHandler("featureTypeHelpAnchor")
+    void featureTypeHelpOnClick(ClickEvent event) {
+        // Create the popup only when needed and if it does not exist
+        if ( featureTypeHelpPopup == null ) {
+            featureTypeHelpPopup = new DashboardInfoPopup();
+            featureTypeHelpPopup.setInfoMessage(FEATURE_TYPE_HELP_HTML);
+        }
+        featureTypeHelpPopup.showCentered();
+    }
+
     @UiHandler("featureTypeSelector")
     void dataTypeSelectorOnClick(ClickEvent event) {
 //        Window.alert(String.valueOf(event));

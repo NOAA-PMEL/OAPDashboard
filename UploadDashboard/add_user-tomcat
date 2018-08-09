@@ -25,11 +25,13 @@
 #		~kamb/tomcat/70/content/OAPUploadDashboard/config/OAPUploadDashboard.properties
 #			RoleFor_[user_name]=[Admin|User(?)]
 
-# OA_FILE=~kamb/tomcat/70/content/OAPUploadDashboard/config/OAPUploadDashboard.properties
-OA_FILE=~kamb/tomcat/7/content/OAPUploadDashboard/config/OAPUploadDashboard.properties
-DASH_DB=oapdashboard
-FLAG_DB=OAPFlags
-OA_USER_ROLE=oapdashboarduser
+OS=`uname -a | awk '{ print $1 }'`
+
+OA_FILE=~kamb/tomcat/70/content/OAPUploadDashboard/config/OAPUploadDashboard.properties
+if [ 'Darwin' == "$OS" ] ; then
+	echo "Running on Darwin.  Using Postgres"
+	OA_FILE=~kamb/tomcat/7/content/OAPUploadDashboard/config/OAPUploadDashboard.properties
+fi
 
 usage() {
 	echo add_user [username] [real name] [email]
@@ -66,11 +68,14 @@ if [ "y" != "$yesno" ] ; then
 	exit
 fi
 
+echo checking for $username in $OA_FILE
+
 if [ -e $OA_FILE ] ; then
 	exists=`grep $username $OA_FILE`
 	if [ $exists ] ; then
 		echo $username already added to OA config file as: $exists
 	else
+		echo adding $username as Admin to OA config
 		echo "RoleFor_"${username}"=Admin" >> $OA_FILE
 	fi
 else
@@ -79,16 +84,40 @@ fi
 
 SQL_FILE=add_user-tomcat.sql
 
-echo "use $DASH_DB;" > $SQL_FILE
+DASH_DB=oapdashboard
+FLAG_DB=OAPFlags
+OA_USER_ROLE=oapdashboarduser
+USE=use
+
+DB=mysql
+DB_USER="-u scientist"
+PASSWD="--password=${ms_passwd}"
+
+if [ 'Darwin' == "$OS" ] ; then
+	DB=psql
+	DB_USER="-U oapweb"
+	PASSWD="-w"
+	USE="\connect"
+fi
+
+
+echo creating sql file $SQL_FILE
+if [ -e $SQL_FILE ] ; then
+	rm $SQL_FILE
+fi
+
+echo "$USE  $DASH_DB;" > $SQL_FILE
 echo "insert into TomcatUsers ( username, password ) values ( '$username', '$user_passwd' );" >> $SQL_FILE
 echo "insert into TomcatRoles ( user_dbid, username, role_dbid, userrole ) values ("\
 "(select db_id from TomcatUsers where username = '${username}'), '${username}', "\
 "(select db_id from Roles where role='$OA_USER_ROLE'), '$OA_USER_ROLE');" >> $SQL_FILE
 
-echo "use $FLAG_DB;" >> $SQL_FILE
+echo "$USE  $FLAG_DB;" >> $SQL_FILE
 echo "insert into Reviewers ( username, realname, email ) values ( '$username', '$realname', '$email' );" >> $SQL_FILE
 
-mysql -u scientist --password=$ms_passwd < $SQL_FILE
+echo "${DB} ${DB_USER} $PASSWD $DASH_DB"
 
-rm $SQL_FILE
+${DB} ${DB_USER} $PASSWD $DASH_DB < $SQL_FILE
+
+# rm $SQL_FILE
 

@@ -294,4 +294,13 @@ public class OADSMetadata {
 		return dbOADSmd;
 	}
 
+    /**
+     * @param datasetId
+     * @throws IOException 
+     */
+    public static File createEmptyOADSMetadataFile(String datasetId) throws IOException {
+        File mdFile = DashboardConfigStore.get().getMetadataFileHandler().createEmptyOADSMetadataFile(datasetId);
+        return mdFile;
+    }
+
 }

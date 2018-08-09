@@ -4,18 +4,33 @@
 package gov.noaa.pmel.dashboard.actions;
 
 import java.io.File;
+import java.io.IOException;
+import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
 
+import org.apache.commons.compress.archivers.ArchiveException;
+import org.apache.commons.compress.compressors.CompressorException;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+import gov.loc.repository.bagit.exceptions.CorruptChecksumException;
+import gov.loc.repository.bagit.exceptions.FileNotInPayloadDirectoryException;
+import gov.loc.repository.bagit.exceptions.InvalidBagitFileFormatException;
+import gov.loc.repository.bagit.exceptions.MaliciousPathException;
+import gov.loc.repository.bagit.exceptions.MissingBagitFileException;
+import gov.loc.repository.bagit.exceptions.MissingPayloadDirectoryException;
+import gov.loc.repository.bagit.exceptions.MissingPayloadManifestException;
+import gov.loc.repository.bagit.exceptions.UnsupportedAlgorithmException;
+import gov.loc.repository.bagit.exceptions.VerificationException;
+import gov.noaa.pmel.dashboard.actions.checker.ProfileDatasetChecker;
 import gov.noaa.pmel.dashboard.dsg.DsgMetadata;
 import gov.noaa.pmel.dashboard.dsg.StdUserDataArray;
 import gov.noaa.pmel.dashboard.handlers.ArchiveFilesBundler;
+import gov.noaa.pmel.dashboard.handlers.Bagger;
 import gov.noaa.pmel.dashboard.handlers.DataFileHandler;
 import gov.noaa.pmel.dashboard.handlers.DatabaseRequestHandler;
 import gov.noaa.pmel.dashboard.handlers.DsgNcFileHandler;
@@ -28,6 +43,8 @@ import gov.noaa.pmel.dashboard.shared.DashboardDataset;
 import gov.noaa.pmel.dashboard.shared.DashboardDatasetData;
 import gov.noaa.pmel.dashboard.shared.DashboardMetadata;
 import gov.noaa.pmel.dashboard.shared.DashboardUtils;
+import gov.noaa.pmel.dashboard.shared.FeatureType;
+import gov.noaa.pmel.tws.util.ApplicationConfiguration;
 
 /**
  * Submits a dataset.  At this time this just means creating the 
@@ -37,6 +54,7 @@ import gov.noaa.pmel.dashboard.shared.DashboardUtils;
  */
 public class DatasetSubmitter {
 
+    DashboardConfigStore configStore;
 	DataFileHandler dataHandler;
 	MetadataFileHandler metadataHandler;
 	DatasetChecker datasetChecker;
@@ -51,6 +69,7 @@ public class DatasetSubmitter {
 	 * 		create with the file handlers and data checker in this data store.
 	 */
 	public DatasetSubmitter(DashboardConfigStore configStore) {
+        this.configStore = configStore;
 		dataHandler = configStore.getDataFileHandler();
 		metadataHandler = configStore.getMetadataFileHandler();
 		datasetChecker = configStore.getDashboardDatasetChecker();
@@ -201,6 +220,18 @@ public class DatasetSubmitter {
 		}
 	}
 
+//	private void bagDatasets(List<String> datasetIds, List<String> columnsList, String archiveStatus, 
+//	                         String timestamp, boolean repeatSend, String submitter) {
+//        for ( String datasetId : datasetIds ) {
+//            try {
+//                File bag = Bagger.Bag(datasetId);
+//                logger.info("Bagged " + datasetId + " as " + bag);
+//            } catch (Exception ex) {
+//                ex.printStackTrace();
+//            }
+//        }
+//    }
+    
 	public void archiveDatasets(List<String> datasetIds, List<String> columnsList, String archiveStatus, 
 	                            String timestamp, boolean repeatSend, String submitter) {
 		ArrayList<String> errorMsgs = new ArrayList<String>();
@@ -211,6 +242,7 @@ public class DatasetSubmitter {
 			try {
 				userRealName = databaseHandler.getReviewerRealname(submitter);
 			} catch (Exception ex) {
+                logger.warn(ex);
 				userRealName = null;
 			}
 			if ( (userRealName == null) || userRealName.isEmpty() )
@@ -231,7 +263,11 @@ public class DatasetSubmitter {
 						userRealName + " (" + userEmail + ") at " + timestamp;
 				try {
 					// filesBundler.sendOrigFilesBundle(datasetId, commitMsg, userRealName, userEmail);
-					File archiveBundle = filesBundler.createAndSendArchiveFilesBundle(datasetId, columnsList, commitMsg, userRealName, userEmail);
+//					File archiveBundle = filesBundler.createAndSendArchiveFilesBundle(datasetId, columnsList, commitMsg, userRealName, userEmail);
+                    File archiveBundle = getArchiveBundle(datasetId, columnsList);
+                    archiveBundleFile(datasetId, archiveBundle, datasetId, userRealName, userEmail);
+                    String archiveStatusMsg = "Submitted " + archiveBundle + " to " + userEmail + " at " + DashboardServerUtils.formatTime(new Date());
+                    logger.info(archiveStatusMsg);
 					thisStatus = "Submitted " + DashboardServerUtils.formatTime(new Date());
 				} catch (Exception ex) {
 					ex.printStackTrace();
@@ -260,7 +296,41 @@ public class DatasetSubmitter {
 
 	}
 
-	public static void main(String[] args) {
+	/**
+     * @param archiveBundle
+     * @param datasetId
+     * @param userRealName
+     * @param userEmail
+     * @return
+	 * @throws IOException 
+     */
+    private void archiveBundleFile(String stdId, File archiveBundle, String archiveMessage, 
+                                     String userRealName, String userEmail) throws IOException {
+        boolean useFtp = ApplicationConfiguration.getProperty("oap.archive.use_ftp", false);
+        if ( useFtp ) {
+            throw new IllegalStateException("FTP not yet supported.");
+        } else {
+            filesBundler.sendArchiveBundle(stdId, archiveBundle, userRealName, userEmail);
+        }
+    }
+
+    /**
+     * @param datasetId
+     * @param columnsList
+     * @return
+	 * @throws Exception
+     */
+    private File getArchiveBundle(String datasetId, List<String> columnsList) throws Exception {
+        File archiveBundle = null;
+        if ( ApplicationConfiguration.getProperty("oap.archive.use_bagit", true)) {
+            archiveBundle = Bagger.Bag(datasetId);
+        } else {
+            archiveBundle = filesBundler.createArchiveDataFile(datasetId, columnsList);
+        }
+        return archiveBundle;
+    }
+
+    public static void main(String[] args) {
         try {
             DatasetSubmitter ds = DashboardConfigStore.get(false).getDashboardDatasetSubmitter();
             ArrayList<String> ids = new ArrayList<String>() {{ add("PRISM082008"); }};

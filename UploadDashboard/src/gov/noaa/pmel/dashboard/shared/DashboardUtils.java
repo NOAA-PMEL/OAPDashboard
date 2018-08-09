@@ -71,6 +71,7 @@ public class DashboardUtils {
 	public static final String ARCHIVE_STATUS_SENT_FOR_ARCHIVAL = "Sent for archival";
 	public static final String ARCHIVE_STATUS_OWNER_TO_ARCHIVE = "Owner to archive";
 	public static final String ARCHIVE_STATUS_ARCHIVED = "Archived";
+	public static final String ARCHIVE_STATUS_FAILED = "Submission Failed";
 
 	/**
 	 *  Missing value for floating-point variables - not null or NaN
@@ -327,7 +328,7 @@ public class DashboardUtils {
 		return username.replace(' ', '_').toLowerCase();
 	}
 
-	/**
+	/*-* This is not used anywhere
 	 * Generate the encrypted password for a given plain-text username 
 	 * and password.  This is intended to only be a first level of
 	 * encryption.
@@ -338,7 +339,6 @@ public class DashboardUtils {
 	 * 		plain-text password to use 
 	 * @return
 	 * 		encrypted password, or an empty string if an error occurs 
-	 */
 	public static String passhashFromPlainText(String username, String password) {
 		// This salt is just to make sure the keys are long enough
 		String salt = "4z#Ni!q?F7b0m9nK(uDF[g%T3pD_";
@@ -362,6 +362,7 @@ public class DashboardUtils {
 
 		return passhash;
 	}
+	 */
 
 	/**
 	 * Decodes a (JSON-like) encoded array of numbers into a byte array. 

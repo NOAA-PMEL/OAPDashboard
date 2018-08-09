@@ -28,6 +28,26 @@ public class DashboardDatasetData extends DashboardDataset implements Serializab
 		dataValues = new ArrayList<ArrayList<String>>();
 	}
 
+    /**
+     * @return 
+     *      the total number of data measurements (data rows) 
+     *      for the dataset
+    public int getNumDataRows() {
+        return dataValues.size();
+    }
+     */
+
+    /**
+     * @param numDataRows 
+     *      the total number of data measurements (data rows) 
+     *      to set for the dataset 
+    XXX This allows the possibility that numDataRows != the actual number of data rows.
+    public void setNumDataRows(int numDataRows) {
+        this.numDataRows = numDataRows;
+    }
+     */
+
+
 	/**
 	 * @return 
 	 * 		the list of row numbers;
@@ -129,7 +149,7 @@ public class DashboardDatasetData extends DashboardDataset implements Serializab
 				"    archiveDate=" + archiveDate + ";\n" + 
 				"    uploadFilename=" + uploadFilename + ";\n" + 
 				"    uploadTimestamp=" + uploadTimestamp + ";\n" + 
-				"    numDataRows=" + Integer.toString(numDataRows) + ";\n" + 
+				"    numDataRows=" + Integer.toString(getNumDataRows()) + ";\n" + 
 				"    numErrorRows=" + Integer.toString(numErrorRows) + ";\n" + 
 				"    numWarnRows=" + Integer.toString(numWarnRows) + ";\n" + 
 				"    userColNames=" + userColNames.toString() + ";\n" + 

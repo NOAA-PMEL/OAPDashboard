@@ -1,0 +1,35 @@
+<?xml version='1.0' encoding='UTF-8' ?>
+<!DOCTYPE mapper PUBLIC '-//mybatis.org//DTD Mapper 3.0//EN'
+  'http://mybatis.org/dtd/mybatis-3-mapper.dtd'>
+
+<mapper namespace='gnpt.db.Common'>
+
+	<sql id="NetInfoSeparator">'::'</sql>
+	
+	<sql id="insertFrag">insert into <include refid="${ns}.TABLE_NAME"/> </sql>
+	
+	<sql id="updateFrag">update <include refid="${ns}.TABLE_NAME"/> set </sql>
+	<sql id="empty"> </sql>
+	<sql id="param1">#{param1}</sql>
+	<sql id="param2">#{param2}</sql>
+	<sql id="param3">#{param3}</sql>
+	<sql id="dbColumn">db_id,</sql>
+	<sql id="dbField">#{_dbId},</sql>
+	<sql id="modColumn">modified_time,</sql>
+	<sql id="modField">#{_modifiedTime},</sql>
+	<sql id="equalsFrag"> = </sql>
+	<sql id="valuesFrag"> values </sql>
+	<sql id="now"> now() </sql>
+	
+	<sql id="dbIdField">#{_dbId}</sql>
+	<sql id="eventIdField">#{_eventId}</sql>
+	
+	<sql id="NULL"> null </sql>
+	<sql id="LASTVAL">( select LASTVAL()) </sql>
+
+<!--
+	<resultMap type="gov.noaa.pmel.tsunami.tws.model.TwsEstimateLocation" id="TwsEstimateLocationMap" >
+		<result property="_value" column="#{value_column}"/>
+	</resultMap>
+  -->
+</mapper>

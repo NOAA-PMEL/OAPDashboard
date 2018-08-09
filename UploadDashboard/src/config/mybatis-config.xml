@@ -1,0 +1,81 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE configuration
+  PUBLIC "-//mybatis.org//DTD Config 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-config.dtd">
+<configuration>
+  <properties resource="config/localhost.database.properties"/>
+  <settings>
+  	<setting name="logImpl" value="LOG4J2" />
+  </settings>
+  <typeAliases>
+    <typeAlias type="gov.noaa.pmel.dashboard.server.db.DbItem"  alias="DbItem"/>
+  	<typeAlias type="gov.noaa.pmel.dashboard.server.model.User" alias="User"/>
+    <typeAlias type="gov.noaa.pmel.dashboard.server.model.InsertUser"  alias="NewUser"/>
+      <!--
+  	<typeAlias type="gov.noaa.pmel.tsunami.types.Latitude" alias="Latitude"/>
+  	<typeAlias type="gov.noaa.pmel.tsunami.types.Longitude" alias="Longitude"/>
+  	<typeAlias type="gov.noaa.pmel.tsunami.types.MagValue" alias="MagValue"/>
+        -->
+  </typeAliases>
+  <!--
+  <typeHandlers>
+  	<typeHandler handler="gov.noaa.pmel.tsunami.tws.db.myb.handlers.InfoSourceTypeHandler"
+  		javaType="gov.noaa.pmel.tsunami.tview.types.InfoSource" jdbcType="VARCHAR" />
+  	<typeHandler handler="gov.noaa.pmel.tsunami.tws.db.myb.handlers.ScaledDecimalHandler"
+  		javaType="gov.noaa.pmel.tsunami.types.Latitude" />
+  	<typeHandler handler="gov.noaa.pmel.tsunami.tws.db.myb.handlers.ScaledDecimalHandler"
+  		javaType="gov.noaa.pmel.tsunami.types.Longitude" />
+  	<typeHandler handler="gov.noaa.pmel.tsunami.tws.db.myb.handlers.ScaledDecimalHandler"
+  		javaType="gov.noaa.pmel.tsunami.types.MagValue" />
+  </typeHandlers>
+           --> 
+  <environments default="development">
+    <environment id="oapdashboard">
+      <transactionManager type="JDBC"/>
+      <dataSource type="POOLED">
+        <property name="driver" value="${db.driver}"/>
+        <property name="url" value="${db.url}"/>
+        <property name="username" value="${db.username}"/>
+        <property name="password" value="${db.password}"/>
+      </dataSource>
+    </environment>
+    <environment id="OAPFlags">
+      <transactionManager type="JDBC"/>
+      <dataSource type="POOLED">
+        <property name="driver" value="${db.driver}"/>
+        <property name="url" value="jdbc:postgresql://${db.host}/OAPFlags"/>
+        <property name="username" value="${db.username}"/>
+        <property name="password" value="${db.password}"/>
+      </dataSource>
+    </environment>
+    <environment id="my-dashboard">
+      <transactionManager type="JDBC"/>
+      <dataSource type="POOLED">
+        <property name="driver" value="${my.driver}"/>
+        <property name="url" value="${my.url}"/>
+        <property name="username" value="${my.username}"/>
+        <property name="password" value="${my.password}"/>
+      </dataSource>
+    </environment>
+    <environment id="my-Flags">
+      <transactionManager type="JDBC"/>
+      <dataSource type="POOLED">
+        <property name="driver" value="${my.driver}"/>
+        <property name="url" value="jdbc:mysql://${my.host}:3306/oapflags"/>
+        <property name="username" value="${my.username}"/>
+        <property name="password" value="${my.password}"/>
+      </dataSource>
+    </environment>
+  </environments>
+  
+  <databaseIdProvider type="DB_VENDOR">
+    <property name="MySQL" value="mysql"/>
+    <property name="PostgreSQL" value="postgresql" />
+  </databaseIdProvider>
+    
+  <mappers>
+    <mapper resource="gov/noaa/pmel/dashboard/server/db/myb/mappers/Common.xml"/>
+    <mapper resource="gov/noaa/pmel/dashboard/server/db/myb/mappers/DbMapper.xml"/>
+    <package name="gov.noaa.pmel.dashboard.server.db.myb.mappers"/>
+  </mappers>
+</configuration>

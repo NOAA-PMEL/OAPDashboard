@@ -6,12 +6,15 @@ body {
 	margin: 0;
 	padding: 0;
 }
-
+.askDialogIcon {
+	height: 32px;
+/* 	width: 32px; */
+}
 .fixedwidthcontainer {
 	width: 35em;
 }
-
 .horizontalpanel {
+    display: block;
 	margin-top: 0.5em;
 	margin-bottom: 1em;
 }
@@ -45,7 +48,7 @@ body {
 	width: 35em;
 }
 .infohtml {
-	text-align: justify;
+	/* text-align: justify; */
 	padding: 1em;
 }
 .infobutton {

@@ -1,7 +1,22 @@
 @CHARSET "UTF-8";
 
-unspec_dataset_id {
-	margin: 2em 0em;
+.bottom_groove {
+    border-bottom-style: groove;
+    border-width: 2px;
+    border-color: #CCCCCC;
+}
+.padded_panel {
+	padding: 1em 0em;
+}
+.font_italic {
+	font-style: italic;
+}
+.unspec_dataset_id_panel {
+    padding-bottom: 1em;
+}
+.unspec_dataset_id_label {
+	margin-left: 2em;
+	margin-right: 1em;
 }
 .labeledlistpanel {
 	display: block;

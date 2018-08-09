@@ -1,0 +1,32 @@
+<?xml version='1.0' encoding='UTF-8' ?>
+<!DOCTYPE mapper PUBLIC '-//mybatis.org//DTD Mapper 3.0//EN'
+  'http://mybatis.org/dtd/mybatis-3-mapper.dtd'>
+
+<mapper namespace='gnpt.db.DbMapper'>
+
+	<sql id="db_columns">
+		db_id,
+		create_time,
+		modified_time
+	</sql>
+	
+	<sql id="select_db_columns">
+		db_id as db_id,
+		create_time as create_time,
+		modified_time as modified_time
+	</sql>
+	
+	<!-- DbItemMapper -->
+	
+	<sql id="select_db_columns_pfx">
+		${pfx}.db_id as ${pfx}_db_id,
+		${pfx}.create_time as ${pfx}_create_time,
+		${pfx}.modified_time as ${pfx}_modified_time
+	</sql>
+	
+	<resultMap type="DbItem"  id="DbItemMap">
+		<id property="_dbId" column="db_id" />
+		<result property="_createTime" column="create_time"/>
+		<result property="_modifiedTime" column="modified_time"/>
+	</resultMap>
+</mapper>

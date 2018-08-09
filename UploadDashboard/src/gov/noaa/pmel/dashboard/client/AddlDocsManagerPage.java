@@ -128,9 +128,10 @@ public class AddlDocsManagerPage extends CompositeWithUsername {
 	private static DashboardServicesInterfaceAsync service = 
 			GWT.create(DashboardServicesInterface.class);
 
-	@UiField InlineLabel titleLabel;
-	@UiField InlineLabel userInfoLabel;
-	@UiField Button logoutButton;
+//	@UiField InlineLabel titleLabel;
+//	@UiField InlineLabel userInfoLabel;
+//	@UiField Button logoutButton;
+    @UiField ApplicationHeaderTemplate header;
 	@UiField HTML introHtml; 
 	@UiField DataGrid<DashboardMetadata> addlDocsGrid;
 	@UiField FormPanel uploadForm;
@@ -168,8 +169,8 @@ public class AddlDocsManagerPage extends CompositeWithUsername {
 
 		clearTokens();
 
-		titleLabel.setText(TITLE_TEXT);
-		logoutButton.setText(LOGOUT_TEXT);
+		header.setPageTitle(TITLE_TEXT);
+		header.logoutButton.setText(LOGOUT_TEXT);
 
 		uploadForm.setEncoding(FormPanel.ENCODING_MULTIPART);
 		uploadForm.setMethod(FormPanel.METHOD_POST);
@@ -222,7 +223,7 @@ public class AddlDocsManagerPage extends CompositeWithUsername {
 	private void updateAddlDocs(DashboardDatasetList cruises) {
 		// Update the username
 		setUsername(cruises.getUsername());
-		userInfoLabel.setText(WELCOME_INTRO + getUsername());
+		header.userInfoLabel.setText(WELCOME_INTRO + getUsername());
 
 		// Update the cruises associated with this page
 		cruiseSet.clear();
@@ -278,11 +279,6 @@ public class AddlDocsManagerPage extends CompositeWithUsername {
 		timestampToken.setValue(localTimestamp);
 		datasetIdsToken.setValue(DashboardUtils.encodeStringArrayList(new ArrayList<String>(datasetIds)));
 		supplementalFlag.setValue("true");
-	}
-
-	@UiHandler("logoutButton")
-	void logoutOnClick(ClickEvent event) {
-		DashboardLogoutPage.showPage();
 	}
 
 	@UiHandler("dismissButton")
@@ -394,6 +390,7 @@ public class AddlDocsManagerPage extends CompositeWithUsername {
 		}
 		resultMsg = resultMsg.trim();
 		if ( resultMsg.startsWith(DashboardUtils.SUCCESS_HEADER_TAG) ) {
+            uploadForm.reset();
 			// Do not show any messages on success;
 			// depend on the updated list of documents to show success
 			;

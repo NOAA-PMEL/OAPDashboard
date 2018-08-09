@@ -4,7 +4,10 @@
 	<ui:style src="FixedWidth.css" />
 
 	<g:VerticalPanel addStyleNames="{style.infopanel}" horizontalAlignment="ALIGN_CENTER">
-		<g:HTML addStyleNames="{style.infohtml}" ui:field="askHtml" />
+        <g:FlowPanel addStyleNames="{style.horizontalpanel}" >
+            <g:Image addStyleNames="{style.askDialogIcon}" ui:field="askTypeIcon"/>
+    		<g:HTML addStyleNames="{style.infohtml}" ui:field="askHtml" />
+        </g:FlowPanel>
 		<g:FlowPanel addStyleNames="{style.horizontalpanel}">
 			<g:Button addStyleNames="{style.horizontalbutton}" ui:field="yesButton" />
 			<g:Button addStyleNames="{style.horizontalbutton}" ui:field="noButton" />

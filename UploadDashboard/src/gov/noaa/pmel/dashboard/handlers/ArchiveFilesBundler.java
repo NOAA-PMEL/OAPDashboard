@@ -389,7 +389,7 @@ public class ArchiveFilesBundler extends VersionedFileHandler {
 	    return bundleFile;
 	}
 	
-    private File createArchiveDataFile(String stdId, List<String> columnsList) throws IOException {
+    public File createArchiveDataFile(String stdId, List<String> columnsList) throws IOException {
 		DashboardConfigStore cfgStore = DashboardConfigStore.get(false);
 		DataFileHandler dataFiler = cfgStore.getDataFileHandler();
 		DashboardDatasetData dd = dataFiler.getDatasetDataFromFiles(stdId, 0, -1);
@@ -423,7 +423,7 @@ public class ArchiveFilesBundler extends VersionedFileHandler {
 		return bundleFile;
 	}
 
-	private void sendArchiveBundle(String stdId, File bundleFile, String userRealName, String userEmail) throws IOException {
+	public void sendArchiveBundle(String stdId, File bundleFile, String userRealName, String userEmail) throws IOException {
         // Create a Session for sending out the email
         Properties props = System.getProperties();
         if ( debugIt )

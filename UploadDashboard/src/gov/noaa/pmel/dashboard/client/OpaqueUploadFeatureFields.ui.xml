@@ -3,9 +3,10 @@
              xmlns:g="urn:import:com.google.gwt.user.client.ui">
     <ui:style src="Widgets.css" />
     
-    <g:FlowPanel>
-        <g:InlineLabel>Dataset ID:</g:InlineLabel>
+    <g:FlowPanel addStyleNames="{style.unspec_dataset_id_panel} {style.bottom_groove}">
+        <g:InlineLabel addStyleNames="{style.unspec_dataset_id_label}">Dataset ID:</g:InlineLabel>
         <g:TextBox ui:field="unspecDatasetIdBox"></g:TextBox>
+		<g:Label addStyleNames="{style.labeledlistlabel} {style.font_italic}" >Optional.</g:Label>
     </g:FlowPanel>
 
 </ui:UiBinder>

@@ -155,10 +155,10 @@ public class MetadataUploadService extends HttpServlet {
 			// Send the success response
 			response.setStatus(HttpServletResponse.SC_OK);
 			response.setContentType("text/html;charset=UTF-8");
-			PrintWriter respWriter = response.getWriter();
-			respWriter.println(DashboardUtils.SUCCESS_HEADER_TAG);
-			response.flushBuffer();
-			
+			try ( PrintWriter respWriter = response.getWriter(); ) {
+    			respWriter.println(DashboardUtils.SUCCESS_HEADER_TAG);
+    			response.flushBuffer();
+			}
 		} catch (Exception ex) {
 			ex.printStackTrace();
 			sendErrMsg(response, "Error processing the request\n" + ex.getMessage());

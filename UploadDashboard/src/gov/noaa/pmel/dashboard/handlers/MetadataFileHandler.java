@@ -46,6 +46,14 @@ public class MetadataFileHandler extends VersionedFileHandler {
 	private static final String METADATA_VERSION_ID = "metadataversion";
 	private static final String METADATA_DOI_ID = "metadatadoi";
 
+    private static final String EMPTY_OADS_XML_METADATA_ELEMENT_OPENING = 
+            "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n" + 
+            "<metadata>\n" + 
+                "<expocode>";
+    private static final String EMPTY_OADS_XML_METADATA_ELEMENT_CLOSING = 
+                "</expocode>\n"+
+            "</metadata>";
+    
 	private static final SimpleDateFormat DATETIME_FORMATTER = new SimpleDateFormat("YYYY-MM-dd HH:mm");
 
 	/**
@@ -109,8 +117,24 @@ public class MetadataFileHandler extends VersionedFileHandler {
 		String stdName = DashboardUtils.metadataFilename(stdId);
 		File grandParentDir = new File(filesDir, stdId.substring(0,4));
 		File parentDir = new File(grandParentDir, stdId);
+        if ( !parentDir.exists()) {
+            parentDir.mkdirs();
+        }
 		File metadataFile = new File(parentDir, stdName);
 		return metadataFile;
+	}
+    
+	public File getAutoExtractedMetadataFile(String datasetId) {
+		String stdId = DashboardServerUtils.checkDatasetID(datasetId);
+		String stdName = DashboardUtils.autoExtractedMdFilename(stdId);
+		File grandParentDir = new File(filesDir, stdId.substring(0,4));
+		File parentDir = new File(grandParentDir, stdId);
+        if ( !parentDir.exists()) {
+            parentDir.mkdirs();
+        }
+		File metadataFile = new File(parentDir, stdName);
+		return metadataFile;
+	    
 	}
 	
 	/**
@@ -868,5 +892,27 @@ public class MetadataFileHandler extends VersionedFileHandler {
 					mdataFile.getPath() + ":\n    " + ex.getMessage());
 		}
 	}
+
+    /**
+     * @param datasetId
+     * @throws IOException 
+     */
+    public File createEmptyOADSMetadataFile(String datasetId) throws IOException {
+		File mdataFile = getAutoExtractedMetadataFile(datasetId);
+		File parentDir = mdataFile.getParentFile();
+		if ( !parentDir.exists()) {
+			parentDir.mkdirs();
+			if ( !parentDir.exists()) {
+				throw new IllegalStateException("Unable to create metadata directory.");
+			}
+		}
+        try ( FileWriter writer = new FileWriter(mdataFile); ) {
+            writer.write(EMPTY_OADS_XML_METADATA_ELEMENT_OPENING);
+            writer.write(datasetId);
+            writer.write(EMPTY_OADS_XML_METADATA_ELEMENT_CLOSING);
+            writer.flush();
+        }
+        return mdataFile;
+    }
 
 }

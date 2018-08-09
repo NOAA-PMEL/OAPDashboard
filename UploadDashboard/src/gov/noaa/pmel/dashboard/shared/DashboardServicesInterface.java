@@ -33,8 +33,9 @@ public interface DashboardServicesInterface extends RemoteService {
 	 * 		the list of datasets for the current user
 	 * @throws IllegalArgumentException
 	 * 		if problems getting the cruise list
+	 * @throws SessionException 
 	 */
-	DashboardDatasetList getDatasetList() throws IllegalArgumentException;
+	DashboardDatasetList getDatasetList() throws IllegalArgumentException, SessionException;
 
 	/**
 	 * Deletes all files for the indicated datasets.
@@ -265,7 +266,10 @@ public interface DashboardServicesInterface extends RemoteService {
 
 	MetadataPreviewInfo getMetadataPreviewInfo(String username, String datasetId)
 			throws NotFoundException, IllegalArgumentException;
-			
+    
+	String sendMetadataInfo(String username, String datasetId)
+			throws NotFoundException, IllegalArgumentException;
+                            
 	/**
 	 * Requests that the preview images for a dataset be generated.
 	 * 

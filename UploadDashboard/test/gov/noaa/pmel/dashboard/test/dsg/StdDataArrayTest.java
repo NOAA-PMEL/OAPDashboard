@@ -355,7 +355,7 @@ public class StdDataArrayTest {
 		StdUserDataArray stdUserData = new StdUserDataArray(dataset, KNOWN_USER_TYPES);
 		assertEquals(numRows, stdUserData.getNumSamples());
 		assertEquals(4, stdUserData.getStandardizationMessages().size());
-		boolean timesAreOk = stdUserData.checkMissingLonLatDepthTime();
+		boolean timesAreOk = stdUserData.checkMissingLonLatTime();
 		assertTrue( timesAreOk );
 		// Should not have added any extra messages
 		assertEquals(4, stdUserData.getStandardizationMessages().size());

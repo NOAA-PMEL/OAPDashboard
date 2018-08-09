@@ -3,8 +3,12 @@
  */
 package gov.noaa.pmel.dashboard.datatype;
 
+import java.util.Arrays;
 import java.util.Collection;
+import java.util.List;
+import java.util.stream.Collectors;
 
+import gov.noaa.pmel.dashboard.dsg.StdDataArray;
 import gov.noaa.pmel.dashboard.dsg.StdUserDataArray;
 import gov.noaa.pmel.dashboard.shared.DashboardUtils;
 import gov.noaa.pmel.dashboard.shared.DataColumnType;
@@ -245,5 +249,4 @@ public class DoubleDashDataType extends DashDataType<Double> {
 	public Double missingValue() {
 	    return DashboardUtils.FP_MISSING_VALUE;
 	}
-
 }

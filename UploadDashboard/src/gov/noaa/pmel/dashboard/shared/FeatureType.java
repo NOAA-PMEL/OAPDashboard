@@ -8,11 +8,11 @@ package gov.noaa.pmel.dashboard.shared;
  *
  */
 public enum FeatureType {
+    UNSPECIFIED,
     TIMESERIES,
     TRAJECTORY,
     PROFILE,
     PROFILE_TIMESERIES, 
     TRAJECTORY_PROFILE,
-    UNSPECIFIED
-
+    OPAQUE
 }

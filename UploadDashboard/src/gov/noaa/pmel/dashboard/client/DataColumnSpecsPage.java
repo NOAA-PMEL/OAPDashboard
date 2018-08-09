@@ -9,6 +9,8 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.TreeSet;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.BrowserEvents;
@@ -21,6 +23,7 @@ import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.event.dom.client.DomEvent.Type;
 import com.google.gwt.event.dom.client.DoubleClickEvent;
 import com.google.gwt.event.dom.client.DoubleClickHandler;
+import com.google.gwt.logging.client.ConsoleLogHandler;
 import com.google.gwt.safehtml.shared.SafeHtmlUtils;
 import com.google.gwt.text.client.IntegerParser;
 import com.google.gwt.uibinder.client.UiBinder;
@@ -174,10 +177,11 @@ public class DataColumnSpecsPage extends CompositeWithUsername {
 	private static DashboardServicesInterfaceAsync service = 
 			GWT.create(DashboardServicesInterface.class);
 
-	@UiField InlineLabel titleLabel;
-	@UiField InlineLabel userInfoLabel;
-	@UiField Button logoutButton;
-	@UiField HTML introHtml;
+    @UiField ApplicationHeaderTemplate header;
+//	@UiField InlineLabel titleLabel;
+//	@UiField InlineLabel userInfoLabel;
+//	@UiField Button logoutButton;
+//	@UiField HTML introHtml;
 	@UiField ScrollPanel dgScroll;
 	@UiField DataGrid<ArrayList<String>> dataGrid;
 	@UiField Label pagerLabel;
@@ -218,6 +222,7 @@ public class DataColumnSpecsPage extends CompositeWithUsername {
 	// Singleton instance of this page
 	private static DataColumnSpecsPage singleton = null;
 
+    private static Logger logger = Logger.getLogger("DataColumnSpecsPage");
 	/**
 	 * Creates an empty cruise data column specification page.  
 	 * Allows the user to update the data column types for a
@@ -226,6 +231,9 @@ public class DataColumnSpecsPage extends CompositeWithUsername {
 	DataColumnSpecsPage() {
 		initWidget(uiBinder.createAndBindUi(this));
 		singleton = this;
+        
+        logger.addHandler(new ConsoleLogHandler());
+        logger.setLevel(Level.ALL);
 
 		setUsername(null);
 		defaultSecondsPopup = null;
@@ -233,8 +241,8 @@ public class DataColumnSpecsPage extends CompositeWithUsername {
 		cruiseNeverChecked = false;
 		wasLoggingOut = false;
 
-		titleLabel.setText(TITLE_TEXT);
-		logoutButton.setText(LOGOUT_TEXT);
+		header.setPageTitle(TITLE_TEXT);
+		header.logoutButton.setText(LOGOUT_TEXT);
 		messagesButton.setText(MESSAGES_TEXT);
 		pagerLabel.setText(PAGER_LABEL_TEXT);
 		submitButton.setText(SUBMIT_TEXT);
@@ -412,7 +420,7 @@ public class DataColumnSpecsPage extends CompositeWithUsername {
 		singleton.expocodes.addAll(expocodes);
 		UploadDashboard.showWaitCursor();
 		service.getDataColumnSpecs(singleton.getUsername(), expocodes.get(0), 
-								new AsyncCallback<TypesDatasetDataPair>() {
+								new OAPAsyncCallback<TypesDatasetDataPair>() {
 			@Override
 			public void onSuccess(TypesDatasetDataPair cruiseSpecs) {
 				if ( cruiseSpecs != null ) {
@@ -427,7 +435,7 @@ public class DataColumnSpecsPage extends CompositeWithUsername {
 				UploadDashboard.showAutoCursor();
 			}
 			@Override
-			public void onFailure(Throwable ex) {
+			public void customFailure(Throwable ex) {
 				String exMsg = ex.getMessage();
 				if ( exMsg.indexOf("SESSION HAS EXPIRED") >= 0 ) {
 					UploadDashboard.showMessage("Your session has expired.<br/><br/>Please log in again.");
@@ -523,7 +531,7 @@ public class DataColumnSpecsPage extends CompositeWithUsername {
 	 * 		initial cruise data for display
 	 */
 	private void updateDatasetColumnSpecs(DashboardDatasetData cruiseSpecs) {
-		userInfoLabel.setText(WELCOME_INTRO + getUsername());
+		header.userInfoLabel.setText(WELCOME_INTRO + getUsername());
 
 		String status = cruiseSpecs.getDataCheckStatus();
 		if ( status.equals(DashboardUtils.CHECK_STATUS_NOT_CHECKED) ||
@@ -593,9 +601,9 @@ public class DataColumnSpecsPage extends CompositeWithUsername {
 		cruise.setArchiveStatus(cruiseSpecs.getArchiveStatus());
 		cruise.setDatasetId(cruiseSpecs.getDatasetId());
 
-		introHtml.setHTML(INTRO_HTML_PROLOGUE +  
-				SafeHtmlUtils.htmlEscape(cruise.getDatasetId()) + 
-				INTRO_HTML_EPILOGUE);
+//		introHtml.setHTML(INTRO_HTML_PROLOGUE +  
+//				SafeHtmlUtils.htmlEscape(cruise.getDatasetId()) + 
+//				INTRO_HTML_EPILOGUE);
 
 		// Rebuild the data grid using the provided DatasetDataColumnSpecs
 		if ( cruise.getDataColTypes().size() < 4 )
@@ -672,28 +680,28 @@ public class DataColumnSpecsPage extends CompositeWithUsername {
 		}
 	}
 
-	@UiHandler("logoutButton")
-	void logoutOnClick(ClickEvent event) {
-		// Check if any changes have been made
-		boolean hasChanged = false;
-		for ( DatasetDataColumn dataCol : cruiseDataCols ) {
-			if ( dataCol.hasChanged() ) {
-				hasChanged = true;
-				break;
-			}
-		}
-		if ( hasChanged ) {
-			// Ask before logging out
-			wasLoggingOut = true;
-			if ( notCheckedPopup == null )
-				makeNotCheckedPopup();
-			notCheckedPopup.askQuestion(CHANGES_NOT_SAVED_HTML);
-		}
-		else {
-			// No changes; just log out
-			DashboardLogoutPage.showPage();
-		}
-	}
+//	@UiHandler("logoutButton")
+//	void logoutOnClick(ClickEvent event) {
+//		// Check if any changes have been made
+//		boolean hasChanged = false;
+//		for ( DatasetDataColumn dataCol : cruiseDataCols ) {
+//			if ( dataCol.hasChanged() ) {
+//				hasChanged = true;
+//				break;
+//			}
+//		}
+//		if ( hasChanged ) {
+//			// Ask before logging out
+//			wasLoggingOut = true;
+//			if ( notCheckedPopup == null )
+//				makeNotCheckedPopup();
+//			notCheckedPopup.askQuestion(CHANGES_NOT_SAVED_HTML);
+//		}
+//		else {
+//			// No changes; just log out
+//			DashboardLogoutPage.showPage();
+//		}
+//	}
 
 	@UiHandler("doneButton")
 	void doneOnClick(ClickEvent event) {
@@ -793,6 +801,7 @@ public class DataColumnSpecsPage extends CompositeWithUsername {
 			return;
 		}
 
+   /*
 		// longitude given?
 		boolean hasLongitude = false;
 		// latitude given?
@@ -938,7 +947,6 @@ public class DataColumnSpecsPage extends CompositeWithUsername {
 			UploadDashboard.showMessage(MISSING_TIME_PIECE_ERROR_MSG);
 			return;
 		}
-
 		// Make sure there is no more than one of each column types - except OTHER
 		HashSet<String> typeSet = new HashSet<String>();
 		TreeSet<String> duplicates = new TreeSet<String>();
@@ -987,6 +995,7 @@ public class DataColumnSpecsPage extends CompositeWithUsername {
 			defaultSecondsPopup.askQuestion(DEFAULT_SECONDS_WARNING_QUESTION);
 			return;
 		}
+   */
 
 		// longitude, latitude, sea water co2, and some form of a timestamp 
 		// is present so continue on  

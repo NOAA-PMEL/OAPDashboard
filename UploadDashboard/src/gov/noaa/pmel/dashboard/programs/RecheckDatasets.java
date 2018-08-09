@@ -8,6 +8,7 @@ import java.io.FileReader;
 import java.util.TreeSet;
 
 import gov.noaa.pmel.dashboard.actions.DatasetChecker;
+import gov.noaa.pmel.dashboard.actions.checker.ProfileDatasetChecker;
 import gov.noaa.pmel.dashboard.handlers.DataFileHandler;
 import gov.noaa.pmel.dashboard.server.DashboardConfigStore;
 import gov.noaa.pmel.dashboard.shared.DashboardDatasetData;

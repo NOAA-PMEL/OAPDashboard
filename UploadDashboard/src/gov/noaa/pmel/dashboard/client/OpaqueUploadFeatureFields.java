@@ -16,9 +16,9 @@ import com.google.gwt.user.client.ui.Widget;
  * @author kamb
  *
  */
-public class UnspecifiedUploadFeatureFields extends Composite implements FeatureTypeFields {
+public class OpaqueUploadFeatureFields extends Composite implements FeatureTypeFields {
 
-    interface UnspecifiedUploadFeatureFieldsUiBinder extends UiBinder<Widget, UnspecifiedUploadFeatureFields> {
+    interface UnspecifiedUploadFeatureFieldsUiBinder extends UiBinder<Widget, OpaqueUploadFeatureFields> {
     }
 
     private static UnspecifiedUploadFeatureFieldsUiBinder uiBinder = GWT.create(UnspecifiedUploadFeatureFieldsUiBinder.class);
@@ -26,7 +26,7 @@ public class UnspecifiedUploadFeatureFields extends Composite implements Feature
     @UiField TextBox unspecDatasetIdBox;
     Hidden datasetIdFormField;
     
-    public UnspecifiedUploadFeatureFields() {
+    public OpaqueUploadFeatureFields() {
         initWidget(uiBinder.createAndBindUi(this));
         unspecDatasetIdBox.getElement().setPropertyString("placeholder", "Default: [File Name]");
     }

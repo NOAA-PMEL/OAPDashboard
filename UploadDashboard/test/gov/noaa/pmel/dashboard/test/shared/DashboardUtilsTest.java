@@ -85,9 +85,8 @@ public class DashboardUtilsTest {
 		assertFalse( DashboardUtils.longitudeCloseTo(Double.NaN, lon1, 1.0, 1.0) );
 	}
 
-	/**
+	/*-*  This is not used anywhere
 	 * Test method for {@link gov.noaa.pmel.dashboard.shared.DashboardUtils#passhashFromPlainText()}.
-	 */
 	@Test
 	public void testPasshashFromPlainText() {
 		String passhash = DashboardUtils.passhashFromPlainText("username", "password");
@@ -107,6 +106,7 @@ public class DashboardUtilsTest {
 		passhash = DashboardUtils.passhashFromPlainText("username", "pass");
 		assertEquals(0, passhash.length());
 	}
+	 */
 
 	/**
 	 * Test method for {@link gov.noaa.pmel.dashboard.shared.DashboardUtils#decodeByteArray(java.lang.String)}.

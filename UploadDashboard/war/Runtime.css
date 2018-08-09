@@ -44,6 +44,10 @@
 	margin-bottom: 50px;
 	padding-bottom: 10px;
 }
+.missingInfoItem {
+    border-width: 2px;
+	border-color: red;
+}
 .popupPreviewImage {
 	width: 99%;
 	border: 1px solid #ccc;

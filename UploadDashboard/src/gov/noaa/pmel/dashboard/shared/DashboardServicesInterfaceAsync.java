@@ -278,6 +278,8 @@ public interface DashboardServicesInterfaceAsync {
 
 	void getMetadataPreviewInfo(String username, String datasetId, AsyncCallback<MetadataPreviewInfo> callback);
 	
+    void sendMetadataInfo(String username, String datasetId, AsyncCallback<String> callback);
+    
 	/**
 	 * Client side request to generate the preview images for a dataset.
 	 * 

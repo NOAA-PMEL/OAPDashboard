@@ -11,7 +11,7 @@ import java.util.Properties;
 
 import org.junit.Test;
 
-import gov.noaa.pmel.dashboard.actions.DatasetChecker;
+import gov.noaa.pmel.dashboard.actions.checker.ProfileDatasetChecker;
 import gov.noaa.pmel.dashboard.datatype.DoubleDashDataType;
 import gov.noaa.pmel.dashboard.datatype.KnownDataTypes;
 import gov.noaa.pmel.dashboard.dsg.StdUserDataArray;
@@ -26,7 +26,7 @@ import gov.noaa.pmel.dashboard.shared.QCFlag;
 import gov.noaa.pmel.dashboard.test.dsg.DsgNcFileTest;
 
 /**
- * Test of the methods in {@link gov.noaa.pmel.dashboard.actions.DatasetChecker}
+ * Test of the methods in {@link gov.noaa.pmel.dashboard.actions.checker.ProfileDatasetChecker}
  * 
  * @author Karl Smith
  */
@@ -73,9 +73,9 @@ public class DatasetCheckerTest {
 	}
 
 	/**
-	 * Test of {@link gov.noaa.pmel.dashboard.actions.DatasetChecker#DatasetChecker(
+	 * Test of {@link gov.noaa.pmel.dashboard.actions.checker.ProfileDatasetChecker#DatasetChecker(
 	 * gov.noaa.pmel.dashboard.datatype.KnownDataTypes, gov.noaa.pmel.dashboard.handlers.CheckerMessageHandler)
-	 * and {@link gov.noaa.pmel.dashboard.actions.DatasetChecker#standardizeDataset(
+	 * and {@link gov.noaa.pmel.dashboard.actions.checker.ProfileDatasetChecker#standardizeDataset(
 	 * gov.noaa.pmel.dashboard.shared.DashboardDatasetData, gov.noaa.pmel.dashboard.dsg.DsgMetadata)
 	 */
 	@Test
@@ -216,7 +216,7 @@ public class DatasetCheckerTest {
 		CheckerMessageHandler msgHandler = confStore.getCheckerMsgHandler();
 		KnownDataTypes knownUserTypes = confStore.getKnownUserDataTypes();
 		knownUserTypes.addTypesFromProperties(ADDN_TYPE_PROPS);
-		DatasetChecker dataChecker = new DatasetChecker(knownUserTypes, msgHandler);
+		ProfileDatasetChecker dataChecker = new ProfileDatasetChecker(knownUserTypes, msgHandler);
 
 		// TODO: need to add metadata to check
 		DashboardDatasetData dataset = new DashboardDatasetData();

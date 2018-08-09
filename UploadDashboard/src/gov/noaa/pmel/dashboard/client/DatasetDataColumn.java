@@ -5,6 +5,8 @@ package gov.noaa.pmel.dashboard.client;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 import com.google.gwt.cell.client.Cell;
 import com.google.gwt.cell.client.CompositeCell;
@@ -13,6 +15,9 @@ import com.google.gwt.cell.client.HasCell;
 import com.google.gwt.cell.client.SelectionCell;
 import com.google.gwt.cell.client.TextCell;
 import com.google.gwt.cell.client.TextInputCell;
+import com.google.gwt.cell.client.ValueUpdater;
+import com.google.gwt.dom.client.Element;
+import com.google.gwt.logging.client.ConsoleLogHandler;
 import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
 import com.google.gwt.user.cellview.client.Header;
 
@@ -43,6 +48,8 @@ public class DatasetDataColumn {
 	private Header<DatasetDataColumn> columnHeader;
 	// Flag that something in the column header has hasChanged
 	private boolean hasChanged;
+
+    private static Logger logger = Logger.getLogger("DatasetDataColumn");
 
 	/**
 	 * Specifies a data column of a DashboardDataset.
@@ -78,6 +85,9 @@ public class DatasetDataColumn {
 		this.columnIndex = columnIndex;
 		this.columnHeader = createHeader(columnIndex+1);
 		this.hasChanged = false;
+        
+        logger.addHandler(new ConsoleLogHandler());
+        logger.setLevel(Level.ALL);
 	}
 
 	/**
@@ -139,6 +149,13 @@ public class DatasetDataColumn {
 						super.render(context, value, sb);
 						sb.appendHtmlConstant("<br />");
 					}
+//                    @Override
+//                    protected void finishEditing(Element parent,
+//                                                 String value,
+//                                                 java.lang.Object key,
+//                                                 ValueUpdater<String> valueUpdater) {
+//                        logger.fine(ID + " finished with " + value);
+//                    }
 				};
 			}
 			@Override

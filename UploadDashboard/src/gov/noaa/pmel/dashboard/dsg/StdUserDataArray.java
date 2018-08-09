@@ -3,6 +3,7 @@
  */
 package gov.noaa.pmel.dashboard.dsg;
 
+import java.lang.reflect.Array;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
@@ -53,15 +54,15 @@ public class StdUserDataArray extends StdDataArray {
 	private ArrayList<ADCMessage> stdMsgList;
 	int woceAutocheckIndex;
 	
-	public StdUserDataArray(StdUserDataArray other, KnownDataTypes knownTypes) {
-		super(other, knownTypes);
-		userUnits = other.userUnits;
-		userMissVals = other.userMissVals;
-		userColNames = other.userColNames;
-		stdMsgList = other.stdMsgList;
-		standardized = other.standardized;
-		datasetId = other.datasetId;
-	}
+//	public StdUserDataArray(StdUserDataArray other, KnownDataTypes knownTypes) {
+//		super(other, knownTypes);
+//		userUnits = other.userUnits;
+//		userMissVals = other.userMissVals;
+//		userColNames = other.userColNames;
+//		stdMsgList = other.stdMsgList;
+//		standardized = other.standardized;
+//		datasetId = other.datasetId;
+//	}
 	
 	/**
 	 * Create from the user's data column descriptions, data strings,  
@@ -247,7 +248,7 @@ public class StdUserDataArray extends StdDataArray {
 	}
 
 	/**
-	 * Check for missing longitude, latitude, sample depth, and time columns 
+	 * Check for missing longitude, latitude, depth, and time columns 
 	 * or data values.  Any problems found generate messages that are added 
 	 * to the internal list of messages.
 	 * 
@@ -256,7 +257,7 @@ public class StdUserDataArray extends StdDataArray {
 	 * 		specification of sample time, or may contain null values if there 
 	 * 		were problems computing the sample time
 	 */
-	public boolean checkMissingLonLatDepthTime() {
+	public boolean checkMissingLonLatTime() {
 		boolean isOk = true;
 		try {
 			Double[] longitudes = getSampleLongitudes();
@@ -310,37 +311,37 @@ public class StdUserDataArray extends StdDataArray {
 			stdMsgList.add(msg);
 		}
 
-	    DashDataType<?> pressureColumn = findDataColumn("water_pressure");
-	    DashDataType<?> depthColumn = findDataColumn("sample_depth");
-	    if ( depthColumn != null ) {
-			try {
-				Double[] depths = getSampleDepths();
-				for (int rowIdx = 0; rowIdx < numSamples; rowIdx++) {
-					if ( depths[rowIdx] == null ) {
-						isOk = pressureColumn != null;
-						ADCMessage msg = new ADCMessage();
-						msg.setSeverity(pressureColumn == null ? Severity.ERROR : Severity.WARNING);
-						msg.setRowIndex(rowIdx);
-						msg.setColIndex(sampleDepthIndex);
-						msg.setColName(userColNames[sampleDepthIndex]);
-						String comment = "missing sample depth";
-						msg.setGeneralComment(comment);
-						msg.setDetailedComment(comment);
-						stdMsgList.add(msg);
-					}
-				}
-			} catch ( Exception ex ) {
-			    ex.printStackTrace();
-			}
-		} else if ( pressureColumn == null ) {
-			isOk = false;
-			ADCMessage msg = new ADCMessage();
-			msg.setSeverity(Severity.CRITICAL);
-			String comment = "no sample depth column";
-			msg.setGeneralComment(comment);
-			msg.setDetailedComment(comment);
-			stdMsgList.add(msg);
-		}
+//	    DashDataType<?> pressureColumn = findDataColumn("water_pressure");
+//	    DashDataType<?> depthColumn = findDataColumn("sample_depth");
+//	    if ( depthColumn != null ) {
+//			try {
+//				Double[] depths = getSampleDepths();
+//				for (int rowIdx = 0; rowIdx < numSamples; rowIdx++) {
+//					if ( depths[rowIdx] == null ) {
+//						isOk = pressureColumn != null;
+//						ADCMessage msg = new ADCMessage();
+//						msg.setSeverity(pressureColumn == null ? Severity.ERROR : Severity.WARNING);
+//						msg.setRowIndex(rowIdx);
+//						msg.setColIndex(sampleDepthIndex);
+//						msg.setColName(userColNames[sampleDepthIndex]);
+//						String comment = "missing sample depth";
+//						msg.setGeneralComment(comment);
+//						msg.setDetailedComment(comment);
+//						stdMsgList.add(msg);
+//					}
+//				}
+//			} catch ( Exception ex ) {
+//			    ex.printStackTrace();
+//			}
+//		} else if ( pressureColumn == null ) {
+//			isOk = false;
+//			ADCMessage msg = new ADCMessage();
+//			msg.setSeverity(Severity.CRITICAL);
+//			String comment = "no sample depth column";
+//			msg.setGeneralComment(comment);
+//			msg.setDetailedComment(comment);
+//			stdMsgList.add(msg);
+//		}
 
 		Double[] times = null;
 		try {
@@ -592,6 +593,17 @@ public class StdUserDataArray extends StdDataArray {
 		return values;
 	}
 
+//    public Object getStdValuesForType(DashDataType<?> type) throws Exception {
+////        String typeName = "java.lang." + type.getDataClassName();
+////        Class<?> dataType = Class.forName(typeName);
+////        Object[] values = (Object[])Array.newInstance(dataType, numSamples);
+//        Object[] stdValues = getStdValues(type.getStandardName());
+////        for (int i = 0; i < numSamples; i++ ) {
+////            values[i] = type.dataValueOf((String)stdValues[i]);
+////        }
+////        return values;
+//        return type.standardValues(stdValues);
+//    }
 	public Object[] getStdValuesForUserType(String userTypeColumnName)  
 			throws NoSuchFieldException, IllegalArgumentException, IllegalStateException {
 		if ( (userTypeColumnName == null) || "".equals(userTypeColumnName.trim()))
@@ -852,65 +864,106 @@ public class StdUserDataArray extends StdDataArray {
 //		return code;
 //	}
 
-	public boolean hasRequiredColumns() {
-		boolean gotem = true;
-		if ( ! hasDate()) {
-			gotem = false;
-			ADCMessage msg = new ADCMessage();
-			msg.setSeverity(Severity.CRITICAL);
-			msg.setGeneralComment("missing column");
-			msg.setDetailedComment("The dataset does not identify the sample Date.");
-			addStandardizationMessage(msg);
-		}
-		if ( ! hasTime()) {
-			gotem = false;
-			ADCMessage msg = new ADCMessage();
-			msg.setSeverity(Severity.CRITICAL);
-			msg.setGeneralComment("missing column");
-			msg.setDetailedComment("The dataset does not identify the sample Time.");
-			addStandardizationMessage(msg);
-		}
-		if ( ! hasDataColumn(DashboardServerUtils.LATITUDE.getStandardName())) {
-			gotem = false;
-			ADCMessage msg = new ADCMessage();
-			msg.setSeverity(Severity.CRITICAL);
-			msg.setGeneralComment("missing column");
-			msg.setDetailedComment("The dataset does not identify the cast Latitude.");
-			addStandardizationMessage(msg);
-		}
-		if ( ! hasDataColumn(DashboardServerUtils.LONGITUDE.getStandardName())) {
-			gotem = false;
-			ADCMessage msg = new ADCMessage();
-			msg.setSeverity(Severity.CRITICAL);
-			msg.setGeneralComment("missing column");
-			msg.setDetailedComment("The dataset does not identify the cast Longitude.");
-			addStandardizationMessage(msg);
-		}
-		if ( ! ( hasDataColumn(DashboardServerUtils.SAMPLE_DEPTH.getStandardName()) || 
-				 hasDataColumn("water_pressure"))) {
-			gotem = false;
-			ADCMessage msg = new ADCMessage();
-			msg.setSeverity(Severity.CRITICAL);
-			msg.setGeneralComment("missing column");
-			msg.setDetailedComment("The dataset does not identify either the sample Depth or Pressure.");
-			addStandardizationMessage(msg);
-		}
-//		if ( ! ( hasDataColumn(DashboardServerUtils.EXPO_CODE.getStandardName()) || 
-//				 hasDataColumn(DashboardServerUtils.PLATFORM_CODE.getStandardName()))) {
+//	public boolean hasRequiredColumns() {
+//		boolean gotem = true;
+//		if ( ! hasDate()) {
 //			gotem = false;
 //			ADCMessage msg = new ADCMessage();
 //			msg.setSeverity(Severity.CRITICAL);
 //			msg.setGeneralComment("missing column");
-//			msg.setDetailedComment("The dataset must identify either the Platform Code or the Cruise Expocode.");
+//			msg.setDetailedComment("The dataset does not identify the sample Date.");
 //			addStandardizationMessage(msg);
 //		}
-		
-		return gotem;
-	}
+//		if ( ! hasTime()) {
+//			gotem = false;
+//			ADCMessage msg = new ADCMessage();
+//			msg.setSeverity(Severity.CRITICAL);
+//			msg.setGeneralComment("missing column");
+//			msg.setDetailedComment("The dataset does not identify the sample Time.");
+//			addStandardizationMessage(msg);
+//		}
+//		if ( ! hasDataColumn(DashboardServerUtils.LATITUDE.getStandardName())) {
+//			gotem = false;
+//			ADCMessage msg = new ADCMessage();
+//			msg.setSeverity(Severity.CRITICAL);
+//			msg.setGeneralComment("missing column");
+//			msg.setDetailedComment("The dataset does not identify the cast Latitude.");
+//			addStandardizationMessage(msg);
+//		}
+//		if ( ! hasDataColumn(DashboardServerUtils.LONGITUDE.getStandardName())) {
+//			gotem = false;
+//			ADCMessage msg = new ADCMessage();
+//			msg.setSeverity(Severity.CRITICAL);
+//			msg.setGeneralComment("missing column");
+//			msg.setDetailedComment("The dataset does not identify the cast Longitude.");
+//			addStandardizationMessage(msg);
+//		}
+//		if ( ! ( hasDataColumn(DashboardServerUtils.SAMPLE_DEPTH.getStandardName()) || 
+//				 hasDataColumn("water_pressure"))) {
+//			gotem = false;
+//			ADCMessage msg = new ADCMessage();
+//			msg.setSeverity(Severity.CRITICAL);
+//			msg.setGeneralComment("missing column");
+//			msg.setDetailedComment("The dataset does not identify either the sample Depth or Pressure.");
+//			addStandardizationMessage(msg);
+//		}
+////		if ( ! ( hasDataColumn(DashboardServerUtils.EXPO_CODE.getStandardName()) || 
+////				 hasDataColumn(DashboardServerUtils.PLATFORM_CODE.getStandardName()))) {
+////			gotem = false;
+////			ADCMessage msg = new ADCMessage();
+////			msg.setSeverity(Severity.CRITICAL);
+////			msg.setGeneralComment("missing column");
+////			msg.setDetailedComment("The dataset must identify either the Platform Code or the Cruise Expocode.");
+////			addStandardizationMessage(msg);
+////		}
+//		
+//		return gotem;
+//	}
 
     public int getOriginalRowIndex(int rowIdx) {
         int sampleNo = ((Integer)getStdVal(rowIdx, numDataCols-2)).intValue();
         return sampleNo -1;
+    }
+
+    /**
+     * @param dataType
+     * @return
+     */
+    public boolean checkForMissingValues(DashDataType dataType) {
+        if ( ! hasDataColumn(dataType.getStandardName())) {
+            return false;
+        }
+        boolean isOk = true;
+		try {
+            int columnIdx = findDataColumnIndex(dataType.getStandardName());
+            String userColName = userColNames[columnIdx];
+			Object[] values = getStdValues(columnIdx);
+			for (int rowIdx = 0; rowIdx < numSamples; rowIdx++) {
+                Object value = values[rowIdx];
+				if ( value == null ||
+                     value.equals(dataType.missingValue())) {
+					isOk = false;
+					ADCMessage msg = new ADCMessage();
+					msg.setSeverity(Severity.CRITICAL);
+					msg.setRowIndex(rowIdx);
+					msg.setColIndex(columnIdx);
+					msg.setColName(userColName);
+					String comment = "missing value for " + userColName;
+					msg.setGeneralComment(comment);
+					msg.setDetailedComment(comment);
+					stdMsgList.add(msg);
+				}
+			}
+		} catch ( Exception ex ) {
+			isOk = false;
+			ADCMessage msg = new ADCMessage();
+			msg.setSeverity(Severity.CRITICAL);
+			String comment = "no column found for " + dataType.getVarName();
+			msg.setGeneralComment(comment);
+			msg.setDetailedComment(comment);
+			stdMsgList.add(msg);
+		}
+        return isOk;
     }
 	
 }

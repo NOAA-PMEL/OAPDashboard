@@ -24,9 +24,9 @@ public class DatabaseRequestHandler {
 	private static final String REVIEWERS_TABLE_NAME = "Reviewers";
 
 	private static String MYSQL_QUOTE = "`";
-	private static String PGSQL_QUOTE = "\"";
+	private static String PGSQL_QUOTE = ""; //  "\"";
 	
-	private String DB_QUOTE = PGSQL_QUOTE;
+	private String DB_QUOTE = PGSQL_QUOTE; // set/confirmed in constructor
 	
 	private static final String SQL_DRIVER_TAG = "sqldriver";
 	private static final String DATABASE_URL_TAG = "databaseurl";
@@ -217,25 +217,19 @@ public class DatabaseRequestHandler {
 	 */
 	public String getReviewerRealname(String username) throws SQLException {
 		String realname = null;
-		Connection catConn = makeConnection(false);
-		try {
+		try ( Connection catConn = makeConnection(false); ) {
 			PreparedStatement prepStmt = 
 				catConn.prepareStatement("SELECT "+DB_QUOTE+"realname"+DB_QUOTE+
 			                             " FROM "+DB_QUOTE+"" + REVIEWERS_TABLE_NAME + ""+DB_QUOTE+
 			                             " WHERE "+DB_QUOTE+"username"+DB_QUOTE+" = ?;");
 			prepStmt.setString(1, username);
-			ResultSet results = prepStmt.executeQuery();
-			try {
+			try ( ResultSet results = prepStmt.executeQuery(); ) {
 				while ( results.next() ) {
 					if ( realname != null ) 
 						throw new SQLException("More than one realname for " + username);
 					realname = results.getString(1);
 				}
-			} finally {
-				results.close();
 			}
-		} finally {
-			catConn.close();
 		}
 		return realname;
 	}

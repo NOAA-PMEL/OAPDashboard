@@ -19,7 +19,7 @@ import org.apache.tomcat.util.http.fileupload.FileItem;
  * @author kamb
  *
  */
-public class RawUploadFileHandler extends VersionedFileHandler {
+public class RawUploadFileHandler /* extends VersionedFileHandler */ {
 
 	/**
 	 * @param filesDirName
@@ -27,8 +27,10 @@ public class RawUploadFileHandler extends VersionedFileHandler {
 	 * @param svnPassword
 	 * @throws IllegalArgumentException
 	 */
+    private File filesDir;
 	public RawUploadFileHandler(String filesDirName, String svnUsername, String svnPassword) throws IllegalArgumentException {
-		super(filesDirName, svnUsername, svnPassword);
+//		super(filesDirName, svnUsername, svnPassword);
+        filesDir = new File(filesDirName);
 	}
 
 	public File createUploadTargetDir(String username) {
@@ -64,7 +66,7 @@ public class RawUploadFileHandler extends VersionedFileHandler {
 		return targetFile;
 	}
 
-	public void writeItem(FileItem item, File targetDir) throws Exception {
+	public static void writeItem(FileItem item, File targetDir) throws Exception {
 		if ( ! targetDir.exists()) {
 			if ( ! targetDir.mkdirs()) {
 				throw new IllegalStateException("Unable to create target directory " + targetDir.getAbsolutePath());
@@ -72,7 +74,7 @@ public class RawUploadFileHandler extends VersionedFileHandler {
 		}
 		File rawFile = getRawFileTarget(targetDir, item);
 		item.write(rawFile);
-		commitVersion(rawFile, "Uploaded raw file.");
+//		commitVersion(rawFile, "Uploaded raw file: " + item.getName());
 	}
 
 }

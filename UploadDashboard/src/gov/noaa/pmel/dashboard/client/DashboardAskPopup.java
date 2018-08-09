@@ -15,6 +15,7 @@ import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.google.gwt.user.client.ui.Button;
 import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.HTML;
+import com.google.gwt.user.client.ui.Image;
 import com.google.gwt.user.client.ui.PopupPanel;
 import com.google.gwt.user.client.ui.Widget;
 
@@ -31,6 +32,7 @@ public class DashboardAskPopup extends Composite {
 	private static DashboardAskPopupUiBinder uiBinder = 
 			GWT.create(DashboardAskPopupUiBinder.class);
 
+    @UiField Image askTypeIcon;
 	@UiField HTML askHtml;
 	@UiField Button yesButton;
 	@UiField Button noButton;
@@ -39,6 +41,24 @@ public class DashboardAskPopup extends Composite {
 	Boolean answer;
 	HandlerRegistration askHandler;
 
+    public static enum QuestionType {
+        PLAIN("images/blank_1px.png"),
+        QUESTION("images/questionMark_64px.png"),
+        WARNING("images/warning_64px.png");
+        
+        private String _iconSrc;
+        
+        private QuestionType(String iconSrc) {
+            this._iconSrc = iconSrc;
+        }
+        String iconSrc() { return _iconSrc; }
+    }
+    
+	public DashboardAskPopup(String yesText, String noText,	
+                			 final AsyncCallback<Boolean> callback) {
+        this(yesText, noText, QuestionType.PLAIN, callback);
+	}
+    
 	/**
 	 * Widget for asking a question in a PopupPanel 
 	 * that is modal and does not auto-hide.
@@ -47,6 +67,8 @@ public class DashboardAskPopup extends Composite {
 	 * 		text for the yes button
 	 * @param noText
 	 * 		text for the no button
+     * @param questionType
+     *      the "class" of question: PLAIN, QUESTION, WARNING, specifies icon
 	 * @param callback
 	 * 		calls the onSuccess method of this callback with the answer: 
 	 * 		true for the yes button, false for the no button, or null if 
@@ -54,8 +76,8 @@ public class DashboardAskPopup extends Composite {
 	 * 		yes or no button.  The onFailure method of this callback is
 	 * 		never called.
 	 */
-	public DashboardAskPopup(String yesText, String noText,	
-			final AsyncCallback<Boolean> callback) {
+	public DashboardAskPopup(String yesText, String noText,	QuestionType questionType,
+                			 final AsyncCallback<Boolean> callback) {
 		initWidget(uiBinder.createAndBindUi(this));
 
 		parentPanel = new PopupPanel(false, true);
@@ -65,6 +87,9 @@ public class DashboardAskPopup extends Composite {
 
 		noButton.setText(noText);
 
+        if ( questionType != null ) {
+            askTypeIcon.setUrl(questionType.iconSrc());
+        }
 		answer = null;
 
 		// Handler to make the callback on window closing 

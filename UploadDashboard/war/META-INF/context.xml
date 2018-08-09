@@ -1,0 +1,80 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Context>
+    <!-- Not necessary.  It's in the server.xml context.
+    <Valve className="org.apache.catalina.valves.AccessLogValve"
+         prefix="localhost_access_log" suffix=".txt"
+         pattern="common"/>
+    -->
+       <Realm className="org.apache.catalina.realm.LockOutRealm">
+        <Realm className="org.apache.catalina.realm.JDBCRealm"
+               driverName="com.mysql.jdbc.Driver"
+               connectionURL="jdbc:mysql://localhost:3306/oapdashboard?user=oapweb&amp;password=webster"
+               userTable="tomcatusers"
+               userRoleTable="tomcatroles"
+               userNameCol="username"
+               userCredCol="password"
+               roleNameCol="userrole" >
+               <CredentialHandler className="org.apache.catalina.realm.NestedCredentialHandler">
+                  <CredentialHandler className="org.apache.catalina.realm.SecretKeyCredentialHandler"
+                          algorithm="PBKDF2WithHmacSHA512"
+                          iterations="100000"
+                          keyLength="256"
+                          saltLength="16"
+                   />
+                  <CredentialHandler className="org.apache.catalina.realm.MessageDigestCredentialHandler" /> 
+               </CredentialHandler>
+           </Realm> 
+         </Realm>
+        <!-- mysql dunkel, matisse pw=twilightparis
+       <Realm className="org.apache.catalina.realm.LockOutRealm">
+        <Realm className="org.apache.catalina.realm.JDBCRealm"
+               driverName="com.mysql.jdbc.Driver"
+               connectionURL="jdbc:mysql://localhost:3306/oapdashboard?user=oapweb&amp;password=webster"
+               userTable="tomcatusers"
+               userRoleTable="tomcatroles"
+               userNameCol="username"
+               userCredCol="password"
+               roleNameCol="userrole" >
+               <CredentialHandler className="org.apache.catalina.realm.NestedCredentialHandler">
+                  <CredentialHandler className="org.apache.catalina.realm.SecretKeyCredentialHandler"
+                          algorithm="PBKDF2WithHmacSHA512"
+                          iterations="100000"
+                          keyLength="256"
+                          saltLength="16"
+                   />
+                  <CredentialHandler className="org.apache.catalina.realm.MessageDigestCredentialHandler" /> 
+               </CredentialHandler>
+           </Realm> 
+         </Realm>
+         -->
+         <!-- postgres
+       <Realm className="org.apache.catalina.realm.LockOutRealm">
+        <Realm className="org.apache.catalina.realm.JDBCRealm"
+               driverName="org.postgresql.Driver"
+               connectionURL="jdbc:postgresql://localhost:5432/oapdashboard?user=oapweb&amp;password=twilightparis"
+               userTable="TomcatUsers"
+               userRoleTable="TomcatRoles"
+               userNameCol="username"
+               userCredCol="password"
+               roleNameCol="userrole" >
+               <CredentialHandler className="org.apache.catalina.realm.NestedCredentialHandler">
+                  <CredentialHandler className="org.apache.catalina.realm.SecretKeyCredentialHandler"
+                          algorithm="PBKDF2WithHmacSHA512"
+                          iterations="100000"
+                          keyLength="256"
+                          saltLength="16"
+                   />
+                  <CredentialHandler className="org.apache.catalina.realm.MessageDigestCredentialHandler" /> 
+               </CredentialHandler>
+           </Realm> 
+         </Realm>
+         I don't know if this is necessary...
+       <ResourceLink global="jdbc/global_postgres" name="jdbc/postgres" type="javax.sql.DataSource"/>
+          -->
+    <!--
+	<Resource name="jdbc/postgres" auth="Application"
+          type="javax.sql.DataSource" driverClassName="org.postgresql.Driver"
+		  url="jdbc:postgresql://localhost:5432/oapdashboard"
+          username="oapweb" password="twilightparis" maxTotal="20" maxIdle="10" maxWaitMillis="-1"/>
+  -->          
+</Context>

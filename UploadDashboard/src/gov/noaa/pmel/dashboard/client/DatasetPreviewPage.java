@@ -17,6 +17,7 @@ import com.google.gwt.event.dom.client.DoubleClickEvent;
 import com.google.gwt.event.dom.client.DoubleClickHandler;
 import com.google.gwt.i18n.client.TimeZone;
 import com.google.gwt.i18n.shared.DateTimeFormat;
+import com.google.gwt.logging.client.ConsoleLogHandler;
 import com.google.gwt.safehtml.shared.SafeHtmlUtils;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
@@ -118,8 +119,8 @@ public class DatasetPreviewPage extends CompositeWithUsername {
 	public DatasetPreviewPage() {
 		initWidget(uiBinder.createAndBindUi(this));
 		
-//		logger.addHandler(new ConsoleLogHandler());
-//		logger.setLevel(Level.ALL);
+		logger.addHandler(new ConsoleLogHandler());
+		logger.setLevel(Level.ALL);
 		
 		singleton = this;
 

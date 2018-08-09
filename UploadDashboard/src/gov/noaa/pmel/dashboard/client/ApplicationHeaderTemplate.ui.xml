@@ -1,0 +1,18 @@
+<!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
+<ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
+             xmlns:g="urn:import:com.google.gwt.user.client.ui" 
+             xmlns:cell="urn:import:com.google.gwt.user.cellview.client">
+
+	<ui:style src="FullWidth.css" />
+    
+            <g:FlowPanel addStyleNames="{style.pageheader}">
+                <g:Image styleName="{style.headerLogo}" url="images/noaa_logo_50x50.gif" />
+                <g:FlowPanel addStyleNames="{style.headerInfo}">
+                    <g:Button addStyleNames="{style.titlelogoutbutton}" ui:field="logoutButton" />
+                    <g:InlineLabel addStyleNames="{style.headeruserlabel}" ui:field="userInfoLabel" />
+                    <g:InlineLabel addStyleNames="{style.headerpagelabel}" ui:field="titleLabel" />
+                    <g:Label addStyleNames="{style.titlereset}" />
+                </g:FlowPanel>
+            </g:FlowPanel>
+        
+</ui:UiBinder>

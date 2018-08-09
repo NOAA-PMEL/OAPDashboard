@@ -26,6 +26,7 @@ import gov.noaa.pmel.dashboard.shared.DashboardDataset;
 import gov.noaa.pmel.dashboard.shared.DashboardDatasetList;
 import gov.noaa.pmel.dashboard.shared.DashboardUtils;
 import gov.noaa.pmel.dashboard.shared.DataColumnType;
+import gov.noaa.pmel.tws.util.StringUtils;
 
 /**
  * Handles storage and retrieval of user data in files.
@@ -153,7 +154,7 @@ public class UserFileHandler extends VersionedFileHandler {
 			BufferedReader idsReader = new BufferedReader(new FileReader(userDataFile));
 			try {
 				String datasetId = idsReader.readLine();
-				while ( datasetId != null ) {
+				while ( ! StringUtils.emptyOrNull(datasetId)) {
 					dataIdsSet.add(datasetId);
 					datasetId = idsReader.readLine();
 				}

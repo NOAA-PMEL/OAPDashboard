@@ -11,6 +11,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.attribute.BasicFileAttributeView;
 import java.nio.file.attribute.BasicFileAttributes;
+import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashSet;
@@ -19,18 +20,41 @@ import java.util.Set;
 import java.util.TreeSet;
 
 import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
 
+import org.apache.commons.compress.archivers.ArchiveException;
+import org.apache.commons.compress.compressors.CompressorException;
+import org.apache.http.HttpEntity;
+import org.apache.http.HttpResponse;
+import org.apache.http.StatusLine;
+import org.apache.http.client.HttpClient;
+import org.apache.http.client.methods.HttpPost;
+import org.apache.http.entity.ContentType;
+import org.apache.http.entity.mime.MultipartEntityBuilder;
+import org.apache.http.entity.mime.content.FileBody;
+import org.apache.http.entity.mime.content.StringBody;
+import org.apache.http.impl.client.HttpClients;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import com.google.gwt.user.server.rpc.RemoteServiceServlet;
 
+import gov.loc.repository.bagit.exceptions.CorruptChecksumException;
+import gov.loc.repository.bagit.exceptions.FileNotInPayloadDirectoryException;
+import gov.loc.repository.bagit.exceptions.InvalidBagitFileFormatException;
+import gov.loc.repository.bagit.exceptions.MaliciousPathException;
+import gov.loc.repository.bagit.exceptions.MissingBagitFileException;
+import gov.loc.repository.bagit.exceptions.MissingPayloadDirectoryException;
+import gov.loc.repository.bagit.exceptions.MissingPayloadManifestException;
+import gov.loc.repository.bagit.exceptions.UnsupportedAlgorithmException;
+import gov.loc.repository.bagit.exceptions.VerificationException;
 import gov.noaa.pmel.dashboard.actions.DatasetChecker;
 import gov.noaa.pmel.dashboard.actions.DatasetModifier;
 import gov.noaa.pmel.dashboard.datatype.DashDataType;
 import gov.noaa.pmel.dashboard.datatype.KnownDataTypes;
 import gov.noaa.pmel.dashboard.dsg.StdUserDataArray;
+import gov.noaa.pmel.dashboard.handlers.Bagger;
 import gov.noaa.pmel.dashboard.handlers.DataFileHandler;
 import gov.noaa.pmel.dashboard.handlers.MetadataFileHandler;
 import gov.noaa.pmel.dashboard.handlers.PreviewPlotsHandler;
@@ -49,6 +73,7 @@ import gov.noaa.pmel.dashboard.shared.MetadataPreviewInfo;
 import gov.noaa.pmel.dashboard.shared.NotFoundException;
 import gov.noaa.pmel.dashboard.shared.PreviewPlotImage;
 import gov.noaa.pmel.dashboard.shared.PreviewPlotResponse;
+import gov.noaa.pmel.dashboard.shared.SessionException;
 import gov.noaa.pmel.dashboard.shared.ADCMessageList;
 import gov.noaa.pmel.dashboard.shared.TypesDatasetDataPair;
 import gov.noaa.pmel.dashboard.util.xml.XmlUtils;
@@ -118,17 +143,20 @@ public class DashboardServices extends RemoteServiceServlet implements Dashboard
 		if ( (pageUsername != null) && ! pageUsername.equals(username) )
 			return false;
 
+        // Really ?
 		configStore = null;
 		try {
 			configStore = DashboardConfigStore.get(true);
 		} catch (Exception ex) {
 			throw new IllegalArgumentException("Unexpected configuration error: " + ex.getMessage());
 		}
-		return configStore.validateUser(username);
+        // XXX TODO: No longer using ConfigStore to validate Users.
+//		return configStore.validateUser(username);
+        return true;
 	}
 
 	@Override
-	public DashboardDatasetList getDatasetList() throws IllegalArgumentException {
+	public DashboardDatasetList getDatasetList() throws IllegalArgumentException, SessionException {
 		// Get the dashboard data store and current username
 		if ( ! validateRequest(null) ) 
 			throw new IllegalArgumentException("Invalid user request");
@@ -433,7 +461,8 @@ public class DashboardServices extends RemoteServiceServlet implements Dashboard
 
 		// Run the automated data checker with the updated data types.
 		// Assigns the data check status and the WOCE-3 and WOCE-4 flags.
-		StdUserDataArray stdArray = configStore.getDashboardDatasetChecker().standardizeDataset(dataset, null);
+		DatasetChecker checker = configStore.getDashboardDatasetChecker(dataset.getFeatureType());
+		StdUserDataArray stdArray = checker.standardizeDataset(dataset, null);
 
 		// Save and commit the updated data columns
 		configStore.getDataFileHandler().saveDatasetInfoToFile(dataset, 
@@ -489,7 +518,6 @@ public class DashboardServices extends RemoteServiceServlet implements Dashboard
 
 		DataFileHandler dataHandler = configStore.getDataFileHandler();
 		UserFileHandler userHandler = configStore.getUserFileHandler();
-		DatasetChecker datasetChecker = configStore.getDashboardDatasetChecker();
 		Logger dataSpecsLogger = logger;
 
 		for ( String datasetId : idsList ) {
@@ -499,6 +527,7 @@ public class DashboardServices extends RemoteServiceServlet implements Dashboard
 				throw new IllegalArgumentException("Dataset " + datasetId + 
 						" has been submitted for QC; data column types cannot be modified.");
 
+    		DatasetChecker datasetChecker = configStore.getDashboardDatasetChecker(dataset.getFeatureType());
 			try {
 				// Identify the columns from stored names-to-types for this user
 				userHandler.assignDataColumnTypes(dataset);
@@ -607,6 +636,72 @@ public class DashboardServices extends RemoteServiceServlet implements Dashboard
 	}
 
 	@Override
+	public String sendMetadataInfo(String pageUsername, String datasetId)
+		throws NotFoundException, IllegalArgumentException {
+        String docId = null;
+        try {
+			File mdFile = OADSMetadata.getMetadataFile(datasetId);
+			if ( !mdFile.exists()) {
+				mdFile = OADSMetadata.getExtractedMetadataFile(datasetId);
+			} 
+			if ( !mdFile.exists()) {
+                mdFile = OADSMetadata.createEmptyOADSMetadataFile(datasetId);
+			}
+            // XXX HttpClient and stuff coming (currently) from netcdfAll jar 
+            @SuppressWarnings("resource")
+            HttpClient client = HttpClients.createDefault();
+            String metadataEditorPostEndpoint = getMetadataPostPoint(datasetId);
+            HttpPost post = new HttpPost(metadataEditorPostEndpoint);
+            FileBody body = new FileBody(mdFile, ContentType.APPLICATION_XML);
+            MultipartEntityBuilder builder = MultipartEntityBuilder.create();
+            builder.addPart("xmlFile", body);
+            String notifyUrl = getNotificationUrl(getThreadLocalRequest().getRequestURL().toString(), datasetId);
+            StringBody notificationUrl = new StringBody(notifyUrl, ContentType.MULTIPART_FORM_DATA);
+            builder.addPart("notificationUrl", notificationUrl);
+            HttpEntity postit = builder.build();
+            post.setEntity(postit);
+            HttpResponse response = client.execute(post);
+            HttpEntity responseEntity = response.getEntity();
+            byte[] bbuf = new byte[4096];
+            int read = responseEntity.getContent().read(bbuf);
+            StatusLine statLine = response.getStatusLine();
+            int responseStatus = statLine.getStatusCode();
+            if ( responseStatus != HttpServletResponse.SC_OK ) {
+                String msg = new String(bbuf);
+                throw new IllegalArgumentException(msg);
+            }
+            docId = new String(bbuf);
+            return getMetadataEditorPage(docId);
+        } catch (Exception ex) {
+            ex.printStackTrace();
+            throw new RuntimeException(ex);
+        }
+	}
+    
+    // request URL is in the form: http://matisse:8080/OAPUploadDashboard/OAPUploadDashboard/DashboardServices
+    private static String getNotificationUrl(String requestUrl, String datasetId) {
+        String notifyUrl = requestUrl.substring(0, requestUrl.lastIndexOf("OAPUploadDashboard"));
+        notifyUrl = notifyUrl + "DashboardUpdateService/notify/"+datasetId;
+        return notifyUrl;
+    }
+
+    private String getMetadataEditorPage(String docId) throws IOException {
+		HttpServletRequest request = getThreadLocalRequest();
+        String server = request.getServerName();
+        String url = DashboardConfigStore.get().getProperty(DashboardConfigStore.METADATA_EDITOR_URL+"."+server);
+        return url + "?id="+docId;
+    }
+    
+    private String getMetadataPostPoint(String datasetId) throws IOException {
+        // "http://matisse:8383/oap/document/postit/<datasetId>";
+		HttpServletRequest request = getThreadLocalRequest();
+        String server = request.getServerName();
+        String url = DashboardConfigStore.get().getProperty(DashboardConfigStore.METADATA_EDITOR_POST_ENDPOINT+"."+server);
+        String slash = url.endsWith("/") ? "" : "/";
+        return url + slash + datasetId;
+    }
+
+    @Override
 	public PreviewPlotResponse buildPreviewImages(String pageUsername, String datasetId, 
 												  String timetag, boolean force) throws IllegalArgumentException {
 		// Get the dashboard data store and current username, and validate that username
@@ -676,20 +771,20 @@ public class DashboardServices extends RemoteServiceServlet implements Dashboard
 	@Override
 	public void submitDatasetsToArchive(String pageUsername, List<String> datasetIds, List<String> columnsList, 
 	                                    String archiveStatus, String timestamp, boolean repeatSend) 
-	         throws IllegalArgumentException {
-		// Get the dashboard data store and current username, and validate that username
-		if ( ! validateRequest(pageUsername) ) 
-			throw new IllegalArgumentException("Invalid user request");
-
-		logger.info("archiving datasets " + datasetIds.toString() + 
-				" submitted by " + username);
-		
-		// Submit the datasets to Archive
-		configStore.getDashboardDatasetSubmitter().archiveDatasets(datasetIds, columnsList,
-																	archiveStatus, timestamp, 
-																	repeatSend, username);
-	}
-
+        throws IllegalArgumentException {
+    	// Get the dashboard data store and current username, and validate that username
+    	if ( ! validateRequest(pageUsername) ) 
+    		throw new IllegalArgumentException("Invalid user request");
+    
+    	logger.info("archiving datasets " + datasetIds.toString() + 
+    			" submitted by " + username);
+    	
+    	// Submit the datasets to Archive
+    	configStore.getDashboardDatasetSubmitter().archiveDatasets(datasetIds, columnsList,
+    															   archiveStatus, timestamp, 
+    															   repeatSend, username);
+    }
+	
 	@Override
 	public void suspendDatasets(String pageUsername, Set<String> idsSet, String timestamp) throws IllegalArgumentException {
 		logger.debug("Suspending dataset ids " + idsSet);

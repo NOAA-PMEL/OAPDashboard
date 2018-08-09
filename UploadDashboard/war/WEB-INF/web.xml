@@ -55,63 +55,71 @@
 		<url-pattern>/DashboardUpdateService/EditFlags/*</url-pattern>
 	</servlet-mapping>
 
-<!-- Not currently necessary, as we are using container-managed auth.
-  -->
-	<filter>
-		<filter-name>LoginVerifier1</filter-name>
-		<filter-class>gov.noaa.pmel.dashboard.server.LoginVerifier</filter-class>
-        <init-param>
-            <param-name>name</param-name>
-            <param-value>one</param-value>
-        </init-param>
-	</filter>
-	<filter-mapping>
-		<filter-name>LoginVerifier1</filter-name>
-		<url-pattern>/*</url-pattern>
-	</filter-mapping>
-    <filter>
-		<filter-name>LoginVerifier2</filter-name>
-		<filter-class>gov.noaa.pmel.dashboard.server.LoginVerifier</filter-class>
-        <init-param>
-            <param-name>name</param-name>
-            <param-value>two</param-value>
-        </init-param>
-	</filter>
-	<filter-mapping>
-		<filter-name>LoginVerifier2</filter-name>
-		<url-pattern>/*</url-pattern>
-	</filter-mapping>
+	<servlet>
+		<servlet-name>NotificationServlet</servlet-name>
+		<servlet-class>gov.noaa.pmel.dashboard.server.NotificationService</servlet-class>
+	</servlet>
+	<servlet-mapping>
+		<servlet-name>NotificationServlet</servlet-name>
+		<url-pattern>/DashboardUpdateService/notify/*</url-pattern>
+	</servlet-mapping>
+
 	<security-constraint>
 		<web-resource-collection>
 			<web-resource-name>DashboardServices</web-resource-name>
 			<url-pattern>/DashboardUpdateService/*</url-pattern>
+			<url-pattern>/images/*</url-pattern>
 			<http-method>GET</http-method>
 			<http-method>POST</http-method>
 		</web-resource-collection>
 	</security-constraint>
 	
-    <!--
 	<security-constraint>
 		<web-resource-collection>
 			<web-resource-name>OAP Dashboard</web-resource-name>
 			<url-pattern>/*</url-pattern>
+            <!--
 			<http-method>DELETE</http-method>
 			<http-method>GET</http-method>
 			<http-method>POST</http-method>
 			<http-method>PUT</http-method>
+              -->
 		</web-resource-collection>
 		<auth-constraint>
 			<role-name>oapdashboarduser</role-name>
 		</auth-constraint>
-          -->
-		<!--
-		<user-data-constraint>
-			<transport-guarantee>CONFIDENTIAL</transport-guarantee>
-		</user-data-constraint>
 	</security-constraint>
-		  -->
+            <!--
+			<url-pattern>/DashboardServices/*</url-pattern>
+             --> 
 
 <!--
+<security-constraint>
+	<display-name>excluded</display-name>
+	<web-resource-collection>
+		<web-resource-name>No Access</web-resource-name>
+		<url-pattern>/excluded/*</url-pattern>
+		<url-pattern>/restricted/employee/excluded/*</url-pattern>
+		<url-pattern>/restricted/partners/excluded/*</url-pattern>
+	</web-resource-collection>
+	<web-resource-collection>
+		<web-resource-name>No Access</web-resource-name>
+		<url-pattern>/restricted/*</url-pattern>
+		<http-method>DELETE</http-method>
+		<http-method>PUT</http-method>
+		<http-method>HEAD</http-method>
+		<http-method>OPTIONS</http-method>
+		<http-method>TRACE</http-method>
+		<http-method>GET</http-method>
+		<http-method>POST</http-method>
+	</web-resource-collection>
+	<auth-constraint />
+	<user-data-constraint>
+		<transport-guarantee>NONE</transport-guarantee>
+	</user-data-constraint>
+</security-constraint>
+  -X->
+  -->
 	<login-config>
 		<auth-method>FORM</auth-method>
 		<realm-name>oapdashboarduser</realm-name>
@@ -125,7 +133,6 @@
 		<description>OAP Dashboard User</description>
 		<role-name>oapdashboarduser</role-name>
 	</security-role>
-  -->
 	<!-- Default page to serve -->
 	<welcome-file-list>
 		<welcome-file>OAPUploadDashboard.html</welcome-file>

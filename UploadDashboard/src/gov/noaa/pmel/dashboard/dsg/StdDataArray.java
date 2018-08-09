@@ -1074,5 +1074,4 @@ public class StdDataArray {
 		repr += "\n]";
 		return repr;
 	}
-
 }

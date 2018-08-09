@@ -23,6 +23,8 @@ import java.util.regex.PatternSyntaxException;
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVParser;
 import org.apache.commons.csv.CSVRecord;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.tmatesoft.svn.core.SVNException;
 
 import gov.noaa.pmel.dashboard.datatype.DashDataType;
@@ -51,6 +53,7 @@ public class DataFileHandler extends VersionedFileHandler {
 	private static final String COMMA = ",";
 	private static final String TAB = "\t";
 	private static final String DATA_OWNER_ID = "dataowner";
+	private static final String FEATURE_TYPE_ID = "featuretype";
 	private static final String VERSION_ID = "version";
 	private static final String UPLOAD_FILENAME_ID = "uploadfilename";
 	private static final String UPLOAD_TIMESTAMP_ID = "uploadtimestamp";
@@ -75,6 +78,8 @@ public class DataFileHandler extends VersionedFileHandler {
 
 	private KnownDataTypes userTypes;
 
+    private static Logger logger = LogManager.getLogger(DataFileHandler.class);
+    
 	/**
 	 * Handles storage and retrieval of dataset data in files 
 	 * under the given data files directory.
@@ -109,7 +114,11 @@ public class DataFileHandler extends VersionedFileHandler {
 		// Check and standardize the dataset ID
 		String upperExpo = DashboardServerUtils.checkDatasetID(datasetId);
 		// Create the file with the full path name of the properties file
-		File parentDir = new File(filesDir, upperExpo.substring(0,4));
+		File grandparentDir = new File(filesDir, upperExpo.substring(0,4));
+		File parentDir = new File(grandparentDir, upperExpo);
+        if ( !parentDir.exists()) {
+            parentDir.mkdirs();
+        }
 		File propsFile = new File(parentDir, upperExpo + INFO_FILENAME_EXTENSION);
 		return propsFile;
 	}
@@ -126,8 +135,28 @@ public class DataFileHandler extends VersionedFileHandler {
 		// Check and standardize the dataset ID
 		String upperExpo = DashboardServerUtils.checkDatasetID(datasetId);
 		// Create the file with the full path name of the properties file
-		File parentDir = new File(filesDir, upperExpo.substring(0,4));
-		File dataFile = new File(parentDir, upperExpo + DATA_FILENAME_EXTENSION);
+		File grandparentDir = new File(filesDir, upperExpo.substring(0,4));
+		File parentDir = new File(grandparentDir, upperExpo);
+        if ( !parentDir.exists()) {
+            parentDir.mkdirs();
+        }
+        File[] dataDirFiles = parentDir.listFiles(new FileFilter() {
+            @Override
+            public boolean accept(File pathname) {
+                return ! ( pathname.isDirectory() || pathname.getName().endsWith(".properties"));
+            }
+        });
+        File dataFile;
+        if ( dataDirFiles.length == 0 ) {
+            logger.info("No data files found for dataset ID: " + datasetId);
+            dataFile = new File(parentDir, datasetId);
+        } else {
+    		dataFile = dataDirFiles[0];
+        }
+        if ( dataDirFiles.length > 1 ) {
+            logger.warn(dataDirFiles.length + " data files found for " + datasetId +". Only archiving first: " + dataFile.getAbsolutePath());
+        }
+//		File dataFile = new File(parentDir, upperExpo + DATA_FILENAME_EXTENSION);
 		return dataFile;
 	}
 
@@ -135,7 +164,11 @@ public class DataFileHandler extends VersionedFileHandler {
 		// Check and standardize the dataset ID
 		String upperExpo = DashboardServerUtils.checkDatasetID(datasetId);
 		// Create the file with the full path name of the properties file
-		File parentDir = new File(DashboardConfigStore.getTempDir(), upperExpo.substring(0,4));
+		File grandparentDir = new File(DashboardConfigStore.getTempDir(), upperExpo.substring(0,4));
+		File parentDir = new File(grandparentDir, upperExpo);
+        if ( !parentDir.exists()) {
+            parentDir.mkdirs();
+        }
 		File dataFile = new File(parentDir, upperExpo + ARCHIVE_FILENAME_EXTENSION);
 		return dataFile;
 	}
@@ -163,12 +196,12 @@ public class DataFileHandler extends VersionedFileHandler {
 			String filenameRegEx = wildDatasetId.toUpperCase();
 			filenameRegEx = filenameRegEx.replace("*", "[\\p{javaUpperCase}\\p{Digit}]+");
 			filenameRegEx = filenameRegEx.replace("?", "[\\p{javaUpperCase}\\p{Digit}]{1}");
-			filenameRegEx += INFO_FILENAME_EXTENSION;
+//			filenameRegEx += INFO_FILENAME_EXTENSION;
 			filenamePattern = Pattern.compile(filenameRegEx);
 		} catch (PatternSyntaxException ex) {
 			throw new IllegalArgumentException(ex);
 		}
-		File[] subDirs = filesDir.listFiles(new FileFilter() {
+		File[] grandparents = filesDir.listFiles(new FileFilter() {
 			@Override
 			public boolean accept(File pathname) {
 				if ( pathname.isDirectory() )
@@ -176,21 +209,33 @@ public class DataFileHandler extends VersionedFileHandler {
 				return false;
 			}
 		});
-		for ( File subDir : subDirs ) {
-			File[] matchFiles = subDir.listFiles(new FilenameFilter() {
-				@Override
-				public boolean accept(File dir, String name) {
-					if ( filenamePattern.matcher(name).matches() )
-						return true;
-					return false;
-				}
-			});
-			for ( File match : matchFiles ) {
-				String name = match.getName();
-				String datasetId = name.substring(0, name.length() - INFO_FILENAME_EXTENSION.length());
-				matchingIds.add(datasetId);
-			}
-		}
+		for ( File partitionDir : grandparents ) {
+    		File[] cruiseDirs = partitionDir.listFiles(new FileFilter() {
+    			@Override
+    			public boolean accept(File file) {
+//    				if ( pathname.isDirectory() )
+//    					return true;
+//    				return false;
+//    			}
+//    		});
+//            for ( File cruiseDir : cruiseDirs ) {
+//    			File[] matchFiles = cruiseDir.listFiles(new FileFilter() {
+//    				@Override
+//    				public boolean accept(File file) {
+    					if ( file.isDirectory() && filenamePattern.matcher(file.getName()).matches() 
+    					     && new File(file, file.getName()+".properties").exists()) {
+    						return true;
+    					}
+    					return false;
+    				}
+    			});
+    			for ( File match : cruiseDirs ) {
+    				String datasetId = match.getName();
+//    				String datasetId = name.substring(0, name.length() - INFO_FILENAME_EXTENSION.length());
+    				matchingIds.add(datasetId);
+    			}
+            }
+//		}
 		return matchingIds;
 	}
 
@@ -441,9 +486,9 @@ public class DataFileHandler extends VersionedFileHandler {
 					dataset.setVersion(version);
 				}
 				int rowNum = dataset.getNumDataRows();
-				dataset.getDataValues().add(datavals);
 				dataset.getRowNums().add(rowNum);
-				dataset.setNumDataRows(rowNum + 1);
+				dataset.getDataValues().add(datavals);
+                dataset.setNumDataRows(rowNum+1);
 				datasetsMap.put(datasetId, dataset);
 			}
 		} finally {
@@ -573,6 +618,8 @@ public class DataFileHandler extends VersionedFileHandler {
 		Properties datasetProps = new Properties();
 		// Owner of the dataset
 		datasetProps.setProperty(DATA_OWNER_ID, dataset.getOwner());
+        // observation feature type
+		datasetProps.setProperty(FEATURE_TYPE_ID, dataset.getFeatureTypeName());
 		// Version 
 		datasetProps.setProperty(VERSION_ID, dataset.getVersion());
 		// Upload filename
@@ -1130,6 +1177,13 @@ public class DataFileHandler extends VersionedFileHandler {
 					DATA_OWNER_ID + " given in " + infoFile.getPath());
 		dataset.setOwner(value);
 
+        // feature type
+        value = cruiseProps.getProperty(FEATURE_TYPE_ID);
+		if ( value == null )
+			throw new IllegalArgumentException("No property value for " + 
+					FEATURE_TYPE_ID + " given in " + infoFile.getPath());	
+		dataset.setFeatureType(value);
+        
 		// version 
 		value = cruiseProps.getProperty(VERSION_ID);
 		if ( value == null )

@@ -24,6 +24,7 @@ public class DashboardDataset implements Serializable, IsSerializable {
 	protected boolean selected;
 	protected String version;
 	protected String owner;
+    protected String featureType;
 	protected String datasetId;
 	protected String dataCheckStatus;
 	protected String mdTimestamp;
@@ -91,6 +92,9 @@ public class DashboardDataset implements Serializable, IsSerializable {
 			 status.equals(DashboardUtils.ARCHIVE_STATUS_SENT_FOR_ARCHIVAL) ||
 			 status.equals(DashboardUtils.ARCHIVE_STATUS_OWNER_TO_ARCHIVE) ) 
 			return Boolean.FALSE;
+        if ( status.equals(DashboardUtils.ARCHIVE_STATUS_FAILED)) {
+            return Boolean.TRUE;
+        }
 		// null for acceptable published datasets
 		return null;
 	}
@@ -153,7 +157,19 @@ public class DashboardDataset implements Serializable, IsSerializable {
 			this.owner = owner.trim();
 	}
 
-	/**
+	public String getFeatureTypeName() {
+        return featureType;
+    }
+
+	public FeatureType getFeatureType() {
+        return FeatureType.valueOf(featureType);
+    }
+    
+    public void setFeatureType(String featureType) {
+        this.featureType = featureType;
+    }
+
+    /**
 	 * @return 
 	 * 		the dataset ID; 
 	 * 		never null but may be {@link DashboardUtils#STRING_MISSING_VALUE}
@@ -369,14 +385,15 @@ public class DashboardDataset implements Serializable, IsSerializable {
 	 * 		for the dataset
 	 */
 	public int getNumDataRows() {
-		return numDataRows;
+    	return numDataRows;
 	}
 
 	/**
 	 * @param numDataRows 
 	 * 		the total number of data measurements (data rows) 
 	 * 		to set for the dataset 
-	 */
+XXX This allows the possibility that numDataRows != the actual number of data rows.
+     */
 	public void setNumDataRows(int numDataRows) {
 		this.numDataRows = numDataRows;
 	}

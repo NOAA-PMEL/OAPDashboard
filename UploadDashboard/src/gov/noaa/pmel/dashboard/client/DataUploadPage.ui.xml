@@ -22,23 +22,11 @@
 					<g:Hidden name="timestamp" ui:field="timestampToken" /> 
 					<g:Hidden name="dataaction" ui:field="actionToken" />
 					<g:Hidden name="dataencoding" ui:field="encodingToken" />
-					<g:Hidden name="dataformat" ui:field="formatToken" />
-					<g:Hidden name="datasetIdColName" ui:field="datasetIdColName" />
                     <g:Hidden name="featureType" ui:field="featureTypeToken"/>
 				</g:FlowPanel>
 			</g:FormPanel>
 			<g:CaptionPanel addStyleNames="{style.settingscaptionpanel}" ui:field="settingsCaption">
 				<g:FlowPanel>
-<!--						
-					<g:FlowPanel addStyleNames="{style.settingsradiopanel}">
-						<g:RadioButton addStyleNames="{style.settingsradiobutton}" 
-								name="formatRadioGroup" ui:field="commaRadio" />
-						<g:RadioButton addStyleNames="{style.settingsradiobutton}" 
-								name="formatRadioGroup" ui:field="semicolonRadio" />
-						<g:RadioButton addStyleNames="{style.settingsradiobutton}" 
-								name="formatRadioGroup" ui:field="tabRadio" />
-					</g:FlowPanel>
--->
                     <g:FlowPanel ui:field="featureTypeSpecificContentPanel"></g:FlowPanel>
 					<g:FlowPanel addStyleNames="{style.settingsradiopanel}">
 						<g:RadioButton addStyleNames="{style.settingsradiobutton}"
@@ -53,8 +41,6 @@
 					<g:DisclosurePanel addStyleNames="{style.advancedoptionspanel}" ui:field="advancedPanel">
 						<g:header>Advanced Options</g:header>
 						<g:FlowPanel>
-							<g:Label addStyleNames="{style.labeledlistlabel}" ui:field="datasetColNameLabel"/>
-							<g:TextBox ui:field="datasetColName"/>
 							<g:HTML addStyleNames="{style.introhtml}" ui:field="advancedHtml"/>
 							<g:FlowPanel addStyleNames="{style.labeledlistpanel}">
 								<g:Label addStyleNames="{style.labeledlistlabel}" ui:field="encodingLabel" />

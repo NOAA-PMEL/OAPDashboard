@@ -4,15 +4,18 @@
 package gov.noaa.pmel.dashboard.datatype;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.LinkedHashSet;
 import java.util.Map.Entry;
+import java.util.stream.Collectors;
 
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 
+import gov.noaa.pmel.dashboard.dsg.StdDataArray;
 import gov.noaa.pmel.dashboard.dsg.StdUserDataArray;
 import gov.noaa.pmel.dashboard.server.DashboardServerUtils;
 import gov.noaa.pmel.dashboard.shared.ADCMessage;
@@ -195,6 +198,17 @@ public abstract class DashDataType<T extends Comparable<T>> implements Comparabl
 	public abstract T dataValueOf(String strRepr) throws IllegalArgumentException;
 	
 	public abstract T missingValue();
+    
+    public T[] typedDataValues(Object[] stdValues) throws ClassNotFoundException {
+        T[] typedValues = null;
+        Class<?> c = Class.forName("java.lang."+getDataClassName());
+        typedValues = Arrays.asList(stdValues).stream()
+                        .filter(c::isInstance)
+                        .map(c::cast)
+                        .collect(Collectors.toList()).toArray(typedValues);
+        return typedValues;
+    }
+
 
 	/**
 	 * Returns a value converter to interpreting string representations to data 

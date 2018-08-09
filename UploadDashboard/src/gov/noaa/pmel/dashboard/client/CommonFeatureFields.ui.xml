@@ -12,9 +12,10 @@
                 <g:RadioButton addStyleNames="{style.settingsradiobutton}" 
                         name="commonFormatRadioGroup" ui:field="tabRadio" />
             </g:FlowPanel>
-            <g:FlowPanel>
+            <g:FlowPanel addStyleNames="{style.padded_panel} {style.bottom_groove}">
     			<g:Label addStyleNames="{style.labeledlistlabel}" ui:field="datasetColNameLabel"/>
     			<g:TextBox ui:field="datasetColName"/>
+    			<g:Label addStyleNames="{style.labeledlistlabel} {style.font_italic}" >Optional.</g:Label>
             </g:FlowPanel>
         </g:FlowPanel>
 

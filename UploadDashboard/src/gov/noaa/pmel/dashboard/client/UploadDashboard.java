@@ -53,9 +53,9 @@ public class UploadDashboard implements EntryPoint, ValueChangeHandler<String> {
 	}
 
 	// Column widths in em's
-	static final double CHECKBOX_COLUMN_WIDTH = 2.5;
+	static final double CHECKBOX_COLUMN_WIDTH = 2.95;
 	static final double NARROW_COLUMN_WIDTH = 5.0;
-	static final double SELECT_COLUMN_WIDTH = 6.2;
+	static final double SELECT_COLUMN_WIDTH = CHECKBOX_COLUMN_WIDTH; // 6.2;
 	static final double NORMAL_COLUMN_WIDTH = 9.0;
 	static final double FILENAME_COLUMN_WIDTH = 16.0;
 
@@ -345,5 +345,12 @@ public class UploadDashboard implements EntryPoint, ValueChangeHandler<String> {
 //		}
 		return baseUrl;
 	}
+
+    static String loginFormHtml = 
+            "<iframe src=\"login\"></iframe>"; 
+
+    public static void showLoginMessage() {
+        showMessage(loginFormHtml);
+    }
 
 }
