@@ -398,7 +398,7 @@ public class DashboardServerUtils {
 		return distanceBase;
 	}
 
-	public static final String FORMAT_TIME_DEFAULT = "yyyy-mm-dd hh:mm:ss z";
+	public static final String FORMAT_TIME_DEFAULT = "yyyy-MM-dd hh:mm:ss z";
 	public static final String EXPO_DATE = "yyyymmdd";
 
 	public static String formatTime(Date date) {
