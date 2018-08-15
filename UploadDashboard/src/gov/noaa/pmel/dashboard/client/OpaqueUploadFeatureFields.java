@@ -45,5 +45,6 @@ public class OpaqueUploadFeatureFields extends Composite implements FeatureTypeF
         if ( datasetIdFormField != null ) {
             datasetIdFormField.setValue("");
         }
+        unspecDatasetIdBox.setValue(null);
     }
 }

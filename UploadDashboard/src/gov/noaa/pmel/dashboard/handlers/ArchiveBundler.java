@@ -11,5 +11,5 @@ import java.io.File;
  */
 public interface ArchiveBundler {
 
-	public File createArchiveFilesBundle(String stdId, File dataFile);
+	public File createArchiveFilesBundle(String stdId, File dataFile) throws Exception;
 }

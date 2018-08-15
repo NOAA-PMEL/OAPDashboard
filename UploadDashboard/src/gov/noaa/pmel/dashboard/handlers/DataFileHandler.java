@@ -38,6 +38,7 @@ import gov.noaa.pmel.dashboard.shared.DashboardDatasetData;
 import gov.noaa.pmel.dashboard.shared.DashboardMetadata;
 import gov.noaa.pmel.dashboard.shared.DashboardUtils;
 import gov.noaa.pmel.dashboard.shared.DataColumnType;
+import gov.noaa.pmel.dashboard.shared.FeatureType;
 import gov.noaa.pmel.dashboard.shared.QCFlag;
 
 /**
@@ -123,6 +124,49 @@ public class DataFileHandler extends VersionedFileHandler {
 		return propsFile;
 	}
 
+    public String datasetDataFileName(String datasetId) throws IllegalArgumentException {
+        String name = null;
+        File parentDir = datasetDataDir(datasetId);
+        if ( parentDir.exists()) {
+            File[] dataDirFiles = parentDir.listFiles(new FileFilter() {
+                @Override
+                public boolean accept(File pathname) {
+                    return ! ( pathname.isDirectory() || pathname.getName().endsWith(".properties"));
+                }
+            });
+            if ( dataDirFiles.length > 0 ) {
+                name = dataDirFiles[0].getName();
+            }
+        }
+        
+        return name;
+    }
+    
+    public File datasetDataDir(String datasetId) throws IllegalArgumentException {
+		// Check and standardize the dataset ID
+		String upperExpo = DashboardServerUtils.checkDatasetID(datasetId);
+		// Create the file with the full path name of the properties file
+		File grandparentDir = new File(filesDir, upperExpo.substring(0,4));
+		File parentDir = new File(grandparentDir, upperExpo);
+        return parentDir;
+    }
+    
+	public File datasetDataFile(String datasetId, DashboardDataset dataset) throws IllegalArgumentException {
+        File parentDir = datasetDataDir(datasetId);
+        if ( !parentDir.exists()) {
+            parentDir.mkdirs();
+        }
+        File dataFile = _datasetDataFile(datasetId);
+        if ( dataFile == null ) {
+            if ( dataset.getFeatureType().equals(FeatureType.OPAQUE)) {
+                dataFile = new File(parentDir, dataset.getUploadFilename());
+            } else {
+                dataFile = new File(parentDir, datasetId + ".tsv");
+            }
+        }
+        return dataFile;
+	}
+    
 	/**
 	 * @param datasetId
 	 * 		the ID of the dataset
@@ -132,13 +176,23 @@ public class DataFileHandler extends VersionedFileHandler {
 	 * 		if datasetId is not a valid dataset ID
 	 */
 	public File datasetDataFile(String datasetId) throws IllegalArgumentException {
-		// Check and standardize the dataset ID
-		String upperExpo = DashboardServerUtils.checkDatasetID(datasetId);
-		// Create the file with the full path name of the properties file
-		File grandparentDir = new File(filesDir, upperExpo.substring(0,4));
-		File parentDir = new File(grandparentDir, upperExpo);
+        File parentDir = datasetDataDir(datasetId);
         if ( !parentDir.exists()) {
             parentDir.mkdirs();
+        }
+        File dataFile = _datasetDataFile(datasetId);
+        if ( dataFile == null ) {
+            String defaultName = datasetId +".tsv";
+            logger.info("Using default dataset filename: " + defaultName);
+            dataFile = new File(parentDir, defaultName);
+        }
+        return dataFile;
+	}
+    
+	private File _datasetDataFile(String datasetId) throws IllegalArgumentException {
+        File parentDir = datasetDataDir(datasetId);
+        if ( !parentDir.exists()) {
+            return null;
         }
         File[] dataDirFiles = parentDir.listFiles(new FileFilter() {
             @Override
@@ -146,10 +200,9 @@ public class DataFileHandler extends VersionedFileHandler {
                 return ! ( pathname.isDirectory() || pathname.getName().endsWith(".properties"));
             }
         });
-        File dataFile;
+        File dataFile = null;
         if ( dataDirFiles.length == 0 ) {
             logger.info("No data files found for dataset ID: " + datasetId);
-            dataFile = new File(parentDir, datasetId);
         } else {
     		dataFile = dataDirFiles[0];
         }
@@ -720,10 +773,10 @@ public class DataFileHandler extends VersionedFileHandler {
 	 * 		if there was an error committing the updated file to version control
 	 */
 	public void saveDatasetDataToFile(DashboardDatasetData dataset,  
-							String message) throws IllegalArgumentException {
+        							  String message) throws IllegalArgumentException {
 		// Get the dataset data filename
 		String datasetId = dataset.getDatasetId();
-		File dataFile = datasetDataFile(datasetId);
+		File dataFile = datasetDataFile(datasetId, dataset);
 		// Create the directory tree for this file if it does not exist
 		File parentFile = dataFile.getParentFile();
 		if ( ! parentFile.exists() ) {

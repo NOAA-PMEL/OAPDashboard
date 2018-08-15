@@ -249,6 +249,7 @@ public class MetadataManagerPage extends CompositeWithUsername {
 //            String meUrl = getMetadataEditorDocumentUrl(datasetId);
 //            openMetadataEditorWindow(meUrl);
             sendCurrentMetadataToMetaEd(datasetId);
+            header.setDatasetId(selectedDatasetId);
 //        }
 	}
 

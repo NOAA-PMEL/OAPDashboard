@@ -147,25 +147,6 @@ public class ProfileUploadProcessor extends FileUploadProcessor {
 				}
 				// At this point, datasetData is the dataset to save, regardless of new, overwrite, or append
     
-//				// Create the OME XML stub file for this dataset
-//				try {
-//					OmeMetadata omeMData = new OmeMetadata(datasetId);
-//					DashboardOmeMetadata mdata = new DashboardOmeMetadata(omeMData,
-//							timestamp, username, datasetData.getVersion());
-//					String msg = "New OME XML document from data file for " + 
-//							datasetId + " uploaded by " + username;
-//					MetadataFileHandler mdataHandler = configStore.getMetadataFileHandler();
-//					mdataHandler.saveMetadataInfo(mdata, msg, false);
-//					mdataHandler.saveAsOmeXmlDoc(mdata, msg);
-//				} catch (Exception ex) {
-//					// should not happen
-//					messages.add(DashboardUtils.UNEXPECTED_FAILURE_HEADER_TAG + " " + 
-//							filename + " ; " + datasetId);
-//					messages.add(ex.getMessage());
-//					messages.add(DashboardUtils.END_OF_ERROR_MESSAGE_TAG);
-//					continue;
-//				}
-    
                 try {
 					MetadataFileHandler mdataHandler = configStore.getMetadataFileHandler();
                     mdataHandler.createEmptyOADSMetadataFile(datasetId);

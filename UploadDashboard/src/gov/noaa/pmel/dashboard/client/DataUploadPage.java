@@ -297,6 +297,7 @@ public class DataUploadPage extends CompositeWithUsername {
                 String files = fileUpload.getFilename(); // getInputFileNames(uploadElement);
                 boolean fileSelected = files != null && files.length() > 0;
                 submitButton.setEnabled(fileSelected);
+                cancelButton.setText("Cancel");
             }
         });
         uploadElement = fileUpload.getElement();
@@ -312,7 +313,7 @@ public class DataUploadPage extends CompositeWithUsername {
 			}
 		}
 
-		clearTokens(true);
+		clearTokens();
 
 		settingsCaption.setCaptionText(SETTINGS_CAPTION_TEXT);
 
@@ -349,7 +350,8 @@ public class DataUploadPage extends CompositeWithUsername {
 			singleton = new DataUploadPage();
 		singleton.setUsername(username);
 		singleton.userInfoLabel.setText(WELCOME_INTRO + singleton.getUsername());
-		singleton.clearTokens(false);
+		singleton.clearTokens();
+        singleton.clearForm();
 		singleton.previewHtml.setHTML(NO_PREVIEW_HTML_MSG);
 		singleton.encodingListBox.setSelectedIndex(2);
 		singleton.advancedPanel.setOpen(false);
@@ -393,13 +395,10 @@ public class DataUploadPage extends CompositeWithUsername {
 	/**
 	 * Clears the values of the Hidden tokens on the page.
 	 */
-	private void clearTokens(boolean clearIdColumn) {
+	private void clearTokens() {
 		timestampToken.setValue("");
 		actionToken.setValue("");
 		encodingToken.setValue("");
-        if ( clearIdColumn ) {
-            uploadForm.reset();
-        }
 		if ( _featureTypeFields != null ) {
 		    _featureTypeFields.clearFormFields((Panel)uploadForm.getWidget());
 		}
@@ -463,6 +462,15 @@ public class DataUploadPage extends CompositeWithUsername {
         return namesString;
 	}-*/;
 
+	private static native void clearInputFileNames(Element input) /*-{
+        if ( typeof (input.files) == 'undefined' || 
+             typeof (input.files.length) == 'undefined') {
+            input.value = 'undefined';
+        } else {
+           
+        }
+    }-*/;
+	
 	@UiHandler("previewButton") 
 	void previewButtonOnClick(ClickEvent event) {
 		String namesString = getInputFileNames(uploadElement).trim();
@@ -508,10 +516,23 @@ public class DataUploadPage extends CompositeWithUsername {
 		UploadDashboard.showWaitCursor();
 	}
 
+    private void clearForm() {
+        uploadForm.reset();
+        clearInputFileNames(uploadElement);
+        featureTypeSelector.setSelectedIndex(0);
+        
+        submitButton.setEnabled(false); 
+        cancelButton.setText("Done");
+    }
+        
 	@UiHandler("uploadForm")
 	void uploadFormOnSubmitComplete(SubmitCompleteEvent event) {
 		boolean wasSuccess = processResultMsg(event.getResults());
-		clearTokens(wasSuccess);
+        GWT.log("Upload was successful: " + wasSuccess);
+		clearTokens();
+        if ( wasSuccess ) {
+            clearForm();
+        }
 		UploadDashboard.showAutoCursor();
 	}
 
@@ -619,7 +640,9 @@ public class DataUploadPage extends CompositeWithUsername {
 			for ( String expo : cruiseIDs )
 				DatasetListPage.addSelectedDataset(expo);
 			DatasetListPage.resortTable();
-			DataColumnSpecsPage.showPage(getUsername(), cruiseIDs);
+            if ( ! featureTypeSelector.getSelectedValue().equals(FeatureType.OPAQUE.name())) {
+    			DataColumnSpecsPage.showPage(getUsername(), cruiseIDs);
+            }
 		}
 		return wasCompleteSuccess;
 	}

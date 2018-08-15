@@ -7,6 +7,7 @@ import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.TreeSet;
 
 import org.apache.tomcat.util.http.fileupload.FileItem;
 
@@ -30,6 +31,7 @@ public abstract class FileUploadProcessor {
     protected RawUploadFileHandler _rawFileHandler;
     
     protected ArrayList<String> messages = new ArrayList<String>();
+    protected TreeSet<String> successes = new TreeSet<String>();
 
     protected FileUploadProcessor(StandardUploadFields uploadFields) {
         this.uploadFields = uploadFields;
@@ -64,5 +66,9 @@ public abstract class FileUploadProcessor {
     
     public ArrayList<String> getMessages() {
         return messages;
+    }
+    
+    public TreeSet<String> getSuccesses() {
+        return successes;
     }
 }

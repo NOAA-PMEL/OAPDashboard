@@ -37,7 +37,6 @@ public class OpaqueFileUploadProcessor extends FileUploadProcessor {
         String datasetId = FormUtils.getFormField("datasetID", uploadFields.parameterMap());
         String action = uploadFields.dataAction();
         DataFileHandler datasetHandler = configStore.getDataFileHandler();
-        TreeSet<String> successes = new TreeSet<String>();
 
         if ( datafiles.size() > 1 ) {
             multiFileUpload = true;

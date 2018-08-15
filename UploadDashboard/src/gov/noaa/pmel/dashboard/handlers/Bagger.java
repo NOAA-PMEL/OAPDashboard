@@ -4,15 +4,19 @@
 package gov.noaa.pmel.dashboard.handlers;
 
 import java.io.BufferedOutputStream;
+import java.io.BufferedWriter;
 import java.io.File;
+import java.io.FileFilter;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.io.PrintWriter;
 import java.nio.channels.Channels;
 import java.nio.channels.FileChannel;
 import java.nio.channels.ReadableByteChannel;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
@@ -21,7 +25,13 @@ import java.security.NoSuchAlgorithmException;
 import java.text.SimpleDateFormat;
 import java.util.Arrays;
 import java.util.Date;
+import java.util.List;
 import java.util.TimeZone;
+import java.util.function.BiConsumer;
+import java.util.function.BiFunction;
+import java.util.stream.Stream;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipOutputStream;
 
 import org.apache.commons.compress.archivers.ArchiveException;
 import org.apache.commons.compress.archivers.ArchiveStreamFactory;
@@ -50,7 +60,10 @@ import gov.loc.repository.bagit.hash.StandardSupportedAlgorithms;
 import gov.loc.repository.bagit.reader.BagReader;
 import gov.loc.repository.bagit.verify.BagVerifier;
 import gov.loc.repository.bagit.writer.BagWriter;
+import gov.noaa.pmel.dashboard.dsg.StdUserDataArray;
 import gov.noaa.pmel.dashboard.server.DashboardConfigStore;
+import gov.noaa.pmel.dashboard.shared.DashboardDatasetData;
+import gov.noaa.pmel.dashboard.shared.FeatureType;
 import gov.noaa.pmel.tws.util.ApplicationConfiguration;
 import gov.noaa.pmel.tws.util.FileUtils;
 import ucar.units.SupplementaryBaseQuantity;
@@ -62,6 +75,7 @@ import ucar.units.SupplementaryBaseQuantity;
 public class Bagger implements ArchiveBundler {
 
     private String _datasetId;
+    private FeatureType _featureType;
     private boolean _includeHiddenFiles = false;
     private File _contentRoot;
     private SimpleDateFormat _tsFormatter;
@@ -74,31 +88,36 @@ public class Bagger implements ArchiveBundler {
                                                     InterruptedException, MaliciousPathException, InvalidBagitFileFormatException, 
                                                     CorruptChecksumException, VerificationException {
         DashboardConfigStore store = DashboardConfigStore.get();
-        Bagger bagger = new Bagger(datasetId, false, store);
-        Path stuff = bagger.stuffit();
-        Bag bag = bagger.bagit(stuff);
-        bagger.verify(bag);
-        File archiveFile = bagger.packit(stuff);
-        File hashFile = bagger.hashit(archiveFile);
-        bagger.cleanup(stuff);
-        return archiveFile;
+        Bagger bagger = null;
+        Path staged = null;
+        try {
+            bagger = new Bagger(datasetId, false, store);
+            staged = bagger.stuffit();
+            Bag bag = bagger.bagit(staged);
+            bagger.verify(bag);
+            File archiveFile = bagger.packit(staged);
+            File hashFile = Bagger.hashit(archiveFile);
+            return archiveFile;
+        } finally {
+            if ( bagger != null ) {
+                bagger.cleanup(staged);
+            }
+        }
     }
     
     /**
      * @see gov.noaa.pmel.dashboard.handlers.ArchiveBundler#createArchiveFilesBundle(java.lang.String, java.io.File)
      */
     @Override
-    public File createArchiveFilesBundle(String stdId, File dataFile) {
-        return null;
+    public File createArchiveFilesBundle(String stdId, File dataFile) throws Exception {
+        return Bag(stdId);
     }
 
     /**
      * 
      */
     public Bagger(String datasetId, DashboardConfigStore store) {
-        _datasetId = datasetId.toUpperCase();
-        _store = store;
-        _contentRoot = _store.getAppContentDir();
+        this(datasetId, false, store);
     }
     
     public Bagger(String datasetId, boolean includeHiddenFiles, DashboardConfigStore store) {
@@ -106,6 +125,7 @@ public class Bagger implements ArchiveBundler {
         _includeHiddenFiles = includeHiddenFiles;
         _store = store;
         _contentRoot = _store.getAppContentDir();
+        _featureType = _store.getDataFileHandler().getDatasetFromInfoFile(datasetId).getFeatureType();
     }
 
     /**
@@ -119,41 +139,46 @@ public class Bagger implements ArchiveBundler {
     }
     
     private Path stuffit(File dataFile) throws IOException {
-        File bagDir = new File(_contentRoot, "staging");
-        File root = new File(bagDir, _datasetId);
-        Path bagPath = root.toPath();
-        if ( root.exists()) {
-            FileUtils.deleteDir(root);
+        File rootDir = new File(_contentRoot, "staging");
+        File bagRoot = new File(rootDir, _datasetId);
+        Path bagPath = bagRoot.toPath();
+        if ( bagRoot.exists()) {
+            FileUtils.deleteDir(bagRoot);
         }
-        root.mkdirs();
-        if ( !root.exists()) { throw new IllegalStateException("Unable to create bag root dir: " + root); }
+        bagRoot.mkdirs();
+        if ( !bagRoot.exists()) { throw new IllegalStateException("Unable to create bag root dir: " + bagRoot); }
         
-        File data = new File(root, "data");
-        data.mkdirs();
-        if ( !data.exists()) { throw new IllegalStateException("Unable to create bag data dir: " + data); }
+        File dataDir = new File(bagRoot, "data");
+        dataDir.mkdirs();
+        if ( !dataDir.exists()) { throw new IllegalStateException("Unable to create bag data dir: " + dataDir); }
         
-        writeFileTo(dataFile, data);
+        writeFileTo(dataFile, dataDir);
         
-        DataFileHandler dataFiler = _store.getDataFileHandler();
-        File infoFile = dataFiler.datasetInfoFile(_datasetId);
-        writeFileTo(infoFile, data);
+//        DataFileHandler dataFiler = _store.getDataFileHandler();
+//        File infoFile = dataFiler.datasetInfoFile(_datasetId);
+//        writeFileTo(infoFile, dataDir);
         
-        File meta = new File(root, "metadata");
+        File meta = new File(bagRoot, "metadata");
         meta.mkdirs();
         if ( !meta.exists()) { throw new IllegalStateException("Unable to create bag metadata dir: " + meta); }
         
-        File supl = new File(root, "supplemental");
+        File supl = new File(bagRoot, "supplemental");
         supl.mkdirs();
         if ( !supl.exists()) { throw new IllegalStateException("Unable to create bag supplemental dir: " + supl); }
         
         MetadataFileHandler metaFiler = _store.getMetadataFileHandler();
         File metaFile = metaFiler.getMetadataFile(_datasetId);
-        File metaProps = new File(metaFile.getPath()+".properties");
+//        File metaProps = new File(metaFile.getPath()+".properties");
         File metaDir = metaFile.getParentFile();
-        for ( File mfile : metaDir.listFiles()) {
-            if (mfile.getName().startsWith("extracted_")) { continue; } // Ignore auto extracted metadata file
-           if (mfile.getAbsoluteFile().equals(metaFile.getAbsoluteFile()) || 
-               mfile.equals(metaProps))  {
+        for ( File mfile : metaDir.listFiles(new FileFilter() {
+                @Override
+                public boolean accept(File pathname) {
+                    return ! pathname.getName().endsWith(".properties");
+                }
+            })) 
+        {
+           if (mfile.getName().startsWith("extracted_")) { continue; } // Ignore auto extracted metadata file
+           if (mfile.getAbsoluteFile().equals(metaFile.getAbsoluteFile())) {
                writeFileTo(mfile, meta);
            } else {
                writeFileTo(mfile, supl);
@@ -162,7 +187,50 @@ public class Bagger implements ArchiveBundler {
         if ( supl.list().length == 0 ) {
            supl.delete();
         }
+        if ( !_featureType.equals(FeatureType.OPAQUE)) {
+            addLatLonFile(dataFile, metaFile, bagRoot);
+        }
+        
         return bagPath;
+    }
+
+    /**
+     * @param metaFile
+     * @param root
+     * @param root2 
+     * @throws FileNotFoundException 
+     */
+    private void addLatLonFile(File dataFile, File metaFile, File root) throws FileNotFoundException {
+        File lonLatFile = new File(root, "lonlat.tsv");
+        try ( PrintWriter lonLatFileWriter = new PrintWriter(lonLatFile); ) {
+            writeBounds(lonLatFileWriter, metaFile);
+            writeAll(lonLatFileWriter);
+        }
+    }
+
+    /**
+     * @param lonLatFile
+     * @param metaFile
+     */
+    private void writeBounds(PrintWriter lonLatFile, File metaFile) {
+        // Bounds tags in metadata file
+        // <westbd>-124.947</westbd>
+        // <eastbd>-124.947</eastbd>
+        // <northbd>47.964</northbd>
+        // <southbd>47.964</southbd>
+    }
+
+    /**
+     * @param lonLatFile
+     */
+    private void writeAll(PrintWriter lonLatFileWriter) {
+        DashboardDatasetData ddd = _store.getDataFileHandler().getDatasetDataFromFiles(_datasetId, 0, -1);
+        StdUserDataArray stda = new StdUserDataArray(ddd, _store.getKnownUserDataTypes());
+        Double[] lats = stda.getSampleLatitudes();
+        Double[] lons = stda.getSampleLongitudes();
+        for (int idx = 1; idx < stda.getNumSamples(); idx++) {
+            lonLatFileWriter.println(lons[idx] + "\t" + lats[idx]);
+        }
     }
 
     /**
@@ -205,13 +273,55 @@ public class Bagger implements ArchiveBundler {
 
     @SuppressWarnings("resource")
     private File packit(Path bagPath) throws IOException, CompressorException, ArchiveException {
+        String compressionFormat = ApplicationConfiguration.getProperty("oap.archive_bundle.format", "zip");
+        if ( "zip".equals(compressionFormat)) {
+            return zip(bagPath);
+        } else {
+            return tgz(bagPath);
+        }
+    }
+    
+    private File zip(Path bagPath) throws IOException, CompressorException, ArchiveException {
+        File bagFile = bagPath.toFile();
+        
+        String bagArchiveDirName = getBagArchiveName(bagFile.getName());
+        File archiveRoot = new File(_contentRoot, "ArchiveBundles/bags/"+_datasetId+"/"+bagArchiveDirName);
+        archiveRoot.mkdirs();
+        File bagArchiveFile = new File(archiveRoot, _datasetId+"_baggit.zip");
+        try ( FileOutputStream fos = new FileOutputStream(bagArchiveFile);
+              ZipOutputStream zipOut = new ZipOutputStream(fos); ) {
+            zipDirFiles(bagFile, "", zipOut);
+        }
+        
+        return bagArchiveFile;
+    }
+    
+    private static void zipDirFiles(File dir, String dirPath, ZipOutputStream zipos) throws IOException {
+        File[] dirFiles = dir.listFiles();
+        for (File file : dirFiles) {
+            if ( file.isDirectory()) {
+                zipDirFiles(file, dirPath+file.getName()+"/", zipos);
+            } else {
+                addZipEntry(file, dirPath, zipos);
+            }
+        }
+    }
+        
+    private static void addZipEntry(File file, String entryPath, ZipOutputStream zipos) throws IOException {
+        ZipEntry zipE = new ZipEntry(entryPath + file.getName());
+        zipE.setTime(file.lastModified());
+        zipos.putNextEntry(zipE);
+        Files.copy(file.toPath(), zipos);
+        zipos.closeEntry();
+    }
+    private File tgz(Path bagPath) throws IOException, CompressorException, ArchiveException {
         File bagFile = bagPath.toFile();
         CompressorStreamFactory csFactoid = new CompressorStreamFactory();
         ArchiveStreamFactory asFactoid = new ArchiveStreamFactory();
         String bagArchiveDirName = getBagArchiveName(bagFile.getName());
         File archiveRoot = new File(_contentRoot, "ArchiveBundles/bags/"+_datasetId+"/"+bagArchiveDirName);
         archiveRoot.mkdirs();
-        File bagArchiveFile = new File(archiveRoot, _datasetId+".tar.gz");
+        File bagArchiveFile = new File(archiveRoot, _datasetId+"_baggit.tar.gz");
         FileOutputStream fos = new FileOutputStream(bagArchiveFile);
         BufferedOutputStream bufOS = new BufferedOutputStream(fos);
         GzipCompressorOutputStream gzOS = (GzipCompressorOutputStream) 

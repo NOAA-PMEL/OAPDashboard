@@ -308,7 +308,8 @@ public class DatasetSubmitter {
                                      String userRealName, String userEmail) throws IOException {
         boolean useFtp = ApplicationConfiguration.getProperty("oap.archive.use_ftp", false);
         if ( useFtp ) {
-            throw new IllegalStateException("FTP not yet supported.");
+//            throw new IllegalStateException("FTP not yet supported.");
+            System.out.println("FTP not yet supported.");
         } else {
             filesBundler.sendArchiveBundle(stdId, archiveBundle, userRealName, userEmail);
         }

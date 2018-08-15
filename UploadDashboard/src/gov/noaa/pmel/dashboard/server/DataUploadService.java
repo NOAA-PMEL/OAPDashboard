@@ -12,6 +12,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Set;
 import java.util.TreeMap;
 import java.util.TreeSet;
 
@@ -122,7 +123,7 @@ public class DataUploadService extends HttpServlet {
             uploadProcessor.processUpload();
             List<String>messages = uploadProcessor.getMessages();
             
-            sendOkMsg(response, messages);
+            sendOkMsg(response, uploadProcessor.getSuccesses());
         } catch (BadRequestException vex) { // baseRequestValidation
             sendErrMsg(response, vex);
         } catch (FileUploadException fex) { // parseParameterMap
@@ -204,6 +205,7 @@ public class DataUploadService extends HttpServlet {
     }
 
 //    @Override
+    /*
 	protected void _doPost(HttpServletRequest request, HttpServletResponse response) throws IOException {
         logger.info(request);
 		// Verify the post has the correct encoding
@@ -496,6 +498,7 @@ public class DataUploadService extends HttpServlet {
 			respWriter.println(msg);
 		response.flushBuffer();
 	}
+    */
 
 	private static boolean isPreviewRequest(String action) {
 		return DashboardUtils.PREVIEW_REQUEST_TAG.equals(action);
@@ -537,12 +540,16 @@ public class DataUploadService extends HttpServlet {
         }
     }
 
-	private static void sendOkMsg(HttpServletResponse response, List<String> messages) throws IOException {
+	private static void sendOkMsg(HttpServletResponse response, Set<String> datasets) throws IOException {
 		response.setStatus(HttpServletResponse.SC_OK);
 		response.setContentType("text/html;charset=UTF-8");
 		try ( PrintWriter respWriter = response.getWriter(); ) {
-    		for ( String msg : messages )
-    			respWriter.println(msg);
+            respWriter.write(DashboardUtils.SUCCESS_HEADER_TAG);
+            String comma = "";
+    		for ( String dsid : datasets ) {
+    			respWriter.println(dsid + comma);
+    			comma = ",";
+    		}
     		response.flushBuffer();
 		}
     }
