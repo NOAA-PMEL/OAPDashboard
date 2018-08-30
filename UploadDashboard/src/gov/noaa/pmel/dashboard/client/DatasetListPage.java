@@ -8,6 +8,7 @@ import java.util.Arrays;
 import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.TreeSet;
 
 import com.google.gwt.cell.client.Cell;
@@ -37,7 +38,6 @@ import com.google.gwt.user.client.History;
 import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.google.gwt.user.client.ui.Button;
-import com.google.gwt.user.client.ui.InlineLabel;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.gwt.view.client.ListDataProvider;
@@ -80,9 +80,9 @@ public class DatasetListPage extends CompositeWithUsername {
 			"review and modify data column type assignments for the " +
 			"selected dataset;\nidentify issues in the data";
 
-	static final String METADATA_TEXT = "Submit Metadata";
+	static final String METADATA_TEXT = "Manage Metadata";
 	private static final String METADATA_HOVER_HELP =
-			"submit metadata for the selected datasets";
+			"manage metadata for the selected datasets";
 
 	private static final String ADDL_DOCS_TEXT = "Supplemental Documents";
 	private static final String ADDL_DOCS_HOVER_HELP =
@@ -234,6 +234,8 @@ public class DatasetListPage extends CompositeWithUsername {
 			"** SELECT A DATASET TO ENABLE BUTTON **\n";
 	private static final String ONLY_ONE_TO_ENABLE_MSG = 
 			"** SELECT ONLY ONE DATASET TO ENABLE BUTTON **\n";
+	private static final String NOT_FOR_OPAQUE = 
+			"** THIS OPTION IS NOT AVAILABLE FOR OPAQUE DATASETS **\n";
 	
 	// Select options
 	private static final String SELECTION_OPTION_LABEL = "Select...";
@@ -285,13 +287,13 @@ public class DatasetListPage extends CompositeWithUsername {
 //	@UiField Button logoutButton;
 	
 	@UiField Button uploadButton;
-	@UiField Button viewDataButton;
+	@UiField Button viewDataAndColumnsButton;
 	@UiField Button metadataButton;
 	@UiField Button addlDocsButton;
-	@UiField Button reviewButton;
+	@UiField Button previewButton;
 //	@UiField Button qcSubmitButton;
 	@UiField Button archiveSubmitButton;
-	@UiField Button suspendDatasetButton;
+//	@UiField Button suspendDatasetButton;
 //	@UiField Label firstSeparator;
 	@UiField Button showDatasetButton;
 	@UiField Button hideDatasetButton;
@@ -302,6 +304,7 @@ public class DatasetListPage extends CompositeWithUsername {
 
 	private Button[] selectSet;
 	private Button[] singleSet;
+	private Button[] noOpaque;
 	
 	private Header<String> selectHeader;
 	
@@ -348,8 +351,8 @@ public class DatasetListPage extends CompositeWithUsername {
 		uploadButton.setText(UPLOAD_TEXT);
 		uploadButton.setTitle(UPLOAD_HOVER_HELP);
 
-		viewDataButton.setText(VIEW_DATA_TEXT);
-		viewDataButton.setTitle(VIEW_DATA_HOVER_HELP);
+		viewDataAndColumnsButton.setText(VIEW_DATA_TEXT);
+		viewDataAndColumnsButton.setTitle(VIEW_DATA_HOVER_HELP);
 
 		metadataButton.setText(METADATA_TEXT);
 		metadataButton.setTitle(METADATA_HOVER_HELP);
@@ -357,8 +360,8 @@ public class DatasetListPage extends CompositeWithUsername {
 		addlDocsButton.setText(ADDL_DOCS_TEXT);
 		addlDocsButton.setTitle(ADDL_DOCS_HOVER_HELP);
 
-		reviewButton.setText(REVIEW_TEXT);
-		reviewButton.setTitle(REVIEW_HOVER_HELP);
+		previewButton.setText(REVIEW_TEXT);
+		previewButton.setTitle(REVIEW_HOVER_HELP);
 
 //		qcSubmitButton.setText(QC_SUBMIT_TEXT);
 //		qcSubmitButton.setTitle(QC_SUBMIT_HOVER_HELP);
@@ -366,8 +369,8 @@ public class DatasetListPage extends CompositeWithUsername {
 		archiveSubmitButton.setText(ARCHIVE_SUBMIT_TEXT);
 		archiveSubmitButton.setTitle(ARCHIVE_SUBMIT_HOVER_HELP);
 
-		suspendDatasetButton.setText(SUSPEND_TEXT);
-		suspendDatasetButton.setTitle(SUSPEND_HOVER_HELP);
+//		suspendDatasetButton.setText(SUSPEND_TEXT);
+//		suspendDatasetButton.setTitle(SUSPEND_HOVER_HELP);
 
 		showDatasetButton.setText(SHOW_DATASETS_TEXT);
 		showDatasetButton.setTitle(SHOW_DATASETS_HOVER_HELP);
@@ -390,22 +393,22 @@ public class DatasetListPage extends CompositeWithUsername {
 
 	private void buildSelectionSets() {
 		selectSet = new Button[] {
-			viewDataButton,
+			viewDataAndColumnsButton,
 			metadataButton,
 			addlDocsButton,
-			reviewButton,
+			previewButton,
 //			qcSubmitButton,
 			archiveSubmitButton,
-			suspendDatasetButton,
+//			suspendDatasetButton,
 			hideDatasetButton,
 			changeOwnerButton,
 			deleteButton
 		};
 		singleSet = new Button[] {
-			viewDataButton,
+			viewDataAndColumnsButton,
 			metadataButton,
 //			addlDocsButton,
-			reviewButton,
+			previewButton,
 //			qcSubmitButton,
 //			archiveSubmitButton,
 //			suspendDatasetButton,
@@ -413,6 +416,10 @@ public class DatasetListPage extends CompositeWithUsername {
 //			changeOwnerButton,
 //			deleteButton
 		};
+        noOpaque = new Button[] {
+			viewDataAndColumnsButton,
+			previewButton
+        };
 	}
 
 	/**
@@ -697,7 +704,7 @@ public class DatasetListPage extends CompositeWithUsername {
 		DataUploadPage.showPage(getUsername());
 	}
 
-	@UiHandler("viewDataButton")
+	@UiHandler("viewDataAndColumnsButton")
 	void dataCheckOnClick(ClickEvent event) {
 		if ( ! getSelectedDatasets(true) ) {
 			UploadDashboard.showMessage(
@@ -740,7 +747,7 @@ public class DatasetListPage extends CompositeWithUsername {
 		AddlDocsManagerPage.showPage(datasetsSet);
 	}
 
-	@UiHandler("reviewButton")
+	@UiHandler("previewButton")
 	void reviewOnClick(ClickEvent event) {
 		getSelectedDatasets(null);
 		if ( datasetsSet.size() < 1 ) {
@@ -804,24 +811,24 @@ public class DatasetListPage extends CompositeWithUsername {
 		checkDatasetsForSubmitting(SubmitFor.ARCHIVE);
 	}
 
-	@UiHandler("suspendDatasetButton")
-	void suspendDatasetOnClick(ClickEvent event) {
-		if ( ! getSelectedDatasets(false) ) {
-			UploadDashboard.showMessage(
-					ARCHIVED_DATASETS_SELECTED_ERR_START + FOR_SUSPEND_ERR_END);
-			return;
-		}
-		if ( datasetsSet.size() == 0 ) {
-			UploadDashboard.showMessage(
-					NO_DATASET_SELECTED_ERR_START + FOR_SUSPEND_ERR_END);
-			return;
-		}
-		checkSet.clear();
-		checkSet.putAll(datasetsSet);
-		checkSet.setUsername(getUsername());
-		checkDatasetsForSuspension();
-		suspendDatasets();
-	}
+//	@UiHandler("suspendDatasetButton")
+//	void suspendDatasetOnClick(ClickEvent event) {
+//		if ( ! getSelectedDatasets(false) ) {
+//			UploadDashboard.showMessage(
+//					ARCHIVED_DATASETS_SELECTED_ERR_START + FOR_SUSPEND_ERR_END);
+//			return;
+//		}
+//		if ( datasetsSet.size() == 0 ) {
+//			UploadDashboard.showMessage(
+//					NO_DATASET_SELECTED_ERR_START + FOR_SUSPEND_ERR_END);
+//			return;
+//		}
+//		checkSet.clear();
+//		checkSet.putAll(datasetsSet);
+//		checkSet.setUsername(getUsername());
+//		checkDatasetsForSuspension();
+//		suspendDatasets();
+//	}
 	
 	@UiHandler("deleteButton")
 	void deleteDatasetOnClick(ClickEvent event) {
@@ -1266,20 +1273,41 @@ public class DatasetListPage extends CompositeWithUsername {
 
 	private void updateAvailableButtons() {
 		int selectCount = 0;
+        Set<FeatureType>selectedFeatures = new TreeSet<>();
 		for (DashboardDataset cruise : listProvider.getList()) {
-			if ( cruise.isSelected()) { selectCount += 1; }
+			if ( cruise.isSelected()) { 
+			    selectCount += 1; 
+                selectedFeatures.add(cruise.getFeatureType());
+		    }
 		}
 		if ( selectCount == 0 ) {
 			disableButtons(selectSet, SELECT_TO_ENABLE_MSG);
 		} else if ( selectCount >= 1 ) {
 			enableButtons(selectSet);
+            if ( selectedFeatures.contains(FeatureType.OPAQUE)) {
+                disableInapropriateButtons(selectedFeatures);
+            }
 		} 
 		if ( selectCount > 1) {
 			disableButtons(singleSet, ONLY_ONE_TO_ENABLE_MSG);
 		}
 	}
 			
-	private static void enableButtons(Button[] enableSet) {
+	/**
+     * @param selectedFeatures
+     */
+    private void disableInapropriateButtons(Set<FeatureType> selectedFeatures) {
+        for (Button b : noOpaque) {
+            b.setEnabled(false);
+            String btitle = b.getTitle();
+            if ( btitle.indexOf("**" ) < 0 ) {
+                b.setTitle(NOT_FOR_OPAQUE+b.getTitle());
+            }
+        }
+        
+    }
+
+    private static void enableButtons(Button[] enableSet) {
 		for (Button button : enableSet) {
 			String tt = button.getTitle();
 			int idx = tt.lastIndexOf("**");
@@ -1418,7 +1446,8 @@ public class DatasetListPage extends CompositeWithUsername {
 			@Override
 			public void update(int index, DashboardDataset cruise, String value) {
                 if ( FeatureType.OPAQUE.equals(cruise.getFeatureType())) {
-                    UploadDashboard.showMessage("This observation type cannot be checked.");
+                    GWT.log("Cannot view/edit columns for OPAQUE datasets.");
+//                    UploadDashboard.showMessage("This observation type cannot be checked.");
                     return;
                 }
 				// Save the currently selected cruises
