@@ -35,7 +35,7 @@ public interface DashboardServicesInterface extends RemoteService {
 	 * 		if problems getting the cruise list
 	 * @throws SessionException 
 	 */
-	DashboardDatasetList getDatasetList() throws IllegalArgumentException, SessionException;
+	DashboardDatasetList getDatasetList(String username) throws IllegalArgumentException, SessionException;
 
 	/**
 	 * Deletes all files for the indicated datasets.

@@ -249,7 +249,7 @@ public class ProfileDatasetChecker implements DatasetChecker {
             msg.setDetailedComment("The dataset does not identify the sample Date.");
             stdUserData.addStandardizationMessage(msg);
         }
-        if ( ! stdUserData.hasTime()) {
+        if ( ! stdUserData.hasSampleTime()) {
             gotem = false;
             ADCMessage msg = new ADCMessage();
             msg.setSeverity(Severity.CRITICAL);

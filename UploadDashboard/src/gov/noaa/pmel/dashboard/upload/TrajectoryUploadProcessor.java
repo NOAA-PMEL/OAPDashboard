@@ -39,7 +39,6 @@ public class TrajectoryUploadProcessor extends FileUploadProcessor {
         String dataFormat = FormUtils.getFormField("dataformat", uploadFields.parameterMap());
         String datasetIdColName = FormUtils.getFormField("datasetIdColName", uploadFields.parameterMap());
         DataFileHandler datasetHandler = configStore.getDataFileHandler();
-        TreeSet<String> successes = new TreeSet<String>();
         
         for ( FileItem item : datafiles ) {
             // Get the datasets from this file

@@ -85,10 +85,6 @@ public class DataUploadService extends HttpServlet {
         return FormUtils.getFormField(fieldName, paramMap, false);
     }
     
-    private static String getUploadField(String fieldName, Map<String,List<FileItem>> paramMap, boolean allowMultipleValues) {
-        return FormUtils.getFormField(fieldName, paramMap, allowMultipleValues);
-    }
-    
     private static String getRequiredField(String fieldName, Map<String,List<FileItem>> paramMap) throws NoSuchFieldException {
         return FormUtils.getRequiredFormField(fieldName, paramMap, false);
     }
@@ -122,8 +118,8 @@ public class DataUploadService extends HttpServlet {
             FileUploadProcessor uploadProcessor = getUploadFileProcessor(stdFields);
             uploadProcessor.processUpload();
             List<String>messages = uploadProcessor.getMessages();
-            
-            sendOkMsg(response, uploadProcessor.getSuccesses());
+            Set<String>successes = uploadProcessor.getSuccesses();
+            sendResponseMsg(response, successes, messages);
         } catch (BadRequestException vex) { // baseRequestValidation
             sendErrMsg(response, vex);
         } catch (FileUploadException fex) { // parseParameterMap
@@ -538,6 +534,22 @@ public class DataUploadService extends HttpServlet {
 			response.flushBuffer();
 			return;
         }
+    }
+
+    /**
+     * @param response
+     * @param messages
+     * @throws IOException 
+     */
+    private void sendResponseMsg(HttpServletResponse response, Set<String> successes, List<String> messages) throws IOException {
+		response.setStatus(HttpServletResponse.SC_OK);
+		response.setContentType("text/html;charset=UTF-8");
+		try ( PrintWriter respWriter = response.getWriter(); ) {
+            for (String msg :  messages ) {
+                respWriter.println(msg);
+    		}
+    		response.flushBuffer();
+		}
     }
 
 	private static void sendOkMsg(HttpServletResponse response, Set<String> datasets) throws IOException {

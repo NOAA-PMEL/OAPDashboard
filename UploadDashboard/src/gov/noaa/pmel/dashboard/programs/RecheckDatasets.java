@@ -68,7 +68,6 @@ public class RecheckDatasets {
 		try {
 
 			DataFileHandler dataHandler = configStore.getDataFileHandler();
-			DatasetChecker dataChecker = configStore.getDashboardDatasetChecker();
 
 			for ( String datasetId : idsSet ) {
 				// Get all the data for this dataset
@@ -82,7 +81,8 @@ public class RecheckDatasets {
 				}
 				// Check the dataset as if this was to be submitted.
 				// This will regenerate the automated data checker messages file.
-				dataChecker.standardizeDataset(dataset, null);
+    			DatasetChecker dataChecker = configStore.getDashboardDatasetChecker(dataset.getFeatureType());
+				dataChecker.standardizeDataset(dataset);
 				System.err.println("Done - " + datasetId);
 			}
 

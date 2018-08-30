@@ -91,22 +91,9 @@ public class MetadataManagerPage extends CompositeWithUsername {
 			GWT.create(DashboardServicesInterface.class);
 
     @UiField ApplicationHeaderTemplate header;
-//	@UiField InlineLabel titleLabel;
-//	@UiField InlineLabel userInfoLabel;
-//	@UiField Button logoutButton;
-//	@UiField HTML introHtml;
-//	@UiField HTML metadataFileInfoHtml;
-//	@UiField FormPanel uploadForm;
-//	@UiField FileUpload mdUpload;
-//	@UiField Hidden timestampField;
-//	@UiField Hidden datasetIdsField;
-//	@UiField InlineLabel previewTitle;
-//	@UiField HTML filePreviewPanel;
-//	@UiField Button uploadButton;
-//	@UiField Button downloadButton;
-//	@UiField Button openMetadataEditorButton;
 	@UiField Button doneButton;
 	@UiField Button cancelButton;
+    private boolean confirmCancel = true;
     @UiField Frame metadataEditorFrame;
     IFrameElement meIFrame;
 
@@ -127,17 +114,8 @@ public class MetadataManagerPage extends CompositeWithUsername {
 		header.setPageTitle(TITLE_TEXT);
 		header.logoutButton.setText(LOGOUT_TEXT);
 
-//		previewTitle.setText("Current metadata:");
-		
-//		uploadForm.setEncoding(FormPanel.ENCODING_MULTIPART);
-//		uploadForm.setMethod(FormPanel.METHOD_POST);
-//		uploadForm.setAction(GWT.getModuleBaseURL() + "MetadataUploadService");
-
 		clearTokens();
 
-//		uploadButton.setText(UPLOAD_TEXT);
-//		downloadButton.setText(DOWNLOAD_TEXT);
-//      openMetadataEditorButton.setText(OPEN_ME_TEXT);
 		doneButton.setText(DONE_TEXT);
         cancelButton.setText(CANCEL_TEXT);
         
@@ -234,22 +212,14 @@ public class MetadataManagerPage extends CompositeWithUsername {
         String selectedDatasetId = cruise.getDatasetId();
 //        if ( ! selectedDatasetId.equals(datasetId)) {
     		datasetId = selectedDatasetId;
+            header.setDatasetId(selectedDatasetId);
     		
-    		// Update the HTML intro naming the cruise
-//    		introHtml.setHTML(CRUISE_HTML_INTRO_PROLOGUE + 
-//    				SafeHtmlUtils.htmlEscape(datasetId) + 
-//    				CRUISE_HTML_INTRO_EPILOGUE);
-    
     		setMetadataFileInfo(null);
-    //		filePreviewPanel.setHTML(NO_METADATA);
     		
     		// Clear the hidden tokens just to be safe
     		clearTokens();
-    //		getMetadataPreview(cruise.getDatasetId());
-//            String meUrl = getMetadataEditorDocumentUrl(datasetId);
-//            openMetadataEditorWindow(meUrl);
+            
             sendCurrentMetadataToMetaEd(datasetId);
-            header.setDatasetId(selectedDatasetId);
 //        }
 	}
 
@@ -328,81 +298,32 @@ public class MetadataManagerPage extends CompositeWithUsername {
 	@UiHandler("cancelButton")
 	void cancelButtonOnClick(ClickEvent event) {
 		// Return to the cruise list page which might have been updated
-        DashboardAskPopup confirm = new DashboardAskPopup(YES_TEXT, NO_TEXT, 
-                                                          DashboardAskPopup.QuestionType.WARNING,
-          new AsyncCallback<Boolean>() {
-                  @Override
-                  public void onSuccess(Boolean result) {
-                      // Submit only if yes
-                      if ( result == true ) {
-                            metadataEditorFrame.setUrl("about:_blank");
-                    		DatasetListPage.showPage();
+        if ( confirmCancel ) {
+            DashboardAskPopup confirm = new DashboardAskPopup(YES_TEXT, NO_TEXT, 
+                                                              DashboardAskPopup.QuestionType.WARNING,
+              new AsyncCallback<Boolean>() {
+                      @Override
+                      public void onSuccess(Boolean result) {
+                          // Submit only if yes
+                          if ( result.booleanValue() == true ) {
+                              showDataListPage();
+                          }
                       }
+                      @Override
+                      public void onFailure(Throwable ex) {
+                          // Never called
                   }
-                  @Override
-                  public void onFailure(Throwable ex) {
-                      // Never called
-              }
-          });
-        confirm.askQuestion("Abandon changes?");
+              });
+            confirm.askQuestion("Abandon changes?");
+        } else {
+            showDataListPage();
+        }
 	}
+    private void showDataListPage() {
+        metadataEditorFrame.setUrl("about:_blank");
+		DatasetListPage.showPage();
+    }
     
-//	@UiHandler("uploadButton") 
-//	void uploadButtonOnClick(ClickEvent event) {
-//		// Make sure a file was selected
-//		String uploadFilename = DashboardUtils.baseName(mdUpload.getFilename());
-//		if ( uploadFilename.isEmpty() ) {
-//			UploadDashboard.showMessage(NO_FILE_ERROR_MSG);
-//			return;
-//		}
-//
-//		// If an overwrite will occur, ask for confirmation
-//		if ( ! cruise.getMdTimestamp().isEmpty() ) {
-//			if ( askOverwritePopup == null ) {
-//				askOverwritePopup = new DashboardAskPopup(YES_TEXT, NO_TEXT, 
-//				     new AsyncCallback<Boolean>() {
-//					@Override
-//					public void onSuccess(Boolean result) {
-//						// Submit only if yes
-//						if ( result == true ) {
-//							assignTokens();
-//							uploadForm.submit();
-//						}
-//					}
-//					@Override
-//					public void onFailure(Throwable ex) {
-//						// Never called
-//					}
-//				});
-//			}
-//			askOverwritePopup.askQuestion(OVERWRITE_WARNING_MSG);
-//			return;
-//		}
-//
-//		// Nothing overwritten, submit the form
-//		assignTokens();
-//		uploadForm.submit();
-//	}
-
-//	@UiHandler("uploadForm")
-//	void uploadFormOnSubmit(SubmitEvent event) {
-//		UploadDashboard.showWaitCursor();
-//	}
-
-//	@UiHandler("uploadForm")
-//	void uploadFormOnSubmitComplete(SubmitCompleteEvent event) {
-//		clearTokens();
-//		processResultMsg(event.getResults());
-//		// Restore the usual cursor
-//		UploadDashboard.showAutoCursor();
-//	}
-
-//	@UiHandler("downloadButton")
-//	void downloadButtonOnClick(ClickEvent event) {
-//		String downloadUrl = getDownloadUrl(cruise.getDatasetId());
-//		Window.Location.replace(downloadUrl);
-//	}
-	
 	private String getDownloadUrl(String datasetId) {
 		StringBuilder b = new StringBuilder(UploadDashboard.getBaseUrl())
 								.append(DOWNLOAD_SERVICE_NAME)
@@ -410,53 +331,6 @@ public class MetadataManagerPage extends CompositeWithUsername {
 		return b.toString();
 	}
 	
-//	@UiHandler("openMetadataEditorButton") 
-//	void openMetadataEditorButtonOnClick(ClickEvent event) {
-//        sendCurrentMetadataToMetaEd(datasetId);
-//	}
-    
-	/**
-     * @return
-     */
-    /*
-    try {
-        File docFile = new File(docPath);
-        HttpClient client = HttpClients.createDefault();
-        HttpPost post = new HttpPost("http://matisse:8383/oap/document/postit");
-        FileBody body = new FileBody(docFile, ContentType.APPLICATION_XML);
-        MultipartEntityBuilder builder = MultipartEntityBuilder.create();
-        builder.addPart("xmlFile", body);
-        HttpEntity postit = builder.build();
-        post.setEntity(postit);
-        HttpResponse response = client.execute(post);
-        HttpEntity responseEntity = response.getEntity();
-        responseEntity.writeTo(System.out);
-    } catch (Exception ex) {
-        ex.printStackTrace();
-    }
-    */
-
-    /*
-            String url = "http://http://matisse:8383/oap/document/postit";
-            RequestBuilder builder = new RequestBuilder(RequestBuilder.POST, url);
-
-            try {
-//              builder.setHeader("Content-Type", "application/x-www-form-urlencoded");
-              builder.setHeader("Content-Type", "application/xml");
-              Request response = builder.sendRequest(postData, new RequestCallback() {
-
-                public void onError(Request request, Throwable exception) {
-                  // code omitted for clarity
-                }
-
-                public void onResponseReceived(Request request, Response response) {
-                  // code omitted for clarity
-                }
-              });
-            } catch (RequestException e) {
-              Window.alert("Failed to send the request: " + e.getMessage());
-            }
-*/
     private void sendCurrentMetadataToMetaEd(String datasetId) {
         try {
             service.sendMetadataInfo(getUsername(), datasetId, new SessionHandlingCallbackBase<String>() {
@@ -468,6 +342,8 @@ public class MetadataManagerPage extends CompositeWithUsername {
                 @Override
                 public void handleFailure(Throwable caught) {
                     String msg = caught.getMessage();
+                    doneButton.setEnabled(false);
+                    confirmCancel = false;
                     if ( caught instanceof NotFoundException ) {
                         UploadDashboard.showMessage(msg);
                     } else {

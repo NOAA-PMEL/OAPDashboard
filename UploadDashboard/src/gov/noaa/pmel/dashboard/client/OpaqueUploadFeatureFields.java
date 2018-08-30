@@ -24,7 +24,6 @@ public class OpaqueUploadFeatureFields extends Composite implements FeatureTypeF
     private static UnspecifiedUploadFeatureFieldsUiBinder uiBinder = GWT.create(UnspecifiedUploadFeatureFieldsUiBinder.class);
 
     @UiField TextBox unspecDatasetIdBox;
-    Hidden datasetIdFormField;
     
     public OpaqueUploadFeatureFields() {
         initWidget(uiBinder.createAndBindUi(this));
@@ -32,19 +31,18 @@ public class OpaqueUploadFeatureFields extends Composite implements FeatureTypeF
     }
 
     @Override
-    public void setFormFields(Panel form) {
-        if ( datasetIdFormField == null ) {
-            datasetIdFormField = new Hidden("datasetID");
-            form.add(datasetIdFormField);
-        }
-        datasetIdFormField.setValue(unspecDatasetIdBox.getValue());
+    public void setFormFields(DataUploadPage page) {
+        page.setDatasetIdToken(unspecDatasetIdBox.getValue());
+//        if ( datasetIdFormField == null ) {
+//            datasetIdFormField = new Hidden("datasetID");
+//            form.add(datasetIdFormField);
+//        }
+//        datasetIdFormField.setValue(unspecDatasetIdBox.getValue());
     }
 
     @Override
-    public void clearFormFields(Panel form) {
-        if ( datasetIdFormField != null ) {
-            datasetIdFormField.setValue("");
-        }
+    public void clearFormFields(DataUploadPage page) {
+        page.setDatasetIdToken("");
         unspecDatasetIdBox.setValue(null);
     }
 }

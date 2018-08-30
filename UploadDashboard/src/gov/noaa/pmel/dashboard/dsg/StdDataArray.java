@@ -812,9 +812,14 @@ public class StdDataArray {
 			 ( isUsableIndex(yearIndex) && isUsableIndex(monthOfYearIndex) && isUsableIndex(dayOfMonthIndex));
 	}
 	
-	public boolean hasTime() {
+    public boolean hasTimeOfDay() {
 		return isUsableIndex(timestampIndex) || isUsableIndex(timeOfDayIndex) ||
 			 ( isUsableIndex(hourOfDayIndex) && isUsableIndex(minuteOfHourIndex));
+    }
+    
+	public boolean hasSampleTime() {
+		return isUsableIndex(timestampIndex) || 
+		     ( hasDate() && hasTimeOfDay());
 	}
 	
 	/**

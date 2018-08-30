@@ -4,8 +4,10 @@ import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map.Entry;
 import java.util.TreeSet;
+
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import gov.noaa.pmel.dashboard.datatype.CharDashDataType;
 import gov.noaa.pmel.dashboard.datatype.DashDataType;
@@ -26,7 +28,6 @@ import ucar.nc2.Dimension;
 import ucar.nc2.Group;
 import ucar.nc2.NetcdfFile;
 import ucar.nc2.NetcdfFileWriter;
-import ucar.nc2.NetcdfFileWriter.Version;
 import ucar.nc2.Variable;
 
 
@@ -34,6 +35,8 @@ public abstract class DsgNcFile extends File {
 
 	private static final long serialVersionUID = -7695491814772713480L;
 
+    protected static final Logger logger = LogManager.getLogger(DsgNcFile.class);
+    
 	protected static final String DSG_VERSION = "DsgNcFile 2.0";
 	protected static final String TIME_ORIGIN_ATTRIBUTE = "01-JAN-1970 00:00:00";
 
@@ -170,8 +173,12 @@ public abstract class DsgNcFile extends File {
 	 * 		if not null and not {@link DashboardUtils#STRING_MISSING_VALUE}, 
 	 * 		the value for the units attribute
 	 */
-	protected void addAttributes(NetcdfFileWriter ncfile, Variable var, Object missVal, 
+	protected static void addAttributes(NetcdfFileWriter ncfile, Variable var, Object missVal, 
 			String longName, String standardName, String ioosCategory, String units) {
+        if ( var == null ) {
+            logger.warn("Add attributes: No ncVar found for varName " + longName);
+            return;
+        }
 		if ( missVal != null ) {
 			ncfile.addVariableAttribute(var, new Attribute("missing_value", String.valueOf(missVal)));
 			ncfile.addVariableAttribute(var, new Attribute("_FillValue", String.valueOf(missVal)));

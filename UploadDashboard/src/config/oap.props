@@ -1,0 +1,38 @@
+#
+# Configuration properties for the tws_util.ApplicationConfiguration system.
+#
+# Primary configuration properties file for OAPUploadDashboard application.
+#
+# Definitions can be overridden by machine- and environment-specific properties files
+# named <machine>.oap.properties and <env>.oap.properties, respectively.
+# Properties can also be overridden by System property definitions, both programmatically,
+# and by command line -D definitions, eg:
+#  java -Dsome.property=new_value -jar server.jar
+#
+# The precedence of overrides is as follows:
+#   primary file definitions
+#   machine-specific definitions
+#   environment-specific definitions
+#   System property definitions
+#
+# Variables are supported using the following convention:
+#   example.VAR_NAME=some_value
+#   example.some.prop={VAR_NAME}
+# Variable substitution happens after all precdence processing is complete.
+# In this way, variable values can also be overridden.
+#
+
+oap.archive.mode=sftp
+oap.archive.sftp.hostname=dunkel
+# oap.archive.sftp.username=sftp1
+# oap.archive.sftp.destination=upload
+oap.archive.sftp.username=kamb
+oap.archive.sftp.destination=/home/sftp/data
+# oap.archive.sftp.id_file=/Users/kamb/oxy-work/oap-git/OAPDashboard/UploadDashboard/ssh/ssk_id_rsa
+
+oap.archive.scp.username=kamb
+oap.archive.scp.hostname=dunkel
+oap.archive.scp.destination=scratch
+oap.archive.scp.id_file=/Users/kamb/.ssh/id_rsa_matisse
+
+oap.archive.cp.destination=/Users/kamb/scratch

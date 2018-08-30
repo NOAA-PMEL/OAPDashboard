@@ -42,6 +42,26 @@ public class TrajectoryDsgFile extends DsgNcFile {
 		super(parent, child);
 	}
 
+	protected void checkIndeces(StdDataArray stddata) {
+		// Quick check of data column indices already assigned in StdDataArray
+		if ( ! stddata.hasLongitude() )
+			throw new IllegalArgumentException("no longitude data column");
+		if ( ! stddata.hasLatitude() )
+			throw new IllegalArgumentException("no latitude data column");
+		if ( ! stddata.hasYear() )
+			throw new IllegalArgumentException("no year data column");
+		if ( ! stddata.hasMonthOfYear() )
+			throw new IllegalArgumentException("no month of year data column");
+		if ( ! stddata.hasDayOfMonth() )
+			throw new IllegalArgumentException("no day of month data column");
+		if ( ! stddata.hasHourOfDay() )
+			throw new IllegalArgumentException("no hour of day data column");
+		if ( ! stddata.hasMinuteOfHour() )
+			throw new IllegalArgumentException("no minute of hour data column");
+		if ( ! stddata.hasSecondOfMinute() )
+			throw new IllegalArgumentException("no second of minute data column");
+	}
+	
 	@Override
 	public void create(DsgMetadata metaData, StdDataArray fileData) 
 			throws IllegalArgumentException, IOException, InvalidRangeException, IllegalAccessException {
@@ -52,6 +72,9 @@ public class TrajectoryDsgFile extends DsgNcFile {
 			throw new IllegalArgumentException("no data given");
 		stddata = fileData;
 		checkIndeces(stddata);
+        if ( ! stddata.hasSampleTime()) {
+			throw new IllegalArgumentException("no data sample time found");
+        }
 
 		NetcdfFileWriter ncfile = NetcdfFileWriter.createNew(Version.netcdf3, getPath());
 		try {
@@ -85,6 +108,10 @@ public class TrajectoryDsgFile extends DsgNcFile {
 			charDataDims.add(obslen);
 			charDataDims.add(charlen);
 
+			List<Dimension> stringDataDims = new ArrayList<Dimension>();
+			stringDataDims.add(obslen);
+			stringDataDims.add(stringlen);
+
 			ncfile.addGroupAttribute(null, new Attribute("featureType", "Trajectory"));
 			ncfile.addGroupAttribute(null, new Attribute("Conventions", "CF-1.6"));
 			ncfile.addGroupAttribute(null, new Attribute("history", DSG_VERSION));
@@ -100,9 +127,13 @@ public class TrajectoryDsgFile extends DsgNcFile {
 			// Make netCDF variables of all the metadata and data variables
 			for ( Entry<DashDataType<?>,Object> entry : metadata.getValuesMap().entrySet() ) {
 				DashDataType<?> dtype = entry.getKey();
-				Object value = entry.getValue();
-				if ( DashboardUtils.isNullOrNull(value)) { continue; }
 				varName = dtype.getVarName();
+				Object value = entry.getValue();
+				if ( DashboardUtils.isNullOrNull(value)) { 
+                    System.out.println("Null value for metadata type " + varName);
+                    logger.info("Null value for metadata type " + varName);
+				    continue; 
+				}
 				
 				if ( dtype instanceof StringDashDataType ) {
 					// Metadata Strings
@@ -142,13 +173,25 @@ public class TrajectoryDsgFile extends DsgNcFile {
 				}
 			}
 
-			boolean timeFound = false;
+            boolean hasTime = false;
 			List<DashDataType<?>> dataTypes = stddata.getDataTypes();
-			for ( DashDataType<?> dtype : dataTypes ) {
-				varName = dtype.getVarName();
+			for ( DashDataType<?> dtype : dataTypes )  {
+			    if ( dtype.typeNameEquals(DashboardServerUtils.OTHER) ||
+			         dtype.typeNameEquals(DashboardServerUtils.DATASET_ID) || 
+			         dtype.typeNameEquals(DashboardServerUtils.DATASET_NAME)) {
+			        continue;
+			    }
+			    varName = dtype.getVarName();
 				if ( dtype instanceof CharDashDataType ) {
 					// Data Characters
 					var = ncfile.addVariable(null, varName, DataType.CHAR, charDataDims);
+					// No missing_value, _FillValue, or units for characters
+					addAttributes(ncfile, var, null, dtype.getDescription(), 
+							dtype.getStandardName(), dtype.getCategoryName(), DashboardUtils.STRING_MISSING_VALUE);
+				}
+				else if ( dtype instanceof StringDashDataType ) {
+					// Data Strings
+					var = ncfile.addVariable(null, varName, DataType.CHAR, stringDataDims);
 					// No missing_value, _FillValue, or units for characters
 					addAttributes(ncfile, var, null, dtype.getDescription(), 
 							dtype.getStandardName(), dtype.getCategoryName(), DashboardUtils.STRING_MISSING_VALUE);
@@ -166,8 +209,8 @@ public class TrajectoryDsgFile extends DsgNcFile {
 							dtype.getStandardName(), dtype.getCategoryName(), dtype.getFileStdUnit());
 					if ( DashboardServerUtils.TIME.typeNameEquals(dtype) ) {
 						// Additional attribute giving the time origin (although also mentioned in the units)
+                        hasTime = true;
 						ncfile.addVariableAttribute(var, new Attribute("time_origin", TIME_ORIGIN_ATTRIBUTE));
-						timeFound = true;
 					}
 					if ( dtype.getStandardName().endsWith("depth") ) {
 						ncfile.addVariableAttribute(var, new Attribute("positive", "down"));
@@ -177,9 +220,14 @@ public class TrajectoryDsgFile extends DsgNcFile {
 					throw new IllegalArgumentException("unexpected unknown data type: " + dtype.toString());
 				}
 			}
-			if ( ! timeFound )
-				throw new IllegalArgumentException("no time data column");
-
+            
+            if ( !hasTime ) {
+                DoubleDashDataType dtype = DashboardServerUtils.TIME;
+                var = ncfile.addVariable(null, "time", DataType.DOUBLE, dataDims);
+    			addAttributes(ncfile, var, DashboardUtils.FP_MISSING_VALUE, dtype.getDescription(), 
+            				  dtype.getStandardName(), dtype.getCategoryName(), dtype.getFileStdUnit());
+    			ncfile.addVariableAttribute(var, new Attribute("time_origin", TIME_ORIGIN_ATTRIBUTE));
+            }
 			ncfile.create();
 
 			// The header has been created.  Now let's fill it up.
@@ -194,9 +242,12 @@ public class TrajectoryDsgFile extends DsgNcFile {
 				DashDataType<?> dtype = entry.getKey();
 				varName = dtype.getVarName();
 				var = ncfile.findVariable(varName);
-				if ( var == null )
-					throw new RuntimeException("Unexpected failure to find ncfile variable " + varName);
-
+				if ( var == null ) {
+//					throw new RuntimeException("Unexpected failure to find ncfile variable " + varName);
+                    System.out.println("Unexpected failure to find ncfile metadata variable " + varName);
+                    logger.warn("Unexpected failure to find ncfile metadata variable " + varName);
+                    continue;
+				}
 				
 				if ( dtype instanceof StringDashDataType ) {
 					// Metadata Strings
@@ -239,14 +290,36 @@ public class TrajectoryDsgFile extends DsgNcFile {
 				}
 			}
 
+            if ( !hasTime ) {
+                Variable tvar = ncfile.findVariable("time");
+                ArrayDouble.D1 dvar = new ArrayDouble.D1(numSamples);
+                Double[] sampleTimes = stddata.getSampleTimes();
+				for (int j = 0; j < numSamples; j++) {
+					dvar.set(j, sampleTimes[j].doubleValue());
+				}
+                ncfile.write(tvar, dvar);
+            }
 			for (int k = 0; k < stddata.getNumDataCols(); k++) {
 				DashDataType<?> dtype = dataTypes.get(k);
 				varName = dtype.getVarName();
 				var = ncfile.findVariable(varName);
-				if ( var == null )
-					throw new RuntimeException("Unexpected failure to find ncfile variable " + varName);
-
-				if ( dtype instanceof CharDashDataType ) {
+				if ( var == null ) {
+//					throw new RuntimeException("Unexpected failure to find ncfile variable " + varName);
+                    System.out.println("Unexpected failure to find ncfile data variable " + varName);
+                    logger.warn("Unexpected failure to find ncfile data variable " + varName);
+                    continue;
+				}
+				if ( dtype instanceof StringDashDataType ) {
+					// Data Strings
+					ArrayChar.D2 dvar = new ArrayChar.D2(numSamples, maxchar);
+					for (int j = 0; j < numSamples; j++) {
+    					String dvalue = (String) stddata.getStdVal(j, k);
+    					if ( dvalue == null )
+    						dvalue = DashboardUtils.STRING_MISSING_VALUE;
+        					dvar.setString(j, dvalue);
+					}
+					ncfile.write(var, dvar);
+				} else if ( dtype instanceof CharDashDataType ) {
 					// Data Characters
 					ArrayChar.D2 dvar = new ArrayChar.D2(numSamples, 1);
 					for (int j = 0; j < numSamples; j++) {
@@ -283,7 +356,8 @@ public class TrajectoryDsgFile extends DsgNcFile {
 					throw new IllegalArgumentException("unexpected unknown data type: " + dtype.toString());
 				}
 			}
-
+		} catch (Exception ex) {
+		    ex.printStackTrace();
 		} finally {
 			ncfile.close();
 		}

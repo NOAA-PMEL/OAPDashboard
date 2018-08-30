@@ -32,7 +32,7 @@ public interface DashboardServicesInterfaceAsync {
 	 * @param callback
 	 * 		the callback to make with the cruise list.
 	 */
-	void getDatasetList(AsyncCallback<DashboardDatasetList> callback);
+	void getDatasetList(String username, AsyncCallback<DashboardDatasetList> callback);
 
 	/**
 	 * Client side request to deletes all files for the indicated cruises.

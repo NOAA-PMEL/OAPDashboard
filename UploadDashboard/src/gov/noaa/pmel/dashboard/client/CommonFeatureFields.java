@@ -3,12 +3,14 @@
  */
 package gov.noaa.pmel.dashboard.client;
 
+
+import java.util.logging.Logger;
+
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.event.logical.shared.ValueChangeHandler;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
-import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.Hidden;
@@ -26,9 +28,13 @@ import gov.noaa.pmel.dashboard.shared.DashboardUtils;
  */
 public class CommonFeatureFields extends Composite implements FeatureTypeFields {
 
+    private static Logger logger = Logger.getLogger("CommonFeatureFields");
+    
 	private static final String COMMA_FORMAT_TEXT = "file contains comma-separated values";
 	private static final String SEMICOLON_FORMAT_TEXT = "file contains semicolon-separated values";
 	private static final String TAB_FORMAT_TEXT = "file contains tab-separated values";
+
+    public static final String DATASET_ID_COLUMN_FIELD_NAME = "datasetIdColName";
 
 	@UiField RadioButton commaRadio;
 	@UiField RadioButton semicolonRadio;
@@ -37,8 +43,8 @@ public class CommonFeatureFields extends Composite implements FeatureTypeFields 
     @UiField Label datasetColNameLabel;
     @UiField TextBox datasetColName;
 
-	Hidden formatToken;
-	Hidden datasetIdColName;
+//	Hidden formatToken;
+//	Hidden datasetIdColName;
     
     interface CommonFeatureFieldsUiBinder extends UiBinder<Widget, CommonFeatureFields> {
     }
@@ -85,17 +91,21 @@ public class CommonFeatureFields extends Composite implements FeatureTypeFields 
     }
 
     @Override
-    public void setFormFields(Panel form) {
-        if ( formatToken == null ) {
-            formatToken = new Hidden("dataformat");
-            form.add(formatToken);
-        }
-        if ( datasetIdColName == null ) {
-            datasetIdColName = new Hidden("datasetIdColName");
-            form.add(datasetIdColName);
-        }
-        formatToken.setValue(getSelectedFormat().getName());
-		datasetIdColName.setValue(datasetColName.getValue());
+    public void setFormFields(DataUploadPage page) {
+        page.setFileDataFormatToken(getSelectedFormat().getName());
+        page.setFormField(DATASET_ID_COLUMN_FIELD_NAME, datasetColName.getValue());
+//        if ( formatToken == null ) {
+//            logger.info("Adding dataformat field for " + this.getClass());
+//            formatToken = new Hidden("dataformat");
+//            form.add(formatToken);
+//        }
+//        if ( datasetIdColName == null ) {
+//            logger.info("Adding datasetIdColName field for " + this.getClass());
+//            datasetIdColName = new Hidden("datasetIdColName");
+//            form.add(datasetIdColName);
+//        }
+//        formatToken.setValue(getSelectedFormat().getName());
+//		datasetIdColName.setValue(datasetColName.getValue());
     }
 
     private RadioButton getSelectedFormat() {
@@ -105,12 +115,12 @@ public class CommonFeatureFields extends Composite implements FeatureTypeFields 
     }
 
     @Override
-    public void clearFormFields(Panel form) {
-        if ( formatToken != null ) {
-            formatToken.setValue("");
-            datasetIdColName.setValue("");
-            datasetColName.setValue("");
-        }
+    public void clearFormFields(DataUploadPage page) {
+//        if ( formatToken != null ) {
+//            formatToken.setValue("");
+//            datasetIdColName.setValue("");
+//            datasetColName.setValue("");
+//        }
     }
 
 }

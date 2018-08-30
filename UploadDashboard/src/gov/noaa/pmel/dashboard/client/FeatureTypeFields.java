@@ -12,7 +12,7 @@ import com.google.gwt.user.client.ui.Panel;
  */
 public interface FeatureTypeFields extends IsWidget {
 
-    void setFormFields(Panel form);
+    void setFormFields(DataUploadPage page);
 
-    void clearFormFields(Panel form);
+    void clearFormFields(DataUploadPage page);
 }

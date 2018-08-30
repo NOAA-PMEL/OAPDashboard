@@ -57,7 +57,7 @@ import gov.noaa.pmel.dashboard.shared.FeatureType;
  */
 public class DashboardConfigStore {
 
-	static class PropertyNotFoundException extends Exception {
+	public static class PropertyNotFoundException extends Exception {
 		private static final long serialVersionUID = -7623805430454642262L;
 		public PropertyNotFoundException() { super(); }
 		public PropertyNotFoundException(String message, Throwable cause) { super(message, cause); }
@@ -133,6 +133,7 @@ public class DashboardConfigStore {
 
 	private static final Object SINGLETON_SYNC_OBJECT = new Object();
 	private static DashboardConfigStore singleton = null;
+    private static File appContentDir;
 
 	private TripleDesCipher cipher;
 	private String encryptionSalt;
@@ -140,7 +141,6 @@ public class DashboardConfigStore {
 	private HashMap<String,DashboardUserInfo> userInfoMap;
 	private String uploadVersion;
 	private String qcVersion;
-    private File appContentDir;
 	private UserFileHandler userFileHandler;
 	private DataFileHandler dataFileHandler;
 	private RawUploadFileHandler rawUploadFileHandler;
@@ -165,6 +165,71 @@ public class DashboardConfigStore {
 	private WatchService watcher;
 	private boolean needToRestart;
 	private Logger itsLogger;
+
+    public static File getAppContentDir() throws PropertyNotFoundException {
+        if ( appContentDir == null ) {
+    		String baseDir = getBaseDir();
+    
+    		// First check is UPLOAD_DASHBOARD_SERVER_NAME is defined for alternate configurations 
+    		// when running the dashboard.program.* applications
+    		String serverAppName = System.getenv("UPLOAD_DASHBOARD_SERVER_NAME");
+    		if ( serverAppName == null )
+    			serverAppName = System.getProperty("UPLOAD_DASHBOARD_SERVER_NAME");
+    		if ( serverAppName == null ) {
+    			// Get the app name from the location of this class source in tomcat;
+    			// e.g., "/home/users/tomcat/webapps/SocatUploadDashboard/WEB-INF/classes/gov/noaa/pmel/dashboard/server/DashboardConfigStore.class"
+    			try {
+    				File webAppSubDir = new File(DashboardConfigStore.class.getProtectionDomain().getCodeSource().getLocation().getPath());
+    				do {
+    					webAppSubDir = webAppSubDir.getParentFile();
+    					serverAppName = webAppSubDir.getName();
+    				} while ( ! serverAppName.equals("WEB-INF") );
+    				webAppSubDir = webAppSubDir.getParentFile();
+    				serverAppName = webAppSubDir.getName();
+    			} catch ( Exception ex ) {
+    				serverAppName = "";
+    			}
+    			if ( serverAppName.isEmpty() )
+    				throw new PropertyNotFoundException("Unable to obtain the upload dashboard server name");
+    		}
+    		String appContentDirPath = baseDir + "content" + File.separator + serverAppName + File.separator;
+            appContentDir = new File(appContentDirPath);
+        }
+        return appContentDir;
+    }
+        
+	private static String getBaseDir() throws PropertyNotFoundException {
+		String baseDir = tryProperty("OA_DOCUMENT_ROOT");
+		if ( baseDir == null ) {
+			baseDir = tryProperty("CATALINA_BASE");
+		}
+		if ( baseDir == null ) {
+			baseDir = tryProperty("CATALINA_HOME");
+		}
+		if ( baseDir == null ) {
+			System.out.println("*** ENV:\n"+System.getenv());
+			System.out.println("*** PROPS:\n"+System.getProperties());
+			throw new PropertyNotFoundException("Document config root not found.");
+		}
+		if ( ! baseDir.endsWith(File.separator)) {
+			baseDir += File.separator;
+		}
+		return baseDir;
+	}
+	
+	private static String tryProperty(String propName) { // throws PropertyNotFoundException {
+		String propVal = System.getenv(propName);
+		if ( propVal == null ) {
+			propVal = System.getProperty(propName);
+		}
+		if ( propVal == null ) {
+//			throw new PropertyNotFoundException(propName + " environment variable is not defined");
+			System.err.println(propName + " not found");
+		} else {
+			System.out.println(propName+":"+ propVal);
+		}
+		return propVal;
+	}
 
 	/**
 	 * Creates a data store initialized from the contents of the standard 
@@ -213,7 +278,12 @@ public class DashboardConfigStore {
 
 		// Configure the log4j2 logger
 		System.setProperty("log4j.configurationFile", appConfigDir.getPath() + "/log4j.properties");
-		itsLogger = LogManager.getLogger(serverAppName);
+        System.out.println("log4j.configurationFile: " + System.getProperty("log4j.configurationFile"));
+		itsLogger = LogManager.getLogger(this.getClass()); // serverAppName);
+        System.out.println("itsLogger: " + itsLogger);
+        itsLogger.warn("Warn level test");
+        itsLogger.info("Info level test");
+        itsLogger.debug("Debug level test");
 
 		// Record configuration files that should be monitored for changes 
 		filesToWatch = new HashSet<File>();
@@ -635,39 +705,6 @@ public class DashboardConfigStore {
 		return dirname;
 	}
 
-	private String getBaseDir() throws PropertyNotFoundException {
-		String baseDir = tryProperty("OA_DOCUMENT_ROOT");
-		if ( baseDir == null ) {
-			baseDir = tryProperty("CATALINA_BASE");
-		}
-		if ( baseDir == null ) {
-			baseDir = tryProperty("CATALINA_HOME");
-		}
-		if ( baseDir == null ) {
-			System.out.println("*** ENV:\n"+System.getenv());
-			System.out.println("*** PROPS:\n"+System.getProperties());
-			throw new PropertyNotFoundException("Document config root not found.");
-		}
-		if ( ! baseDir.endsWith(File.separator)) {
-			baseDir += File.separator;
-		}
-		return baseDir;
-	}
-	
-	private String tryProperty(String propName) { // throws PropertyNotFoundException {
-		String propVal = System.getenv(propName);
-		if ( propVal == null ) {
-			propVal = System.getProperty(propName);
-		}
-		if ( propVal == null ) {
-//			throw new PropertyNotFoundException(propName + " environment variable is not defined");
-			System.err.println(propName + " not found");
-		} else {
-			System.out.println(propName+":"+ propVal);
-		}
-		return propVal;
-	}
-
 	private static String getFilePathProperty(Properties configProps, String propKey, File baseDir) throws IOException {
 		String fPath = configProps.getProperty(propKey);
 		if ( fPath == null ) {
@@ -947,13 +984,10 @@ public class DashboardConfigStore {
 	}
 
 	/**
+	 * @param featureType The FeatureType of the dataset to be checked.
 	 * @return
-	 * 		the checker for dataset data and metadata
+	 * 		the checker for the type of dataset data and metadata
 	 */
-	public DatasetChecker getDashboardDatasetChecker() {
-        return getDashboardDatasetChecker(FeatureType.PROFILE); // XXX should either be not allowed or UNSPECIFIED
-	}
-    
 	public DatasetChecker getDashboardDatasetChecker(FeatureType featureType) {
 		DatasetChecker datasetChecker;
         switch (featureType) {
@@ -1097,27 +1131,6 @@ public class DashboardConfigStore {
 		return userInfo.isAdmin();
 	}
 
-	/*-* This is not used anywhere.
-	 * Generates an further encrypted password hash 
-	 * from the given username and initially encrypted password
-	 * @param username
-	 * 		username to use
-	 * @param passhash
-	 * 		initially encrypted password to use
-	 * @return
-	 * 		further encrypted password, or an empty string on failure
-	public String spicedHash(String username, String passhash) {
-		String passSpicedHash;
-		try {
-			passSpicedHash = cipher.encrypt(passhash + encryptionSalt);
-		} catch (DataLengthException | IllegalStateException
-				| InvalidCipherTextException ex) {
-			return "";
-		}
-		return DashboardUtils.passhashFromPlainText(username, passSpicedHash);
-	}
-	 */
-
 	private static File tmpDir;
 	public static File getTempDir() {
 	    if ( tmpDir == null ) {
@@ -1131,27 +1144,4 @@ public class DashboardConfigStore {
 	    }
 	    return tmpDir;
 	}
-
-    /**
-     * @return the root dir of the application-managed content.
-     */
-    public File getAppContentDir() {
-        return appContentDir;
-    }
-
-//    public void addUser(String username, String name) throws IllegalStateException {
-//        DashboardUserInfo userInfo = userInfoMap.get(username);
-//        if ( userInfo != null ) {
-//            String msg = "User " + username + " already exists in ConfigStore.";
-//            throw new IllegalStateException(msg);
-//        }
-//    }
-//    public void removeUser(String username) throws IllegalStateException {
-//        DashboardUserInfo userInfo = userInfoMap.get(username);
-//        if ( userInfo == null ) {
-//            String msg = "User " + username + " does not exist in ConfigStore.";
-//            throw new IllegalStateException(msg);
-//        }
-//    }
-
 }

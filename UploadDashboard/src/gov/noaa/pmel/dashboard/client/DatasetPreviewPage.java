@@ -33,9 +33,11 @@ import com.google.gwt.user.client.ui.TabLayoutPanel;
 import com.google.gwt.user.client.ui.Widget;
 
 import gov.noaa.pmel.dashboard.client.UploadDashboard.PagesEnum;
+import gov.noaa.pmel.dashboard.shared.DashboardDataset;
 import gov.noaa.pmel.dashboard.shared.DashboardDatasetList;
 import gov.noaa.pmel.dashboard.shared.DashboardServicesInterface;
 import gov.noaa.pmel.dashboard.shared.DashboardServicesInterfaceAsync;
+import gov.noaa.pmel.dashboard.shared.FeatureType;
 import gov.noaa.pmel.dashboard.shared.PreviewPlotImage;
 import gov.noaa.pmel.dashboard.shared.PreviewPlotResponse;
 
@@ -109,9 +111,11 @@ public class DatasetPreviewPage extends CompositeWithUsername {
 	List<FlowPanel> tabPanels = new ArrayList<FlowPanel>();
 	List<List<Image>> tabImages = new ArrayList<List<Image>>();
 	
-	String datasetId;
-	String timetag;
-	AsyncCallback<PreviewPlotResponse> checkStatusCallback;
+	private String datasetId;
+	private String timetag;
+    private FeatureType obsType;
+
+	private AsyncCallback<PreviewPlotResponse> checkStatusCallback;
 
 	// The singleton instance of this page
 	private static DatasetPreviewPage singleton;
@@ -191,8 +195,9 @@ public class DatasetPreviewPage extends CompositeWithUsername {
 		if ( singleton == null )
 			singleton = new DatasetPreviewPage();
 		UploadDashboard.updateCurrentPage(singleton);
-		String datasetId = cruiseList.keySet().iterator().next(); 
-		singleton.updatePreviewPlots(datasetId,
+// 		String datasetId = cruiseList.keySet().iterator().next(); 
+		DashboardDataset dataset = cruiseList.get(cruiseList.keySet().iterator().next()); 
+		singleton.updatePreviewPlots(dataset,
 									 cruiseList.getUsername(), false);
 		History.newItem(PagesEnum.PREVIEW_DATASET.name(), false);
 	}
@@ -219,13 +224,18 @@ public class DatasetPreviewPage extends CompositeWithUsername {
 	 * @param username
 	 * 		user requesting these plots 
 	 */
-	private void updatePreviewPlots(String expoCode, String username, boolean force) {
-		// Update the username
+	private void updatePreviewPlots(DashboardDataset dataset, String username, boolean force) {
+        String dsid = dataset.getDatasetId();
+		this.datasetId = dsid;
+        obsType = dataset.getFeatureType();
+        this.updatePreviewPlots(dsid, username, force);
+	}
+	private void updatePreviewPlots(String dsid, String username, boolean force) {
+		if ( dsid == null ) { throw new IllegalArgumentException("Null dataset id"); }
+        if ( ! dsid.equals(datasetId)) { logger.warning("Changing dataset ID without changing feature type."); }
 		setUsername(username);
 		userInfoLabel.setText(WELCOME_INTRO + getUsername());
 
-		if ( expoCode == null ) { throw new IllegalArgumentException("Null dataset id"); }
-		this.datasetId = expoCode;
 		introHtml.setHTML(INTRO_HTML_PROLOGUE + SafeHtmlUtils.htmlEscape(this.datasetId));
 //		if ( this.expocode.length() > 11 ) { // WTF?
 			// Tell the server to generate the preview plots

@@ -423,7 +423,7 @@ public class DatasetListPage extends CompositeWithUsername {
 	static void showPage() {
 		UploadDashboard.showWaitCursor();
 		// Request the latest cruise list
-		service.getDatasetList(new OAPAsyncCallback<DashboardDatasetList>() {
+		service.getDatasetList(null, new OAPAsyncCallback<DashboardDatasetList>() {
 			@Override
 			public void onSuccess(DashboardDatasetList cruises) {
 				if ( singleton == null )

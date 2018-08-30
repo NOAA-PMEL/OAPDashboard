@@ -845,7 +845,7 @@ public class DataFileHandler extends VersionedFileHandler {
 	        throws IllegalArgumentException, IOException 
 	{
 		StdUserDataArray stdData = DashboardConfigStore.get(false)
-			                            .getDashboardDatasetChecker()
+			                            .getDashboardDatasetChecker(datasetData.getFeatureType())
 			                            .standardizeDataset(datasetData, null);
 		return saveArchiveDataFile(stdData, datasetData, columns);
 	}
@@ -1153,6 +1153,8 @@ public class DataFileHandler extends VersionedFileHandler {
 				dataset.getOwner() + " deleted by " + username;
 		try {
 			deleteVersionedFile(datasetDataFile(datasetId), commitMsg);
+		} catch ( SVNException sex ) {
+            logger.warn("Exception deleting versioned file: " + sex);
 		} catch ( Exception ex ) {
 			throw new IllegalArgumentException("Problems deleting the cruise data file: " + 
 					ex.getMessage());
@@ -1160,6 +1162,8 @@ public class DataFileHandler extends VersionedFileHandler {
 		// Delete the cruise information file
 		try {
 			deleteVersionedFile(datasetInfoFile(datasetId), commitMsg);
+		} catch ( SVNException sex ) {
+            logger.warn("Exception deleting versioned file: " + sex);
 		} catch ( Exception ex ) {
 			throw new IllegalArgumentException("Problems deleting the cruise information file: " + 
 					ex.getMessage());

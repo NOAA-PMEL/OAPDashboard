@@ -41,6 +41,7 @@ public class FerretConfig extends Document {
 		 * Create the preview plots
 		 */
 		PLOTS,
+        trajectory_PLOTS
 	}
 
 	/**
@@ -253,6 +254,8 @@ public class FerretConfig extends Document {
         		driver = invoker.getAttributeValue("decimate_driver");
         	else if ( actionEnum.equals(Action.PLOTS) )
         		driver = invoker.getAttributeValue("plots_driver");
+        	else if ( actionEnum.equals(Action.trajectory_PLOTS) )
+        		driver = invoker.getAttributeValue("trajectory_plots_driver");
         	else
         		driver = null;
             if ( driver != null ) {

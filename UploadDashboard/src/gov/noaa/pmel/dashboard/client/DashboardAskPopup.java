@@ -42,7 +42,7 @@ public class DashboardAskPopup extends Composite {
 	HandlerRegistration askHandler;
 
     public static enum QuestionType {
-        PLAIN("images/blank_1px.png"),
+        PLAIN("images/blank_1px.gif"),
         QUESTION("images/questionMark_64px.png"),
         WARNING("images/warning_64px.png");
         

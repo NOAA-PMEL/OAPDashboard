@@ -6,7 +6,8 @@ package gov.noaa.pmel.dashboard.util;
 import java.util.List;
 import java.util.Map;
 
-import org.apache.logging.log4j.core.Logger;     // XXX
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.apache.tomcat.util.http.fileupload.FileItem;
 
 /**
@@ -15,6 +16,7 @@ import org.apache.tomcat.util.http.fileupload.FileItem;
  */
 public class FormUtils {
 
+    private static Logger logger = LogManager.getLogger(FormUtils.class);
     
     public static String getFormField(String fieldName, Map<String,List<FileItem>> paramMap) {
         return getFormField(fieldName, paramMap, false);
@@ -24,13 +26,13 @@ public class FormUtils {
         String fieldValue = null;
         List<FileItem> itemList = paramMap.get(fieldName);
         if (itemList == null || itemList.isEmpty()) {
-//  XXX           logger.debug("No upload field found for " + fieldName);
+            logger.info("No upload form fields provided for:" + fieldName);
         } else if (itemList.size() == 1) {
             fieldValue = itemList.get(0).getString();
         } else if (itemList.size() >= 1 && allowMultipleValues) {
             fieldValue = itemList.get(0).getString();
         } else {
-//  XXX           logger.info("Unexpected Multiple field values found for " + fieldName);
+          throw new IllegalStateException("Unexpected Multiple form field values found for: " + fieldName);
         }
         return fieldValue;
     }

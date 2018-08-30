@@ -4,7 +4,6 @@
 package gov.noaa.pmel.dashboard.handlers;
 
 import java.io.BufferedOutputStream;
-import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileFilter;
 import java.io.FileInputStream;
@@ -18,18 +17,13 @@ import java.nio.channels.FileChannel;
 import java.nio.channels.ReadableByteChannel;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.text.SimpleDateFormat;
 import java.util.Arrays;
 import java.util.Date;
-import java.util.List;
 import java.util.TimeZone;
-import java.util.function.BiConsumer;
-import java.util.function.BiFunction;
-import java.util.stream.Stream;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 
@@ -41,7 +35,6 @@ import org.apache.commons.compress.compressors.CompressorException;
 import org.apache.commons.compress.compressors.CompressorStreamFactory;
 import org.apache.commons.compress.compressors.gzip.GzipCompressorOutputStream;
 import org.apache.commons.compress.utils.IOUtils;
-import org.apache.commons.io.FilenameUtils;
 
 import gov.loc.repository.bagit.creator.BagCreator;
 import gov.loc.repository.bagit.domain.Bag;
@@ -57,16 +50,15 @@ import gov.loc.repository.bagit.exceptions.UnparsableVersionException;
 import gov.loc.repository.bagit.exceptions.UnsupportedAlgorithmException;
 import gov.loc.repository.bagit.exceptions.VerificationException;
 import gov.loc.repository.bagit.hash.StandardSupportedAlgorithms;
-import gov.loc.repository.bagit.reader.BagReader;
 import gov.loc.repository.bagit.verify.BagVerifier;
 import gov.loc.repository.bagit.writer.BagWriter;
 import gov.noaa.pmel.dashboard.dsg.StdUserDataArray;
 import gov.noaa.pmel.dashboard.server.DashboardConfigStore;
+import gov.noaa.pmel.dashboard.server.DashboardConfigStore.PropertyNotFoundException;
 import gov.noaa.pmel.dashboard.shared.DashboardDatasetData;
 import gov.noaa.pmel.dashboard.shared.FeatureType;
 import gov.noaa.pmel.tws.util.ApplicationConfiguration;
 import gov.noaa.pmel.tws.util.FileUtils;
-import ucar.units.SupplementaryBaseQuantity;
 
 /**
  * @author kamb
@@ -82,7 +74,7 @@ public class Bagger implements ArchiveBundler {
     private DashboardConfigStore _store;
 
     public static File Bag(String datasetId) throws IOException, NoSuchAlgorithmException, UnsupportedAlgorithmException, 
-                                                    CompressorException, ArchiveException, 
+                                                    CompressorException, ArchiveException, PropertyNotFoundException,
                                                     MissingPayloadManifestException, MissingBagitFileException, 
                                                     MissingPayloadDirectoryException, FileNotInPayloadDirectoryException, 
                                                     InterruptedException, MaliciousPathException, InvalidBagitFileFormatException, 
@@ -116,11 +108,11 @@ public class Bagger implements ArchiveBundler {
     /**
      * 
      */
-    public Bagger(String datasetId, DashboardConfigStore store) {
+    public Bagger(String datasetId, DashboardConfigStore store) throws PropertyNotFoundException {
         this(datasetId, false, store);
     }
     
-    public Bagger(String datasetId, boolean includeHiddenFiles, DashboardConfigStore store) {
+    public Bagger(String datasetId, boolean includeHiddenFiles, DashboardConfigStore store) throws PropertyNotFoundException {
         _datasetId = datasetId.toUpperCase();
         _includeHiddenFiles = includeHiddenFiles;
         _store = store;
@@ -158,11 +150,11 @@ public class Bagger implements ArchiveBundler {
 //        File infoFile = dataFiler.datasetInfoFile(_datasetId);
 //        writeFileTo(infoFile, dataDir);
         
-        File meta = new File(bagRoot, "metadata");
+        File meta = dataDir; // new File(dataDir, "metadata");
         meta.mkdirs();
         if ( !meta.exists()) { throw new IllegalStateException("Unable to create bag metadata dir: " + meta); }
         
-        File supl = new File(bagRoot, "supplemental");
+        File supl = new File(dataDir, "supplemental");
         supl.mkdirs();
         if ( !supl.exists()) { throw new IllegalStateException("Unable to create bag supplemental dir: " + supl); }
         
@@ -188,7 +180,7 @@ public class Bagger implements ArchiveBundler {
            supl.delete();
         }
         if ( !_featureType.equals(FeatureType.OPAQUE)) {
-            addLatLonFile(dataFile, metaFile, bagRoot);
+            addLatLonFile(bagRoot);
         }
         
         return bagPath;
@@ -200,10 +192,10 @@ public class Bagger implements ArchiveBundler {
      * @param root2 
      * @throws FileNotFoundException 
      */
-    private void addLatLonFile(File dataFile, File metaFile, File root) throws FileNotFoundException {
-        File lonLatFile = new File(root, "lonlat.tsv");
+    private void addLatLonFile(File bagRoot) throws FileNotFoundException {
+        File lonLatFile = new File(bagRoot, "lonlat.tsv");
         try ( PrintWriter lonLatFileWriter = new PrintWriter(lonLatFile); ) {
-            writeBounds(lonLatFileWriter, metaFile);
+//            writeBounds(lonLatFileWriter, metaFile);
             writeAll(lonLatFileWriter);
         }
     }
@@ -211,7 +203,6 @@ public class Bagger implements ArchiveBundler {
     /**
      * @param lonLatFile
      * @param metaFile
-     */
     private void writeBounds(PrintWriter lonLatFile, File metaFile) {
         // Bounds tags in metadata file
         // <westbd>-124.947</westbd>
@@ -219,6 +210,7 @@ public class Bagger implements ArchiveBundler {
         // <northbd>47.964</northbd>
         // <southbd>47.964</southbd>
     }
+     */
 
     /**
      * @param lonLatFile

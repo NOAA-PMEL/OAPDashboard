@@ -10,6 +10,8 @@ import java.util.ArrayDeque;
 import java.util.Timer;
 import java.util.TimerTask;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.tmatesoft.svn.core.SVNDepth;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.wc.SVNClientManager;
@@ -25,6 +27,8 @@ import org.tmatesoft.svn.core.wc.SVNWCUtil;
  */
 public class VersionedFileHandler {
 
+    private static Logger logger = LogManager.getLogger(VersionedFileHandler.class);
+    
 	// File to write commit command to - when not actually performing the commits
 	// private static final String SVN_COMMIT_COMMANDS_FILENAME = "commit_commands.sh";
 	// Check every 15 seconds
@@ -334,7 +338,18 @@ public class VersionedFileHandler {
 		if ( (filesToCommit == null) || (parentToUpdate == null) || (commitMessage == null) )
 			throw new NullPointerException("moveVersionedFile called for VersionedFileHandler that is not version controlled");
 		// Delete the file (force) from the working directory and version control
-		svnManager.getWCClient().doDelete(wcFile, true, true, false);
+        try {
+    		svnManager.getWCClient().doDelete(wcFile, true, true, false);
+        } catch (SVNException sex) {
+            logger.warn("Exception deleting " + wcFile +".  Forcing. " + sex.toString());
+            if ( wcFile.exists()) {
+                boolean deleted = wcFile.delete();
+                if ( !deleted ) {
+                    logger.warn("Delete was false for deleting file " + wcFile);
+                }
+            }
+            throw sex;
+        }
 		// schedule committing the changes
 		addFilesToCommit(new File[] {wcFile}, wcFile.getParentFile(), message);
 	}

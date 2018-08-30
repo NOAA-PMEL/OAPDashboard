@@ -5,28 +5,15 @@ package gov.noaa.pmel.dashboard.actions;
 
 import java.io.File;
 import java.io.IOException;
-import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
 
-import org.apache.commons.compress.archivers.ArchiveException;
-import org.apache.commons.compress.compressors.CompressorException;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import gov.loc.repository.bagit.exceptions.CorruptChecksumException;
-import gov.loc.repository.bagit.exceptions.FileNotInPayloadDirectoryException;
-import gov.loc.repository.bagit.exceptions.InvalidBagitFileFormatException;
-import gov.loc.repository.bagit.exceptions.MaliciousPathException;
-import gov.loc.repository.bagit.exceptions.MissingBagitFileException;
-import gov.loc.repository.bagit.exceptions.MissingPayloadDirectoryException;
-import gov.loc.repository.bagit.exceptions.MissingPayloadManifestException;
-import gov.loc.repository.bagit.exceptions.UnsupportedAlgorithmException;
-import gov.loc.repository.bagit.exceptions.VerificationException;
-import gov.noaa.pmel.dashboard.actions.checker.ProfileDatasetChecker;
 import gov.noaa.pmel.dashboard.dsg.DsgMetadata;
 import gov.noaa.pmel.dashboard.dsg.StdUserDataArray;
 import gov.noaa.pmel.dashboard.handlers.ArchiveFilesBundler;
@@ -34,7 +21,9 @@ import gov.noaa.pmel.dashboard.handlers.Bagger;
 import gov.noaa.pmel.dashboard.handlers.DataFileHandler;
 import gov.noaa.pmel.dashboard.handlers.DatabaseRequestHandler;
 import gov.noaa.pmel.dashboard.handlers.DsgNcFileHandler;
+import gov.noaa.pmel.dashboard.handlers.FileXferService;
 import gov.noaa.pmel.dashboard.handlers.MetadataFileHandler;
+import gov.noaa.pmel.dashboard.handlers.FileXferService.XFER_PROTOCOL;
 import gov.noaa.pmel.dashboard.oads.DashboardOADSMetadata;
 import gov.noaa.pmel.dashboard.oads.OADSMetadata;
 import gov.noaa.pmel.dashboard.server.DashboardConfigStore;
@@ -43,7 +32,6 @@ import gov.noaa.pmel.dashboard.shared.DashboardDataset;
 import gov.noaa.pmel.dashboard.shared.DashboardDatasetData;
 import gov.noaa.pmel.dashboard.shared.DashboardMetadata;
 import gov.noaa.pmel.dashboard.shared.DashboardUtils;
-import gov.noaa.pmel.dashboard.shared.FeatureType;
 import gov.noaa.pmel.tws.util.ApplicationConfiguration;
 
 /**
@@ -57,12 +45,13 @@ public class DatasetSubmitter {
     DashboardConfigStore configStore;
 	DataFileHandler dataHandler;
 	MetadataFileHandler metadataHandler;
-	DatasetChecker datasetChecker;
+//	DatasetChecker datasetChecker;
 	DsgNcFileHandler dsgHandler;
 	DatabaseRequestHandler databaseHandler;
 	ArchiveFilesBundler filesBundler;
 	String version;
 	Logger logger;
+    private DashboardConfigStore _configStore;
 
 	/**
 	 * @param configStore
@@ -72,12 +61,13 @@ public class DatasetSubmitter {
         this.configStore = configStore;
 		dataHandler = configStore.getDataFileHandler();
 		metadataHandler = configStore.getMetadataFileHandler();
-		datasetChecker = configStore.getDashboardDatasetChecker();
+//		datasetChecker = configStore.getDashboardDatasetChecker();
 		dsgHandler = configStore.getDsgNcFileHandler();
 		databaseHandler = configStore.getDatabaseRequestHandler();
 		filesBundler = configStore.getArchiveFilesBundler();
 		version = configStore.getUploadVersion();
 		logger = LogManager.getLogger(getClass());
+        _configStore = configStore;
 	}
 
 	/**
@@ -143,6 +133,7 @@ public class DatasetSubmitter {
 
 					// Standardize the data
 					// TODO: update the metadata with data-derived values
+            		DatasetChecker datasetChecker = configStore.getDashboardDatasetChecker(dataset.getFeatureType());
 					StdUserDataArray standardized = datasetChecker.standardizeDataset(dataset, null);
 					if ( DashboardUtils.CHECK_STATUS_UNACCEPTABLE.equals(dataset.getDataCheckStatus()) ) {
 						errorMsgs.add(datasetId + ": unacceptable; check data check error messages " +
@@ -265,7 +256,7 @@ public class DatasetSubmitter {
 					// filesBundler.sendOrigFilesBundle(datasetId, commitMsg, userRealName, userEmail);
 //					File archiveBundle = filesBundler.createAndSendArchiveFilesBundle(datasetId, columnsList, commitMsg, userRealName, userEmail);
                     File archiveBundle = getArchiveBundle(datasetId, columnsList);
-                    archiveBundleFile(datasetId, archiveBundle, datasetId, userRealName, userEmail);
+                    doSubmitAchiveBundleFile(datasetId, archiveBundle, datasetId, userRealName, userEmail);
                     String archiveStatusMsg = "Submitted " + archiveBundle + " to " + userEmail + " at " + DashboardServerUtils.formatTime(new Date());
                     logger.info(archiveStatusMsg);
 					thisStatus = "Submitted " + DashboardServerUtils.formatTime(new Date());
@@ -304,14 +295,23 @@ public class DatasetSubmitter {
      * @return
 	 * @throws IOException 
      */
-    private void archiveBundleFile(String stdId, File archiveBundle, String archiveMessage, 
-                                     String userRealName, String userEmail) throws IOException {
-        boolean useFtp = ApplicationConfiguration.getProperty("oap.archive.use_ftp", false);
-        if ( useFtp ) {
-//            throw new IllegalStateException("FTP not yet supported.");
-            System.out.println("FTP not yet supported.");
-        } else {
-            filesBundler.sendArchiveBundle(stdId, archiveBundle, userRealName, userEmail);
+    private void doSubmitAchiveBundleFile(String stdId, File archiveBundle, String archiveMessage, 
+                                          String userRealName, String userEmail) throws IOException {
+        try {
+            String achiveMethod = ApplicationConfiguration.getProperty("oap.archive.mode", "bad");
+            XFER_PROTOCOL protocol = XFER_PROTOCOL.from(achiveMethod);
+            switch (protocol) {
+                case SFTP:
+                case SCP:
+                case CP:
+                    FileXferService.putArchiveBundle(stdId, archiveBundle, userRealName, userEmail);
+                    break;
+                case EMAIL:
+                    filesBundler.sendArchiveBundle(stdId, archiveBundle, userRealName, userEmail);
+                    break;
+            }
+        } catch (Exception ex) {
+            
         }
     }
 

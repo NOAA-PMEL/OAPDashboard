@@ -540,6 +540,28 @@ public class ProfileDsgFile extends DsgNcFile {
 		ncfile.write(vSampleLats, dLatVar);
 		ncfile.write(vSampleLons, dLonVar);
 	}
+    @Override
+	protected void checkIndeces(StdDataArray stddata) {
+		// Quick check of data column indices already assigned in StdDataArray
+		if ( ! stddata.hasLongitude() )
+			throw new IllegalArgumentException("no longitude data column");
+		if ( ! stddata.hasLatitude() )
+			throw new IllegalArgumentException("no latitude data column");
+		if ( ! ( stddata.hasSampleDepth() || stddata.hasSamplePressure() ))
+			throw new IllegalArgumentException("no sample depth data column");
+		if ( ! stddata.hasYear() )
+			throw new IllegalArgumentException("no year data column");
+		if ( ! stddata.hasMonthOfYear() )
+			throw new IllegalArgumentException("no month of year data column");
+		if ( ! stddata.hasDayOfMonth() )
+			throw new IllegalArgumentException("no day of month data column");
+		if ( ! stddata.hasHourOfDay() )
+			throw new IllegalArgumentException("no hour of day data column");
+		if ( ! stddata.hasMinuteOfHour() )
+			throw new IllegalArgumentException("no minute of hour data column");
+		if ( ! stddata.hasSecondOfMinute() )
+			throw new IllegalArgumentException("no second of minute data column");
+	}
 	@Override
 	public void create(DsgMetadata metaData, StdDataArray fileData) 
 			throws IllegalArgumentException, IOException, InvalidRangeException, IllegalAccessException {

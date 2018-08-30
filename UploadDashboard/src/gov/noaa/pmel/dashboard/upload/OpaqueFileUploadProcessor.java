@@ -94,16 +94,7 @@ public class OpaqueFileUploadProcessor extends FileUploadProcessor {
                 }
                 
                 if ( ! successes.isEmpty()) {
-                    StringBuilder msg = new StringBuilder("The following dataset")
-                                                .append(( successes.size() > 1 ? "s were" : " was " ))
-                                                .append("successfully uploaded: ");
-                    String comma = "";
-                    for (String dsId : successes) {
-                        msg.append(comma).append(dsId);
-                        comma = ", ";
-                    }
-                    msg.append(".");
-                    messages.add(msg.toString());
+    				messages.add(DashboardUtils.SUCCESS_HEADER_TAG + " " + datasetId);
                 }
                 
                 // Update the list of cruises for the user

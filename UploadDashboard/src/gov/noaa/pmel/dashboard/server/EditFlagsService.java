@@ -167,7 +167,7 @@ public class EditFlagsService extends HttpServlet {
         DashboardConfigStore cfg = DashboardConfigStore.get(false);
         String datasetId = update.datasetId;
         DashboardDatasetData ddd = _dataFileHandler.getDatasetDataFromFiles(datasetId, 0, -1);
-        StdUserDataArray preStdUsr = cfg.getDashboardDatasetChecker().standardizeDataset(ddd, null);
+        StdUserDataArray preStdUsr = cfg.getDashboardDatasetChecker(ddd.getFeatureType()).standardizeDataset(ddd, null);
         int flagColIdx = getColumnIdx(update.qcFlagName, preStdUsr, ddd);
         for (QcChange change : update.changes) {
             Integer rowNum = Integer.valueOf(change.sampleId);
@@ -181,7 +181,7 @@ public class EditFlagsService extends HttpServlet {
         _dataFileHandler.saveDatasetInfoToFile(ddd, msg);
         
         // redo the standardization after changes
-        StdUserDataArray stdUsr = cfg.getDashboardDatasetChecker().standardizeDataset(ddd, null);
+        StdUserDataArray stdUsr = cfg.getDashboardDatasetChecker(ddd.getFeatureType()).standardizeDataset(ddd, null);
         DsgNcFileHandler dsgHandler = cfg.getDsgNcFileHandler();
         DashboardOADSMetadata oadsMd = OADSMetadata.extractOADSMetadata(stdUsr);
         DsgMetadata dsgMData = oadsMd.createDsgMetadata();

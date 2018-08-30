@@ -11,7 +11,6 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.attribute.BasicFileAttributeView;
 import java.nio.file.attribute.BasicFileAttributes;
-import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashSet;
@@ -23,8 +22,6 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
 
-import org.apache.commons.compress.archivers.ArchiveException;
-import org.apache.commons.compress.compressors.CompressorException;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
 import org.apache.http.StatusLine;
@@ -40,21 +37,11 @@ import org.apache.logging.log4j.Logger;
 
 import com.google.gwt.user.server.rpc.RemoteServiceServlet;
 
-import gov.loc.repository.bagit.exceptions.CorruptChecksumException;
-import gov.loc.repository.bagit.exceptions.FileNotInPayloadDirectoryException;
-import gov.loc.repository.bagit.exceptions.InvalidBagitFileFormatException;
-import gov.loc.repository.bagit.exceptions.MaliciousPathException;
-import gov.loc.repository.bagit.exceptions.MissingBagitFileException;
-import gov.loc.repository.bagit.exceptions.MissingPayloadDirectoryException;
-import gov.loc.repository.bagit.exceptions.MissingPayloadManifestException;
-import gov.loc.repository.bagit.exceptions.UnsupportedAlgorithmException;
-import gov.loc.repository.bagit.exceptions.VerificationException;
 import gov.noaa.pmel.dashboard.actions.DatasetChecker;
 import gov.noaa.pmel.dashboard.actions.DatasetModifier;
 import gov.noaa.pmel.dashboard.datatype.DashDataType;
 import gov.noaa.pmel.dashboard.datatype.KnownDataTypes;
 import gov.noaa.pmel.dashboard.dsg.StdUserDataArray;
-import gov.noaa.pmel.dashboard.handlers.Bagger;
 import gov.noaa.pmel.dashboard.handlers.DataFileHandler;
 import gov.noaa.pmel.dashboard.handlers.MetadataFileHandler;
 import gov.noaa.pmel.dashboard.handlers.PreviewPlotsHandler;
@@ -87,8 +74,19 @@ public class DashboardServices extends RemoteServiceServlet implements Dashboard
 
 	private static final long serialVersionUID = -8189933983319827049L;
 
+    private static DashboardConfigStore store;
+    static {
+        try {
+            store = DashboardConfigStore.get(true);
+            logger = LogManager.getLogger(DashboardServices.class);
+        } catch (IOException iex) {
+            iex.printStackTrace();
+            System.exit(-42);
+        }
+    }
+    
 	// To get config debug set: -Dorg.apache.logging.log4j.simplelog.StatusLogger.level=TRACE
-	private static Logger logger = LogManager.getLogger(DashboardServices.class);
+	private static Logger logger; //  = LogManager.getLogger(DashboardServices.class);
 	
 	private String username = null;
 	private DashboardConfigStore configStore = null;
@@ -156,9 +154,10 @@ public class DashboardServices extends RemoteServiceServlet implements Dashboard
 	}
 
 	@Override
-	public DashboardDatasetList getDatasetList() throws IllegalArgumentException, SessionException {
+	public DashboardDatasetList getDatasetList(String pageUsername) throws IllegalArgumentException, SessionException {
 		// Get the dashboard data store and current username
-		if ( ! validateRequest(null) ) 
+        logger.debug(pageUsername);
+		if ( ! validateRequest(pageUsername) ) 
 			throw new IllegalArgumentException("Invalid user request");
 		DashboardDatasetList datasetList = configStore.getUserFileHandler().getDatasetListing(username);
 		logger.info("dataset list returned for " + username);

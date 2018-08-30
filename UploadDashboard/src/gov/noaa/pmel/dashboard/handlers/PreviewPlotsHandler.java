@@ -25,6 +25,7 @@ import gov.noaa.pmel.dashboard.server.DashboardConfigStore;
 import gov.noaa.pmel.dashboard.server.DashboardServerUtils;
 import gov.noaa.pmel.dashboard.shared.DashboardDatasetData;
 import gov.noaa.pmel.dashboard.shared.DashboardUtils;
+import gov.noaa.pmel.dashboard.shared.FeatureType;
 import gov.noaa.pmel.dashboard.shared.PreviewPlotImage;
 
 
@@ -33,10 +34,12 @@ public class PreviewPlotsHandler {
 	File dsgFilesDir;
 	File plotsFilesDir;
 	DataFileHandler dataHandler;
-	DatasetChecker dataChecker;
+//	DatasetChecker dataChecker;
 	KnownDataTypes knownMetadataTypes;
 	KnownDataTypes knownDataFileTypes;
 	FerretConfig ferretConfig;
+    private DashboardConfigStore _configStore;
+    private FeatureType featureType;
 
 	private static Logger logger = LogManager.getLogger("PreviewPlotsHandler");
 	
@@ -66,10 +69,11 @@ public class PreviewPlotsHandler {
 		if ( ! plotsFilesDir.exists() || ! plotsFilesDir.isDirectory() )
 			throw new IllegalArgumentException(previewPlotsDirName + " doesn't exist or is not a directory");
 		dataHandler = configStore.getDataFileHandler();
-		dataChecker = configStore.getDashboardDatasetChecker();
+//		dataChecker = configStore.getDashboardDatasetChecker();
 		knownMetadataTypes = configStore.getKnownMetadataTypes();
 		knownDataFileTypes = configStore.getKnownDataFileTypes();
 		ferretConfig = configStore.getFerretConfig();
+        _configStore = configStore;
 	}
 
 	/**
@@ -161,6 +165,8 @@ public class PreviewPlotsHandler {
 
 		// Get the complete original cruise data
 		DashboardDatasetData dataset = dataHandler.getDatasetDataFromFiles(stdId, 0, -1);
+        featureType = dataset.getFeatureType();
+		DatasetChecker dataChecker = _configStore.getDashboardDatasetChecker(featureType);
 
 		log.debug("standardizing data for " + stdId);
 
@@ -178,7 +184,14 @@ public class PreviewPlotsHandler {
 
 		// Get the preview DSG filename, creating the parent directory if it does not exist
 		File dsgDir = getDatasetPreviewDsgDir(stdId);
-		DsgNcFile dsgFile = DsgNcFile.createProfileFile(dsgDir, stdId + "_" + timetag + ".nc");
+        DsgNcFile dsgFile;
+        if ( FeatureType.PROFILE.equals(dataset.getFeatureType())) {
+    		dsgFile = DsgNcFile.createProfileFile(dsgDir, stdId + "_" + timetag + ".nc");
+        } else if ( FeatureType.TRAJECTORY.equals(dataset.getFeatureType())) {
+    		dsgFile = DsgNcFile.createTrajectoryFile(dsgDir, stdId + "_" + timetag + ".nc");
+        } else {
+            throw new IllegalArgumentException("Cannot create preview plots for feature type: " + dataset.getFeatureTypeName());
+        }
 
 		log.debug("generating preview DSG file " + dsgFile.getPath());
 
@@ -187,6 +200,8 @@ public class PreviewPlotsHandler {
 			dsgFile.create(dsgMData, stdUserData, knownDataFileTypes);
 			createSymlink(dsgFile, dsgDir, stdId);
 		} catch (Exception ex) {
+            log.warn(ex, ex);
+            ex.printStackTrace();
 			dsgFile.delete();
 			throw new IllegalArgumentException("Problems creating the preview DSG file for " + 
 					datasetId + ": " + ex.getMessage(), ex);
@@ -227,7 +242,11 @@ public class PreviewPlotsHandler {
 			scriptArgs.add(dsgFileName);
 			scriptArgs.add(cruisePlotsDirname);
 			scriptArgs.add(timetag);
-			tool.init(scriptArgs, stdId, FerretConfig.Action.PLOTS);
+            FeatureType dataFeatureType = dataset.getFeatureType();
+            FerretConfig.Action action = dataFeatureType.equals(FeatureType.PROFILE) ?
+                                            FerretConfig.Action.PLOTS :
+                                            FerretConfig.Action.trajectory_PLOTS;
+			tool.init(scriptArgs, stdId, action);
 			tool.run();
 			if ( tool.hasError() )
 				throw new IllegalArgumentException("Failure generating data preview plots for " + 
@@ -277,7 +296,9 @@ public class PreviewPlotsHandler {
 		HashMap<String, PreviewPlotImage> plotNameMap = buildNameMap(plotFiles);
 		
 		logger.debug("Overview---");
-		List<PreviewPlotImage> tabList = getOverviewPlots(plotNameMap, datasetId);
+		List<PreviewPlotImage> tabList = featureType.equals(FeatureType.PROFILE) ? 
+		                                    getOverviewPlots(plotNameMap, datasetId) :
+		                                    buildPlotList(plotNameMap);
 		plotTabs.add(tabList);
 		logger.debug("General---");
 		tabList = getGeneralPlots(plotNameMap, datasetId);
@@ -303,7 +324,19 @@ public class PreviewPlotsHandler {
 		return plotTabs;
 	}
 
-	private HashMap<String, PreviewPlotImage> buildNameMap(ArrayList<String> plotFiles) {
+	/**
+     * @param plotNameMap
+     * @return
+     */
+    private static List<PreviewPlotImage> buildPlotList(HashMap<String, PreviewPlotImage> plotNameMap) {
+		List<PreviewPlotImage> plotList = new ArrayList<>();
+        for (String plot : plotNameMap.keySet()) {
+            plotList.add(plotNameMap.get(plot));
+        }
+        return plotList;
+    }
+
+    private static HashMap<String, PreviewPlotImage> buildNameMap(ArrayList<String> plotFiles) {
 		HashMap<String, PreviewPlotImage> nameMap = new HashMap<>();
 		for (String file : plotFiles) {
 			String name = file.substring(0, file.lastIndexOf('.'));

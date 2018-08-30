@@ -5,6 +5,8 @@ package gov.noaa.pmel.dashboard.client;
 
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.HashMap;
+import java.util.Map;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.Element;
@@ -196,6 +198,9 @@ public class DataUploadPage extends CompositeWithUsername {
 	@UiField Hidden timestampToken;
 	@UiField Hidden actionToken;
 	@UiField Hidden encodingToken;
+    @UiField Hidden fileDataFormatToken;
+    @UiField Hidden datasetIdToken;
+    @UiField Hidden datasetIdColumnToken;
 	@UiField CaptionPanel settingsCaption;
 	@UiField DisclosurePanel advancedPanel;
 	@UiField HTML advancedHtml;
@@ -217,6 +222,8 @@ public class DataUploadPage extends CompositeWithUsername {
 	private static DataUploadPage singleton = null;
     private FeatureTypeFields _featureTypeFields = null;
     private FeatureType selectedType = FeatureType.UNSPECIFIED;
+    
+    private static Map<FeatureType, FeatureTypeFields> _featureSpecificPanels = new HashMap<FeatureType, FeatureTypeFields>();
 
 	/**
 	 * Creates an empty cruise upload page.  Do not call this 
@@ -254,29 +261,12 @@ public class DataUploadPage extends CompositeWithUsername {
 
               selectedType = FeatureType.valueOf(featureTypeSelector.getSelectedValue());
               GWT.log("Selecting type " + selectedType.name());
-              switch ( selectedType ) {
-                  case TIMESERIES:
-                      break;
-                  case OPAQUE:
-                      _featureTypeFields = new OpaqueUploadFeatureFields();
-                      break;
-                  case PROFILE_TIMESERIES:
-                      break;
-                  case PROFILE:
-                      _featureTypeFields = new ProfileFeatureFields();
-                      break;
-                  case TRAJECTORY:
-                  case TRAJECTORY_PROFILE:
-                      _featureTypeFields = new CommonFeatureFields();
-                      break;
-                  default:
-                      _featureTypeFields = null;
-                      break;
-              }
+              _featureTypeFields = getFeatureTypePanel(selectedType);
               if ( _featureTypeFields != null ) {
                   featureTypeSpecificContentPanel.add(_featureTypeFields);
               }
           }
+
         });
         featureTypeHelpAnchor.setText(FEATURE_TYPE_HELP_ANCHOR_TEXT);
         featureTypeHelpPopup = null;
@@ -339,6 +329,55 @@ public class DataUploadPage extends CompositeWithUsername {
 		previewButton.setText(PREVIEW_TEXT);
 	}
 
+    private Map<String, Hidden> _formFields = new HashMap<>();
+            
+    public void setFormField(String fieldName, String fieldValue) {
+        Hidden formField = _formFields.get(fieldName);
+        if ( formField == null ) {
+            formField = new Hidden(fieldName);
+            _formFields.put(fieldName, formField);
+            
+        }
+        formField.setValue(fieldValue);
+    }
+    
+    public void clearFormField(String fieldName) {
+        Hidden formField = _formFields.get(fieldName);
+        if ( formField == null ) {
+        }
+    }
+    
+    private FeatureTypeFields getFeatureTypePanel(FeatureType selectedType) {
+        FeatureTypeFields fieldsPanel = null;
+        if ( _featureSpecificPanels.containsKey(selectedType)) {
+            fieldsPanel = _featureSpecificPanels.get(selectedType);
+        } else {
+            switch ( selectedType ) {
+              case TIMESERIES:
+                  break;
+              case OPAQUE:
+                  fieldsPanel = new OpaqueUploadFeatureFields();
+                  break;
+              case PROFILE_TIMESERIES:
+                  break;
+              case PROFILE:
+                  fieldsPanel = new ProfileFeatureFields();
+                  break;
+              case TRAJECTORY:
+              case TRAJECTORY_PROFILE:
+                  fieldsPanel = new CommonFeatureFields();
+                  break;
+              default:
+                  fieldsPanel = null;
+                  break;
+            }
+            if ( fieldsPanel != null ) {
+                _featureSpecificPanels.put(selectedType, fieldsPanel);
+            }
+        }
+        return fieldsPanel;
+    }
+    
 	/**
 	 * Display the cruise upload page in the RootLayoutPanel
 	 * after clearing as much of the page as possible.  
@@ -388,7 +427,8 @@ public class DataUploadPage extends CompositeWithUsername {
         featureTypeToken.setValue(selectedType.name());
         
 		if ( _featureTypeFields != null ) {
-		    _featureTypeFields.setFormFields((Panel)uploadForm.getWidget());
+		    _featureTypeFields.setFormFields(this);
+//		    _featureTypeFields.setFormFields((Panel)uploadForm.getWidget());
 		}
 	}
 
@@ -400,7 +440,8 @@ public class DataUploadPage extends CompositeWithUsername {
 		actionToken.setValue("");
 		encodingToken.setValue("");
 		if ( _featureTypeFields != null ) {
-		    _featureTypeFields.clearFormFields((Panel)uploadForm.getWidget());
+		    _featureTypeFields.clearFormFields(this);
+//		    _featureTypeFields.clearFormFields((Panel)uploadForm.getWidget());
 		}
 	}
 
@@ -647,4 +688,17 @@ public class DataUploadPage extends CompositeWithUsername {
 		return wasCompleteSuccess;
 	}
 
+    /**
+     * @param value
+     */
+    public void setDatasetIdToken(String value) {
+        datasetIdToken.setValue(value);
+    }
+
+    /**
+     * @param name
+     */
+    public void setFileDataFormatToken(String name) {
+        fileDataFormatToken.setValue(name);
+    }
 }
