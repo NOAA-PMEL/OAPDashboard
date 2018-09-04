@@ -410,7 +410,7 @@ public class DatasetListPage extends CompositeWithUsername {
 //			addlDocsButton,
 			previewButton,
 //			qcSubmitButton,
-//			archiveSubmitButton,
+			archiveSubmitButton,
 //			suspendDatasetButton,
 //			hideDatasetButton,
 //			changeOwnerButton,
