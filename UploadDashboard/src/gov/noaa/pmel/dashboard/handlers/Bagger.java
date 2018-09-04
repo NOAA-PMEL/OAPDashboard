@@ -375,7 +375,7 @@ public class Bagger implements ArchiveBundler {
          
        String hash = sb.toString();
        
-       String hashFileName = archiveFile.getName().substring(0, archiveFile.getName().indexOf('.')) + "-SHA256.txt";
+       String hashFileName = archiveFile.getName().substring(0, archiveFile.getName().indexOf('.')) + "-sha256.txt";
        File digestFile = new File(archiveFile.getParentFile(), hashFileName);
        try (FileWriter hashWriter = new FileWriter(digestFile)) {
            hashWriter.write(hash);
