@@ -201,6 +201,15 @@ hr .hline {
 	border: 1px solid black;
 	margin: .5em;
 }
+.columnContentScroll {
+	margin: .5em 1em;
+    height: 89%;
+    width: 97%;
+	padding: .5em;
+	border: 1px solid black;
+	overflow: hidden;
+	background-color: white;
+}
 .mainContentScroll {
 	margin: .5em 1em;
 	padding: .5em;
@@ -393,7 +402,7 @@ hr .hline {
 }
 
 .sideSelectionPanel {
-	padding: 10px 8px;
+	padding: 15px 12px;
 }
 .sideSelector {
 	margin: 10px 8px;
@@ -403,6 +412,22 @@ hr .hline {
 }
 .sideSelectionRadio {
 	/* margin-left: 5px; */
+}
+.submit_msg_panel {
+	display: flex;
+    height: 5em;
+}
+.west_gutter_element {
+    flex: 0 0 8em;
+    text-align: right;
+    margin-right: 1em;
+}
+.submit_msg_scroll {
+    flex: 1;
+}
+.submit_msg_text {
+    width:98%;
+    height:4em;
 }
 .titlepanel {
 /* 	display: block; */

@@ -64,6 +64,7 @@ public class DataFileHandler extends VersionedFileHandler {
 	private static final String ADDL_DOC_TITLES_ID = "addldoctitles";
 	private static final String SUBMIT_STATUS_ID = "submitstatus";
 	private static final String ARCHIVE_STATUS_ID = "archivestatus";
+	private static final String ARCHIVE_MSG_ID = "archivemessage";
 	private static final String ARCHIVAL_DATE_ID = "archivaldate";
 	private static final String NUM_DATA_ROWS_ID = "numdatarows";
 	private static final String NUM_ERROR_ROWS_ID = "numerrrows";
@@ -692,6 +693,7 @@ public class DataFileHandler extends VersionedFileHandler {
 		datasetProps.setProperty(SUBMIT_STATUS_ID, dataset.getSubmitStatus());
 		// Archive status string
 		datasetProps.setProperty(ARCHIVE_STATUS_ID, dataset.getArchiveStatus());
+		datasetProps.setProperty(ARCHIVE_MSG_ID, dataset.getArchiveSubmissionMessage());
 		// Date of request to archive original data and metadata files
 		datasetProps.setProperty(ARCHIVAL_DATE_ID, dataset.getArchiveDate());
 		// Total number of data measurements (rows of data)
@@ -1304,6 +1306,12 @@ public class DataFileHandler extends VersionedFileHandler {
 					ARCHIVE_STATUS_ID + " given in " + infoFile.getPath());			
 		dataset.setArchiveStatus(value);
 
+		value = cruiseProps.getProperty(ARCHIVE_MSG_ID);
+		if ( value == null ) {
+            value = "";
+		}
+		dataset.setArchiveSubmissionMessage(value);
+		
 		// Date of request to archive data and metadata
 		value = cruiseProps.getProperty(ARCHIVAL_DATE_ID);
 		if ( value == null )

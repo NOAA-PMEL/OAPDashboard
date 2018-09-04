@@ -7,33 +7,43 @@
 	
 	<g:DockLayoutPanel unit="EM">
 		<g:north size="6">
-			<g:FlowPanel>
-                <oap:ApplicationHeaderTemplate ui:field="header"/>
-				<g:HTML addStyleNames="{style.introhtml}" ui:field="introHtml" />
-			</g:FlowPanel>
+            <oap:ApplicationHeaderTemplate ui:field="header"/>
 		</g:north>
-		<g:west size="8">
-			<g:FlowPanel addStyleNames="{style.sideSelectionPanel}">
-				<g:InlineLabel addStyleNames="{style.sideSelectionLabel}">Select:</g:InlineLabel>
-				<g:VerticalPanel addStyleNames="{style.sideSelector}">
-					<g:RadioButton ui:field="select_none" name="columnSelectionGroup" addStyleNames="{style.sideSelectionRadio}">None</g:RadioButton>
-					<!--
-					<g:RadioButton ui:field="select_min" name="columnSelectionGroup" addStyleNames="{style.sideSelectionRadio}">Minimal</g:RadioButton>
-					<g:RadioButton ui:field="select_req" name="columnSelectionGroup" addStyleNames="{style.sideSelectionRadio}">Required</g:RadioButton>
-					<g:RadioButton ui:field="select_user" name="columnSelectionGroup" addStyleNames="{style.sideSelectionRadio}">User</g:RadioButton>
-					-->
-					<g:RadioButton ui:field="select_std" name="columnSelectionGroup" addStyleNames="{style.sideSelectionRadio}">Standard</g:RadioButton>
-					<g:RadioButton ui:field="select_all" name="columnSelectionGroup" addStyleNames="{style.sideSelectionRadio}">All</g:RadioButton>
-				</g:VerticalPanel>
-			</g:FlowPanel>
-		</g:west>
-		<g:center>
-			<g:ScrollPanel addStyleNames="{style.mainContentScroll}">
-<!--						<cell:DataGrid addStyleNames="{style.cruiselistgrid}" ui:field="datasetsGrid" />  -->
-				<g:VerticalPanel ui:field="columnsPanel">
-				</g:VerticalPanel>
-			</g:ScrollPanel>
-		</g:center>
+        <g:center>
+            <g:DockLayoutPanel unit="EM">
+        		<g:north size="5">
+        			<g:FlowPanel addStyleNames="{style.submit_msg_panel}">
+                        <g:HTML addStyleNames="{style.west_gutter_element}">Submission<br/>Comments</g:HTML>
+                        <g:ScrollPanel addStyleNames="{style.submit_msg_scroll}">
+                            <g:TextArea ui:field="submitMsgTextBox" addStyleNames="{style.submit_msg_text}"></g:TextArea>
+                        </g:ScrollPanel>
+        			</g:FlowPanel>
+        		</g:north>
+        		<g:west size="8">
+        			<g:FlowPanel addStyleNames="{style.sideSelectionPanel}">
+        				<g:InlineLabel addStyleNames="{style.sideSelectionLabel}">Select:</g:InlineLabel>
+        				<g:VerticalPanel addStyleNames="{style.sideSelector}">
+        					<g:RadioButton ui:field="select_none" name="columnSelectionGroup" addStyleNames="{style.sideSelectionRadio}">None</g:RadioButton>
+        					<!--
+        					<g:RadioButton ui:field="select_min" name="columnSelectionGroup" addStyleNames="{style.sideSelectionRadio}">Minimal</g:RadioButton>
+        					<g:RadioButton ui:field="select_req" name="columnSelectionGroup" addStyleNames="{style.sideSelectionRadio}">Required</g:RadioButton>
+        					<g:RadioButton ui:field="select_user" name="columnSelectionGroup" addStyleNames="{style.sideSelectionRadio}">User</g:RadioButton>
+        					-->
+        					<g:RadioButton ui:field="select_std" name="columnSelectionGroup" addStyleNames="{style.sideSelectionRadio}">Standard</g:RadioButton>
+        					<g:RadioButton ui:field="select_all" name="columnSelectionGroup" addStyleNames="{style.sideSelectionRadio}">All</g:RadioButton>
+        				</g:VerticalPanel>
+        			</g:FlowPanel>
+        		</g:west>
+        		<g:center>
+                <g:FlowPanel>
+    				<g:HTML addStyleNames="{style.introhtml}" ui:field="introHtml" />
+        			<g:ScrollPanel addStyleNames="{style.columnContentScroll}">
+        				<g:VerticalPanel ui:field="columnsPanel"></g:VerticalPanel>
+            		</g:ScrollPanel>
+                </g:FlowPanel>
+    		</g:center>
+            </g:DockLayoutPanel>
+        </g:center>
 		<g:south size="6">
             <g:FlowPanel>
 			<g:FlowPanel addStyleNames="{style.horizontalbuttonpanel}">

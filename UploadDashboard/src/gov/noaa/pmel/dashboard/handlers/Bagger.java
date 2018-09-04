@@ -55,10 +55,12 @@ import gov.loc.repository.bagit.writer.BagWriter;
 import gov.noaa.pmel.dashboard.dsg.StdUserDataArray;
 import gov.noaa.pmel.dashboard.server.DashboardConfigStore;
 import gov.noaa.pmel.dashboard.server.DashboardConfigStore.PropertyNotFoundException;
+import gov.noaa.pmel.dashboard.shared.DashboardDataset;
 import gov.noaa.pmel.dashboard.shared.DashboardDatasetData;
 import gov.noaa.pmel.dashboard.shared.FeatureType;
 import gov.noaa.pmel.tws.util.ApplicationConfiguration;
 import gov.noaa.pmel.tws.util.FileUtils;
+import gov.noaa.pmel.tws.util.StringUtils;
 
 /**
  * @author kamb
@@ -73,12 +75,11 @@ public class Bagger implements ArchiveBundler {
     private SimpleDateFormat _tsFormatter;
     private DashboardConfigStore _store;
 
-    public static File Bag(String datasetId) throws IOException, NoSuchAlgorithmException, UnsupportedAlgorithmException, 
-                                                    CompressorException, ArchiveException, PropertyNotFoundException,
-                                                    MissingPayloadManifestException, MissingBagitFileException, 
-                                                    MissingPayloadDirectoryException, FileNotInPayloadDirectoryException, 
-                                                    InterruptedException, MaliciousPathException, InvalidBagitFileFormatException, 
-                                                    CorruptChecksumException, VerificationException {
+    public static File Bag(String datasetId) throws Exception {
+        return Bag(datasetId, "");
+    }
+    
+    public static File Bag(String datasetId, String submitMsg) throws Exception {
         DashboardConfigStore store = DashboardConfigStore.get();
         Bagger bagger = null;
         Path staged = null;
@@ -86,13 +87,14 @@ public class Bagger implements ArchiveBundler {
             bagger = new Bagger(datasetId, false, store);
             staged = bagger.stuffit();
             Bag bag = bagger.bagit(staged);
+            bagger.addSubmissionComment(staged, submitMsg);
             bagger.verify(bag);
             File archiveFile = bagger.packit(staged);
-            File hashFile = Bagger.hashit(archiveFile);
+            Bagger.hashit(archiveFile);
             return archiveFile;
         } finally {
             if ( bagger != null ) {
-                bagger.cleanup(staged);
+                cleanup(staged);
             }
         }
     }
@@ -236,7 +238,21 @@ public class Bagger implements ArchiveBundler {
         return bag;
     }
     
-    private StandardSupportedAlgorithms getHashAlgorithm() {
+    /**
+     * @param staged
+     * @throws IOException 
+     */
+    private void addSubmissionComment(Path staged, String submitMsg) throws IOException {
+        if ( StringUtils.emptyOrNull(submitMsg)) {
+            return;
+        }
+        File msgFile = new File(staged.toFile(), _datasetId + "_SubmissionComment.txt");
+        try (FileWriter fout = new FileWriter(msgFile)) {
+            fout.write(submitMsg);
+        }
+    }
+
+    private static StandardSupportedAlgorithms getHashAlgorithm() {
         return StandardSupportedAlgorithms.SHA256;
     }
     
@@ -482,35 +498,6 @@ public class Bagger implements ArchiveBundler {
             ex.printStackTrace();
         }
     }
-    /**
-     * @param args
-     */
-    public static void main(String[] args) {
-        try {
-            File configDir = new File("/Users/kamb/tomcat/7/content/OAPUploadDashboard/config");
-            ApplicationConfiguration.Initialize(configDir, "oap");
-            String datasetId = "mybati"; // "PRISM082008";
-            File bagArchive = Bagger.Bag(datasetId);
-            System.out.println("Archive: " + bagArchive.getAbsolutePath());
-//            DashboardConfigStore store = DashboardConfigStore.get();
-//            Bagger bagger = new Bagger(datasetId, false, store);
-////            Path bagPath = new File(store.getAppContentDir(), "bags/"+datasetId).toPath();
-////            bagger.packit(bagPath);
-//            Path stuff = bagger.stuffit();
-//            Bag bag = bagger.bagit(stuff);
-//            bagger.verify(bag);
-//            bagger.packit(stuff.getParent());
-//            bagger.tossit(bag);
-//        File bagDir = new File(bagger._contentRoot, "bags");
-//        File root = new File(bagDir, datasetId);
-//            Bag again = bagger.read(root);
-//            bagger.verify(again);
-        } catch (Exception ex) {
-            ex.printStackTrace();
-            // TODO: handle exception
-        }
-
-    }
 
     private static void writeFileTo(File inFile, File destDir) throws IOException {
         if ( !destDir.exists()) {
@@ -544,4 +531,33 @@ public class Bagger implements ArchiveBundler {
         }
     }
 
+    /**
+     * @param args
+     */
+    public static void main(String[] args) {
+        try {
+            File configDir = new File("/Users/kamb/tomcat/7/content/OAPUploadDashboard/config");
+            ApplicationConfiguration.Initialize(configDir, "oap");
+            String datasetId = "PRISM082008";
+            File bagArchive = Bagger.Bag(datasetId, "Bagit Test Submission");
+            System.out.println("Archive: " + bagArchive.getAbsolutePath());
+//            DashboardConfigStore store = DashboardConfigStore.get();
+//            Bagger bagger = new Bagger(datasetId, false, store);
+////            Path bagPath = new File(store.getAppContentDir(), "bags/"+datasetId).toPath();
+////            bagger.packit(bagPath);
+//            Path stuff = bagger.stuffit();
+//            Bag bag = bagger.bagit(stuff);
+//            bagger.verify(bag);
+//            bagger.packit(stuff.getParent());
+//            bagger.tossit(bag);
+//        File bagDir = new File(bagger._contentRoot, "bags");
+//        File root = new File(bagDir, datasetId);
+//            Bag again = bagger.read(root);
+//            bagger.verify(again);
+        } catch (Exception ex) {
+            ex.printStackTrace();
+            // TODO: handle exception
+        }
+
+    }
 }

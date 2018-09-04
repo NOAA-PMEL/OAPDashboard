@@ -27,6 +27,7 @@ import com.google.gwt.user.client.ui.HTML;
 import com.google.gwt.user.client.ui.InlineLabel;
 import com.google.gwt.user.client.ui.Panel;
 import com.google.gwt.user.client.ui.RadioButton;
+import com.google.gwt.user.client.ui.TextArea;
 import com.google.gwt.user.client.ui.Widget;
 
 import gov.noaa.pmel.dashboard.client.UploadDashboard.PagesEnum;
@@ -67,6 +68,8 @@ public class SubmitToArchivePage extends CompositeWithUsername implements DataSu
 	@UiField RadioButton select_std;
 //	@UiField RadioButton select_user;
 	@UiField RadioButton select_all;
+    
+	@UiField TextArea submitMsgTextBox;
 
 	@UiField ApplicationHeaderTemplate header;
 	
@@ -274,6 +277,7 @@ public class SubmitToArchivePage extends CompositeWithUsername implements DataSu
 		_datasetId = dataset.getDatasetId();
 		header.userInfoLabel.setText(WELCOME_INTRO + getUsername());
 		
+        submitMsgTextBox.setText(dataset.getArchiveSubmissionMessage());
 		columnsPanel.clear();
 		_allCBoxes.clear();
 		_columnBoxMap.clear();
@@ -386,6 +390,7 @@ public class SubmitToArchivePage extends CompositeWithUsername implements DataSu
 		UploadDashboard.showWaitCursor();
 		service.submitDatasetsToArchive(getUsername(), _submitIdsList, _submitColsList, 
 		                                archiveStatus, localTimestamp, repeatSend, 
+                                        submitMsgTextBox.getText(),
 			new AsyncCallback<Void>() {
 				@Override
 				public void onSuccess(Void result) {
