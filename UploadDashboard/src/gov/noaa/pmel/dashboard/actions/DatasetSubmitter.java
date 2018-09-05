@@ -223,8 +223,8 @@ public class DatasetSubmitter {
 //        }
 //    }
     
-	public void archiveDatasets(List<String> datasetIds, List<String> columnsList, String archiveStatus, 
-	                            String timestamp, boolean repeatSend, String submitter) {
+	public void archiveDatasets(List<String> datasetIds, List<String> columnsList, String submitMsg,
+	                            String archiveStatus, String timestamp, boolean repeatSend, String submitter) {
 		ArrayList<String> errorMsgs = new ArrayList<String>();
 		
 		// Send dataset data and metadata for archival where user requested immediate archival
@@ -255,7 +255,7 @@ public class DatasetSubmitter {
 				try {
 					// filesBundler.sendOrigFilesBundle(datasetId, commitMsg, userRealName, userEmail);
 //					File archiveBundle = filesBundler.createAndSendArchiveFilesBundle(datasetId, columnsList, commitMsg, userRealName, userEmail);
-                    File archiveBundle = getArchiveBundle(datasetId, columnsList);
+                    File archiveBundle = getArchiveBundle(datasetId, columnsList, submitMsg);
                     doSubmitAchiveBundleFile(datasetId, archiveBundle, datasetId, userRealName, userEmail);
                     String archiveStatusMsg = "Submitted " + archiveBundle + " to " + userEmail + " at " + DashboardServerUtils.formatTime(new Date());
                     logger.info(archiveStatusMsg);
@@ -271,6 +271,7 @@ public class DatasetSubmitter {
 				DashboardDataset cruise = dataHandler.getDatasetFromInfoFile(datasetId);
 				cruise.setArchiveStatus(thisStatus);
 				cruise.setArchiveDate(timestamp);
+                cruise.setArchiveSubmissionMessage(submitMsg);
 				dataHandler.saveDatasetInfoToFile(cruise, commitMsg);
 			}
 		}
@@ -321,10 +322,10 @@ public class DatasetSubmitter {
      * @return
 	 * @throws Exception
      */
-    private File getArchiveBundle(String datasetId, List<String> columnsList) throws Exception {
+    private File getArchiveBundle(String datasetId, List<String> columnsList, String submitMsg) throws Exception {
         File archiveBundle = null;
         if ( ApplicationConfiguration.getProperty("oap.archive.use_bagit", true)) {
-            archiveBundle = Bagger.Bag(datasetId);
+            archiveBundle = Bagger.Bag(datasetId, submitMsg);
         } else {
             archiveBundle = filesBundler.createArchiveDataFile(datasetId, columnsList);
         }
