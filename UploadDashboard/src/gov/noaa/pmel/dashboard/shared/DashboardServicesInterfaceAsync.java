@@ -326,8 +326,8 @@ public interface DashboardServicesInterfaceAsync {
 			String archiveStatus, String localTimestamp, boolean repeatSend,
 			AsyncCallback<Void> callback);
 
-	void submitDatasetsToArchive(String username, List<String> _submitDatasetIds, List<String> _submitColumnList, 
-	                             String archiveStatus, String localTimestamp, boolean repeatSend, 
+	void submitDatasetsToArchive(String username, List<String> submitDatasetIds, List<String> submitColumnList, 
+	                             String archiveStatus, String localTimestamp, boolean repeatSend, String submitComment,
 	                             AsyncCallback<Void> asyncCallback);
 
 	/**
