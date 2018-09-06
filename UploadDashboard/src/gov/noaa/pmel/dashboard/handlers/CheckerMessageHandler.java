@@ -76,8 +76,9 @@ public class CheckerMessageHandler {
 		String stdId = DashboardServerUtils.checkDatasetID(datasetId);
 		// Get the parent directory
 		File parentDir = new File(filesDir, stdId.substring(0,4));
+        File dataDir = new File(parentDir, stdId);
 		// Get the dataset messages file
-		File msgsFile = new File(parentDir, stdId + MSGS_FILENAME_EXTENSION);
+		File msgsFile = new File(dataDir, stdId + MSGS_FILENAME_EXTENSION);
 		return msgsFile;
 	}
 
