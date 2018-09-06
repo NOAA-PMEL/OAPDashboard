@@ -198,7 +198,7 @@ public class DataFileHandler extends VersionedFileHandler {
         File[] dataDirFiles = parentDir.listFiles(new FileFilter() {
             @Override
             public boolean accept(File pathname) {
-                return ! ( pathname.isDirectory() || pathname.getName().endsWith(".properties"));
+                return ! ( pathname.isDirectory() || pathname.getName().endsWith(".properties") || pathname.getName().endsWith(".messages"));
             }
         });
         File dataFile = null;
