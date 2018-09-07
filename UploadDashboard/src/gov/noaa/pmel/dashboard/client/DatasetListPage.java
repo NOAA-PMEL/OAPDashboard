@@ -67,8 +67,6 @@ public class DatasetListPage extends CompositeWithUsername {
 	}
 	
 	private static final String TITLE_TEXT = "My Datasets";
-	private static final String WELCOME_INTRO = "Logged in as ";
-	private static final String LOGOUT_TEXT = "Logout";
 
 	private static final String UPLOAD_TEXT = "Upload Datasets";
 	private static final String UPLOAD_HOVER_HELP = 

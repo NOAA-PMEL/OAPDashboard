@@ -416,8 +416,7 @@ public class DataColumnSpecsPage extends CompositeWithUsername {
 			singleton = new DataColumnSpecsPage();
 
 		singleton.setUsername(username);
-		singleton.expocodes.clear();
-		singleton.expocodes.addAll(expocodes);
+        singleton.setDatasetIds(expocodes);
 		UploadDashboard.showWaitCursor();
 		service.getDataColumnSpecs(singleton.getUsername(), expocodes.get(0), 
 								new OAPAsyncCallback<TypesDatasetDataPair>() {
@@ -447,7 +446,16 @@ public class DataColumnSpecsPage extends CompositeWithUsername {
 		});
 	}
 
-	protected void updateCruiseSpecs(TypesDatasetDataPair cruiseSpecs) {
+	/**
+     * @param expocodes2
+     */
+    private void setDatasetIds(ArrayList<String> datasetIds) {
+		expocodes.clear();
+		expocodes.addAll(expocodes);
+        header.addDatasetIds(datasetIds);
+    }
+
+    protected void updateCruiseSpecs(TypesDatasetDataPair cruiseSpecs) {
 		knownUserTypes.clear();
 		if ( cruiseSpecs.getAllKnownTypes() != null )
 			knownUserTypes.addAll(cruiseSpecs.getAllKnownTypes());

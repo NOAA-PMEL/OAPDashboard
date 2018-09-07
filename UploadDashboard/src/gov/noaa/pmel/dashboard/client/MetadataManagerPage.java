@@ -210,24 +210,22 @@ public class MetadataManagerPage extends CompositeWithUsername {
 		// Update the cruise associated with this page
 		cruise = cruises.values().iterator().next();
         String selectedDatasetId = cruise.getDatasetId();
-//        if ( ! selectedDatasetId.equals(datasetId)) {
-    		datasetId = selectedDatasetId;
-            header.setDatasetId(selectedDatasetId);
+		datasetId = selectedDatasetId;
+        header.addDatasetIds(cruises);
     		
-    		setMetadataFileInfo(null);
+		setMetadataFileInfo(null);
     		
-    		// Clear the hidden tokens just to be safe
-    		clearTokens();
+		// Clear the hidden tokens just to be safe
+		clearTokens();
             
-            sendCurrentMetadataToMetaEd(datasetId);
-//        }
+        sendCurrentMetadataToMetaEd(datasetId);
 	}
 
 	/**
      * @param datasetId2
      * @return
      */
-    private String getMetadataEditorDocumentUrl(String docId) {
+    private static String getMetadataEditorDocumentUrl(String docId) {
         return "http://localhost:8383/oap/OAPMetadataEditor.html?id="+docId.toUpperCase();
     }
 

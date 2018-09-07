@@ -224,6 +224,7 @@ public class AddlDocsManagerPage extends CompositeWithUsername {
 		// Update the username
 		setUsername(cruises.getUsername());
 		header.userInfoLabel.setText(WELCOME_INTRO + getUsername());
+        header.addDatasetIds(cruises);
 
 		// Update the cruises associated with this page
 		cruiseSet.clear();

@@ -3,6 +3,8 @@
  */
 package gov.noaa.pmel.dashboard.client;
 
+import java.util.Collection;
+
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.uibinder.client.UiBinder;
@@ -12,6 +14,8 @@ import com.google.gwt.user.client.ui.Button;
 import com.google.gwt.user.client.ui.InlineLabel;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.Widget;
+
+import gov.noaa.pmel.dashboard.shared.DashboardDatasetList;
 
 /**
  * @author kamb
@@ -41,18 +45,45 @@ public class ApplicationHeaderTemplate extends CompositeWithUsername {
         titleLabel.setText(title);
     }
     
-    public void setDatasetId(String datasetId) {
+    @UiHandler("logoutButton")
+    static void logoutOnClick(ClickEvent event) {
+        DashboardLogoutPage.showPage();
+    }
+
+    public void setDatasetIds(String datasetIds) {
         String currentText = titleLabel.getText();
         if ( currentText.indexOf(':') > 0 ) {
             currentText = currentText.substring(0, currentText.indexOf(':') -1);
         }
-        String newText = currentText + ": " + datasetId;
+        String newText = currentText + ": " + datasetIds;
         titleLabel.setText(newText);
     }
 
-    @UiHandler("logoutButton")
-    void logoutOnClick(ClickEvent event) {
-        DashboardLogoutPage.showPage();
+    /**
+     * @param cruises
+     */
+    public void addDatasetIds(DashboardDatasetList cruises) {
+        String cruiseIds = extractCruiseIds(cruises.keySet());
+        setDatasetIds(cruiseIds);
+    }
+    
+    public void addDatasetIds(Collection<String> cruiseIds) {
+        String datasetIds = extractCruiseIds(cruiseIds);
+        setDatasetIds(datasetIds);
+    }
+
+    /**
+     * @param cruises
+     * @return
+     */
+    private static String extractCruiseIds(Collection<String> cruises) {
+        StringBuilder ids = new StringBuilder();
+        String comma = "";
+        for (String id : cruises) {
+            ids.append(comma).append(id);
+            comma = ", ";
+        }
+        return ids.toString();
     }
 
 }

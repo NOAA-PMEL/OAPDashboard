@@ -28,7 +28,7 @@
 					</g:FlowPanel>
 				</g:west>
 				<g:center>
-					<g:ResizeLayoutPanel >
+					<g:ResizeLayoutPanel  >
 						<cell:DataGrid addStyleNames="{style.cruiselistgrid}" ui:field="datasetsGrid" />
 					</g:ResizeLayoutPanel>
 				</g:center>

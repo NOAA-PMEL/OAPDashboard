@@ -103,7 +103,7 @@ public class SubmitToArchivePage extends CompositeWithUsername implements DataSu
 		submitButton.setText("Submit");
 		submitButton.setTitle("Submit");
 		
-		header.titleLabel.setText("Submit Datasets for Archving");
+		header.setPageTitle("Submit Datasets for Archving");
 		introHtml.setHTML("Select Columns to Submit to Archive: <br/>");
 		
 		_allCBoxes = new ArrayList<>();
@@ -248,6 +248,7 @@ public class SubmitToArchivePage extends CompositeWithUsername implements DataSu
 		}
 		UploadDashboard.updateCurrentPage(datasets.getUsername(), singleton);
 		singleton._datasets = datasets;
+        singleton.header.addDatasetIds(datasets);
 		singleton.updateDatasetColumns(datasets);
 		History.newItem(PagesEnum.SUBMIT_TO_ARCHIVE.name(), false);
 	}

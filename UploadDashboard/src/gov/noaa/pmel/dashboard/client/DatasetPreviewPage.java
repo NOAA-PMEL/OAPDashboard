@@ -88,9 +88,10 @@ public class DatasetPreviewPage extends CompositeWithUsername {
 	private static DashboardServicesInterfaceAsync service = 
 			GWT.create(DashboardServicesInterface.class);
 
-	@UiField InlineLabel titleLabel;
-	@UiField InlineLabel userInfoLabel;
-	@UiField Button logoutButton;
+    @UiField ApplicationHeaderTemplate header;
+//	@UiField InlineLabel titleLabel;
+//	@UiField InlineLabel userInfoLabel;
+//	@UiField Button logoutButton;
 	@UiField HTML introHtml;
 	@UiField Button refreshButton;
 	@UiField Button doneButton;
@@ -161,9 +162,8 @@ public class DatasetPreviewPage extends CompositeWithUsername {
 			}
 		};
 
-		titleLabel.setText(TITLE_TEXT);
-		logoutButton.setText(LOGOUT_TEXT);
-
+		header.setPageTitle(TITLE_TEXT);
+		
 		refreshButton.setText(REFRESH_TEXT);
 		refreshButton.setTitle(REFRESH_HOVER_HELP);
 		doneButton.setText(DONE_TEXT);
@@ -234,9 +234,9 @@ public class DatasetPreviewPage extends CompositeWithUsername {
 		if ( dsid == null ) { throw new IllegalArgumentException("Null dataset id"); }
         if ( ! dsid.equals(datasetId)) { logger.warning("Changing dataset ID without changing feature type."); }
 		setUsername(username);
-		userInfoLabel.setText(WELCOME_INTRO + getUsername());
-
-		introHtml.setHTML(INTRO_HTML_PROLOGUE + SafeHtmlUtils.htmlEscape(this.datasetId));
+		header.setDatasetIds(dsid);
+		
+//		introHtml.setHTML(INTRO_HTML_PROLOGUE + SafeHtmlUtils.htmlEscape(this.datasetId));
 //		if ( this.expocode.length() > 11 ) { // WTF?
 			// Tell the server to generate the preview plots
 			UploadDashboard.showWaitCursor();
@@ -345,11 +345,6 @@ public class DatasetPreviewPage extends CompositeWithUsername {
 		availablePlots = null;
 		UploadDashboard.closePreviews(this);
 		resetImageUrls(true);
-	}
-
-	@UiHandler("logoutButton")
-	void logoutOnClick(ClickEvent event) {
-		DashboardLogoutPage.showPage();
 	}
 
 	@UiHandler("doneButton")
