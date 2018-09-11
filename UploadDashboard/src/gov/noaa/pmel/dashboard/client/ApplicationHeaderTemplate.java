@@ -4,12 +4,14 @@
 package gov.noaa.pmel.dashboard.client;
 
 import java.util.Collection;
+import java.util.logging.Logger;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.event.dom.client.ClickEvent;
+import com.google.gwt.event.dom.client.ClickHandler;
+import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
-import com.google.gwt.uibinder.client.UiHandler;
 import com.google.gwt.user.client.ui.Button;
 import com.google.gwt.user.client.ui.InlineLabel;
 import com.google.gwt.user.client.ui.Label;
@@ -23,13 +25,17 @@ import gov.noaa.pmel.dashboard.shared.DashboardDatasetList;
  */
 public class ApplicationHeaderTemplate extends CompositeWithUsername {
 
+    private static Logger logger = Logger.getLogger(ApplicationHeaderTemplate.class.getName());
     @UiField
     Label titleLabel;
     @UiField
     InlineLabel userInfoLabel;
     @UiField
     Button logoutButton;
+    
+    private HandlerRegistration logoutHandler;
 
+    
     interface ApplicationHeaderTemplateUiBinder extends UiBinder<Widget, ApplicationHeaderTemplate> {
     }
 
@@ -39,14 +45,17 @@ public class ApplicationHeaderTemplate extends CompositeWithUsername {
         initWidget(uiBinder.createAndBindUi(this));
 		logoutButton.setText(LOGOUT_TEXT);
 		logoutButton.setTitle(LOGOUT_TEXT);
+		handleLogout();
     }
 
     protected void setPageTitle(String title) {
         titleLabel.setText(title);
     }
     
-    @UiHandler("logoutButton")
-    static void logoutOnClick(ClickEvent event) {
+//    @UiHandler("logoutButton")
+    void logoutOnClick(ClickEvent event) {
+        GWT.log("GWT log Header logout");
+        logger.info("Logger Header logout");
         DashboardLogoutPage.showPage();
     }
 
@@ -84,6 +93,25 @@ public class ApplicationHeaderTemplate extends CompositeWithUsername {
             comma = ", ";
         }
         return ids.toString();
+    }
+
+    public void handleLogout() {
+        if ( logoutHandler != null ) {
+            logoutHandler.removeHandler();
+        }
+        logoutHandler = logoutButton.addClickHandler(new ClickHandler() {
+            @Override
+            public void onClick(ClickEvent event) {
+                logoutOnClick(event);
+            }
+        });
+    }
+    /**
+     * @param clickHandler
+     */
+    public void setClickHandler(ClickHandler clickHandler) {
+        logoutHandler.removeHandler();
+        logoutButton.addClickHandler(clickHandler);
     }
 
 }

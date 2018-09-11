@@ -246,10 +246,10 @@ public class SubmitToArchivePage extends CompositeWithUsername implements DataSu
 		if ( singleton == null ) {
 			singleton = new SubmitToArchivePage();
 		}
-		UploadDashboard.updateCurrentPage(datasets.getUsername(), singleton);
 		singleton._datasets = datasets;
         singleton.header.addDatasetIds(datasets);
 		singleton.updateDatasetColumns(datasets);
+		UploadDashboard.updateCurrentPage(singleton, UploadDashboard.DO_PING);
 		History.newItem(PagesEnum.SUBMIT_TO_ARCHIVE.name(), false);
 	}
 

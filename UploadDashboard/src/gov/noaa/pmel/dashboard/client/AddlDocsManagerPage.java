@@ -25,6 +25,7 @@ import com.google.gwt.user.cellview.client.ColumnSortEvent.ListHandler;
 import com.google.gwt.user.cellview.client.DataGrid;
 import com.google.gwt.user.cellview.client.TextColumn;
 import com.google.gwt.user.client.History;
+import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.google.gwt.user.client.ui.Button;
 import com.google.gwt.user.client.ui.FileUpload;
@@ -33,7 +34,6 @@ import com.google.gwt.user.client.ui.FormPanel.SubmitCompleteEvent;
 import com.google.gwt.user.client.ui.FormPanel.SubmitEvent;
 import com.google.gwt.user.client.ui.HTML;
 import com.google.gwt.user.client.ui.Hidden;
-import com.google.gwt.user.client.ui.InlineLabel;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.gwt.view.client.ListDataProvider;
@@ -54,8 +54,6 @@ import gov.noaa.pmel.dashboard.shared.DashboardUtils;
 public class AddlDocsManagerPage extends CompositeWithUsername {
 
 	private static final String TITLE_TEXT = "Supplemental Documents";
-	private static final String WELCOME_INTRO = "Logged in as ";
-	private static final String LOGOUT_TEXT = "Logout";
 
 	private static final String INTRO_HTML_PROLOGUE = 
 			"Supplemental documents associated with the datasets: <ul>";
@@ -128,9 +126,6 @@ public class AddlDocsManagerPage extends CompositeWithUsername {
 	private static DashboardServicesInterfaceAsync service = 
 			GWT.create(DashboardServicesInterface.class);
 
-//	@UiField InlineLabel titleLabel;
-//	@UiField InlineLabel userInfoLabel;
-//	@UiField Button logoutButton;
     @UiField ApplicationHeaderTemplate header;
 	@UiField HTML introHtml; 
 	@UiField DataGrid<DashboardMetadata> addlDocsGrid;
@@ -170,7 +165,6 @@ public class AddlDocsManagerPage extends CompositeWithUsername {
 		clearTokens();
 
 		header.setPageTitle(TITLE_TEXT);
-		header.logoutButton.setText(LOGOUT_TEXT);
 
 		uploadForm.setEncoding(FormPanel.ENCODING_MULTIPART);
 		uploadForm.setMethod(FormPanel.METHOD_POST);
@@ -194,8 +188,8 @@ public class AddlDocsManagerPage extends CompositeWithUsername {
 	static void showPage(DashboardDatasetList cruiseList) {
 		if ( singleton == null )
 			singleton = new AddlDocsManagerPage();
-		UploadDashboard.updateCurrentPage(singleton);
 		singleton.updateAddlDocs(cruiseList);
+		UploadDashboard.updateCurrentPage(singleton, UploadDashboard.DO_PING);
 		History.newItem(PagesEnum.MANAGE_DOCUMENTS.name(), false);
 	}
 
@@ -326,7 +320,7 @@ public class AddlDocsManagerPage extends CompositeWithUsername {
 			message += OVERWRITE_WARNING_MSG_EPILOGUE;
 			if ( askOverwritePopup == null ) {
 				askOverwritePopup = new DashboardAskPopup(OVERWRITE_YES_TEXT, 
-						OVERWRITE_NO_TEXT, new AsyncCallback<Boolean>() {
+						OVERWRITE_NO_TEXT, new OAPAsyncCallback<Boolean>() {
 					@Override
 					public void onSuccess(Boolean result) {
 						// Submit only if yes
@@ -336,9 +330,8 @@ public class AddlDocsManagerPage extends CompositeWithUsername {
 						}
 					}
 					@Override
-					public void onFailure(Throwable ex) {
-						// Never called
-						;
+					public void customFailure(Throwable ex) {
+                        Window.alert("Error from popup: " + ex.toString()); // Should never be called.
 					}
 				});
 			}
@@ -363,7 +356,7 @@ public class AddlDocsManagerPage extends CompositeWithUsername {
 		// Contact the server to obtain the latest set 
 		// of supplemental documents for the current cruises
 		service.getUpdatedDatasets(getUsername(), datasetIds, 
-				new AsyncCallback<DashboardDatasetList>() {
+				new OAPAsyncCallback<DashboardDatasetList>() {
 			@Override
 			public void onSuccess(DashboardDatasetList cruiseList) {
 				// Update the list shown in this page
@@ -371,7 +364,7 @@ public class AddlDocsManagerPage extends CompositeWithUsername {
 				UploadDashboard.showAutoCursor();
 			}
 			@Override
-			public void onFailure(Throwable ex) {
+			public void customFailure(Throwable ex) {
 				UploadDashboard.showFailureMessage(ADDL_DOCS_LIST_FAIL_MSG, ex);
 				UploadDashboard.showAutoCursor();
 			}
@@ -548,8 +541,7 @@ public class AddlDocsManagerPage extends CompositeWithUsername {
 					}
 					@Override
 					public void onFailure(Throwable caught) {
-						// Never called
-						;
+                        Window.alert("Error from popup: " + caught.toString()); // Should never be called.
 					}
 				}).askQuestion(message);
 			}
@@ -569,7 +561,7 @@ public class AddlDocsManagerPage extends CompositeWithUsername {
 		// Send the request to the server
 		UploadDashboard.showWaitCursor();
 		service.deleteAddlDoc(getUsername(), deleteFilename, deleteId, 
-				datasetIds, new AsyncCallback<DashboardDatasetList>() {
+				datasetIds, new OAPAsyncCallback<DashboardDatasetList>() {
 			@Override
 			public void onSuccess(DashboardDatasetList cruiseList) {
 				// Update the list shown in this page
@@ -577,7 +569,7 @@ public class AddlDocsManagerPage extends CompositeWithUsername {
 				UploadDashboard.showAutoCursor();
 			}
 			@Override
-			public void onFailure(Throwable ex) {
+			public void customFailure(Throwable ex) {
 				UploadDashboard.showFailureMessage(DELETE_DOCS_FAIL_MSG, ex);
 				UploadDashboard.showAutoCursor();
 			}

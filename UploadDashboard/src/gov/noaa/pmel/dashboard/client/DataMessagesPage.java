@@ -141,7 +141,7 @@ public class DataMessagesPage extends CompositeWithUsername {
 	 */
 	static void showPage(String username, String datasetId) {
 		UploadDashboard.showWaitCursor();
-		service.getDataMessages(username, datasetId, new AsyncCallback<ADCMessageList>() {
+		service.getDataMessages(username, datasetId, new OAPAsyncCallback<ADCMessageList>() {
 			@Override
 			public void onSuccess(ADCMessageList msgList) {
 				if ( msgList == null ) {
@@ -157,9 +157,8 @@ public class DataMessagesPage extends CompositeWithUsername {
 				UploadDashboard.showAutoCursor();
 			}
 			@Override
-			public void onFailure(Throwable ex) {
-				UploadDashboard.showFailureMessage(
-						"Unexpected failure obtaining the list of data problems", ex);
+			public void customFailure(Throwable ex) {
+				UploadDashboard.showFailureMessage("Unexpected failure obtaining the list of data problems", ex);
 				UploadDashboard.showAutoCursor();
 			}
 		});

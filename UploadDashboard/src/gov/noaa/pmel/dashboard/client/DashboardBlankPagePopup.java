@@ -5,13 +5,22 @@ package gov.noaa.pmel.dashboard.client;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.event.dom.client.ClickEvent;
+import com.google.gwt.safehtml.shared.SafeHtml;
+import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.uibinder.client.UiHandler;
 import com.google.gwt.user.client.ui.Button;
 import com.google.gwt.user.client.ui.Composite;
+import com.google.gwt.user.client.ui.FileUpload;
+import com.google.gwt.user.client.ui.FormPanel;
+import com.google.gwt.user.client.ui.FormPanel.SubmitCompleteEvent;
+import com.google.gwt.user.client.ui.FormPanel.SubmitEvent;
 import com.google.gwt.user.client.ui.HTML;
+import com.google.gwt.user.client.ui.Hidden;
+import com.google.gwt.user.client.ui.PasswordTextBox;
 import com.google.gwt.user.client.ui.PopupPanel;
+import com.google.gwt.user.client.ui.TextBox;
 import com.google.gwt.user.client.ui.UIObject;
 import com.google.gwt.user.client.ui.Widget;
 
@@ -20,44 +29,34 @@ import com.google.gwt.user.client.ui.Widget;
  * 
  * @author Karl Smith
  */
-public class DashboardInfoPopup extends Composite {
+public class DashboardBlankPagePopup extends Composite {
 
-	private static final String DISMISS_TEXT = "Dismiss";
+	private static final String BUTTON_TEXT = "Submit";
 
-	interface DashboardInfoPopupUiBinder extends UiBinder<Widget, DashboardInfoPopup> {
+	interface DashboardLoginPopupUiBinder extends UiBinder<Widget, DashboardBlankPagePopup> {
 	}
 
-	private static DashboardInfoPopupUiBinder uiBinder = 
-			GWT.create(DashboardInfoPopupUiBinder.class);
+	private static DashboardLoginPopupUiBinder uiBinder = 
+			GWT.create(DashboardLoginPopupUiBinder.class);
 
-	@UiField HTML infoHtml;
-	@UiField Button dismissButton;
-
+    @UiField HTML html;
+    @UiField Button closeButton;
+    
 	private PopupPanel parentPanel;
 
 	/**
 	 * Creates an empty message within a PopupPanel.
 	 * The popup includes a dismiss button to hide it.  
-	 * Use {@link #setInfoMessage(String)} to assign 
+	 * Use {@link #setLoginMessage(String)} to assign 
 	 * the message to be displayed.  
 	 * Use {@link #showAtPosition(int, int)} 
 	 * or {@link #showInCenterOf(UIObject)} 
 	 * to show the popup.
 	 */
-	DashboardInfoPopup() {
+	DashboardBlankPagePopup() {
 		initWidget(uiBinder.createAndBindUi(this));
-		dismissButton.setText(DISMISS_TEXT);
 		parentPanel = new PopupPanel(false);
 		parentPanel.setWidget(this);
-	}
-
-	/**
-	 * @param htmlMessage
-	 * 		the unchecked HTML message to display.
-	 * 		For safety, use only known (static) HTML.
-	 */
-	void setInfoMessage(String htmlMessage) {
-		infoHtml.setHTML(htmlMessage);
 	}
 
 	/**
@@ -78,12 +77,20 @@ public class DashboardInfoPopup extends Composite {
 		parentPanel.center();
 	}
 
-	@UiHandler("dismissButton")
-	void onClick(ClickEvent e) {
-		parentPanel.hide();
-	}
-
+    public void setCloseButtonText(String text) {
+        closeButton.setText(text);
+    }
+    
+    public void setMessage(String msg) {
+        html.setHTML(msg);
+    }
+    
     public void dismiss() {
-		parentPanel.hide();
-	}
+        parentPanel.hide();
+    }
+    
+    @UiHandler("closeButton")
+    void closeButtonOnClick(ClickEvent e) {
+        parentPanel.hide();
+    }
 }

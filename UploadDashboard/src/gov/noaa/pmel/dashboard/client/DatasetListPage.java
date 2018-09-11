@@ -10,6 +10,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.TreeSet;
+import java.util.logging.Logger;
 
 import com.google.gwt.cell.client.Cell;
 import com.google.gwt.cell.client.CheckboxCell;
@@ -61,6 +62,8 @@ import gov.noaa.pmel.dashboard.shared.FeatureType;
  */
 public class DatasetListPage extends CompositeWithUsername {
 
+    private static Logger logger = Logger.getLogger(DatasetListPage.class.getName());
+    
 	private static enum SubmitFor {
 		QC,
 		ARCHIVE
@@ -342,9 +345,7 @@ public class DatasetListPage extends CompositeWithUsername {
 		datasetIdsSet = new TreeSet<String>();
 
         header.setPageTitle(TITLE_TEXT);
-        header.logoutButton.setText(LOGOUT_TEXT);
-//		titleLabel.setText(TITLE_TEXT);
-//		logoutButton.setText(LOGOUT_TEXT);
+//        header.handleLogout();
 
 		uploadButton.setText(UPLOAD_TEXT);
 		uploadButton.setTitle(UPLOAD_HOVER_HELP);
@@ -691,6 +692,8 @@ public class DatasetListPage extends CompositeWithUsername {
 
 //	@UiHandler("logoutButton")
 //	void logoutOnClick(ClickEvent event) {
+//        GWT.log("GWT log DataListPage logout");
+//        logger.info("Logger DataListPage logout");
 //		DashboardLogoutPage.showPage();
 //	}
 
@@ -873,7 +876,7 @@ public class DatasetListPage extends CompositeWithUsername {
 	private void continueDeleteDatasets(Boolean deleteMetadata) {
 		UploadDashboard.showWaitCursor();
 		service.deleteDatasets(getUsername(), datasetIdsSet, deleteMetadata, 
-				new AsyncCallback<DashboardDatasetList>() {
+				new OAPAsyncCallback<DashboardDatasetList>() {
 			@Override
 			public void onSuccess(DashboardDatasetList datasetList) {
 				if ( getUsername().equals(datasetList.getUsername()) ) {
@@ -886,7 +889,7 @@ public class DatasetListPage extends CompositeWithUsername {
 				UploadDashboard.showAutoCursor();
 			}
 			@Override
-			public void onFailure(Throwable ex) {
+			public void customFailure(Throwable ex) {
 				UploadDashboard.showFailureMessage(DELETE_DATASET_FAIL_MSG, ex);
 				UploadDashboard.showAutoCursor();
 			}
@@ -901,7 +904,7 @@ public class DatasetListPage extends CompositeWithUsername {
 			// Save the currently selected cruises
 			getSelectedDatasets(null);
 			service.addDatasetsToList(getUsername(), wildDatasetId, 
-					new AsyncCallback<DashboardDatasetList>() {
+					new OAPAsyncCallback<DashboardDatasetList>() {
 				@Override
 				public void onSuccess(DashboardDatasetList cruises) {
 					if ( getUsername().equals(cruises.getUsername()) ) {
@@ -914,7 +917,7 @@ public class DatasetListPage extends CompositeWithUsername {
 					UploadDashboard.showAutoCursor();
 				}
 				@Override
-				public void onFailure(Throwable ex) {
+				public void customFailure(Throwable ex) {
 					UploadDashboard.showFailureMessage(SHOW_DATASET_FAIL_MSG, ex);
 					UploadDashboard.showAutoCursor();
 				}
@@ -961,7 +964,7 @@ public class DatasetListPage extends CompositeWithUsername {
 	private void continueRemoveDatasetsFromList() {
 		UploadDashboard.showWaitCursor();
 		service.removeDatasetsFromList(getUsername(), datasetIdsSet, 
-				new AsyncCallback<DashboardDatasetList>() {
+				new OAPAsyncCallback<DashboardDatasetList>() {
 			@Override
 			public void onSuccess(DashboardDatasetList cruises) {
 				if ( getUsername().equals(cruises.getUsername()) ) {
@@ -974,7 +977,7 @@ public class DatasetListPage extends CompositeWithUsername {
 				UploadDashboard.showAutoCursor();
 			}
 			@Override
-			public void onFailure(Throwable ex) {
+			public void customFailure(Throwable ex) {
 				UploadDashboard.showFailureMessage(HIDE_DATASET_FAIL_MSG, ex);
 				UploadDashboard.showAutoCursor();
 			}
@@ -1020,7 +1023,7 @@ public class DatasetListPage extends CompositeWithUsername {
 	private void continueChangeOwner(String newOwner) {
 		UploadDashboard.showWaitCursor();
 		service.changeDatasetOwner(getUsername(), datasetIdsSet, newOwner, 
-				new AsyncCallback<DashboardDatasetList>() {
+				new OAPAsyncCallback<DashboardDatasetList>() {
 			@Override
 			public void onSuccess(DashboardDatasetList cruises) {
 				if ( getUsername().equals(cruises.getUsername()) ) {
@@ -1033,7 +1036,7 @@ public class DatasetListPage extends CompositeWithUsername {
 				UploadDashboard.showAutoCursor();
 			}
 			@Override
-			public void onFailure(Throwable ex) {
+			public void customFailure(Throwable ex) {
 				UploadDashboard.showFailureMessage(CHANGE_OWNER_FAIL_MSG, ex);
 				UploadDashboard.showAutoCursor();
 			}
@@ -1810,9 +1813,9 @@ public class DatasetListPage extends CompositeWithUsername {
 		}
 		String localTimestamp = DateTimeFormat.getFormat("yyyy-MM-dd HH:mm Z").format(new Date());
 		UploadDashboard.showWaitCursor();
-		service.suspendDatasets(username, datasetIds, localTimestamp, new AsyncCallback<Void>() {
+		service.suspendDatasets(username, datasetIds, localTimestamp, new OAPAsyncCallback<Void>() {
 			@Override
-			public void onFailure(Throwable caught) {
+			public void customFailure(Throwable caught) {
 				String errMsg = "There was a problem suspending the datasets: " + caught.getMessage();
 				UploadDashboard.showMessage(errMsg);
 				UploadDashboard.showAutoCursor();

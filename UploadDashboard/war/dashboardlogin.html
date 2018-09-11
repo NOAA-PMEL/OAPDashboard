@@ -39,6 +39,7 @@
 <script>
   function dismissDialog(btn) {
 	  console.log(btn);
+      Window.close();
   }
 </script>
 <form method="post" action="j_security_check">
@@ -49,7 +50,7 @@
   <div class="banner">
     <img src="images/noaa_logo_50x50.gif" class="noaaLogo"/>
   </div>
-  <table class="login_table" "border="0" cellspacing="5">
+  <table class="login_table" border="0" cellspacing="5">
     <tr>
       <td style="text-align:center; padding-bottom: 1em;" colspan="2"><b>Please enter your OAP Dashboard Login Credentials</b></td>
     </tr>
@@ -62,7 +63,7 @@
       <td><input type="password" name="j_password" /></td>
     </tr>
     <tr>
-      <td style="text-align:center;" colspan="2"><input onclick="dismissDialog(this)" type="submit" value="Submit" /></td>
+      <td style="text-align:center;" colspan="2"><input type="submit" value="Submit" /></td> <!-- onclick="dismissDialog(this)"  -->
     </tr>
   </table>
 </form>

@@ -92,6 +92,9 @@ public class Bagger implements ArchiveBundler {
             File archiveFile = bagger.packit(staged);
             Bagger.hashit(archiveFile);
             return archiveFile;
+        } catch (Exception ex) {
+            ex.printStackTrace();
+            throw ex;
         } finally {
             if ( bagger != null ) {
                 cleanup(staged);
@@ -492,7 +495,9 @@ public class Bagger implements ArchiveBundler {
     
     private static void cleanup(Path staging) {
         try {
-            FileUtils.deleteDir(staging.toFile());
+            if ( staging != null ) {
+                FileUtils.deleteDir(staging.toFile());
+            }
         } catch (IOException ex) {
             // TODO Auto-generated catch block
             ex.printStackTrace();

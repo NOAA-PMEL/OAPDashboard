@@ -26,6 +26,11 @@ public interface DashboardServicesInterface extends RemoteService {
 	 */
 	void logoutUser();
 	
+    /**
+     * Checks session.
+     */
+	void ping();
+	
 	/**
 	 * Gets the current user's list of datasets.
 	 * 

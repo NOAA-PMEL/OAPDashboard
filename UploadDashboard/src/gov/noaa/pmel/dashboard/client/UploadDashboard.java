@@ -4,17 +4,25 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
+import com.gargoylesoftware.htmlunit.javascript.host.Console;
 import com.google.gwt.core.client.EntryPoint;
 import com.google.gwt.core.client.GWT;
+import com.google.gwt.dom.client.Document;
+import com.google.gwt.dom.client.FormElement;
 import com.google.gwt.dom.client.Style;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.event.logical.shared.ValueChangeHandler;
 import com.google.gwt.event.shared.HandlerRegistration;
+import com.google.gwt.logging.client.ConsoleLogHandler;
 import com.google.gwt.safehtml.shared.SafeHtmlUtils;
 import com.google.gwt.user.client.History;
+import com.google.gwt.user.client.Window;
+import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.google.gwt.user.client.ui.Button;
 import com.google.gwt.user.client.ui.HTML;
 import com.google.gwt.user.client.ui.PopupPanel;
@@ -22,10 +30,23 @@ import com.google.gwt.user.client.ui.RootLayoutPanel;
 import com.google.gwt.user.client.ui.UIObject;
 import com.google.gwt.user.client.ui.VerticalPanel;
 
+import gov.noaa.pmel.dashboard.client.DashboardAskPopup.QuestionType;
+import gov.noaa.pmel.dashboard.shared.DashboardServicesInterface;
+import gov.noaa.pmel.dashboard.shared.DashboardServicesInterfaceAsync;
 import gov.noaa.pmel.dashboard.shared.PreviewPlotImage;
 
 public class UploadDashboard implements EntryPoint, ValueChangeHandler<String> {
 
+    private static Logger logger = Logger.getLogger("UploadDashboard");
+    static {
+        logger.addHandler(new ConsoleLogHandler());
+        logger.setLevel(Level.ALL);
+    }
+	private static DashboardServicesInterfaceAsync service = 
+			GWT.create(DashboardServicesInterface.class);
+    
+	static final boolean DO_PING = true;
+    
 	/**
 	 * Enumerated type to specify pages for browser history.
 	 */
@@ -79,7 +100,9 @@ public class UploadDashboard implements EntryPoint, ValueChangeHandler<String> {
 	private CompositeWithUsername currentPage;
 
 	// PopupPanel for displaying messages 
-	private DashboardInfoPopup msgPopup;
+	private DashboardInfoPopup infoMsgPopup;
+    
+	private DashboardBlankPagePopup blankMsgPopup;
 
 	/**
 	 * Create the manager for the UploadDashboard pages.
@@ -93,8 +116,9 @@ public class UploadDashboard implements EntryPoint, ValueChangeHandler<String> {
 			RootLayoutPanel.get().remove(singleton.currentPage);
 			singleton.currentPage = null;
 		}
+        
 		currentPage = null;
-		msgPopup = null;
+		infoMsgPopup = null;
 		// Make sure singleton is assign to this instance since 
 		// this constructor is probably called from GWT.
 		singleton = this;
@@ -109,10 +133,10 @@ public class UploadDashboard implements EntryPoint, ValueChangeHandler<String> {
 	public static void showMessage(String htmlMsg) {
 		if ( singleton == null )
 			singleton = new UploadDashboard();
-		if ( singleton.msgPopup == null )
-			singleton.msgPopup = new DashboardInfoPopup();
-		singleton.msgPopup.setInfoMessage(htmlMsg);
-		singleton.msgPopup.showCentered();
+		if ( singleton.infoMsgPopup == null )
+			singleton.infoMsgPopup = new DashboardInfoPopup();
+		singleton.infoMsgPopup.setInfoMessage(htmlMsg);
+		singleton.infoMsgPopup.showCentered();
 	}
 
 	private static Map<CompositeWithUsername, List<WindowBox>> pagePopups = new HashMap<>();
@@ -191,10 +215,10 @@ public class UploadDashboard implements EntryPoint, ValueChangeHandler<String> {
 	public static void showMessageAt(String htmlMsg, UIObject obj) {
 		if ( singleton == null )
 			singleton = new UploadDashboard();
-		if ( singleton.msgPopup == null )
-			singleton.msgPopup = new DashboardInfoPopup();
-		singleton.msgPopup.setInfoMessage(htmlMsg);
-		singleton.msgPopup.showRelativeTo(obj);
+		if ( singleton.infoMsgPopup == null )
+			singleton.infoMsgPopup = new DashboardInfoPopup();
+		singleton.infoMsgPopup.setInfoMessage(htmlMsg);
+		singleton.infoMsgPopup.showRelativeTo(obj);
 	}
 
 	/**
@@ -224,19 +248,37 @@ public class UploadDashboard implements EntryPoint, ValueChangeHandler<String> {
 	 * 		new page to be shown; if null, not page is shown
 	 */
 	public static void updateCurrentPage(CompositeWithUsername newPage) {
-		if ( singleton == null )
-			singleton = new UploadDashboard();
-		if ( singleton.currentPage != null )
-			RootLayoutPanel.get().remove(singleton.currentPage);
-		singleton.currentPage = newPage;
-		if ( singleton.currentPage != null )
-			RootLayoutPanel.get().add(singleton.currentPage);
+        updateCurrentPage(newPage, false);
+	}
+	public static void updateCurrentPage(CompositeWithUsername newPage, boolean doPing) {
+        if ( doPing ) {
+        service.ping(new OAPAsyncCallback<Void>() {
+            @Override
+            public void onSuccess(Void arg0) {
+        		if ( singleton == null )
+        			singleton = new UploadDashboard();
+        		if ( singleton.currentPage != null )
+        			RootLayoutPanel.get().remove(singleton.currentPage);
+        		singleton.currentPage = newPage;
+        		if ( singleton.currentPage != null )
+        			RootLayoutPanel.get().add(singleton.currentPage);
+            }
+        });
+        } else {
+            if ( singleton == null )
+                singleton = new UploadDashboard();
+            if ( singleton.currentPage != null )
+                RootLayoutPanel.get().remove(singleton.currentPage);
+            singleton.currentPage = newPage;
+            if ( singleton.currentPage != null )
+                RootLayoutPanel.get().add(singleton.currentPage);
+        }
 	}
 	
-	public static void updateCurrentPage(String username, CompositeWithUsername newPage) {
-	    newPage.setUsername(username);
-	    updateCurrentPage(newPage);
-	}
+//	public static void updateCurrentPage(String username, CompositeWithUsername newPage) {
+//	    newPage.setUsername(username);
+//	    updateCurrentPage(newPage);
+//	}
 
 	/**
 	 * Returns whether the given page is still the current page instance 
@@ -346,11 +388,111 @@ public class UploadDashboard implements EntryPoint, ValueChangeHandler<String> {
 		return baseUrl;
 	}
 
-    static String loginFormHtml = 
-            "<iframe src=\"login\"></iframe>"; 
+    static String mustLoginMsg = 
+            "Your session has expired.<br/>"
+            + "You must log in again.<br/>";
 
+    public static void ask(String question, String yesText, String noText, QuestionType type, AsyncCallback<Boolean> callback) {
+        new DashboardAskPopup(yesText, noText, type, callback).askQuestion(question);
+    }
     public static void showLoginMessage() {
-        showMessage(loginFormHtml);
+        ask(mustLoginMsg, "Login", "Cancel", QuestionType.WARNING,
+              new AsyncCallback<Boolean>() {
+                  @Override
+                  public void onSuccess(Boolean result) {
+                      if ( result.booleanValue() == true ) {
+                          Window.Location.replace("dashboardlogin.html");
+                      } else {
+                          logger.fine("Cancel login");
+                      }
+                  }
+                  @Override
+                  public void onFailure(Throwable caught) {
+                      // Never called
+                      ;
+                  }
+              });
+    }
+    
+    static String loginFormHtml = 
+      "<form id=\"reloginForm\" method=\"post\" action=\"j_security_check\">" +
+        "<table class=\"login_table\" border=\"0\" cellspacing=\"5\">" +
+          "<tr>" +
+            "<td style=\"text-align:center; padding-bottom: .5em;\" colspan=\"2\"><b>Your session has expired.</b></td>" +
+          "</tr>" +
+          "<tr>" +
+            "<td style=\"text-align:center; padding-bottom: .25em;\" colspan=\"2\"><b>Please enter your OAP Dashboard Login Credentials</b></td>" +
+          "</tr>" +
+          "<tr>" +
+            "<td style=\"text-align:center; padding-bottom: 1em;\" colspan=\"2\"><b>and try again.</b></td>" +
+          "</tr>" +
+          "<tr>" +
+            "<td>Username:</td>" +
+            "<td><input type=\"text\" name=\"j_username\" /></td>" +
+          "</tr>" +
+          "<tr>" +
+            "<td>Password:</td>" +
+            "<td><input type=\"password\" name=\"j_password\" /></td>" +
+          "</tr>" +
+          "<tr>" +
+            "<td style=\"text-align:center;\" colspan=\"2\"><input onclick=\"completeRelogin()\" type=\"submit\" value=\"Submit\" /></td>" +
+          "</tr>" +
+        "</table>" +
+      "</form>" ;
+  
+    static native void submitAndClosePopup()/*-{
+        var loginForm = document.getElementById("reloginForm");
+        console.log("reloginForm: "+ loginForm);
+        closeLoginPopup();
+        loginForm.submit();
+    }-*/;
+        
+    static native void setupLoginPopupClose()/*-{
+        console.log("setupClose");
+        if ( ! $wnd.completeRelogin ) {
+            console.log("wnd: " + $wnd);
+            $wnd.completeRelogin = @gov.noaa.pmel.dashboard.client.UploadDashboard::completeRelogin();
+            console.log("completeRelogin: " + $wnd.completeRelogin);
+        }
+    }-*/;
+    
+    public static void completeRelogin() {
+       logger.info("Completing relogin submission");
+       submitForm();
+       closeLoginPopup();
+    }
+    
+    private static void submitForm() {
+        logger.info("Submitting login form");
+        FormElement form = (FormElement)Document.get().getElementById("reloginForm");
+        logger.info("Form: " + form);
+        form.submit();
+    }
+
+    public static void showPopupMessage(String htmlMsg) {
+        showPopupMessage(htmlMsg, null);
+    }
+    
+    public static void showPopupMessage(String htmlMsg, String closeButtonText) {
+		if ( singleton == null )
+			singleton = new UploadDashboard();
+		if ( singleton.blankMsgPopup == null )
+			singleton.blankMsgPopup = new DashboardBlankPagePopup();
+		singleton.blankMsgPopup.setMessage(htmlMsg);
+        if ( closeButtonText != null ) {
+            singleton.blankMsgPopup.setCloseButtonText(closeButtonText);
+        }
+		singleton.blankMsgPopup.showCentered();
+    }
+    
+    public static void showLoginPopup() {
+        setupLoginPopupClose();
+        showPopupMessage(loginFormHtml, "Cancel"); 
+    }
+    
+    public static void closeLoginPopup() {
+        logger.info("Closing login popup");
+        singleton.blankMsgPopup.dismiss();
     }
 
 }

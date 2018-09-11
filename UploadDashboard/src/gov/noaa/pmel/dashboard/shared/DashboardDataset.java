@@ -31,6 +31,7 @@ public class DashboardDataset implements Serializable, IsSerializable {
 	protected TreeSet<String> addlDocs;
 	protected String submitStatus;
 	protected String archiveStatus;
+	protected String archiveSubmissionMessage;
 	protected String archiveDate;
 	protected String uploadFilename;
 	protected String uploadTimestamp;
@@ -294,6 +295,28 @@ public class DashboardDataset implements Serializable, IsSerializable {
 		else
 			this.archiveStatus = archiveStatus.trim();
 	}
+    
+	/**
+	 * @return 
+	 * 		the archive submission message, if any; 
+	 * 		never null but may be empty string if not entered
+	 */
+	public String getArchiveSubmissionMessage() {
+		return archiveSubmissionMessage;
+	}
+
+	/**
+	 * @param submitStatus 
+	 * 		the archive submission status (after trimming) to set;
+	 * 		if null, {@link DashboardUtils#ARCHIVE_STATUS_NOT_SUBMITTED} is assigned
+	 */
+	public void setArchiveSubmissionMessage(String submissionMessage) {
+		if ( submissionMessage == null )
+			this.archiveSubmissionMessage = "";
+		else
+			this.archiveSubmissionMessage = submissionMessage.trim();
+	}
+	
 
 	/**
 	 * @return 

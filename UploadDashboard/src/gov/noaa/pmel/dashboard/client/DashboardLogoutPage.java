@@ -8,7 +8,7 @@ import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.user.client.Cookies;
 import com.google.gwt.user.client.History;
-import com.google.gwt.user.client.rpc.AsyncCallback;
+import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.ui.Anchor;
 import com.google.gwt.user.client.ui.HTML;
 import com.google.gwt.user.client.ui.Widget;
@@ -67,7 +67,7 @@ public class DashboardLogoutPage extends CompositeWithUsername {
 		UploadDashboard.updateCurrentPage(singleton);
 		History.newItem(PagesEnum.LOGOUT.name(), false);
 		UploadDashboard.showWaitCursor();
-		service.logoutUser(new AsyncCallback<Void>() {
+		service.logoutUser(new OAPAsyncCallback<Void>() {
 			@Override
 			public void onSuccess(Void nada) {
 				Cookies.removeCookie("JSESSIONID");
@@ -76,6 +76,7 @@ public class DashboardLogoutPage extends CompositeWithUsername {
 			}
 			@Override
 			public void onFailure(Throwable ex) {
+                Window.alert("Logout error:" + ex.toString());
 				Cookies.removeCookie("JSESSIONID");
 				UploadDashboard.stopHistoryHandling();
 				UploadDashboard.showAutoCursor();

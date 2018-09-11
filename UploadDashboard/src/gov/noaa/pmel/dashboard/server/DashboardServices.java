@@ -116,6 +116,18 @@ public class DashboardServices extends RemoteServiceServlet implements Dashboard
 		logger.info("logged out " + username);
 	}
 
+	@Override
+	public void ping() {
+		HttpServletRequest request = getThreadLocalRequest();
+		username = null;
+		try {
+			username = DashboardUtils.cleanUsername(request.getUserPrincipal().getName().trim());
+		} catch (Exception ex) {
+            logger.info(ex);
+		}
+		logger.debug("ping from user: " + username);
+	}
+
 	/**
 	 * Validates the given request by retrieving the current username from the request
 	 * and verifying that username with the Dashboard data store.  If pageUsername is

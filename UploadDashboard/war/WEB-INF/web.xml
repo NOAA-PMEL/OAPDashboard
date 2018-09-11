@@ -13,6 +13,15 @@
         <listener-class>gov.noaa.pmel.dashboard.server.ApplicationContextListener</listener-class>
     </listener>
     
+    <filter>
+        <filter-name>LoginPageMisdirectFilter</filter-name>
+        <filter-class>gov.noaa.pmel.dashboard.server.LoginRedirectFilter</filter-class>
+    </filter>
+    <filter-mapping>
+        <filter-name>LoginPageMisdirectFilter</filter-name>
+        <url-pattern>/OAPUploadDashboard/DashboardServices</url-pattern>
+    </filter-mapping>
+	
 	<!-- Servlets -->
 	<servlet>
 		<servlet-name>DashboardServlet</servlet-name>
@@ -73,6 +82,7 @@
 			<web-resource-name>DashboardServices</web-resource-name>
 			<url-pattern>/DashboardUpdateService/*</url-pattern>
 			<url-pattern>/images/*</url-pattern>
+            <url-pattern>/dashboardloginPopup.html</url-pattern>
 			<http-method>GET</http-method>
 			<http-method>POST</http-method>
 		</web-resource-collection>

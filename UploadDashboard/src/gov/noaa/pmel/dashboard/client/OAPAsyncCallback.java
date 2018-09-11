@@ -4,7 +4,8 @@
 package gov.noaa.pmel.dashboard.client;
 
 
-import com.google.gwt.user.client.Window;
+import java.util.logging.Logger;
+
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.google.gwt.user.client.rpc.StatusCodeException;
 
@@ -14,6 +15,8 @@ import com.google.gwt.user.client.rpc.StatusCodeException;
  */
 public abstract class OAPAsyncCallback<T> implements AsyncCallback<T> {
 
+    private static Logger logger = Logger.getLogger(OAPAsyncCallback.class.getName());
+    
     public OAPAsyncCallback() {
         // TODO Auto-generated constructor stub
     }
@@ -24,12 +27,15 @@ public abstract class OAPAsyncCallback<T> implements AsyncCallback<T> {
     @Override
     public void onFailure(Throwable error) {
         UploadDashboard.showAutoCursor();
+        logger.info(error.toString());
         String exMsg = error.getMessage();
         
         if (( exMsg.indexOf("SESSION HAS EXPIRED") >= 0 ) ||
               ( error instanceof StatusCodeException &&
               ((StatusCodeException)error).getStatusCode() == 401 )) {
-            UploadDashboard.showLoginMessage();
+            UploadDashboard.showLoginPopup();
+        } else if (exMsg.indexOf("TRY AGAIN") >= 0 ) {
+            UploadDashboard.closeLoginPopup();
         } else {
             customFailure(error);
         }

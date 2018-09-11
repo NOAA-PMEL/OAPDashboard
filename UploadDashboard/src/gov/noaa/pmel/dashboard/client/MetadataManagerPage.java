@@ -177,8 +177,6 @@ public class MetadataManagerPage extends CompositeWithUsername {
 		if ( singleton == null )
 			singleton = new MetadataManagerPage();
 		singleton.updateDataset(cruises);
-		UploadDashboard.updateCurrentPage(singleton);
-		History.newItem(PagesEnum.EDIT_METADATA.name(), false);
 	}
 
 	/**
@@ -213,7 +211,7 @@ public class MetadataManagerPage extends CompositeWithUsername {
 		datasetId = selectedDatasetId;
         header.addDatasetIds(cruises);
     		
-		setMetadataFileInfo(null);
+//		setMetadataFileInfo(null);
     		
 		// Clear the hidden tokens just to be safe
 		clearTokens();
@@ -229,41 +227,41 @@ public class MetadataManagerPage extends CompositeWithUsername {
         return "http://localhost:8383/oap/OAPMetadataEditor.html?id="+docId.toUpperCase();
     }
 
-    private void getMetadataPreview(String datasetId) {
-		service.getMetadataPreviewInfo(getUsername(), datasetId, new SessionHandlingCallbackBase<MetadataPreviewInfo>() {
-			@Override
-			public void onSuccess(MetadataPreviewInfo result) {
-				String html = result.getMetadataPreview();
-//				filePreviewPanel.setHTML(html);
-				setMetadataFileInfo(result.getMetadataFileInfo());
-			}
-			@Override
-			public void handleFailure(Throwable caught) {
-				setMetadataFileInfo(null);
-				String msg = caught.getMessage();
-				if ( caught instanceof NotFoundException ) {
-					UploadDashboard.showMessage(msg);
-				} else {
-					UploadDashboard.showFailureMessage(msg, caught);
-				}
-			}
-		});
-	}
+//    private void getMetadataPreview(String datasetId) {
+//		service.getMetadataPreviewInfo(getUsername(), datasetId, new SessionHandlingCallbackBase<MetadataPreviewInfo>() {
+//			@Override
+//			public void onSuccess(MetadataPreviewInfo result) {
+//				String html = result.getMetadataPreview();
+////				filePreviewPanel.setHTML(html);
+////				setMetadataFileInfo(result.getMetadataFileInfo());
+//			}
+//			@Override
+//			public void handleFailure(Throwable caught) {
+////				setMetadataFileInfo(null);
+//				String msg = caught.getMessage();
+//				if ( caught instanceof NotFoundException ) {
+//					UploadDashboard.showMessage(msg);
+//				} else {
+//					UploadDashboard.showFailureMessage(msg, caught);
+//				}
+//			}
+//		});
+//	}
 	
-	private void setMetadataFileInfo(FileInfo metadataFileInfo) {
-		String fileInfoHtml;
-		if ( metadataFileInfo == null ) {
-			fileInfoHtml = "";
-		} else {
-			fileInfoHtml = "Metadata File: " + metadataFileInfo.getFileName();
-			fileInfoHtml += "<br/><ul>" +
-							"<li>created: " + metadataFileInfo.getFileCreateTime() + "</li>" + 
-							"<li>modified: " + metadataFileInfo.getFileModTime() + "</li>" + 
-							"<li>size: " + metadataFileInfo.getFileSize() + "</li>" +
-							"</ul>";
-		}
-//		metadataFileInfoHtml.setHTML(fileInfoHtml);
-	}
+//	private void setMetadataFileInfo(FileInfo metadataFileInfo) {
+//		String fileInfoHtml;
+//		if ( metadataFileInfo == null ) {
+//			fileInfoHtml = "";
+//		} else {
+//			fileInfoHtml = "Metadata File: " + metadataFileInfo.getFileName();
+//			fileInfoHtml += "<br/><ul>" +
+//							"<li>created: " + metadataFileInfo.getFileCreateTime() + "</li>" + 
+//							"<li>modified: " + metadataFileInfo.getFileModTime() + "</li>" + 
+//							"<li>size: " + metadataFileInfo.getFileSize() + "</li>" +
+//							"</ul>";
+//		}
+////		metadataFileInfoHtml.setHTML(fileInfoHtml);
+//	}
 
 
 	/**
@@ -322,23 +320,25 @@ public class MetadataManagerPage extends CompositeWithUsername {
 		DatasetListPage.showPage();
     }
     
-	private String getDownloadUrl(String datasetId) {
-		StringBuilder b = new StringBuilder(UploadDashboard.getBaseUrl())
-								.append(DOWNLOAD_SERVICE_NAME)
-								.append("/").append(datasetId);
-		return b.toString();
-	}
+//	private String getDownloadUrl(String datasetId) {
+//		StringBuilder b = new StringBuilder(UploadDashboard.getBaseUrl())
+//								.append(DOWNLOAD_SERVICE_NAME)
+//								.append("/").append(datasetId);
+//		return b.toString();
+//	}
 	
     private void sendCurrentMetadataToMetaEd(String datasetId) {
         try {
-            service.sendMetadataInfo(getUsername(), datasetId, new SessionHandlingCallbackBase<String>() {
+            service.sendMetadataInfo(getUsername(), datasetId, new OAPAsyncCallback<String>() {
                 @Override
                 public void onSuccess(String result) {
+            		UploadDashboard.updateCurrentPage(singleton);
+            		History.newItem(PagesEnum.EDIT_METADATA.name(), false);
                     // Validate response for valid url...
                     openMetadataEditorWindow(result);
                 }
                 @Override
-                public void handleFailure(Throwable caught) {
+                public void customFailure(Throwable caught) {
                     String msg = caught.getMessage();
                     doneButton.setEnabled(false);
                     confirmCancel = false;
@@ -349,7 +349,6 @@ public class MetadataManagerPage extends CompositeWithUsername {
                     }
                 }
             });
-
         } catch (Exception ex) {
             ex.printStackTrace();
         }

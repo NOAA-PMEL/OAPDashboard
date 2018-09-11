@@ -33,10 +33,9 @@ import com.google.gwt.user.cellview.client.DataGrid;
 import com.google.gwt.user.cellview.client.RowStyles;
 import com.google.gwt.user.cellview.client.SimplePager;
 import com.google.gwt.user.client.History;
+import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.google.gwt.user.client.ui.Button;
-import com.google.gwt.user.client.ui.HTML;
-import com.google.gwt.user.client.ui.InlineLabel;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.ScrollPanel;
 import com.google.gwt.user.client.ui.Widget;
@@ -242,7 +241,12 @@ public class DataColumnSpecsPage extends CompositeWithUsername {
 		wasLoggingOut = false;
 
 		header.setPageTitle(TITLE_TEXT);
-		header.logoutButton.setText(LOGOUT_TEXT);
+		header.setClickHandler(new ClickHandler() {
+            @Override
+            public void onClick(ClickEvent event) {
+                logoutOnClick(event);
+            }
+        });
 		messagesButton.setText(MESSAGES_TEXT);
 		pagerLabel.setText(PAGER_LABEL_TEXT);
 		submitButton.setText(SUBMIT_TEXT);
@@ -292,7 +296,7 @@ public class DataColumnSpecsPage extends CompositeWithUsername {
 				final Range range = display.getVisibleRange();
 				service.getDataWithRowNum(getUsername(), cruise.getDatasetId(), 
 						range.getStart(), range.getLength(), 
-						new AsyncCallback<ArrayList<ArrayList<String>>>() {
+						new OAPAsyncCallback<ArrayList<ArrayList<String>>>() {
 					@Override
 					public void onSuccess(ArrayList<ArrayList<String>> newData) {
 						int actualStart;
@@ -308,7 +312,7 @@ public class DataColumnSpecsPage extends CompositeWithUsername {
 						UploadDashboard.showAutoCursor();
 					}
 					@Override
-					public void onFailure(Throwable ex) {
+					public void customFailure(Throwable ex) {
 						UploadDashboard.showFailureMessage(MORE_DATA_FAIL_MSG, ex);
 						UploadDashboard.showAutoCursor();
 					}
@@ -689,27 +693,27 @@ public class DataColumnSpecsPage extends CompositeWithUsername {
 	}
 
 //	@UiHandler("logoutButton")
-//	void logoutOnClick(ClickEvent event) {
-//		// Check if any changes have been made
-//		boolean hasChanged = false;
-//		for ( DatasetDataColumn dataCol : cruiseDataCols ) {
-//			if ( dataCol.hasChanged() ) {
-//				hasChanged = true;
-//				break;
-//			}
-//		}
-//		if ( hasChanged ) {
-//			// Ask before logging out
-//			wasLoggingOut = true;
-//			if ( notCheckedPopup == null )
-//				makeNotCheckedPopup();
-//			notCheckedPopup.askQuestion(CHANGES_NOT_SAVED_HTML);
-//		}
-//		else {
-//			// No changes; just log out
-//			DashboardLogoutPage.showPage();
-//		}
-//	}
+	void logoutOnClick(ClickEvent event) {
+		// Check if any changes have been made
+		boolean hasChanged = false;
+		for ( DatasetDataColumn dataCol : cruiseDataCols ) {
+			if ( dataCol.hasChanged() ) {
+				hasChanged = true;
+				break;
+			}
+		}
+		if ( hasChanged ) {
+			// Ask before logging out
+			wasLoggingOut = true;
+			if ( notCheckedPopup == null )
+				makeNotCheckedPopup();
+			notCheckedPopup.askQuestion(CHANGES_NOT_SAVED_HTML);
+		}
+		else {
+			// No changes; just log out
+			DashboardLogoutPage.showPage();
+		}
+	}
 
 	@UiHandler("doneButton")
 	void doneOnClick(ClickEvent event) {
@@ -745,7 +749,7 @@ public class DataColumnSpecsPage extends CompositeWithUsername {
 			// Put up the wait cursor and send the rest of the cruises through the sanity checker
 			UploadDashboard.showWaitCursor();
 			expocodes.remove(0);
-			service.updateDataColumns(getUsername(), expocodes, new AsyncCallback<Void>() {
+			service.updateDataColumns(getUsername(), expocodes, new OAPAsyncCallback<Void>() {
 				@Override
 				public void onSuccess(Void result) {
 					// Go to the list of cruises without comment; return to the normal cursor
@@ -754,7 +758,8 @@ public class DataColumnSpecsPage extends CompositeWithUsername {
 					return;
 				}
 				@Override
-				public void onFailure(Throwable caught) {
+				public void customFailure(Throwable caught) {
+                    Window.alert("Error updating column specifications: " + caught.toString());
 					// Go to the list of cruises without comment; return to the normal cursor
 					DatasetListPage.showPage();
 					UploadDashboard.showAutoCursor();
@@ -790,8 +795,7 @@ public class DataColumnSpecsPage extends CompositeWithUsername {
 			}
 			@Override
 			public void onFailure(Throwable ex) {
-				// never called
-				;
+				Window.alert("Error from popup dialog: " + ex.toString());  // should never be called
 			}
 		});
 	}
@@ -1017,7 +1021,7 @@ public class DataColumnSpecsPage extends CompositeWithUsername {
 		// This update invokes the SanityChecker on the data and
 		// the results are then reported back to this page.
 		service.updateDataColumnSpecs(getUsername(), cruise, 
-				new AsyncCallback<TypesDatasetDataPair>() {
+				new OAPAsyncCallback<TypesDatasetDataPair>() {
 			@Override
 			public void onSuccess(TypesDatasetDataPair tddp) {
 				if ( tddp == null ) {
@@ -1056,7 +1060,7 @@ public class DataColumnSpecsPage extends CompositeWithUsername {
 				UploadDashboard.showAutoCursor();
 			}
 			@Override
-			public void onFailure(Throwable ex) {
+			public void customFailure(Throwable ex) {
 				UploadDashboard.showFailureMessage(SUBMIT_FAIL_MSG, ex);
 				// Show the normal cursor
 				UploadDashboard.showAutoCursor();
@@ -1092,7 +1096,7 @@ public class DataColumnSpecsPage extends CompositeWithUsername {
 		// This update invokes the SanityChecker on the data and
 		// the results are then reported back to this page.
 		service.saveDataColumnSpecs(getUsername(), cruise, 
-				new AsyncCallback<DashboardDatasetData>() {
+				new OAPAsyncCallback<DashboardDatasetData>() {
 			@Override
 			public void onSuccess(DashboardDatasetData specs) {
 				if ( specs == null ) {
@@ -1104,7 +1108,7 @@ public class DataColumnSpecsPage extends CompositeWithUsername {
 				UploadDashboard.showAutoCursor();
 			}
 			@Override
-			public void onFailure(Throwable ex) {
+			public void customFailure(Throwable ex) {
 				UploadDashboard.showFailureMessage(SAVE_FAIL_MSG, ex);
 				// Show the normal cursor
 				UploadDashboard.showAutoCursor();

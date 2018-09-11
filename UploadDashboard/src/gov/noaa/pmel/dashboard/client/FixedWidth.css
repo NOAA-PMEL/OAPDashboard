@@ -43,6 +43,28 @@ body {
 	padding-right: 2em;
 }
 
+.blankPopupClose {
+	color: button;
+	background-color: white;
+    padding: 2px 8px 3px;
+    position:absolute;
+    bottom: 5px;
+    right: 5px;
+    font: 400 11px system-ui;
+    border-radius: 5px;
+}
+.blankPopupPanel {
+	background-color: #BBDDFF;
+    padding: 1em;
+/* 	width: 35em;
+    height: 15em; */
+}
+.uploadfile {
+    display: block;
+    width: 90%;
+    font-size: 100%;
+    margin: 1em 2em;
+}
 .infopanel {
 	background-color: #CCCCCC;
 	width: 35em;

@@ -53,8 +53,6 @@ public class DatasetPreviewPage extends CompositeWithUsername {
 	Logger logger = Logger.getLogger("DatasetPreviewPage");
 
 	private static final String TITLE_TEXT = "Preview Dataset";
-	private static final String WELCOME_INTRO = "Logged in as ";
-	private static final String LOGOUT_TEXT = "Logout";
 
 	private static final String INTRO_HTML_PROLOGUE = 
 			"Plots of the dataset: ";
@@ -89,9 +87,6 @@ public class DatasetPreviewPage extends CompositeWithUsername {
 			GWT.create(DashboardServicesInterface.class);
 
     @UiField ApplicationHeaderTemplate header;
-//	@UiField InlineLabel titleLabel;
-//	@UiField InlineLabel userInfoLabel;
-//	@UiField Button logoutButton;
 	@UiField HTML introHtml;
 	@UiField Button refreshButton;
 	@UiField Button doneButton;
@@ -132,7 +127,7 @@ public class DatasetPreviewPage extends CompositeWithUsername {
 		setUsername(null);
 		datasetId = "";
 		// Callback when generating plots
-		checkStatusCallback = new AsyncCallback<PreviewPlotResponse>() {
+		checkStatusCallback = new OAPAsyncCallback<PreviewPlotResponse>() {
 			@Override
 			public void onSuccess(PreviewPlotResponse plotResponse) {
 				logger.fine("Got response " + plotResponse);
@@ -152,7 +147,7 @@ public class DatasetPreviewPage extends CompositeWithUsername {
 				}
 			}
 			@Override
-			public void onFailure(Throwable ex) {
+			public void customFailure(Throwable ex) {
 				logger.log(Level.FINE, "Get Preview failure", ex);
 				if ( UploadDashboard.isCurrentPage(singleton) ) {
 					UploadDashboard.showAutoCursor();
@@ -163,6 +158,7 @@ public class DatasetPreviewPage extends CompositeWithUsername {
 		};
 
 		header.setPageTitle(TITLE_TEXT);
+        header.handleLogout();
 		
 		refreshButton.setText(REFRESH_TEXT);
 		refreshButton.setTitle(REFRESH_HOVER_HELP);
@@ -194,11 +190,11 @@ public class DatasetPreviewPage extends CompositeWithUsername {
 	static void showPage(DashboardDatasetList cruiseList) {
 		if ( singleton == null )
 			singleton = new DatasetPreviewPage();
-		UploadDashboard.updateCurrentPage(singleton);
 // 		String datasetId = cruiseList.keySet().iterator().next(); 
 		DashboardDataset dataset = cruiseList.get(cruiseList.keySet().iterator().next()); 
 		singleton.updatePreviewPlots(dataset,
 									 cruiseList.getUsername(), false);
+		UploadDashboard.updateCurrentPage(singleton);
 		History.newItem(PagesEnum.PREVIEW_DATASET.name(), false);
 	}
 
