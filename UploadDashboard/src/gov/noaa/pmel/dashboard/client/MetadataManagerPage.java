@@ -117,6 +117,8 @@ public class MetadataManagerPage extends CompositeWithUsername {
 		clearTokens();
 
 		doneButton.setText(DONE_TEXT);
+		doneButton.setEnabled(true);
+		
         cancelButton.setText(CANCEL_TEXT);
         
         metadataEditorFrame.getElement().setId("__metadataEditorFrame");
