@@ -3,59 +3,55 @@
 	xmlns:g="urn:import:com.google.gwt.user.client.ui" xmlns:cell="urn:import:com.google.gwt.user.cellview.client"
     xmlns:oap="urn:import:gov.noaa.pmel.dashboard.client" >
 
-	<ui:style src="FullWidth.css" />
+	<ui:style src="FullWidth.css" >
+        #submitFileListLabel {
+            padding: 2em 3em;
+	        font-size: large;
+	        font-weight: bold;
+        }
+        #submitCommentLabelHead {
+            padding: 0em 2em;
+    	    font-weight: bold;
+            font-size: large;
+        }
+        #submitCommentLabelExp {
+            padding: 1em 2em 0em 2.5em;
+            font-size: medium;
+        }
+        #submitCommentLabelLine2 {
+	       font-weight: bold;
+           color: red;
+        }
+	</ui:style>
 	
 	<g:DockLayoutPanel unit="EM">
-		<g:north size="6">
+		<g:north size="5">
             <oap:ApplicationHeaderTemplate ui:field="header"/>
 		</g:north>
-        <g:center>
-            <g:DockLayoutPanel unit="EM">
-        		<g:north size="5">
-        			<g:FlowPanel addStyleNames="{style.submit_msg_panel}">
-                        <g:HTML addStyleNames="{style.west_gutter_element}">Submission<br/>Comments</g:HTML>
-                        <g:ScrollPanel addStyleNames="{style.submit_msg_scroll}">
-                            <g:TextArea ui:field="submitMsgTextBox" addStyleNames="{style.submit_msg_text}"></g:TextArea>
-                        </g:ScrollPanel>
-        			</g:FlowPanel>
-        		</g:north>
-        		<g:west size="8">
-        			<g:FlowPanel addStyleNames="{style.sideSelectionPanel}">
-        				<g:InlineLabel addStyleNames="{style.sideSelectionLabel}">Select:</g:InlineLabel>
-        				<g:VerticalPanel addStyleNames="{style.sideSelector}">
-        					<g:RadioButton ui:field="select_none" name="columnSelectionGroup" addStyleNames="{style.sideSelectionRadio}">None</g:RadioButton>
-        					<!--
-        					<g:RadioButton ui:field="select_min" name="columnSelectionGroup" addStyleNames="{style.sideSelectionRadio}">Minimal</g:RadioButton>
-        					<g:RadioButton ui:field="select_req" name="columnSelectionGroup" addStyleNames="{style.sideSelectionRadio}">Required</g:RadioButton>
-        					<g:RadioButton ui:field="select_user" name="columnSelectionGroup" addStyleNames="{style.sideSelectionRadio}">User</g:RadioButton>
-        					-->
-        					<g:RadioButton ui:field="select_std" name="columnSelectionGroup" addStyleNames="{style.sideSelectionRadio}">Standard</g:RadioButton>
-        					<g:RadioButton ui:field="select_all" name="columnSelectionGroup" addStyleNames="{style.sideSelectionRadio}">All</g:RadioButton>
-        				</g:VerticalPanel>
-        			</g:FlowPanel>
-        		</g:west>
-        		<g:center>
-                <g:FlowPanel>
-    				<g:HTML addStyleNames="{style.introhtml}" ui:field="introHtml" />
-        			<g:ScrollPanel addStyleNames="{style.columnContentScroll}">
-        				<g:VerticalPanel ui:field="columnsPanel"></g:VerticalPanel>
-            		</g:ScrollPanel>
+        <g:center addStyleNames="{style.fullpagecontainer}">
+            <g:FlowPanel addStyleNames="{style.fullpagecontainer}">
+                <g:FlowPanel addStyleNames="{style.archiveFileListPanel}">
+                    <g:HTML ui:field="fileListLabel" addStyleNames="{style.archiveFileListLabel}"/>
+                    <g:HTML ui:field="fileListHtml" addStyleNames="{style.archiveFileList}"></g:HTML>
                 </g:FlowPanel>
-    		</g:center>
-            </g:DockLayoutPanel>
+                <g:FlowPanel addStyleNames="{style.submit_msg_panel}">
+                    <g:HTML ui:field="submitCommentLabel" addStyleNames="{style.submit_msg_label_panel}"/>
+                    <g:ScrollPanel addStyleNames="{style.submit_msg_scroll}">
+                        <g:TextArea  ui:field="submitCommentTextArea" addStyleNames="{style.submit_msg_text}"/>
+                    </g:ScrollPanel>
+                </g:FlowPanel>
+    			<g:FlowPanel addStyleNames="{style.horizontalbuttonpanel}">
+    				<g:Button addStyleNames="{style.horizontalbutton}"
+    					ui:field="submitButton" />
+    				<g:Button addStyleNames="{style.horizontalbutton}"
+    					ui:field="cancelButton" />
+    			</g:FlowPanel>
+            </g:FlowPanel>
         </g:center>
 		<g:south size="6">
             <g:FlowPanel>
-			<g:FlowPanel addStyleNames="{style.horizontalbuttonpanel}">
-				<g:Button addStyleNames="{style.horizontalbutton}"
-					ui:field="submitButton" />
-				<g:Button addStyleNames="{style.horizontalbutton}"
-					ui:field="cancelButton" />
-			</g:FlowPanel>
-            <g:FlowPanel>
                 <oap:ApplicationFooter/>
             </g:FlowPanel>
-			</g:FlowPanel>
 		</g:south>
 	</g:DockLayoutPanel>
 </ui:UiBinder>

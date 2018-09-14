@@ -14,8 +14,6 @@ import com.google.gwt.core.client.GWT;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.i18n.client.DateTimeFormat;
-import com.google.gwt.safehtml.shared.SafeHtml;
-import com.google.gwt.safehtml.shared.SafeHtmlUtils;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.uibinder.client.UiHandler;
@@ -24,9 +22,6 @@ import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.google.gwt.user.client.ui.Button;
 import com.google.gwt.user.client.ui.CheckBox;
 import com.google.gwt.user.client.ui.HTML;
-import com.google.gwt.user.client.ui.InlineLabel;
-import com.google.gwt.user.client.ui.Panel;
-import com.google.gwt.user.client.ui.RadioButton;
 import com.google.gwt.user.client.ui.TextArea;
 import com.google.gwt.user.client.ui.Widget;
 
@@ -55,22 +50,24 @@ public class SubmitToArchivePage extends CompositeWithUsername implements DataSu
 		ALL
 	}
 	
+    @UiField HTML fileListLabel;
+    @UiField HTML fileListHtml;
+    @UiField HTML submitCommentLabel;
+    @UiField TextArea submitCommentTextArea;
 //	@UiField Tree columnTree;
-	@UiField HTML introHtml;
-	@UiField Panel columnsPanel;
+//	@UiField HTML introHtml;
+//	@UiField Panel columnsPanel;
 //	@UiField DataGrid<DataColumnType> columnsGrid;
 	@UiField Button cancelButton;
 	@UiField Button submitButton;
 	
-	@UiField RadioButton select_none;
-//	@UiField RadioButton select_min;
-//	@UiField RadioButton select_req;
-	@UiField RadioButton select_std;
-//	@UiField RadioButton select_user;
-	@UiField RadioButton select_all;
+//	@UiField RadioButton select_none;
+////	@UiField RadioButton select_min;
+////	@UiField RadioButton select_req;
+//	@UiField RadioButton select_std;
+////	@UiField RadioButton select_user;
+//	@UiField RadioButton select_all;
     
-	@UiField TextArea submitMsgTextBox;
-
 	@UiField ApplicationHeaderTemplate header;
 	
 	private String _datasetId;
@@ -92,19 +89,30 @@ public class SubmitToArchivePage extends CompositeWithUsername implements DataSu
 	private static DashboardServicesInterfaceAsync service = 
 			GWT.create(DashboardServicesInterface.class);
 
+    private static final String submitCommentHtml =
+        "<div id='submitCommentLabelHead'>Optional Submission Comment:</div>"
+        + "<div id='submitCommentLabelExp'>"
+        + "<div id='submitCommentLabelLine1'>This optional comment will not be archived.<br/></div>"
+        + "<div id='submitCommentLabelLine2'>Do not use this comment to include metadata or other important dataset information.<br/></div>"
+        + "<div id='submitCommentLabelLine3'>Its use is solely to communicate special information or archiving considerations to the archive staff.</div>"
+        + "</div>";
+    
 	public SubmitToArchivePage() {
 		initWidget(uiBinder.createAndBindUi(this));
 		setupHandlers();
 		buildGrid();
-		
-		
+        
+		header.setPageTitle("Submit Datasets for Archving");
+        
+        fileListLabel.setText("The following files will be archived at NCEI:");
+        submitCommentLabel.setHTML(submitCommentHtml);
+        
 		cancelButton.setText("Cancel");
 		cancelButton.setTitle("Cancel");
 		submitButton.setText("Submit");
 		submitButton.setTitle("Submit");
 		
-		header.setPageTitle("Submit Datasets for Archving");
-		introHtml.setHTML("Select Columns to Submit to Archive: <br/>");
+//		introHtml.setHTML("Select Columns to Submit to Archive: <br/>");
 		
 		_allCBoxes = new ArrayList<>();
 		_columnBoxMap = new HashMap<>();
@@ -234,12 +242,12 @@ public class SubmitToArchivePage extends CompositeWithUsername implements DataSu
 	}
 	
 	private void setupHandlers() {
-		select_none.addClickHandler(new RadioButtonClickHandler(SELECT.NONE));
-//		select_min.addClickHandler(new RadioButtonClickHandler(SELECT.MIN));
-//		select_req.addClickHandler(new RadioButtonClickHandler(SELECT.REQUIRED));
-		select_std.addClickHandler(new RadioButtonClickHandler(SELECT.STANDARD));
-//		select_user.addClickHandler(new RadioButtonClickHandler(SELECT.USER));
-		select_all.addClickHandler(new RadioButtonClickHandler(SELECT.ALL));
+//		select_none.addClickHandler(new RadioButtonClickHandler(SELECT.NONE));
+////		select_min.addClickHandler(new RadioButtonClickHandler(SELECT.MIN));
+////		select_req.addClickHandler(new RadioButtonClickHandler(SELECT.REQUIRED));
+//		select_std.addClickHandler(new RadioButtonClickHandler(SELECT.STANDARD));
+////		select_user.addClickHandler(new RadioButtonClickHandler(SELECT.USER));
+//		select_all.addClickHandler(new RadioButtonClickHandler(SELECT.ALL));
 	}
 
 	static void showPage(DashboardDatasetList datasets) {
@@ -248,6 +256,7 @@ public class SubmitToArchivePage extends CompositeWithUsername implements DataSu
 		}
 		singleton._datasets = datasets;
         singleton.header.addDatasetIds(datasets);
+        singleton.setUsername(datasets.getUsername());
 		singleton.updateDatasetColumns(datasets);
 		UploadDashboard.updateCurrentPage(singleton, UploadDashboard.DO_PING);
 		History.newItem(PagesEnum.SUBMIT_TO_ARCHIVE.name(), false);
@@ -255,9 +264,9 @@ public class SubmitToArchivePage extends CompositeWithUsername implements DataSu
 
 	protected void updateDatasetColumns(DashboardDatasetList datasets) {
 	    _submitIdsList.clear();
-	    select_none.setValue(false);
-	    select_std.setValue(false);
-	    select_all.setValue(false);
+//	    select_none.setValue(false);
+//	    select_std.setValue(false);
+//	    select_all.setValue(false);
 	    clearSelections();
 	    if ( ! okToArchive(datasets)) {
 	        UploadDashboard.showMessage("All datasets selected for archival must have the same set of columns.");
@@ -278,8 +287,54 @@ public class SubmitToArchivePage extends CompositeWithUsername implements DataSu
 		_datasetId = dataset.getDatasetId();
 		header.userInfoLabel.setText(WELCOME_INTRO + getUsername());
 		
-        submitMsgTextBox.setText(dataset.getArchiveSubmissionMessage());
-		columnsPanel.clear();
+        submitCommentTextArea.setText(dataset.getArchiveSubmissionMessage());
+//		columnsPanel.clear();
+        
+        setFilesToBeArchived(dataset);
+        
+//        setDataColumns(dataset);
+	}
+
+	/**
+     * @param dataset
+     */
+    private void setFilesToBeArchived(DashboardDataset dataset) {
+        StringBuilder b = new StringBuilder();
+        b.append("<ul>");
+        addLine(b, "Data File", dataset.getUploadFilename());
+        addLine(b, "Metadata File", dataset.getDatasetId()+"_OADS.xml");
+        if ( dataset.getAddlDocs().size() > 0 ) {
+            b.append("<li>Supplemental Documents<ul>");
+            for (String f : dataset.getAddlDocs()) {
+                addFile(b, f);
+            }
+            b.append("</ul></li>");
+        }
+        b.append("</ul>");
+        fileListHtml.setHTML(b.toString());
+    }
+
+    /**
+     * @param b 
+     * @param string
+     * @param datasetId
+     */
+    private void addLine(StringBuilder b, String title, String filename) {
+        b.append("<li>").append(title).append(" : ").append(filename).append("</li>");
+    }
+
+    /**
+     * @param b 
+     * @param f
+     */
+    private void addFile(StringBuilder b, String filename) {
+        b.append("<li>").append(filename).append("</li>");
+    }
+
+    /**
+     * @param dataset
+     */
+    private void setDataColumns(DashboardDataset dataset) {
 		_allCBoxes.clear();
 		_columnBoxMap.clear();
 		_userColNames = dataset.getUserColNames(); 
@@ -294,24 +349,19 @@ public class SubmitToArchivePage extends CompositeWithUsername implements DataSu
 			cb.setName(userColName);
 			_allCBoxes.add(cb);
 			_columnBoxMap.put(varName, cb);
-			columnsPanel.add(cb);
+//			columnsPanel.add(cb);
 		}
-	}
+        
+    }
 
-	private boolean okToArchive(DashboardDatasetList datasets) {
+    private boolean okToArchive(DashboardDatasetList datasets) {
 	    boolean isOk = true;
 	    
         return isOk; // XXX
     }
 	
-	private boolean checkDatasetColumns() {
-	    boolean isOk = true;
-	    
-	    return isOk; // XXX
-	}
-
     @UiHandler("cancelButton")
-	void cancelOnClick(ClickEvent event) {
+    static void cancelOnClick(ClickEvent event) {
 		// Return to the list of cruises which could have been modified by this page
 		DatasetListPage.showPage();
 	}
@@ -391,7 +441,7 @@ public class SubmitToArchivePage extends CompositeWithUsername implements DataSu
 		UploadDashboard.showWaitCursor();
 		service.submitDatasetsToArchive(getUsername(), _submitIdsList, _submitColsList, 
 		                                archiveStatus, localTimestamp, repeatSend, 
-                                        submitMsgTextBox.getText(),
+                                        submitCommentTextArea.getText(),
 			new AsyncCallback<Void>() {
 				@Override
 				public void onSuccess(Void result) {

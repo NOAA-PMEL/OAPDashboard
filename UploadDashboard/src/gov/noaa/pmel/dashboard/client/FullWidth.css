@@ -29,6 +29,18 @@ html, body {
 	display: inline;
 	margin-left: 3em;
 }
+.archiveFileListPanel {
+    padding: 3em 2em;
+}
+.archiveFileListLabel {
+    display:inline-block;
+    vertical-align: top;
+    padding: 1em 2em;
+    text-weight: bold;
+}
+.archiveFileList {
+    display:inline-block;
+}
 .columnSelectGrid {
 }
 .cruiselistdockpanel {
@@ -154,6 +166,9 @@ hr .hline {
 	font-size: 100%;
 	width: 12em;
 	margin-left: 3em;
+}
+.inlinePanel {
+	display: inline-block;
 }
 .verticalbutton {
 	display: inline;
@@ -402,7 +417,7 @@ hr .hline {
 }
 
 .sideSelectionPanel {
-	padding: 15px 12px;
+	padding: 15px 15px 0px 0px;
 }
 .sideSelector {
 	margin: 10px 8px;
@@ -414,20 +429,24 @@ hr .hline {
 	/* margin-left: 5px; */
 }
 .submit_msg_panel {
-	display: flex;
-    height: 5em;
+    padding: 0em 0em 2em 2em;
+ 	display: flex;
+/*    height: 5em; */
 }
-.west_gutter_element {
-    flex: 0 0 8em;
-    text-align: right;
-    margin-right: 1em;
+.submit_msg_label_panel {
+    flex: 0 0 27.5em;
+	display: inline-block;
 }
 .submit_msg_scroll {
+    display: inline-block;
+    padding-right: 5em;
     flex: 1;
 }
 .submit_msg_text {
-    width:98%;
-    height:4em;
+/*    display: inline-block;
+     width:98%; */
+     height: 8.5em;
+     width: 60%;
 }
 .titlepanel {
 /* 	display: block; */
@@ -532,10 +551,14 @@ hr .hline {
 	left: 50%;
 	margin-left: -25px;
 }
-
 .uploadfile {
 	display: block;
 	width: 90%;
 	font-size: 100%;
 	margin: 1em 2em;
+}
+.west_gutter_element {
+    flex: 0 0 8em;
+    text-align: right;
+    margin-right: 1em;
 }
