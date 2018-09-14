@@ -34,27 +34,9 @@ public abstract class OAPAsyncCallback<T> implements AsyncCallback<T> {
               ( error instanceof StatusCodeException &&
               ((StatusCodeException)error).getStatusCode() == 401 )) {
             UploadDashboard.showLoginPopup();
-        } else if (exMsg.indexOf("TRY AGAIN") >= 0 ) {
-            UploadDashboard.closeLoginPopup();
         } else {
             customFailure(error);
         }
-        
-//        if ( exMsg.indexOf("SESSION HAS EXPIRED") >= 0 ) {
-//            UploadDashboard.showMessage(exMsg);
-//        } else if ( error instanceof StatusCodeException &&
-//                  ((StatusCodeException)error).getStatusCode() == 401 ) {
-//            UploadDashboard.showMessage("Your session has expired.<br/><br/>Please log in again.");
-//        } else {
-//            customFailure(error);
-////            UploadDashboard.showFailureMessage(GET_COLUMN_SPECS_FAIL_MSG, ex);
-//        }
-//        if ( error instanceof StatusCodeException &&
-//             ((StatusCodeException)error).getStatusCode() == 401 ) {
-//            Window.alert("login required");
-//        } else if {
-//            customFailure(error);
-//        }
     }
 
     public void customFailure(Throwable error) {

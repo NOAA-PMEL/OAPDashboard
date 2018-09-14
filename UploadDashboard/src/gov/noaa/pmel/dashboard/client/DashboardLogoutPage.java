@@ -76,7 +76,7 @@ public class DashboardLogoutPage extends CompositeWithUsername {
 			}
 			@Override
 			public void onFailure(Throwable ex) {
-                Window.alert("Logout error:" + ex.toString());
+                GWT.log("Logout error:" + ex.toString());
 				Cookies.removeCookie("JSESSIONID");
 				UploadDashboard.stopHistoryHandling();
 				UploadDashboard.showAutoCursor();
