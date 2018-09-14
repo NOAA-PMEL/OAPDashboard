@@ -121,16 +121,22 @@ public class DataUploadService extends HttpServlet {
             Set<String>successes = uploadProcessor.getSuccesses();
             sendResponseMsg(response, successes, messages);
         } catch (BadRequestException vex) { // baseRequestValidation
+            logger.warn(vex);
             sendErrMsg(response, vex);
         } catch (FileUploadException fex) { // parseParameterMap
+            logger.warn(fex);
             sendErrMsg(response, fex);
         } catch (IllegalStateException iex) { // no username
+            logger.warn(iex);
             sendErrMsg(response, iex);
         } catch (NoSuchFieldException nsf) { // missing field
+            logger.warn(nsf);
             sendErrMsg(response, nsf);
         } catch (IllegalArgumentException iex) { // no files
+            logger.warn(iex);
             sendErrMsg(response, iex);
         } catch (Exception ex) {
+            logger.warn(ex, ex);
             sendErrMsg(response, ex);
         } finally {
 			for ( Entry<String,List<FileItem>> paramEntry : paramMap.entrySet() ) {

@@ -28,7 +28,7 @@ public class LoginRedirectFilter implements Filter {
 	@Override
 	public void init(FilterConfig filterConfig) throws ServletException {
 		System.out.println("LoginRedirectFilter init:" + filterConfig);
-		logger.warn("LoginRedirectFilter:" + filterConfig);
+		logger.debug("LoginRedirectFilter:" + filterConfig);
 	}
 
 	@Override
@@ -45,18 +45,10 @@ public class LoginRedirectFilter implements Filter {
         String contentType = request.getHeader("Content-Type");
         String method = request.getMethod();
 		logger.debug("target:" + target + ", referer: " + referer + ", content: " + contentType);
-        if (target.indexOf("DashboardServices") > 0 &&
-           ( "GET".equals(method) || contentType == null || referer.indexOf("dashboardlogin") > 0 )) {
-                response.setStatus(HttpServletResponse.SC_NO_CONTENT);
-//                String loadPage = referer.indexOf("Popup") > 0 ? "/dashboardloginPopupClose.html" : "/OAPUploadDashboard.html";
-//                String mainPage = request.getContextPath()+loadPage;
-//                response.sendRedirect(mainPage);
-                return;
-//            } else if ( contentType == null || referer.indexOf("dashboardlogin") > 0 ) {
-//                response.setStatus(HttpServletResponse.SC_CONFLICT);
-//                response.getOutputStream().write("TRY AGAIN".getBytes());
-//                response.flushBuffer();
-//                return;
+        if (( target.indexOf("DashboardServices") > 0 || target.indexOf("DataUploadService") > 0 ) &&
+            ( "GET".equals(method) || contentType == null || referer.indexOf("dashboardlogin") > 0 )) {
+            response.setStatus(HttpServletResponse.SC_NO_CONTENT);
+            return;
         } else {
     		// All is well - continue on
     		chain.doFilter(request, response);

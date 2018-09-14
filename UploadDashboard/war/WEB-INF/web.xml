@@ -20,6 +20,7 @@
     <filter-mapping>
         <filter-name>LoginPageMisdirectFilter</filter-name>
         <url-pattern>/OAPUploadDashboard/DashboardServices</url-pattern>
+        <url-pattern>/OAPUploadDashboard/DataUploadService</url-pattern>
     </filter-mapping>
 	
 	<!-- Servlets -->
@@ -82,7 +83,6 @@
 			<web-resource-name>DashboardServices</web-resource-name>
 			<url-pattern>/DashboardUpdateService/*</url-pattern>
 			<url-pattern>/images/*</url-pattern>
-            <url-pattern>/dashboardloginPopup.html</url-pattern>
 			<http-method>GET</http-method>
 			<http-method>POST</http-method>
 		</web-resource-collection>
@@ -92,6 +92,7 @@
 		<web-resource-collection>
 			<web-resource-name>OAP Dashboard</web-resource-name>
 			<url-pattern>/*</url-pattern>
+			<http-method>*</http-method>
             <!--
 			<http-method>DELETE</http-method>
 			<http-method>GET</http-method>

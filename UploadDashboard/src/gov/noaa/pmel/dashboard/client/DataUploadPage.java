@@ -654,8 +654,10 @@ public class DataUploadPage extends CompositeWithUsername {
 					if ( k >= splitMsgs.length )
 						break;
 				} while ( ! splitMsgs[k].trim().startsWith(JAVASCRIPT_CLOSE) );
-			}
-			else {
+			} else if ( resultMsg.indexOf("SESSION HAS EXPIRED") >= 0 ) {
+			    UploadDashboard.showLoginPopup();
+                return false; // XXX mid-method bail-out. yuk.
+			} else {
 				//  some other error message, display the whole message and be done with it
 				String failMsg = "<pre>";
 				do {
