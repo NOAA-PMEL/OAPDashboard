@@ -36,3 +36,6 @@ oap.archive.scp.destination=scratch
 oap.archive.scp.id_file=/Users/kamb/.ssh/id_rsa_matisse
 
 oap.archive.cp.destination=/Users/kamb/scratch
+
+# metadata_editor.url=
+# metadata_editor.post.url=
