@@ -1,0 +1,5 @@
+#
+# definitions and overrides when running on machine matisse
+#
+metadata_editor.url=http://localhost:8383/oap/OAPMetadataEditor.html
+metadata_editor.post.url=http://localhost:8383/oap/document/postit
