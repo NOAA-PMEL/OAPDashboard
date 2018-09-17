@@ -146,7 +146,29 @@ public class UploadDashboard implements EntryPoint, ValueChangeHandler<String> {
 		}
 		pagePopups.get(page).add(popup);
 	}
-	public static void closePreviews(CompositeWithUsername page) {
+    public static void closePopups() {
+        closePreviews();
+        if ( singleton.infoMsgPopup != null && singleton.infoMsgPopup.isVisible()) {
+            singleton.infoMsgPopup.dismiss();
+        }
+        if ( singleton.blankMsgPopup != null && singleton.blankMsgPopup.isVisible()) {
+            singleton.blankMsgPopup.dismiss();
+        }
+    }
+
+    private static void closePreviews() {
+		for (List<WindowBox> popups : pagePopups.values()) {
+    		for(WindowBox popup : popups) {
+    			if ( popup.isVisible()) {
+    				popup.hide();
+    			}
+    		}
+    		popups.clear();
+		}
+        pagePopups.clear();
+    }
+
+    public static void closePreviews(CompositeWithUsername page) {
 		List<WindowBox> popups = pagePopups.get(page);
 		if ( popups == null ) { return; }
 		for(WindowBox popup : popups) {
@@ -394,24 +416,6 @@ public class UploadDashboard implements EntryPoint, ValueChangeHandler<String> {
 
     public static void ask(String question, String yesText, String noText, QuestionType type, AsyncCallback<Boolean> callback) {
         new DashboardAskPopup(yesText, noText, type, callback).askQuestion(question);
-    }
-    public static void showLoginMessage() {
-        ask(mustLoginMsg, "Login", "Cancel", QuestionType.WARNING,
-              new AsyncCallback<Boolean>() {
-                  @Override
-                  public void onSuccess(Boolean result) {
-                      if ( result.booleanValue() == true ) {
-                          Window.Location.replace("dashboardlogin.html");
-                      } else {
-                          logger.fine("Cancel login");
-                      }
-                  }
-                  @Override
-                  public void onFailure(Throwable caught) {
-                      // Never called
-                      ;
-                  }
-              });
     }
     
     static String loginFormHtml = 

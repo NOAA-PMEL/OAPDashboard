@@ -64,6 +64,7 @@ public class DashboardLogoutPage extends CompositeWithUsername {
 	static void showPage() {
 		if ( singleton == null )
 			singleton = new DashboardLogoutPage();
+        UploadDashboard.closePopups();
 		UploadDashboard.updateCurrentPage(singleton);
 		History.newItem(PagesEnum.LOGOUT.name(), false);
 		UploadDashboard.showWaitCursor();

@@ -690,13 +690,6 @@ public class DatasetListPage extends CompositeWithUsername {
 		return true;
 	}
 
-//	@UiHandler("logoutButton")
-//	void logoutOnClick(ClickEvent event) {
-//        GWT.log("GWT log DataListPage logout");
-//        logger.info("Logger DataListPage logout");
-//		DashboardLogoutPage.showPage();
-//	}
-
 	@UiHandler("uploadButton")
 	void uploadDatasetOnClick(ClickEvent event) {
 		// Save the IDs of the currently selected datasets
