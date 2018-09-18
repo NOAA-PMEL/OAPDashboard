@@ -31,7 +31,6 @@ import com.googlecode.gwt.crypto.client.TripleDesCipher;
 
 import gov.noaa.pmel.dashboard.actions.DatasetChecker;
 import gov.noaa.pmel.dashboard.actions.DatasetSubmitter;
-import gov.noaa.pmel.dashboard.actions.OmePdfGenerator;
 import gov.noaa.pmel.dashboard.actions.checker.OpaqueDatasetChecker;
 import gov.noaa.pmel.dashboard.actions.checker.ProfileDatasetChecker;
 import gov.noaa.pmel.dashboard.actions.checker.TrajectoryDatasetChecker;
@@ -57,6 +56,9 @@ import gov.noaa.pmel.dashboard.shared.FeatureType;
  */
 public class DashboardConfigStore {
 
+    private static Logger logger = LogManager.getLogger(DashboardConfigStore.class.getName());
+           
+           
 	public static class PropertyNotFoundException extends Exception {
 		private static final long serialVersionUID = -7623805430454642262L;
 		public PropertyNotFoundException() { super(); }
@@ -164,7 +166,6 @@ public class DashboardConfigStore {
 	private Thread watcherThread;
 	private WatchService watcher;
 	private boolean needToRestart;
-	private Logger itsLogger;
 
     public static File getAppContentDir() throws PropertyNotFoundException {
         if ( appContentDir == null ) {
@@ -279,11 +280,10 @@ public class DashboardConfigStore {
 		// Configure the log4j2 logger
 		System.setProperty("log4j.configurationFile", appConfigDir.getPath() + "/log4j.properties");
         System.out.println("log4j.configurationFile: " + System.getProperty("log4j.configurationFile"));
-		itsLogger = LogManager.getLogger(this.getClass()); // serverAppName);
-        System.out.println("itsLogger: " + itsLogger);
-        itsLogger.warn("Warn level test");
-        itsLogger.info("Info level test");
-        itsLogger.debug("Debug level test");
+        System.out.println("logger: " + logger);
+        logger.warn("Warn level test");
+        logger.info("Info level test");
+        logger.debug("Debug level test");
 
 		// Record configuration files that should be monitored for changes 
 		filesToWatch = new HashSet<File>();
@@ -399,11 +399,11 @@ public class DashboardConfigStore {
 					" value specified in " + configFile.getPath() + "\n" + 
 					ex.getMessage() + "\n" + CONFIG_FILE_INFO_MSG);
 		}
-		if ( itsLogger.isInfoEnabled() ) {
-			itsLogger.info("Known user-provided data types: ");
+		if ( logger.isInfoEnabled() ) {
+			logger.info("Known user-provided data types: ");
 			TreeSet<DashDataType<?>> knownTypes = knownUserDataTypes.getKnownTypesSet();
 			for ( DashDataType<?> dtype : knownTypes )
-				itsLogger.info("    " + dtype.getVarName() + "=" + dtype.toPropertyValue());			
+				logger.info("    " + dtype.getVarName() + "=" + dtype.toPropertyValue());			
 		}
 
 		try {
@@ -423,11 +423,11 @@ public class DashboardConfigStore {
 					" value specified in " + configFile.getPath() + "\n" + 
 					ex.getMessage() + "\n" + CONFIG_FILE_INFO_MSG);
 		}
-		if ( itsLogger.isInfoEnabled() ) {
-			itsLogger.info("Known file metadata types: ");
+		if ( logger.isInfoEnabled() ) {
+			logger.info("Known file metadata types: ");
 			TreeSet<DashDataType<?>> knownTypes = knownMetadataTypes.getKnownTypesSet();
 			for ( DashDataType<?> dtype : knownTypes )
-				itsLogger.info("    " + dtype.getVarName() + "=" + dtype.toPropertyValue());			
+				logger.info("    " + dtype.getVarName() + "=" + dtype.toPropertyValue());			
 		}
 
 		try {
@@ -444,11 +444,11 @@ public class DashboardConfigStore {
 					" value specified in " + configFile.getPath() + "\n" + 
 					ex.getMessage() + "\n" + CONFIG_FILE_INFO_MSG);
 		}
-		if ( itsLogger.isInfoEnabled() ) {
-			itsLogger.info("Known file data types: ");
+		if ( logger.isInfoEnabled() ) {
+			logger.info("Known file data types: ");
 			TreeSet<DashDataType<?>> knownTypes = knownDataFileTypes.getKnownTypesSet();
 			for ( DashDataType<?> dtype : knownTypes )
-				itsLogger.info("    " + dtype.getVarName() + "=" + dtype.toPropertyValue());			
+				logger.info("    " + dtype.getVarName() + "=" + dtype.toPropertyValue());			
 		}
 
 		// Read the default column names to types with units properties file
@@ -550,19 +550,19 @@ public class DashboardConfigStore {
 			archiveFilesBundler = new ArchiveFilesBundler(propVal, svnUsername, 
 					svnPassword, toEmailAddresses, ccEmailAddresses, 
 					smtpHostAddress, smtpHostPort, smtpUsername, smtpPassword, false);
-			itsLogger.info("Archive files bundler and mailer using:");
-			itsLogger.info("    bundles directory: " + propVal);
+			logger.info("Archive files bundler and mailer using:");
+			logger.info("    bundles directory: " + propVal);
 			String emails = toEmailAddresses[0];
 			for (int k = 1; k < toEmailAddresses.length; k++)
 				emails += ", " + toEmailAddresses[k];
-			itsLogger.info("    To: " + emails);
+			logger.info("    To: " + emails);
 			emails = ccEmailAddresses[0];
 			for (int k = 1; k < ccEmailAddresses.length; k++)
 				emails += ", " + ccEmailAddresses[k];
-			itsLogger.info("    CC: " + emails);
-			itsLogger.info("    SMTP host: " + smtpHostAddress);
-			itsLogger.info("    SMTP port: " + smtpHostPort);
-			itsLogger.info("    SMTP username: " + smtpUsername);
+			logger.info("    CC: " + emails);
+			logger.info("    SMTP host: " + smtpHostAddress);
+			logger.info("    SMTP port: " + smtpHostPort);
+			logger.info("    SMTP username: " + smtpUsername);
 		} catch ( Exception ex ) {
 			throw new IOException("Invalid " + ARCHIVE_BUNDLES_DIR_NAME_TAG + 
 					" value specified in " + configFile.getPath() + "\n" + 
@@ -581,7 +581,7 @@ public class DashboardConfigStore {
 		    	ferretConf = new FerretConfig();
 		    	ferretConf.setRootElement((Element)jdom.getRootElement().clone());
 		    }
-		    itsLogger.info("read Ferret configuration file " + propVal);
+		    logger.info("read Ferret configuration file " + propVal);
 		} catch ( Exception ex ) {
 			throw new IOException("Invalid " + FERRET_CONFIG_FILE_NAME_TAG + 
 					" value specified in " + configFile.getPath() + "\n" + 
@@ -592,7 +592,7 @@ public class DashboardConfigStore {
 		String dsgFileDirName;
 		try {
 			dsgFileDirName = getFilePathProperty(configProps, DSG_NC_FILES_DIR_NAME_TAG, appConfigDir);
-		    itsLogger.info("DSG directory = " + dsgFileDirName);
+		    logger.info("DSG directory = " + dsgFileDirName);
 		} catch ( Exception ex ) {
 			throw new IOException("Invalid " + DSG_NC_FILES_DIR_NAME_TAG + 
 					" value specified in " + configFile.getPath() + "\n" + 
@@ -601,7 +601,7 @@ public class DashboardConfigStore {
 		String erddapDsgFlagFileName;
 		try {
 			erddapDsgFlagFileName = getFilePathProperty(configProps, ERDDAP_DSG_FLAG_FILE_NAME_TAG, appConfigDir);
-		    itsLogger.info("ERDDAP DSG flag file = " + erddapDsgFlagFileName);
+		    logger.info("ERDDAP DSG flag file = " + erddapDsgFlagFileName);
 		} catch ( Exception ex ) {
 			throw new IOException("Invalid " + ERDDAP_DSG_FLAG_FILE_NAME_TAG + 
 					" value specified in " + configFile.getPath() + "\n" + 
@@ -619,7 +619,7 @@ public class DashboardConfigStore {
 			propVal = getFilePathProperty(configProps, DATABASE_CONFIG_FILE_NAME_TAG, appConfigDir);
 			filesToWatch.add(new File(propVal));
 			databaseRequestHandler = new DatabaseRequestHandler(propVal);
-		    itsLogger.info("read Database configuration file " + propVal);
+		    logger.info("read Database configuration file " + propVal);
 		} catch ( Exception ex ) {
 			throw new IOException("Invalid " + DATABASE_CONFIG_FILE_NAME_TAG + 
 					" value specified in " + configFile.getPath() + "\n" + 
@@ -674,9 +674,9 @@ public class DashboardConfigStore {
 			userInfoMap.put(username, userInfo);
 		}
 		for ( DashboardUserInfo info : userInfoMap.values() ) {
-			itsLogger.info("    user info: " + info.toString());
+			logger.info("    user info: " + info.toString());
 		}
-		itsLogger.info("read configuration file " + configFile.getPath());
+		logger.info("read configuration file " + configFile.getPath());
 		watcher = null;
 		watcherThread = null;
 		needToRestart = false;
@@ -693,6 +693,8 @@ public class DashboardConfigStore {
         String propertyValue = defaultValue;
         if ( configProps.containsKey(propertyName)) {
             propertyValue = (String)configProps.get(propertyName);
+        } else {
+            logger.warn("No property found for name:"+propertyName+", returning default:"+defaultValue);
         }
         return propertyValue;
     }
@@ -816,7 +818,7 @@ public class DashboardConfigStore {
 				try {
 					watcher = FileSystems.getDefault().newWatchService();
 				} catch (Exception ex) {
-					itsLogger.error("Unexpected error starting a watcher for the default file system", ex);
+					logger.error("Unexpected error starting a watcher for the default file system", ex);
 					return;
 				}
 				// Register the the directories containing the dashboard configuration files with the watch service
@@ -829,7 +831,7 @@ public class DashboardConfigStore {
 					try {
 						registrations.add(watchDir.toPath().register(watcher, StandardWatchEventKinds.ENTRY_MODIFY));
 					} catch (Exception ex) {
-						itsLogger.error("Unexpected error registering " + watchDir.getPath() + " for watching", ex);
+						logger.error("Unexpected error registering " + watchDir.getPath() + " for watching", ex);
 						for ( WatchKey reg : registrations ) {
 							reg.cancel();
 							reg.pollEvents();
@@ -875,7 +877,7 @@ public class DashboardConfigStore {
 				return;
 			}
 		});
-		itsLogger.info("Starting new thread monitoring the dashboard configuration files");
+		logger.info("Starting new thread monitoring the dashboard configuration files");
 		watcherThread.start();
 	}
 
@@ -899,7 +901,7 @@ public class DashboardConfigStore {
 				;
 			}
 			watcherThread = null;
-			itsLogger.info("End of thread monitoring the dashboard configuration files");
+			logger.info("End of thread monitoring the dashboard configuration files");
 		}
 	}
 
