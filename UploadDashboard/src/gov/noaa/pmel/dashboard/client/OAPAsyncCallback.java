@@ -40,6 +40,6 @@ public abstract class OAPAsyncCallback<T> implements AsyncCallback<T> {
     }
 
     public void customFailure(Throwable error) {
-        // default no-op implementation
+        logger.warning(String.valueOf(error));
     }
 }
