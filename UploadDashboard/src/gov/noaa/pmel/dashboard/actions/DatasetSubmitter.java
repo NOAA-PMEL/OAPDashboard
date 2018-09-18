@@ -312,7 +312,7 @@ public class DatasetSubmitter {
                     break;
             }
         } catch (Exception ex) {
-            
+            ex.printStackTrace();
         }
     }
 
