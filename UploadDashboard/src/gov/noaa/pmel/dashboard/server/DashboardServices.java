@@ -27,6 +27,7 @@ import org.apache.http.HttpResponse;
 import org.apache.http.StatusLine;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpPost;
+import org.apache.http.conn.HttpHostConnectException;
 import org.apache.http.entity.ContentType;
 import org.apache.http.entity.mime.MultipartEntityBuilder;
 import org.apache.http.entity.mime.content.FileBody;
@@ -64,6 +65,7 @@ import gov.noaa.pmel.dashboard.shared.SessionException;
 import gov.noaa.pmel.dashboard.shared.ADCMessageList;
 import gov.noaa.pmel.dashboard.shared.TypesDatasetDataPair;
 import gov.noaa.pmel.dashboard.util.xml.XmlUtils;
+import gov.noaa.pmel.tws.util.ApplicationConfiguration;
 
 /**
  * Implementation of DashboardServicesInterface
@@ -646,10 +648,12 @@ public class DashboardServices extends RemoteServiceServlet implements Dashboard
 		}
 	}
 
-	@Override
+	@SuppressWarnings("resource")
+    @Override
 	public String sendMetadataInfo(String pageUsername, String datasetId)
-		throws NotFoundException, IllegalArgumentException {
+    		throws NotFoundException, IllegalArgumentException {
         String docId = null;
+        String metadataEditorPostEndpoint = null;
         try {
 			File mdFile = OADSMetadata.getMetadataFile(datasetId);
 			if ( !mdFile.exists()) {
@@ -661,7 +665,7 @@ public class DashboardServices extends RemoteServiceServlet implements Dashboard
             // XXX HttpClient and stuff coming (currently) from netcdfAll jar 
             @SuppressWarnings("resource")
             HttpClient client = HttpClients.createDefault();
-            String metadataEditorPostEndpoint = getMetadataPostPoint(datasetId);
+            metadataEditorPostEndpoint = getMetadataPostPoint(datasetId);
             HttpPost post = new HttpPost(metadataEditorPostEndpoint);
             FileBody body = new FileBody(mdFile, ContentType.APPLICATION_XML);
             MultipartEntityBuilder builder = MultipartEntityBuilder.create();
@@ -683,6 +687,9 @@ public class DashboardServices extends RemoteServiceServlet implements Dashboard
             }
             docId = new String(bbuf);
             return getMetadataEditorPage(docId);
+        } catch (HttpHostConnectException hcex) {
+            logger.warn("Unable to connect to MetadataEditor at " + metadataEditorPostEndpoint + ": " + hcex);
+            throw new NotFoundException("Unable to connect to MetadataEditor. <br/>Please contact your administrator.");
         } catch (Exception ex) {
             ex.printStackTrace();
             throw new RuntimeException(ex);
@@ -696,18 +703,13 @@ public class DashboardServices extends RemoteServiceServlet implements Dashboard
         return notifyUrl;
     }
 
-    private String getMetadataEditorPage(String docId) throws IOException {
-		HttpServletRequest request = getThreadLocalRequest();
-        String server = request.getServerName();
-        String url = DashboardConfigStore.get().getProperty(DashboardConfigStore.METADATA_EDITOR_URL+"."+server);
+    private static String getMetadataEditorPage(String docId) throws Exception {
+        String url = ApplicationConfiguration.getProperty(DashboardConfigStore.METADATA_EDITOR_URL);
         return url + "?id="+docId;
     }
     
-    private String getMetadataPostPoint(String datasetId) throws IOException {
-        // "http://matisse:8383/oap/document/postit/<datasetId>";
-		HttpServletRequest request = getThreadLocalRequest();
-        String server = request.getServerName();
-        String url = DashboardConfigStore.get().getProperty(DashboardConfigStore.METADATA_EDITOR_POST_ENDPOINT+"."+server);
+    private static String getMetadataPostPoint(String datasetId) throws Exception {
+        String url = ApplicationConfiguration.getProperty(DashboardConfigStore.METADATA_EDITOR_POST_ENDPOINT);
         String slash = url.endsWith("/") ? "" : "/";
         return url + slash + datasetId;
     }
