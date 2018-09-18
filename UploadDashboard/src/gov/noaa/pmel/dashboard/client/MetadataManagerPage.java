@@ -8,8 +8,6 @@ import java.util.Date;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.IFrameElement;
 import com.google.gwt.event.dom.client.ClickEvent;
-import com.google.gwt.event.dom.client.LoadEvent;
-import com.google.gwt.event.dom.client.LoadHandler;
 import com.google.gwt.i18n.client.DateTimeFormat;
 import com.google.gwt.safehtml.shared.SafeHtmlUtils;
 import com.google.gwt.uibinder.client.UiBinder;
@@ -20,8 +18,6 @@ import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.google.gwt.user.client.ui.Button;
 import com.google.gwt.user.client.ui.Frame;
-import com.google.gwt.user.client.ui.HTML;
-import com.google.gwt.user.client.ui.InlineLabel;
 import com.google.gwt.user.client.ui.Widget;
 
 import gov.noaa.pmel.dashboard.client.UploadDashboard.PagesEnum;
@@ -30,8 +26,6 @@ import gov.noaa.pmel.dashboard.shared.DashboardDatasetList;
 import gov.noaa.pmel.dashboard.shared.DashboardServicesInterface;
 import gov.noaa.pmel.dashboard.shared.DashboardServicesInterfaceAsync;
 import gov.noaa.pmel.dashboard.shared.DashboardUtils;
-import gov.noaa.pmel.dashboard.shared.FileInfo;
-import gov.noaa.pmel.dashboard.shared.MetadataPreviewInfo;
 import gov.noaa.pmel.dashboard.shared.NotFoundException;
 
 /**
@@ -40,8 +34,6 @@ import gov.noaa.pmel.dashboard.shared.NotFoundException;
 public class MetadataManagerPage extends CompositeWithUsername {
 
 	private static final String TITLE_TEXT = "Manage Metadata";
-	private static final String WELCOME_INTRO = "Logged in as ";
-	private static final String LOGOUT_TEXT = "Logout";
 	private static final String UPLOAD_TEXT = "Upload";
 	private static final String DOWNLOAD_TEXT = "Download";
 	private static final String DONE_TEXT = "Done";
@@ -147,6 +139,15 @@ public class MetadataManagerPage extends CompositeWithUsername {
                 }
             };
             t.schedule(500);
+       } else if ( isAck(data, "dirty")) {
+           String dirtyReply = data.substring(data.indexOf("dirty")+6);
+           boolean isDirty = Boolean.parseBoolean(dirtyReply);
+           if ( isDirty ) {
+               handleDirtyClose();
+           } else {
+               showDataListPage();
+           }
+           
        }
     }
     
@@ -295,6 +296,18 @@ public class MetadataManagerPage extends CompositeWithUsername {
     
 	@UiHandler("cancelButton")
 	void cancelButtonOnClick(ClickEvent event) {
+	    checkDirty();
+	}
+	
+	static void checkDirty() {
+	    sendIFrameMessage("dirty");
+	}
+	
+    static void checkDirtyOnBackingOut() {
+        checkDirty();
+    }
+    
+	void handleDirtyClose() {
 		// Return to the cruise list page which might have been updated
         if ( confirmCancel ) {
             DashboardAskPopup confirm = new DashboardAskPopup(YES_TEXT, NO_TEXT, 
@@ -317,18 +330,12 @@ public class MetadataManagerPage extends CompositeWithUsername {
             showDataListPage();
         }
 	}
+    
     private void showDataListPage() {
-        metadataEditorFrame.setUrl("about:_blank");
+//        metadataEditorFrame.setUrl("about:_blank");
 		DatasetListPage.showPage();
     }
     
-//	private String getDownloadUrl(String datasetId) {
-//		StringBuilder b = new StringBuilder(UploadDashboard.getBaseUrl())
-//								.append(DOWNLOAD_SERVICE_NAME)
-//								.append("/").append(datasetId);
-//		return b.toString();
-//	}
-	
     private void sendCurrentMetadataToMetaEd(String datasetId) {
         try {
             service.sendMetadataInfo(getUsername(), datasetId, new OAPAsyncCallback<String>() {
@@ -336,6 +343,8 @@ public class MetadataManagerPage extends CompositeWithUsername {
                 public void onSuccess(String result) {
             		UploadDashboard.updateCurrentPage(singleton);
             		History.newItem(PagesEnum.EDIT_METADATA.name(), false);
+                    confirmCancel = true;
+                    doneButton.setEnabled(true);
                     // Validate response for valid url...
                     openMetadataEditorWindow(result);
                 }
