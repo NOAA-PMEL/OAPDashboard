@@ -1044,9 +1044,21 @@ public class DataColumnSpecsPage extends CompositeWithUsername {
 				}
 				else if ( status.startsWith(DashboardUtils.CHECK_STATUS_ERRORS_PREFIX) ) {
 					// errors issued
-					UploadDashboard.showMessage(SANITY_CHECK_ERROR_MSG);
-				}
-				else if ( status.startsWith(DashboardUtils.CHECK_STATUS_WARNINGS_PREFIX) ) {
+					UploadDashboard.theresAproblem(SANITY_CHECK_ERROR_MSG, "Show Errors / Warnings", "Dismiss", 
+                           new AsyncCallback<Boolean>() {
+                                @Override
+                                public void onFailure(Throwable arg0) {
+                                    ; // Doesn't happen
+                                }
+                                @Override
+                                public void onSuccess(Boolean showErrors) {
+                                    if ( showErrors.booleanValue()) {
+                                        DataMessagesPage.showPage(getUsername(), cruise.getDatasetId());
+                                    }
+                                }
+                        });
+        		}
+        		else if ( status.startsWith(DashboardUtils.CHECK_STATUS_WARNINGS_PREFIX) ) {
 					// warnings issued
 					UploadDashboard.showMessage(SANITY_CHECK_WARNING_MSG);
 				}

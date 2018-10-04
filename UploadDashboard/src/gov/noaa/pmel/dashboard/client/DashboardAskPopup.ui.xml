@@ -9,8 +9,8 @@
     		<g:HTML addStyleNames="{style.infohtml}" ui:field="askHtml" />
         </g:FlowPanel>
 		<g:FlowPanel addStyleNames="{style.horizontalpanel}">
-			<g:Button addStyleNames="{style.horizontalbutton}" ui:field="yesButton" />
-			<g:Button addStyleNames="{style.horizontalbutton}" ui:field="noButton" />
+			<g:Button addStyleNames="{style.adjustingbutton}" ui:field="yesButton" />
+			<g:Button addStyleNames="{style.adjustingbutton}" ui:field="noButton" />
 		</g:FlowPanel>
 	</g:VerticalPanel>
 
