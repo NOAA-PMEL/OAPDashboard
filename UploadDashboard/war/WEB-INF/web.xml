@@ -13,6 +13,7 @@
 	<servlet>
 		<servlet-name>DashboardServlet</servlet-name>
 		<servlet-class>gov.noaa.pmel.dashboard.server.DashboardServices</servlet-class>
+        <load-on-startup>1</load-on-startup>
 	</servlet>
 	<servlet-mapping>
 		<servlet-name>DashboardServlet</servlet-name>

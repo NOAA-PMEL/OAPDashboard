@@ -158,6 +158,20 @@ public class DashboardConfigStore {
 	private boolean needToRestart;
 	private Logger itsLogger;
 
+    /**
+     * 
+     */
+    public static void configureLogging() {
+        try {
+            DashboardConfigStore dcs = DashboardConfigStore.get(true);
+            System.out.println("OAPDashboard Logging configuration: " + System.getProperty("log4j.configurationFile"));
+        } catch (IOException ex) {
+            System.err.println("ERROR configuring OAPDashboard logging: " + ex);
+            ex.printStackTrace();
+        }
+        
+    }
+
 	/**
 	 * Creates a data store initialized from the contents of the standard 
 	 * configuration file.  See the contents of {@link #CONFIG_FILE_INFO_MSG} 
@@ -204,8 +218,10 @@ public class DashboardConfigStore {
 		}
 
 		// Configure the log4j2 logger
-		System.setProperty("log4j.configurationFile", appConfigDirPath + "log4j2.properties");
-		itsLogger = LogManager.getLogger(serverAppName);
+        String loggingConfigFile = appConfigDirPath + "log4j2.properties";
+        System.out.println("setting logging config file property to:"+ loggingConfigFile);
+		System.setProperty("log4j.configurationFile", loggingConfigFile);
+		itsLogger = LogManager.getLogger(this.getClass().getName());
 
 		// Record configuration files that should be monitored for changes 
 		filesToWatch = new HashSet<File>();

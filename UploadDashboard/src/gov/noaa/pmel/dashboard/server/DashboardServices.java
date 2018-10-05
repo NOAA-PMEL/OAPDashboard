@@ -61,7 +61,9 @@ import gov.noaa.pmel.dashboard.util.xml.XmlUtils;
 public class DashboardServices extends RemoteServiceServlet implements DashboardServicesInterface {
 
 	private static final long serialVersionUID = -8189933983319827049L;
-
+	static {
+	    DashboardConfigStore.configureLogging();
+	}
 	// To get config debug set: -Dorg.apache.logging.log4j.simplelog.StatusLogger.level=TRACE
 	private static Logger logger = LogManager.getLogger(DashboardServices.class);
 	
