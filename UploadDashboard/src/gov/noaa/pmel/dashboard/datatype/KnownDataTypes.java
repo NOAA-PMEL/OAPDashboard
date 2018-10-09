@@ -92,7 +92,8 @@ public class KnownDataTypes {
 		addDataTypeTo(types, DashboardServerUtils.PLATFORM_TYPE);
 		addDataTypeTo(types, DashboardServerUtils.ORGANIZATION_NAME);
 		addDataTypeTo(types, DashboardServerUtils.INVESTIGATOR_NAMES);
-		addDataTypeTo(types, DashboardServerUtils.STATION_CAST);
+		addDataTypeTo(types, DashboardServerUtils.STATION_ID);
+		addDataTypeTo(types, DashboardServerUtils.CAST_ID);
 		addDataTypeTo(types, DashboardServerUtils.NISKIN);
 		addDataTypeTo(types, DashboardServerUtils.SAMPLE_ID);
 		addDataTypeTo(types, DashboardServerUtils.LONGITUDE);

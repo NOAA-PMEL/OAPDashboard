@@ -475,7 +475,13 @@ public class DashboardServices extends RemoteServiceServlet implements Dashboard
 		// Run the automated data checker with the updated data types.
 		// Assigns the data check status and the WOCE-3 and WOCE-4 flags.
 		DatasetChecker checker = configStore.getDashboardDatasetChecker(dataset.getFeatureType());
-		StdUserDataArray stdArray = checker.standardizeDataset(dataset, null);
+		StdUserDataArray stdArray;
+        try {
+    		stdArray = checker.standardizeDataset(dataset, null);
+        } catch (Exception ex) {
+            logger.warn("Exception checking dataset:"+ ex, ex);
+            throw new IllegalArgumentException("There was an error checking the dataset: " + ex.getMessage());
+        }
 
 		// Save and commit the updated data columns
 		configStore.getDataFileHandler().saveDatasetInfoToFile(dataset, 
@@ -666,6 +672,7 @@ public class DashboardServices extends RemoteServiceServlet implements Dashboard
             @SuppressWarnings("resource")
             HttpClient client = HttpClients.createDefault();
             metadataEditorPostEndpoint = getMetadataPostPoint(datasetId);
+            logger.debug("metadataPost: " + metadataEditorPostEndpoint);
             HttpPost post = new HttpPost(metadataEditorPostEndpoint);
             FileBody body = new FileBody(mdFile, ContentType.APPLICATION_XML);
             MultipartEntityBuilder builder = MultipartEntityBuilder.create();
@@ -676,13 +683,16 @@ public class DashboardServices extends RemoteServiceServlet implements Dashboard
             HttpEntity postit = builder.build();
             post.setEntity(postit);
             HttpResponse response = client.execute(post);
+            logger.debug("response: " + response);
             HttpEntity responseEntity = response.getEntity();
             byte[] bbuf = new byte[4096];
             int read = responseEntity.getContent().read(bbuf);
             StatusLine statLine = response.getStatusLine();
             int responseStatus = statLine.getStatusCode();
             if ( responseStatus != HttpServletResponse.SC_OK ) {
+                logger.warn("ME response: " + statLine.getStatusCode() + ":" + statLine.getReasonPhrase());
                 String msg = new String(bbuf);
+                logger.warn("ME response content: " + msg);
                 throw new IllegalArgumentException(msg);
             }
             docId = new String(bbuf);

@@ -398,30 +398,49 @@ public class CastChecker {
 			logger.info("Cast of one. Not doing cast depth check.");
 			return;
 		}
-		Integer depthCol = stda.lookForDataColumnIndex("sample_depth");
+        String columnName = "sample_depth";
+        Double[] depthOrPressures = null;
+		Integer depthCol = stda.lookForDataColumnIndex(columnName);
 		if ( depthCol == null ) {
-			logger.warn("No sample depth column.  Aborting cast depth checking.");
-			return;
+			logger.info("No sample depth column.  Checking for pressure column.");
+            columnName = "ctd_pressure";
+    		depthCol = stda.lookForDataColumnIndex(columnName);
+            if ( depthCol == null ) {
+    			logger.warn("No sample depth or pressure column.  Aborting cast depth checking.");
+    			return;
+            } else {
+                depthOrPressures = stda.getStdValuesAsDouble(depthCol.intValue());
+            }
+		} else {
+            depthOrPressures = stda.getSampleDepths();
 		}
-        Double[] depths = stda.getSampleDepths();
+        
+        Integer bottleIdx = stda.lookForDataColumnIndex("niskin");
+        Object[] bottles = bottleIdx != null ? stda.getStdValues(bottleIdx.intValue()) : null ;
 						 
 		Set<Double> checkDepths = new HashSet<>();
+		Set<Object> checkBottles = new HashSet<>();
 		for (int check = 0; check < castRows.size(); check++) {
 			int checkRow = castRows.get(check).intValue();
-			Double depth = depths[checkRow];
+			Double depth = depthOrPressures[checkRow];
+            Object bottle = bottles != null ? bottles[checkRow] : null;
 			if ( depth != null &&    // missing depths are reported in StdUserDataArray.checkMissingLatLonDepthTime() // ! XXX
 			     ! checkDepths.add(depth)) {
-				String genlComment = "Duplicate depths in cast.";
-				String detailMsg =  "Duplicate depths in cast " + cs.toString() + " at row " + (checkRow + 1); 
-				ADCMessage amsg = new ADCMessage();
-				amsg.setSeverity(Severity.WARNING); 
-				amsg.setRowIndex(checkRow);
-				amsg.setColIndex(depthCol);
-				amsg.setColName("sample_depth");
-				amsg.setDetailedComment(detailMsg);
-				amsg.setGeneralComment(genlComment);
-				addTimeAndLocation(amsg, cs, check);
-				stda.addStandardizationMessage(amsg);
+                if ( bottle == null || !checkBottles.add(bottle)) {
+    				String genlComment = "Duplicate depths in cast.";
+    				String detailMsg =  "Duplicate depths in cast " + cs.toString() + " at row " + (checkRow + 1); 
+    				ADCMessage amsg = new ADCMessage();
+    				amsg.setSeverity(Severity.WARNING); 
+    				amsg.setRowIndex(checkRow);
+    				amsg.setColIndex(depthCol);
+    				amsg.setColName(columnName);
+    				amsg.setDetailedComment(detailMsg);
+    				amsg.setGeneralComment(genlComment);
+    				addTimeAndLocation(amsg, cs, check);
+    				stda.addStandardizationMessage(amsg);
+                }
+			} else if ( bottle != null ) {
+			    checkBottles.add(bottle);
 			}
 		}
 	}
