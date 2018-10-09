@@ -593,6 +593,32 @@ public class StdUserDataArray extends StdDataArray {
 		return values;
 	}
 
+	public Integer[] getStdValuesAsInteger(int columnIdx) 
+			throws IndexOutOfBoundsException, IllegalArgumentException, IllegalStateException {
+		Integer[] values = new Integer[numSamples];
+		for (int row = 0; row < numSamples; row++ ) {
+			try {
+			    values[row] = (Integer)getStdVal(row, columnIdx);
+            } catch (ClassCastException cce) {
+                throw new IllegalStateException("Unable to retrieve values as integers for column " + columnIdx);
+			}
+		}
+		return values;
+	}
+
+	public Double[] getStdValuesAsDouble(int columnIdx) 
+			throws IndexOutOfBoundsException, IllegalArgumentException, IllegalStateException {
+		Double[] values = new Double[numSamples];
+		for (int row = 0; row < numSamples; row++ ) {
+            try {
+    			values[row] = (Double)getStdVal(row, columnIdx);
+            } catch (ClassCastException cce) {
+                throw new IllegalStateException("Unable to retrieve values as doubles for column " + columnIdx);
+            }
+		}
+		return values;
+	}
+
 //    public Object getStdValuesForType(DashDataType<?> type) throws Exception {
 ////        String typeName = "java.lang." + type.getDataClassName();
 ////        Class<?> dataType = Class.forName(typeName);

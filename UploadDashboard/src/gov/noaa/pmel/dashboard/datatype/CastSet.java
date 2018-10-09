@@ -35,7 +35,7 @@ public class CastSet implements Comparable<CastSet> {
 		}
 		String expoCode = String.valueOf(dataset.getStdVal(0, dsNameCol.intValue()));
 		for (int row = 0; row < dataset.getNumSamples(); row++) {
-			String castId = dataset.getCastId(row);
+			String castId = dataset.getStationCastId(row);
 			if ( ! lastId.equals(castId)) {
 				cast = new CastSet(castId, expoCode);
 				casts.add(cast);

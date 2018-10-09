@@ -135,8 +135,12 @@ public class DataTypeChecker {
         return true;
     }
 
+    private static boolean hasStationIdColumn(DashboardDatasetData ddd) {
+        return indexOf(ddd, DashboardUtils.STATION_ID) >= 0;
+    }
+
     private static boolean hasCastIdColumn(DashboardDatasetData ddd) {
-        return indexOf(ddd, DashboardUtils.STATION_CAST) >= 0;
+        return indexOf(ddd, DashboardUtils.CAST_ID) >= 0;
     }
 
     public static boolean couldBeProfileTimeseries(DashboardDatasetData ddd) {

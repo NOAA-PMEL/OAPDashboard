@@ -238,12 +238,18 @@ public class DashboardUtils {
 
 	/**
 	 * User-provided station / cast identifier.
-	 */
+	 *
+     * deprecated. And removed.
 	public static final DataColumnType STATION_CAST = new DataColumnType("station", 
 			200.0, "station/cast", "station", true, NO_UNITS);
+	 */
 
+	public static final DataColumnType STATION_ID = new DataColumnType("station", 
+			200.0, "station ID", "station", true, NO_UNITS);
+	public static final DataColumnType CAST_ID = new DataColumnType("cast", 
+			201.0, "cast ID", "cast", true, NO_UNITS);
 	public static final DataColumnType NISKIN = new DataColumnType("niskin", 
-			201.0, "bottle ID", "niskin", false, NO_UNITS);
+			202.0, "bottle ID", "niskin", false, NO_UNITS);
 
 	/**
 	 * User-provided unique ID for a sample in a dataset (user data type only). 

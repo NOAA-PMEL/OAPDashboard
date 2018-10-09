@@ -20,6 +20,7 @@ import gov.noaa.pmel.dashboard.datatype.KnownDataTypes;
 import gov.noaa.pmel.dashboard.server.DashboardServerUtils;
 import gov.noaa.pmel.dashboard.shared.DashboardUtils;
 import gov.noaa.pmel.dashboard.shared.DataColumnType;
+import gov.noaa.pmel.tws.util.StringUtils;
 
 /**
  * A 2-D array of objects corresponding to the standardized values in a dataset, 
@@ -37,6 +38,7 @@ public class StdDataArray {
 	protected int latitudeIndex;
 	protected int sampleDepthIndex;
 	protected int samplePressureIndex;
+	protected int stationIdIndex;
 	protected int castIdIndex;
 	protected int timestampIndex;
 	protected int dateIndex;
@@ -366,6 +368,7 @@ public class StdDataArray {
 		latitudeIndex = DashboardUtils.INT_MISSING_VALUE;
 		sampleDepthIndex = DashboardUtils.INT_MISSING_VALUE;
 		samplePressureIndex = DashboardUtils.INT_MISSING_VALUE;
+		stationIdIndex = DashboardUtils.INT_MISSING_VALUE;
 		castIdIndex = DashboardUtils.INT_MISSING_VALUE;
 		timestampIndex = DashboardUtils.INT_MISSING_VALUE;
 		dateIndex = DashboardUtils.INT_MISSING_VALUE;
@@ -387,7 +390,9 @@ public class StdDataArray {
 				sampleDepthIndex = k;
 			else if ( DashboardServerUtils.CTD_PRESSURE.typeNameEquals(dataTypes[k]) )
 				samplePressureIndex = k;
-			else if ( DashboardServerUtils.STATION_CAST.typeNameEquals(dataTypes[k]))
+			else if ( DashboardServerUtils.STATION_ID.typeNameEquals(dataTypes[k]))
+				stationIdIndex = k;
+			else if ( DashboardServerUtils.CAST_ID.typeNameEquals(dataTypes[k]))
 				castIdIndex = k;
 			else if ( DashboardServerUtils.TIMESTAMP.typeNameEquals(dataTypes[k]) )
 				timestampIndex = k;
@@ -930,22 +935,70 @@ public class StdDataArray {
 	}
 	
 	/**
+	 * Get the station ID for the specified row.
+	 * 
+	 * @param row Zero-based row index
+	 * @return The stationId for the specified row.
+	 * @throws IllegalStateException If there is no station ID column defined.
+	 */
+	public String getStationId(int row) throws IllegalStateException {
+		String stationId = null;
+		int cidx = getStationIdIndex();
+		stationId = String.valueOf((getStdVal(row, cidx)));
+		return stationId;
+	}
+	
+	private int getStationIdIndex() {
+		if ( stationIdIndex == DashboardUtils.INT_MISSING_VALUE.intValue() ) {
+			Integer checkIdx = lookForDataColumnIndex("station");
+			if ( checkIdx == null ) {
+				throw new IllegalStateException("No stationId column found.");
+			}
+			stationIdIndex = checkIdx.intValue();
+		}
+		return stationIdIndex;
+	}
+
+	/**
+	 * Check to see if a stationId column has been defined.
+	 * @return
+	 */
+	public boolean hasStationIdColumn() {
+		try {
+			getStationIdIndex();
+			return true;
+		} catch (Exception e) {
+			return false;
+		}
+	}
+
+	/**
 	 * Get the cast ID for the specified row.
 	 * 
 	 * @param row Zero-based row index
 	 * @return The castId for the specified row.
 	 * @throws IllegalStateException If there is no cast ID column defined.
 	 */
-	public String getCastId(int row) throws IllegalStateException {
-		String castId = null;
-		int cidx = getCastIdIndex();
-		castId = String.valueOf((getStdVal(row, cidx)));
-		return castId;
+	public String getStationCastId(int row) throws IllegalStateException {
+        String stationCastId = null;
+        if ( hasStationIdColumn()) {
+            int sidx = getStationIdIndex();
+            stationCastId = String.valueOf((getStdVal(row, sidx)));
+        }
+        if ( hasCastIdColumn()) {
+    		String castId = null;
+    		int cidx = getCastIdIndex();
+    		castId = String.valueOf((getStdVal(row, cidx)));
+            if ( ! StringUtils.emptyOrNullOrNull(castId)) {
+                stationCastId += ":" + castId;
+            }
+        }
+		return stationCastId;
 	}
 	
 	private int getCastIdIndex() {
 		if ( castIdIndex == DashboardUtils.INT_MISSING_VALUE.intValue() ) {
-			Integer checkIdx = lookForDataColumnIndex("station_cast");
+			Integer checkIdx = lookForDataColumnIndex("cast");
 			if ( checkIdx == null ) {
 				throw new IllegalStateException("No castId column found.");
 			}

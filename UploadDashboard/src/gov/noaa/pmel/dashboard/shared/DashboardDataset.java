@@ -60,6 +60,7 @@ public class DashboardDataset implements Serializable, IsSerializable {
 		addlDocs = new TreeSet<String>();
 		submitStatus = DashboardUtils.STATUS_NOT_SUBMITTED;
 		archiveStatus = DashboardUtils.ARCHIVE_STATUS_NOT_SUBMITTED;
+        archiveSubmissionMessage = DashboardUtils.STRING_MISSING_VALUE;
 		archiveDate = DashboardUtils.STRING_MISSING_VALUE;
 		uploadFilename = DashboardUtils.STRING_MISSING_VALUE;
 		uploadTimestamp = DashboardUtils.STRING_MISSING_VALUE;

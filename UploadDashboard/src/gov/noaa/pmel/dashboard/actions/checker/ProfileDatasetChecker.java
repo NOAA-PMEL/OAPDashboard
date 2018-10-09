@@ -7,6 +7,9 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
 import gov.noaa.pmel.dashboard.actions.DatasetChecker;
 import gov.noaa.pmel.dashboard.data.sanity.CastChecker;
 import gov.noaa.pmel.dashboard.datatype.KnownDataTypes;
@@ -30,6 +33,8 @@ import gov.noaa.pmel.dashboard.shared.QCFlag.Severity;
  */
 public class ProfileDatasetChecker implements DatasetChecker {
 
+    private static Logger logger = LogManager.getLogger(ProfileDatasetChecker.class);
+    
 	private class RowColumn {
 		int row;
 		int column;
@@ -154,6 +159,7 @@ public class ProfileDatasetChecker implements DatasetChecker {
 
 		// IMPORTANT: DO THIS ONLY AFTER ALL DATA CHECKS HAVE BEEN COMPLETED!
 		// INCLUDING processing the CheckerMessages (since that pulls in User QC flags.)
+        // Question: might delaying mess up possible inter-cast checks? TODO: Check it out.
 		// Reorder the data as best possible
 		if ( timesAreOk ) {
 			Double[] sampleTimes = stdUserData.getSampleTimes();
@@ -298,15 +304,18 @@ public class ProfileDatasetChecker implements DatasetChecker {
 
 	private static void checkCastConsistency(StdUserDataArray stdData) {
 		if ( !stdData.hasCastIdColumn()) {
-			System.err.println("No castID column found.");	// XXX TODO Return an Error or Warning message?
-			return;
+            logger.info("No CastID column found for dataset " + stdData.getDatasetId());
+            if ( !stdData.hasStationIdColumn()) {
+                logger.warn("No CastID OR StationID found for dataset: " + stdData.getDatasetId());
+                throw new IllegalStateException("No station or cast identifier found.");
+            }
 		}
-		try {
+//		try {
 			CastChecker cc = new CastChecker(stdData);
 			cc.checkCastConsistency();
-		} catch (Exception ex) {
-			ex.printStackTrace();
-		}
+//		} catch (Exception ex) {
+//			ex.printStackTrace();
+//		}
 	}
 	
 	public static void main(String[] args) {
