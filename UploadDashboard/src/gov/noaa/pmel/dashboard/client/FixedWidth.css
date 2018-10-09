@@ -18,10 +18,21 @@ body {
 	margin-top: 0.5em;
 	margin-bottom: 1em;
 }
+.adjustingbutton {
+    display: inline-block;
+    text-align: center;
+	margin-left: 2.5em;
+	margin-right: 2.5em;
+}
 .horizontalbutton {
 	width: 5em;
 	margin-left: 3.5em;
 	margin-right: 3.5em;
+}
+.widebutton {
+	width: 15em;
+	margin-left: 2.5em;
+	margin-right: 2.5em;
 }
 
 .introtitle {
