@@ -139,6 +139,11 @@ public class UploadDashboard implements EntryPoint, ValueChangeHandler<String> {
 		singleton.infoMsgPopup.showCentered();
 	}
 
+    public static void theresAproblem(String msg, String yesText, String noText, AsyncCallback<Boolean> callback) {
+        DashboardAskPopup dap = new DashboardAskPopup(yesText, noText, callback);
+        dap.askQuestion(msg);
+    }
+    
 	private static Map<CompositeWithUsername, List<WindowBox>> pagePopups = new HashMap<>();
 	private static void addPagePopup(CompositeWithUsername page, WindowBox popup) {
 		if ( !pagePopups.containsKey(page)) {
