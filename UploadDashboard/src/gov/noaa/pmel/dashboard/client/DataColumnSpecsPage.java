@@ -20,11 +20,9 @@ import com.google.gwt.dom.client.TableCellElement;
 import com.google.gwt.dom.client.TableRowElement;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
-import com.google.gwt.event.dom.client.DomEvent.Type;
 import com.google.gwt.event.dom.client.DoubleClickEvent;
 import com.google.gwt.event.dom.client.DoubleClickHandler;
 import com.google.gwt.logging.client.ConsoleLogHandler;
-import com.google.gwt.safehtml.shared.SafeHtmlUtils;
 import com.google.gwt.text.client.IntegerParser;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
@@ -67,6 +65,8 @@ public class DataColumnSpecsPage extends CompositeWithUsername {
 
 	private static final int DATA_COLUMN_WIDTH = 16;
 
+    private static boolean HIGHLIGHT_USER_FLAGS = false;
+    
 	private static final String TITLE_TEXT = "Identify Data Columns";
 	private static final String WELCOME_INTRO = "Logged in as ";
 	private static final String LOGOUT_TEXT = "Logout";
@@ -272,11 +272,11 @@ public class DataColumnSpecsPage extends CompositeWithUsername {
 				if ( amsg != null ) {
 					switch (amsg.getSeverity()) {
 						case WARNING:
-							rowStyle += "oa_datagrid_checker_warning_row";
+							rowStyle += amsg.isUserFlag() && HIGHLIGHT_USER_FLAGS ? "oa_datagrid_user_warning_row" : "oa_datagrid_checker_warning_row";
 							break;
 						case ERROR:
 						case CRITICAL:
-							rowStyle += "oa_datagrid_checker_error_row";
+							rowStyle += amsg.isUserFlag() && HIGHLIGHT_USER_FLAGS ? "oa_datagrid_user_error_row" : "oa_datagrid_checker_error_row";
 							break;
 						default:
 					}
@@ -463,8 +463,8 @@ public class DataColumnSpecsPage extends CompositeWithUsername {
 		knownUserTypes.clear();
 		if ( cruiseSpecs.getAllKnownTypes() != null )
 			knownUserTypes.addAll(cruiseSpecs.getAllKnownTypes());
-		updateDatasetMessages(cruiseSpecs.getMsgList());
-		updateDatasetMessages(cruiseSpecs.getDatasetData());
+		updateDatasetDataCheckMessages(cruiseSpecs.getMsgList());
+		updateDatasetUserQcFlagMessages(cruiseSpecs.getDatasetData());
 		updateDatasetColumnSpecs(cruiseSpecs.getDatasetData());
 		scrollToCol = null;
 		scrollToRow = null;
@@ -665,15 +665,17 @@ public class DataColumnSpecsPage extends CompositeWithUsername {
 		dataGrid.setPageSize(DashboardUtils.MAX_ROWS_PER_GRID_PAGE);
 	}
 
-	private void updateDatasetMessages(DashboardDatasetData cruiseSpecs) {
+	private void updateDatasetUserQcFlagMessages(DashboardDatasetData cruiseSpecs) {
+        if ( ! HIGHLIGHT_USER_FLAGS ) { return; }
 		for ( QCFlag flag : cruiseSpecs.getUserFlags()) {
 			Integer rowIdx = flag.getRowIndex();
 			if ( DashboardUtils.INT_MISSING_VALUE.equals(rowIdx)) { continue; }
 			ADCMessage m = new ADCMessage();
+            m.setUserFlag(true);
 			m.setSeverity(flag.getSeverity());
 			m.setColIndex(flag.getColumnIndex());
 			m.setRowIndex(rowIdx);
-			String msg = "User QC Flag set for row " + (rowIdx.intValue()+1);
+			String msg = "User QC Flag set to " + flag.getFlagValue() + " for row " + (rowIdx.intValue()+1);
 			Integer colIdx = flag.getColumnIndex();
 			if ( ! DashboardUtils.INT_MISSING_VALUE.equals(colIdx)) { 
 				msg += " on column " + (colIdx.intValue()+1);
@@ -682,7 +684,7 @@ public class DataColumnSpecsPage extends CompositeWithUsername {
 			rowMsgMap.put(rowIdx, m);
 		}
 	}
-	protected void updateDatasetMessages(ADCMessageList msgList) {
+	protected void updateDatasetDataCheckMessages(ADCMessageList msgList) {
 		rowMsgMap.clear();
 		datasetMessages = msgList;
 		if ( datasetMessages != null ) {
@@ -1078,8 +1080,8 @@ public class DataColumnSpecsPage extends CompositeWithUsername {
 					// no problems
 					UploadDashboard.showMessage(SANITY_CHECK_SUCCESS_MSG);
 				}
-				updateDatasetMessages(tddp.getMsgList());
-				updateDatasetMessages(ddd);
+				updateDatasetDataCheckMessages(tddp.getMsgList());
+				updateDatasetUserQcFlagMessages(ddd);
 				// Show the normal cursor
 				UploadDashboard.showAutoCursor();
 			}

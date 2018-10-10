@@ -30,6 +30,7 @@ public class ADCMessage implements Serializable, IsSerializable {
 	protected String colName;
 	protected String generalComment;
 	protected String detailedComment;
+    protected boolean userFlag = false;
 
 	/**
 	 * Create an empty message of unknown severity
@@ -531,4 +532,8 @@ public class ADCMessage implements Serializable, IsSerializable {
 		}
 	};
 
+    public boolean isUserFlag() { return userFlag; }
+    public void setUserFlag(boolean isUserFlag) {
+        userFlag = isUserFlag;
+    }
 }

@@ -383,6 +383,7 @@ public class CheckerMessageHandler {
 							severity = Severity.ERROR;
 						QCFlag flag;
 						ADCMessage msg = new ADCMessage();
+                        msg.setUserFlag(true);
 						msg.setRowIndex(rowIdx);
 						msg.setSeverity(severity);
 						msg.setGeneralComment("User QC flag");
