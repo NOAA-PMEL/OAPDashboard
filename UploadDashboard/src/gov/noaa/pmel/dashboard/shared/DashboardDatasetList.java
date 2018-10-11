@@ -33,6 +33,24 @@ public class DashboardDatasetList extends HashMap<String,DashboardDataset> imple
 	}
 
 	/**
+	 * Creates empty dataset list for specified user.
+	 */
+	public DashboardDatasetList(String username) {
+		super();
+		this.username = username;
+		manager = false;
+	}
+
+    /**
+     * Creates empty dataset list for specified user.
+     */
+    public DashboardDatasetList(String username, boolean manager) {
+        super();
+        this.username = username;
+        this.manager = manager ;
+    }
+
+	/**
 	 * @return 
 	 * 		the username; 
 	 * 		never null but may be {@link DashboardUtils#STRING_MISSING_VALUE}

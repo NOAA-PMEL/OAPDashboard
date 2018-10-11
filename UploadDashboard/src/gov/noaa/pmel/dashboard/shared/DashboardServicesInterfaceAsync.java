@@ -73,6 +73,18 @@ public interface DashboardServicesInterfaceAsync {
 	void addDatasetsToList(String username, String wildDatasetId,
 			AsyncCallback<DashboardDatasetList> callback);
 
+    /**
+     * Filters the set of datasets by datasetId to be displayed 
+	 * in the current user's list of datasets.
+     * 
+     * @param pageUsername
+     * @param wildDatasetId
+     * @return
+     * @throws IllegalArgumentException
+     */
+    void filterDatasetsToList(String pageUsername, String wildDatasetId,
+			AsyncCallback<DashboardDatasetList> callback);
+
 	/**
 	 * Client side request to remove the indicated datasets from the current 
 	 * user's list of datasets (but does not delete any files for these datasets).

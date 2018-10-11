@@ -74,6 +74,17 @@ public interface DashboardServicesInterface extends RemoteService {
 	DashboardDatasetList addDatasetsToList(String username, String wildDatasetId) 
 			throws IllegalArgumentException;
 
+    /**
+     * Filters the set of datasets to be displayed by datasetId.
+     * 
+     * @param pageUsername
+     * @param wildDatasetId
+     * @return
+     * @throws IllegalArgumentException
+     */
+    DashboardDatasetList filterDatasetsToList(String pageUsername,
+                                              String wildDatasetId) throws IllegalArgumentException;
+
 	/**
 	 * Removes the indicated datasets from the current user's 
 	 * list of datasets (but does not delete any files for these datasets).
