@@ -201,6 +201,20 @@ public class DashboardServices extends RemoteServiceServlet implements Dashboard
 	}
 
 	@Override
+	public DashboardDatasetList filterDatasetsToList(String pageUsername, 
+			String wildDatasetId) throws IllegalArgumentException {
+		// Get the dashboard data store and current username, and validate that username
+		if ( ! validateRequest(pageUsername) ) 
+			throw new IllegalArgumentException("Invalid user request");
+
+		// Add the datasets to the user's list and return the updated list
+		DashboardDatasetList cruiseList = configStore.getUserFileHandler()
+				.getFilteredDatasets(wildDatasetId, username);
+		logger.info("filtered datasets " + wildDatasetId + " for " + username + ": " + cruiseList);
+		return cruiseList;
+	}
+
+	@Override
 	public DashboardDatasetList addDatasetsToList(String pageUsername, 
 			String wildDatasetId) throws IllegalArgumentException {
 		// Get the dashboard data store and current username, and validate that username

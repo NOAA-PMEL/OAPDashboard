@@ -106,9 +106,9 @@ public class DatasetListPage extends CompositeWithUsername {
 			"examine various plots of data given in the selected dataset";
 
 	private static final String SHOW_DATASETS_TEXT = 
-			"Show Datasets";
+			"Filter Datasets";
 	private static final String SHOW_DATASETS_HOVER_HELP = 
-			"show existing datasets in your list of displayed datasets";
+			"filter datasets displayed in your list";
 
 	private static final String HIDE_DATASETS_TEXT = 
 			"Hide Datasets";
@@ -895,7 +895,7 @@ public class DatasetListPage extends CompositeWithUsername {
 			UploadDashboard.showWaitCursor();
 			// Save the currently selected cruises
 			getSelectedDatasets(null);
-			service.addDatasetsToList(getUsername(), wildDatasetId, 
+			service.filterDatasetsToList(getUsername(), wildDatasetId, 
 					new OAPAsyncCallback<DashboardDatasetList>() {
 				@Override
 				public void onSuccess(DashboardDatasetList cruises) {
