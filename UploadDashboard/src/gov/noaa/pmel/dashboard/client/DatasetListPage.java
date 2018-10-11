@@ -241,9 +241,10 @@ public class DatasetListPage extends CompositeWithUsername {
 	// Select options
 	private static final String SELECTION_OPTION_LABEL = "Select...";
 	private static final String ALL_SELECTION_OPTION = "All";
-	private static final String EDITABLE_SELECTION_OPTION = "Editable";
-	private static final String SUBMITTED_SELECTION_OPTION = "Submitted";
-	private static final String PUBLISHED_SELECTION_OPTION = "Published";
+//	private static final String EDITABLE_SELECTION_OPTION = "Editable";
+//	private static final String SUBMITTED_SELECTION_OPTION = "Submitted";
+//	private static final String PUBLISHED_SELECTION_OPTION = "Published";
+	private static final String ARCHIVED_SELECTION_OPTION = "Archived";
 	private static final String CLEAR_SELECTION_OPTION = "None";
 
 	// Column header strings
@@ -545,28 +546,26 @@ public class DatasetListPage extends CompositeWithUsername {
 			for ( DashboardDataset dataset : providerList )
 				dataset.setSelected(true);
 		}
-		else if ( EDITABLE_SELECTION_OPTION.equals(option) ) {
-			for ( DashboardDataset dataset : providerList ) {
-				if ( Boolean.TRUE.equals(dataset.isEditable()) )
-					dataset.setSelected(true);
-				else
-					dataset.setSelected(false);
-			}
-		}
-		else if ( SUBMITTED_SELECTION_OPTION.equals(option) ) {
-			for ( DashboardDataset dataset : providerList ) {
-				if ( Boolean.FALSE.equals(dataset.isEditable()) )
-					dataset.setSelected(true);
-				else
-					dataset.setSelected(false);					
-			}
-		}
-		else if ( PUBLISHED_SELECTION_OPTION.equals(option) ) {
+//		else if ( EDITABLE_SELECTION_OPTION.equals(option) ) {
+//			for ( DashboardDataset dataset : providerList ) {
+//				if ( Boolean.TRUE.equals(dataset.isEditable()) )
+//					dataset.setSelected(true);
+//				else
+//					dataset.setSelected(false);
+//			}
+//		}
+//		else if ( SUBMITTED_SELECTION_OPTION.equals(option) ) {
+//			for ( DashboardDataset dataset : providerList ) {
+//				if ( Boolean.FALSE.equals(dataset.isEditable()) )
+//					dataset.setSelected(true);
+//				else
+//					dataset.setSelected(false);					
+//			}
+//		}
+//		else if ( PUBLISHED_SELECTION_OPTION.equals(option) ) {
+		else if ( ARCHIVED_SELECTION_OPTION.equals(option) ) {
 			for ( DashboardDataset dataset : providerList )
-				if ( null == dataset.isEditable() )
-					dataset.setSelected(true);
-				else
-					dataset.setSelected(false);					
+				dataset.setSelected(dataset.isArchived());					
 		}
 		else if ( CLEAR_SELECTION_OPTION.equals(option) ) {
 			for ( DashboardDataset dataset : providerList )
@@ -1222,9 +1221,10 @@ public class DatasetListPage extends CompositeWithUsername {
 		SelectionCell selectHeaderCell = new SelectionCell(Arrays.asList(
 				SELECTION_OPTION_LABEL, 
 				ALL_SELECTION_OPTION, 
-				EDITABLE_SELECTION_OPTION, 
-				SUBMITTED_SELECTION_OPTION, 
-				PUBLISHED_SELECTION_OPTION, 
+//				EDITABLE_SELECTION_OPTION, 
+//				SUBMITTED_SELECTION_OPTION, 
+//				PUBLISHED_SELECTION_OPTION, 
+				ARCHIVED_SELECTION_OPTION, 
 				CLEAR_SELECTION_OPTION));
 		selectHeader = new Header<String>(selectHeaderCell) {
 			@Override
