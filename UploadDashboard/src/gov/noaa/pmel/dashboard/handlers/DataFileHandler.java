@@ -159,7 +159,7 @@ public class DataFileHandler extends VersionedFileHandler {
         }
         File dataFile = _datasetDataFile(datasetId);
         if ( dataFile == null ) {
-            if ( dataset.getFeatureType().equals(FeatureType.OPAQUE)) {
+            if ( dataset.getFeatureType().equals(FeatureType.OTHER)) {
                 dataFile = new File(parentDir, dataset.getUploadFilename());
             } else {
                 dataFile = new File(parentDir, datasetId + ".tsv");

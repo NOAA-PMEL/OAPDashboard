@@ -170,7 +170,9 @@ public class Bagger implements ArchiveBundler {
         for ( File mfile : metaDir.listFiles(new FileFilter() {
                 @Override
                 public boolean accept(File pathname) {
-                    return ! pathname.getName().endsWith(".properties");
+                    String fname = pathname.getName();
+                    return ! ( fname.endsWith(".properties") ||
+                               pathname.isDirectory());
                 }
             })) 
         {
@@ -184,7 +186,7 @@ public class Bagger implements ArchiveBundler {
         if ( supl.list().length == 0 ) {
            supl.delete();
         }
-        if ( !_featureType.equals(FeatureType.OPAQUE)) {
+        if ( !_featureType.equals(FeatureType.OTHER)) {
             addLatLonFile(bagRoot);
         }
         

@@ -243,7 +243,7 @@ public class DataUploadPage extends CompositeWithUsername {
         featureTypeSelector.addItem("Trajectory (Underway)", FeatureType.TRAJECTORY.name());
         featureTypeSelector.addItem("Profile", FeatureType.PROFILE.name());
         featureTypeSelector.addItem("Profile Timeseries (Mooring)", FeatureType.PROFILE_TIMESERIES.name());
-        featureTypeSelector.addItem("Other", FeatureType.OPAQUE.name());
+        featureTypeSelector.addItem("Other", FeatureType.OTHER.name());
         featureTypeSelector.getElement().<SelectElement>cast().getOptions().getItem(0).setDisabled(true); // Please select...
         featureTypeSelector.getElement().<SelectElement>cast().getOptions().getItem(3).setDisabled(true); // Mooring
         featureTypeSelector.addChangeHandler(new ChangeHandler() {
@@ -355,7 +355,7 @@ public class DataUploadPage extends CompositeWithUsername {
             switch ( selectedType ) {
               case TIMESERIES:
                   break;
-              case OPAQUE:
+              case OTHER:
                   fieldsPanel = new OpaqueUploadFeatureFields();
                   break;
               case PROFILE_TIMESERIES:
@@ -683,7 +683,7 @@ public class DataUploadPage extends CompositeWithUsername {
 			for ( String expo : cruiseIDs )
 				DatasetListPage.addSelectedDataset(expo);
 			DatasetListPage.resortTable();
-            if ( ! featureTypeSelector.getSelectedValue().equals(FeatureType.OPAQUE.name())) {
+            if ( ! featureTypeSelector.getSelectedValue().equals(FeatureType.OTHER.name())) {
     			DataColumnSpecsPage.showPage(getUsername(), cruiseIDs);
             }
 		}

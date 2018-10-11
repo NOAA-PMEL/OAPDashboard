@@ -14,5 +14,5 @@ public enum FeatureType {
     PROFILE,
     PROFILE_TIMESERIES, 
     TRAJECTORY_PROFILE,
-    OPAQUE
+    OTHER
 }
