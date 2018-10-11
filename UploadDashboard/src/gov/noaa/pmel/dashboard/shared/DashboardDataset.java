@@ -74,13 +74,17 @@ public class DashboardDataset implements Serializable, IsSerializable {
 		userFlags = new TreeSet<QCFlag>();
 	}
 
+    
+	public boolean isArchived() {
+	    return getArchiveStatus().startsWith("Submitted");
+	}
 	/**
 	 * @return
 	 * 		Boolean.TRUE if the dataset is suspended, excluded, or not submitted; 
 	 * 		Boolean.FALSE if the dataset is submitted or acceptable but not published;
 	 * 		null if the dataset is (acceptable and) published.
 	 */
-	public Boolean isEditable() {
+	public Boolean isEditable() { // XXX needs clarification / update
 		// true for datasets that are not submitted, suspended, or excluded
 		String status = getSubmitStatus();
 		if ( status.equals(DashboardUtils.STATUS_NOT_SUBMITTED) || 
