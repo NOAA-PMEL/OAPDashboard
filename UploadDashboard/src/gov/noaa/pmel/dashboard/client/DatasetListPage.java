@@ -235,8 +235,8 @@ public class DatasetListPage extends CompositeWithUsername {
 			"** SELECT A DATASET TO ENABLE BUTTON **\n";
 	private static final String ONLY_ONE_TO_ENABLE_MSG = 
 			"** SELECT ONLY ONE DATASET TO ENABLE BUTTON **\n";
-	private static final String NOT_FOR_OPAQUE = 
-			"** THIS OPTION IS NOT AVAILABLE FOR OPAQUE DATASETS **\n";
+	private static final String NOT_FOR_OTHER = 
+			"** THIS OPTION IS NOT AVAILABLE FOR OTHER-type DATASETS **\n";
 	
 	// Select options
 	private static final String SELECTION_OPTION_LABEL = "Select...";
@@ -1278,7 +1278,7 @@ public class DatasetListPage extends CompositeWithUsername {
 			disableButtons(selectSet, SELECT_TO_ENABLE_MSG);
 		} else if ( selectCount >= 1 ) {
 			enableButtons(selectSet);
-            if ( selectedFeatures.contains(FeatureType.OPAQUE)) {
+            if ( selectedFeatures.contains(FeatureType.OTHER)) {
                 disableInapropriateButtons(selectedFeatures);
             }
 		} 
@@ -1295,7 +1295,7 @@ public class DatasetListPage extends CompositeWithUsername {
             b.setEnabled(false);
             String btitle = b.getTitle();
             if ( btitle.indexOf("**" ) < 0 ) {
-                b.setTitle(NOT_FOR_OPAQUE+b.getTitle());
+                b.setTitle(NOT_FOR_OTHER+b.getTitle());
             }
         }
         
@@ -1381,7 +1381,7 @@ public class DatasetListPage extends CompositeWithUsername {
 			@Override
 			public String getValue(DashboardDataset cruise) { 
                 FeatureType type = cruise.getFeatureType();
-                if ( FeatureType.OPAQUE == type ) {
+                if ( FeatureType.OTHER == type ) {
                     return STATUS_CANNOT_CHECK_STRING;
                 }
 				String status = cruise.getDataCheckStatus();
@@ -1406,7 +1406,7 @@ public class DatasetListPage extends CompositeWithUsername {
                 
 				String msg = getValue(cruise);
                 FeatureType type = cruise.getFeatureType();
-                if ( FeatureType.OPAQUE == type ) {
+                if ( FeatureType.OTHER == type ) {
 					sb.appendHtmlConstant("<div >"); // style=\"background-color:" + UploadDashboard.CHECKER_WARNING_COLOR + ";\">");
 					sb.appendEscaped(msg);
 					sb.appendHtmlConstant("</div>");
@@ -1439,8 +1439,8 @@ public class DatasetListPage extends CompositeWithUsername {
 		dataCheckColumn.setFieldUpdater(new FieldUpdater<DashboardDataset,String>() {
 			@Override
 			public void update(int index, DashboardDataset cruise, String value) {
-                if ( FeatureType.OPAQUE.equals(cruise.getFeatureType())) {
-                    GWT.log("Cannot view/edit columns for OPAQUE datasets.");
+                if ( FeatureType.OTHER.equals(cruise.getFeatureType())) {
+                    GWT.log("Cannot view/edit columns for OTHER-type datasets.");
 //                    UploadDashboard.showMessage("This observation type cannot be checked.");
                     return;
                 }
@@ -1728,7 +1728,7 @@ public class DatasetListPage extends CompositeWithUsername {
 		boolean willAutofail = false;
 		for ( DashboardDataset cruise : checkSet.values() ) {
 			String status = cruise.getDataCheckStatus();
-			if ( ! cruise.getFeatureType().equals(FeatureType.OPAQUE) &&
+			if ( ! cruise.getFeatureType().equals(FeatureType.OTHER) &&
 			     ( status.equals(DashboardUtils.CHECK_STATUS_NOT_CHECKED) ||
 				   status.equals(DashboardUtils.CHECK_STATUS_UNACCEPTABLE) ||
 				   status.contains(DashboardUtils.GEOPOSITION_ERRORS_MSG) )) {
@@ -1736,7 +1736,7 @@ public class DatasetListPage extends CompositeWithUsername {
 						 SafeHtmlUtils.htmlEscape(cruise.getDatasetId()) + "</li>";
 				cannotSubmit = true;
 			}
-			else if ( cruise.getFeatureType().equals(FeatureType.OPAQUE) ||
+			else if ( cruise.getFeatureType().equals(FeatureType.OTHER) ||
 			          status.equals(DashboardUtils.CHECK_STATUS_ACCEPTABLE) ||
 					  status.startsWith(DashboardUtils.CHECK_STATUS_WARNINGS_PREFIX) ||
 					  ( status.startsWith(DashboardUtils.CHECK_STATUS_ERRORS_PREFIX) &&

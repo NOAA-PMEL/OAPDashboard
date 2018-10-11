@@ -117,7 +117,7 @@ public class OpaqueFileUploadProcessor extends FileUploadProcessor {
         odd.setUploadTimestamp(uploadFields.timestamp());
         odd.setOwner(uploadFields.username());
         odd.setFileItem(item);
-        odd.setFeatureType(FeatureType.OPAQUE.name());
+        odd.setFeatureType(FeatureType.OTHER.name());
         return odd;
     }
 

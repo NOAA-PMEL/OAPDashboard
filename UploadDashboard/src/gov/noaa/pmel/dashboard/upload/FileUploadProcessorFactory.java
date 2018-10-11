@@ -39,7 +39,7 @@ public class FileUploadProcessorFactory {
             case TRAJECTORY_PROFILE:
                 processor = new TrajectoryProfileUploadProcessor(_stdFields);
                 break;
-            case OPAQUE:
+            case OTHER:
                 processor = new OpaqueFileUploadProcessor(_stdFields);
                 break;
             default:
