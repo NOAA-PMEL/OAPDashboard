@@ -352,6 +352,73 @@ public class UserFileHandler extends VersionedFileHandler {
 	}
 
 	/**
+	 * Filters a user's list of datasets by wild-carded ID, and saves the 
+	 * resulting list of datasets.  Only datasets that are owned by the 
+	 * user, or owned by someone the user manages, are added. 
+	 * 
+	 * @param wildDatasetId
+	 * 		dataset ID, possibly with wildcards * and ?, to add
+	 * @param username
+	 * 		user whose dataset list is to be updated
+	 * @return
+	 * 		updated list of datasets for the user
+	 * @throws IllegalArgumentException
+	 * 		if username is invalid, 
+	 * 		if the dataset ID is invalid,
+	 * 		if the dataset information file does not exist, 
+	 * 		if there was a problem saving the updated dateset listing, or 
+	 * 		if there was an error committing the updated dataset listing to version control
+	 */
+	public DashboardDatasetList getFilteredDatasets(String wildDatasetId, 
+						String username) throws IllegalArgumentException {
+		String cleanUsername = DashboardUtils.cleanUsername(username);
+		if ( cleanUsername.isEmpty() )
+			throw new IllegalArgumentException("invalid username");
+		DashboardConfigStore configStore;
+		try {
+			configStore = DashboardConfigStore.get(false);
+		} catch ( IOException ex ) {
+			throw new IllegalArgumentException("Unexpected failure to get the default dashboard settings");
+		}
+		DataFileHandler dataHandler = configStore.getDataFileHandler();
+		DashboardDatasetList existingDatasetList = getDatasetListing(cleanUsername);
+		HashSet<String> matchingIds = dataHandler.getMatchingDatasetIds(wildDatasetId);
+		if ( matchingIds.size() == 0 ) 
+			throw new IllegalArgumentException("No datasets with an ID matching " + wildDatasetId);
+		DashboardDatasetList datasetList = new DashboardDatasetList(cleanUsername);
+        datasetList.setManager(existingDatasetList.isManager());
+		String commitMsg = "Filtering dataset(s) ";
+		boolean needsCommit = false;
+		boolean viewableFound = false;
+        if ( matchingIds.size() != existingDatasetList.size() ||
+             ! matchingIds.equals(new HashSet<String>(existingDatasetList.keySet()))) { 
+            needsCommit = true; 
+        }
+        String comma = "";
+		for ( String datasetId : matchingIds ) {
+			// Create a dataset entry for this data
+			DashboardDataset dataset = dataHandler.getDatasetFromInfoFile(datasetId);
+			if ( dataset == null ) 
+				throw new IllegalArgumentException("Unexpected error: dataset " + datasetId + " does not exist");
+			if ( configStore.userManagesOver(cleanUsername, dataset.getOwner()) ) {
+				// Add or replace this dataset entry in the dataset list
+				viewableFound = true;
+				if ( datasetList.put(datasetId, dataset) == null ) {
+					// Only the IDs are saved to the dataset listing file
+					commitMsg += comma + datasetId;
+					comma = ", ";
+				}
+			}
+		}
+		if ( ! viewableFound )
+			throw new IllegalArgumentException("No datasets with an ID matching " + wildDatasetId + 
+					" that can be viewed by " + cleanUsername);
+		if ( needsCommit )
+			saveDatasetListing(datasetList, commitMsg + " to the listing for " + cleanUsername);
+		return datasetList;
+	}
+
+	/**
 	 * Adds entries to a user's list of datasets, and saves the resulting 
 	 * list of datasets.  This does not check dataset ownership.
 	 * 
