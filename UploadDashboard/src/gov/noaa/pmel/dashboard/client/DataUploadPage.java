@@ -186,8 +186,6 @@ public class DataUploadPage extends CompositeWithUsername {
     @UiField Hidden featureTypeToken;
     @UiField Anchor featureTypeHelpAnchor;
     
-//    @UiField HTML featureTypeDisplay;
-    
 	@UiField InlineLabel titleLabel;
 	@UiField InlineLabel userInfoLabel;
 	@UiField Button logoutButton;
@@ -236,8 +234,6 @@ public class DataUploadPage extends CompositeWithUsername {
 
 		setUsername(null);
 
-//        contentFrame = new Frame();
-//        contentPanel.add(contentFrame);
         featureTypeSelector.addItem("-- Observation Type --");
 //      featureTypeSelector.addItem("Timeseries");
         featureTypeSelector.addItem("Trajectory (Underway)", FeatureType.TRAJECTORY.name());
@@ -329,25 +325,7 @@ public class DataUploadPage extends CompositeWithUsername {
 		previewButton.setText(PREVIEW_TEXT);
 	}
 
-    private Map<String, Hidden> _formFields = new HashMap<>();
-            
-    public void setFormField(String fieldName, String fieldValue) {
-        Hidden formField = _formFields.get(fieldName);
-        if ( formField == null ) {
-            formField = new Hidden(fieldName);
-            _formFields.put(fieldName, formField);
-            
-        }
-        formField.setValue(fieldValue);
-    }
-    
-    public void clearFormField(String fieldName) {
-        Hidden formField = _formFields.get(fieldName);
-        if ( formField == null ) {
-        }
-    }
-    
-    private FeatureTypeFields getFeatureTypePanel(FeatureType selectedType) {
+    private static FeatureTypeFields getFeatureTypePanel(FeatureType selectedType) {
         FeatureTypeFields fieldsPanel = null;
         if ( _featureSpecificPanels.containsKey(selectedType)) {
             fieldsPanel = _featureSpecificPanels.get(selectedType);
@@ -695,6 +673,10 @@ public class DataUploadPage extends CompositeWithUsername {
      */
     public void setDatasetIdToken(String value) {
         datasetIdToken.setValue(value);
+    }
+    
+    public void setDatasetIdColumnNameToken(String value) {
+        datasetIdColumnToken.setValue(value);
     }
 
     /**
