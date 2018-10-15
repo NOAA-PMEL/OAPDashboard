@@ -93,7 +93,7 @@ public class CommonFeatureFields extends Composite implements FeatureTypeFields 
     @Override
     public void setFormFields(DataUploadPage page) {
         page.setFileDataFormatToken(getSelectedFormat().getName());
-        page.setFormField(DATASET_ID_COLUMN_FIELD_NAME, datasetColName.getValue());
+        page.setDatasetIdColumnNameToken(datasetColName.getValue());
 //        if ( formatToken == null ) {
 //            logger.info("Adding dataformat field for " + this.getClass());
 //            formatToken = new Hidden("dataformat");
