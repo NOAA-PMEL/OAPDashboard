@@ -131,7 +131,12 @@ html, body {
 	margin-bottom: 0.5em;
 	margin-left: 3em;
 }
-
+.contentscroll {
+	width: 99.7%;
+	height: 100%;
+    margin: 0;
+    overflow: scroll;
+}
 .fullpagecontainer {
 	width: 99.7%;
 	height: 100%;
