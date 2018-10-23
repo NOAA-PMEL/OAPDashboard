@@ -45,11 +45,13 @@ public class DataMessagesPage extends CompositeWithUsername {
 
 	private static final String TITLE_TEXT = "Data Errors and Warnings";
 
-	private static final String INTRO_HTML_PROLOGUE = 
-			"Dataset: <ul><li>";
-	private static final String INTRO_HTML_EPILOGUE = 
-			"</li></ul>";
+//	private static final String INTRO_HTML_PROLOGUE = 
+//			"Dataset: <ul><li>";
+//	private static final String INTRO_HTML_EPILOGUE = 
+//			"</li></ul>";
 
+    @UiField ApplicationHeaderTemplate header;
+    
 	private static final String DISMISS_BUTTON_TEXT = "Back";
 
 	private static final String SEVERITY_COLUMN_NAME = "Type";
@@ -77,7 +79,7 @@ public class DataMessagesPage extends CompositeWithUsername {
 	private static DashboardServicesInterfaceAsync service = 
 			GWT.create(DashboardServicesInterface.class);
 
-	@UiField InlineLabel titleLabel;
+//	@UiField InlineLabel titleLabel;
 	@UiField HTML introHtml;
 	@UiField DataGrid<ADCMessage> messagesGrid;
 	@UiField Button dismissButton;
@@ -103,8 +105,9 @@ public class DataMessagesPage extends CompositeWithUsername {
 		initWidget(uiBinder.createAndBindUi(this));
 		singleton = this;
 
+        header.setPageTitle(TITLE_TEXT);
 		singleton.setUsername(null);
-		titleLabel.setText(TITLE_TEXT);
+//		titleLabel.setText(TITLE_TEXT);
 		buildMessageListTable();
 		dismissButton.setText(DISMISS_BUTTON_TEXT);
 
@@ -203,9 +206,8 @@ public class DataMessagesPage extends CompositeWithUsername {
 	private void updateMessages(ADCMessageList msgs) {
 		// Assign the username and introduction message
 		setUsername(msgs.getUsername());
-		introHtml.setHTML(INTRO_HTML_PROLOGUE + 
-				SafeHtmlUtils.htmlEscape(msgs.getDatasetId()) + 
-				INTRO_HTML_EPILOGUE);
+        header.userInfoLabel.setText(WELCOME_INTRO + getUsername());
+        header.setDatasetIds(msgs.getDatasetId());
 		// Update the table by resetting the data in the data provider
 		List<ADCMessage> msgList = listProvider.getList();
 		msgList.clear();

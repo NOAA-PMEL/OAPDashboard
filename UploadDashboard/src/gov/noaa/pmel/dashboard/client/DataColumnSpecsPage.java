@@ -68,8 +68,6 @@ public class DataColumnSpecsPage extends CompositeWithUsername {
     private static boolean HIGHLIGHT_USER_FLAGS = false;
     
 	private static final String TITLE_TEXT = "Identify Data Columns";
-	private static final String WELCOME_INTRO = "Logged in as ";
-	private static final String LOGOUT_TEXT = "Logout";
 
 	private static final String MESSAGES_TEXT = "Show errors/warnings";
 
@@ -79,13 +77,9 @@ public class DataColumnSpecsPage extends CompositeWithUsername {
 	private static final String DISABLED_SUBMIT_HOVER_HELP = 
 			"This cruise has been submitted for QC.  Data column types cannot be modified.";
 
-	private static final String CANCEL_TEXT = "Cancel";
 	private static final String DONE_TEXT = "Done";
 	private static final String SAVE_BUTTON_TEXT = "Save";
 	private static final String SAVE_BUTTON_HOVER_HELP = "Save column data type definitions";
-
-	private static final String INTRO_HTML_PROLOGUE = "Dataset: <ul><li>";
-	private static final String INTRO_HTML_EPILOGUE = "</li></ul>";
 
 	private static final String PAGER_LABEL_TEXT = "Rows shown";
 
@@ -694,7 +688,7 @@ public class DataColumnSpecsPage extends CompositeWithUsername {
 		}
 	}
 
-//	@UiHandler("logoutButton")
+//	keep this here, since we have to do change detection
 	void logoutOnClick(ClickEvent event) {
 		// Check if any changes have been made
 		boolean hasChanged = false;

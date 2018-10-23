@@ -186,9 +186,7 @@ public class DataUploadPage extends CompositeWithUsername {
     @UiField Hidden featureTypeToken;
     @UiField Anchor featureTypeHelpAnchor;
     
-	@UiField InlineLabel titleLabel;
-	@UiField InlineLabel userInfoLabel;
-	@UiField Button logoutButton;
+    @UiField ApplicationHeaderTemplate header;
 	@UiField HTML introHtml;
 	@UiField Anchor moreHelpAnchor;
 	@UiField FormPanel uploadForm;
@@ -267,8 +265,7 @@ public class DataUploadPage extends CompositeWithUsername {
         featureTypeHelpAnchor.setText(FEATURE_TYPE_HELP_ANCHOR_TEXT);
         featureTypeHelpPopup = null;
         
-		titleLabel.setText(TITLE_TEXT);
-		logoutButton.setText(LOGOUT_TEXT);
+        header.setPageTitle(TITLE_TEXT);
 		introHtml.setHTML(UPLOAD_FILE_INTRO_HTML);
 		moreHelpAnchor.setText(MORE_HELP_TEXT);
 		moreHelpPopup = null;
@@ -366,12 +363,13 @@ public class DataUploadPage extends CompositeWithUsername {
 		if ( singleton == null )
 			singleton = new DataUploadPage();
 		singleton.setUsername(username);
-		singleton.userInfoLabel.setText(WELCOME_INTRO + singleton.getUsername());
+//		singleton.userInfoLabel.setText(WELCOME_INTRO + singleton.getUsername());
 		singleton.clearTokens();
         singleton.clearForm();
 		singleton.previewHtml.setHTML(NO_PREVIEW_HTML_MSG);
 		singleton.encodingListBox.setSelectedIndex(2);
 		singleton.advancedPanel.setOpen(false);
+        singleton.header.userInfoLabel.setText(WELCOME_INTRO + username);
 		UploadDashboard.updateCurrentPage(singleton);
 		History.newItem(PagesEnum.UPLOAD_DATA.name(), false);
 	}
@@ -421,13 +419,6 @@ public class DataUploadPage extends CompositeWithUsername {
 		    _featureTypeFields.clearFormFields(this);
 //		    _featureTypeFields.clearFormFields((Panel)uploadForm.getWidget());
 		}
-	}
-
-	@UiHandler("logoutButton")
-	void logoutOnClick(ClickEvent event) {
-		DashboardLogoutPage.showPage();
-		// Make sure the normal cursor is shown
-		UploadDashboard.showAutoCursor();
 	}
 
 	@UiHandler("moreHelpAnchor")
