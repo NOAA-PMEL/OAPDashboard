@@ -7,7 +7,7 @@
 		<Set name="loginService">
 			<New class="org.eclipse.jetty.security.JDBCLoginService">
 				<Set name="name">JDBC Login Realm</Set>
-				<Set name="config">/Users/kamb/oxy-work/oap-git/OAPDashboard/UploadDashboard/war/WEB-INF/jettydbcRealm.properties
+				<Set name="config">WEB-INF/jettydbcRealm.properties
 				</Set>
 			</New>
 		</Set>
