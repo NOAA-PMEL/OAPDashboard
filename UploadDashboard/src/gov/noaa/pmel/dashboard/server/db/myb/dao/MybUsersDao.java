@@ -25,7 +25,25 @@ public class MybUsersDao implements UsersDao {
 			return user.dbId().intValue();
 		}
 	}
+    
+    @Override
+    public void resetUserPassword(int userId, String newAuthString) throws SQLException {
+        try (SqlSession session = MybatisConnectionFactory.getDashboardDbSessionFactory().openSession();) {
+            UserMapper umapper = (UserMapper) session.getMapper(UserMapper.class);
+            umapper.updateUserAuth(userId, newAuthString);
+            session.commit();
+        }
+    }
 		
+    @Override
+    public String retrieveUserAuthString(int userId) throws SQLException {
+        try (SqlSession session = MybatisConnectionFactory.getDashboardDbSessionFactory().openSession();) {
+            UserMapper umapper = (UserMapper) session.getMapper(UserMapper.class);
+            String auth = umapper.retrieveHashByUserId(userId);
+            return auth;
+        }
+    }
+        
     @Override
     public void addAccessRole(String username) throws SQLException {
 		try (SqlSession session = MybatisConnectionFactory.getDashboardDbSessionFactory().openSession();) {

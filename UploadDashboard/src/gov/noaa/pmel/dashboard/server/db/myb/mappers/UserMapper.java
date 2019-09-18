@@ -29,8 +29,7 @@ public interface UserMapper {
 	public void insertUserAuth(int _dbId, String _authString);
 	
 	public int updateUser(User user);
-	
-	public int updateUserAuth(int userId, String authString);
+	public void updateUserAuth(int userId, String authString);
 	
 	public void updateLastLogin(int userId);
 	
