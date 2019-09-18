@@ -1,0 +1,15 @@
+<!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
+<ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
+	xmlns:g="urn:import:com.google.gwt.user.client.ui">
+	<ui:style src="FixedWidth.css" />
+
+	<g:VerticalPanel addStyleNames="{style.infopanel}" horizontalAlignment="ALIGN_CENTER">
+        <g:ListBox addStyleNames="{style.feedbackChoiceBox}" ui:field="feedbackChoiceBox"/>
+		<g:TextArea addStyleNames="{style.feedbackTextBox}" ui:field="feedbackTextBox" />
+		<g:FlowPanel addStyleNames="{style.horizontalpanel}">
+			<g:Button addStyleNames="{style.adjustingbutton}" ui:field="yesButton" />
+			<g:Button addStyleNames="{style.adjustingbutton}" ui:field="noButton" />
+		</g:FlowPanel>
+	</g:VerticalPanel>
+
+</ui:UiBinder>
