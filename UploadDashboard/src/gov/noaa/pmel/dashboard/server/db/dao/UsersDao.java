@@ -26,6 +26,9 @@ public interface UsersDao {
     
     public void updateUser(User changedUser) throws SQLException;
     
+    public void resetUserPassword(int userId, String newAuthString) throws SQLException;
+    public String retrieveUserAuthString(int userId) throws SQLException;
+    
     public void deleteUserByUsername(String username) throws SQLException;
 
     public void removeReviewer(String username);

@@ -278,6 +278,12 @@
 	</update> 
 	 -->
 	<update id="updateUserAuth" >
+		update tomcatusers set
+			<!--modified_time = now(),  -->
+			password = #{param2,javaType=String}
+		where db_id = #{param1,javaType=int}
+	</update>
+	<update id="updateUserAuthX" >
 		update user_auth set
 			modified_time = now(),
 			auth_string = #{param2,javaType=String}
@@ -291,11 +297,18 @@
 	</update>
 	
 	<select id="retrieveHashByUsername" resultType="String">
+			select u.password from tomcatusers u
+			where u.username = #{username} 
+	</select>
+	<select id="retrieveHashByUserId" resultType="String">
+			select password from tomcatusers 
+			where db_id = #{id}
+	</select>
+	<select id="retrieveHashByUsernameX" resultType="String">
 			select ua.auth_string from users u, user_auth ua
 			where u.username = #{username} and u.db_id = ua.db_id
 	</select>
-	
-	<select id="retrieveHashByUserId" resultType="String">
+	<select id="retrieveHashByUserIdX" resultType="String">
 			select ua.auth_string from user_auth ua
 			where ua.db_id = #{id}
 	</select>
