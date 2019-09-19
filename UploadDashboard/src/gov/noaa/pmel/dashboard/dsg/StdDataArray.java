@@ -678,7 +678,7 @@ public class StdDataArray {
 //				try {
 					String stdYMD = (String) stdObjects[j][dateIndex];
 					if ( DashboardUtils.isEmptyNull(stdYMD)) {
-						throw new IllegalStateException("Invalid (empty or null) date string");
+						throw new IllegalStateException("Invalid (empty or null) date string (possibly due to wrong date format specified) at row: " + j);
 					}
 					String[] ymd = stdYMD.split("-");
 					if ( ymd.length != 3 )
@@ -688,7 +688,7 @@ public class StdDataArray {
 					int day = Integer.parseInt(ymd[2]);
 					String stdHMS = (String) stdObjects[j][timeOfDayIndex];
 					if ( DashboardUtils.isEmptyNull(stdHMS)) {
-						throw new IllegalStateException("Invalid (empty or null) time string");
+						throw new IllegalStateException("Invalid (empty or null) time string (possibly due to wrong time format specified) at row: " + j);
 					}
 					String[] hms = stdHMS.split(":");
 					if ( hms.length != 3 )
