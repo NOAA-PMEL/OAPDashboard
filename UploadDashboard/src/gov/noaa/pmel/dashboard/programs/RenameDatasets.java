@@ -44,21 +44,16 @@ public class RenameDatasets {
 		File idsFile = new File(args[1]);
 
 		TreeMap<String,String> oldNewIdsMap = new TreeMap<String,String>();
-		try {
-			BufferedReader idsReader = new BufferedReader(new FileReader(idsFile));
-			try {
-				String dataline = idsReader.readLine();
-				while ( dataline != null ) {
-					if ( dataline.isEmpty() || dataline.startsWith("#") )
-						continue;
-					String[] expoPair = dataline.split("\\s+");
-					if ( expoPair.length != 2 )
-						throw new IllegalArgumentException("not a pair of IDs: '" + dataline.trim() + "'");
-					oldNewIdsMap.put(expoPair[0], expoPair[1]);
-					dataline = idsReader.readLine();
-				}
-			} finally {
-				idsReader.close();
+		try ( BufferedReader idsReader = new BufferedReader(new FileReader(idsFile)); ) {
+			String dataline = idsReader.readLine();
+			while ( dataline != null ) {
+				if ( dataline.isEmpty() || dataline.startsWith("#") )
+					continue;
+				String[] expoPair = dataline.split("\\s+");
+				if ( expoPair.length != 2 )
+					throw new IllegalArgumentException("not a pair of IDs: '" + dataline.trim() + "'");
+				oldNewIdsMap.put(expoPair[0], expoPair[1]);
+				dataline = idsReader.readLine();
 			}
 			if ( oldNewIdsMap.isEmpty() )
 				throw new IOException("file is empty");

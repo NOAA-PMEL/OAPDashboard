@@ -5,12 +5,18 @@ import java.io.PrintStream;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.jdom2.Element;
 
 
 
 public class SocatTool extends Thread {
 
+    private static Logger logger = LogManager.getLogger(SocatTool.class);
+    
+    static boolean deleteScriptOnExit = false;
+    
 	FerretConfig ferret = new FerretConfig();
 	ArrayList<String> scriptArgs;
 	String expocode;
@@ -41,7 +47,6 @@ public class SocatTool extends Thread {
 	public void run() {
 		done = false;
 		error = false;
-		PrintStream script_writer;
 		try {
 
 			String temp_dir = ferret.getTempDir();
@@ -67,11 +72,13 @@ public class SocatTool extends Thread {
 			else
 				throw new RuntimeException("Unknown action " + action.toString());
 			
-			script_writer = new PrintStream(script);
-			script_writer.print("go " + driver);
-			for (String scarg : scriptArgs)
-				script_writer.print(" \"" + scarg + "\"");
-			script_writer.println();
+            logger.debug("Script file: "+ script);
+			try ( PrintStream script_writer = new PrintStream(script); ) {
+    			script_writer.print("go " + driver);
+    			for (String scarg : scriptArgs)
+    				script_writer.print(" \"" + scarg + "\"");
+    			script_writer.println();
+			}
 
 			List<String> args = ferret.getArgs();
 		    String interpreter = ferret.getInterpreter();
@@ -97,13 +104,14 @@ public class SocatTool extends Thread {
 			
 			long timelimit = ferret.getTimeLimit();
 
+            logger.debug("Ferret tool to run command " + args + " using " + interpreter + " by " + executable);
 			Task task = new Task(fullCmd, ferret.getRuntimeEnvironment().getEnv(), 
 					new File(temp_dir), new File("cancel"), timelimit, ferret.getErrorKeys());
 			task.run();
 			error = task.getHasError();
 			message = task.getErrorMessage();
 			done = true;
-			if ( ! error )
+			if ( ! error && deleteScriptOnExit )
 				script.delete();
 		} catch ( Exception e ) {
 			done = true;

@@ -59,11 +59,8 @@ public class DatabaseRequestHandler {
 						IOException, IllegalArgumentException, SQLException {
 		// Read the configuration properties file
 		Properties configProps = new Properties();
-		FileReader reader = new FileReader(configFilename);
-		try {
+		try ( FileReader reader = new FileReader(configFilename); ) {
 			configProps.load(reader);
-		} finally {
-			reader.close();
 		}
 
 		// Get the values given in the configuration properties file
@@ -122,7 +119,6 @@ public class DatabaseRequestHandler {
 	 * 		if a given value is invalid (null or empty)
 	 * @throws SQLException 
 	 * 		if there are problems connecting to or executing a query on the database
-	 */
 	public DatabaseRequestHandler(String sqlDriverName, String databaseUrl, 
 			String selectUser, String selectPass, String updateUser, String updatePass) 
 					throws IllegalArgumentException, SQLException {
@@ -150,6 +146,7 @@ public class DatabaseRequestHandler {
 		}
 		testConnections(sqlDriverName.trim());
 	}
+	 */
 
 	/**
 	 * Validates the parameters in this handler.
@@ -167,15 +164,18 @@ public class DatabaseRequestHandler {
 		try {
 			Class.forName(sqlDriverName).newInstance();
 		} catch (Exception ex) {
+            ex.printStackTrace();
 			throw new SQLException("Unable to register the SQL driver " + 
 					sqlDriverName + "\n" + ex.getMessage());
 		}
 
 		// Verify the values by making the database connections
-		Connection catConn = makeConnection(false);
-		catConn.close();
-		catConn = makeConnection(true);
-		catConn.close();
+		try ( Connection catConn = makeConnection(false); ) {
+		    // ignore empty block
+		}
+        try ( Connection catConn = makeConnection(true); ) {
+            // ignore empty block
+        }
 	}
 
 	/**
@@ -192,15 +192,14 @@ public class DatabaseRequestHandler {
 	 */
 	private Connection makeConnection(boolean canUpdate) throws SQLException {
 		// Open a connection to the database
-		Connection catConn;
+        String user = selectUser;
+        String pass = selectPass;
 		if ( canUpdate ) {
-			catConn = DriverManager.getConnection(databaseUrl, updateUser, updatePass);
+            user = updateUser;
+            pass = selectPass;
 		}
-		else { 	
-			catConn = DriverManager.getConnection(databaseUrl, selectUser, selectPass);
-		}
-		if ( catConn == null )
-			throw new SQLException("null SQL connection returned");
+        System.out.println("Trying " + databaseUrl +" with " + user + ", " + pass);
+		Connection catConn = DriverManager.getConnection(databaseUrl, user, pass);
 		return catConn;
 	}
 
@@ -247,25 +246,20 @@ public class DatabaseRequestHandler {
 	 */
 	public String getReviewerUsername(String realname) throws SQLException {
 		String username = null;
-		Connection catConn = makeConnection(false);
-		try {
+		
+		try ( Connection catConn = makeConnection(false); ) {
 			PreparedStatement prepStmt = 
 				catConn.prepareStatement("SELECT "+DB_QUOTE+"username"+DB_QUOTE+
 				                         " FROM "+DB_QUOTE+"" + REVIEWERS_TABLE_NAME + ""+DB_QUOTE+
 				                         " WHERE "+DB_QUOTE+"realname"+DB_QUOTE+" = ?;");
 			prepStmt.setString(1, realname);
-			ResultSet results = prepStmt.executeQuery();
-			try {
+			try ( ResultSet results = prepStmt.executeQuery(); ) {
 				while ( results.next() ) {
 					if ( username != null ) 
 						throw new SQLException("More than one username for " + realname);
 					username = results.getString(1);
 				}
-			} finally {
-				results.close();
 			}
-		} finally {
-			catConn.close();
 		}
 		return username;
 	}
@@ -283,25 +277,20 @@ public class DatabaseRequestHandler {
 	 */
 	public String getReviewerEmail(String username) throws SQLException {
 		String userEmail = null;
-		Connection catConn = makeConnection(false);
-		try {
+		
+		try ( Connection catConn = makeConnection(false); ) {
 			PreparedStatement prepStmt = 
 				catConn.prepareStatement("SELECT "+DB_QUOTE+"email"+DB_QUOTE+
 				                         " FROM "+DB_QUOTE+"" + REVIEWERS_TABLE_NAME + ""+DB_QUOTE+
 				                         " WHERE "+DB_QUOTE+"username"+DB_QUOTE+" = ?;");
 			prepStmt.setString(1, username);
-			ResultSet results = prepStmt.executeQuery();
-			try {
+			try ( ResultSet results = prepStmt.executeQuery(); ) {
 				while ( results.next() ) {
 					if ( userEmail != null ) 
 						throw new SQLException("More than one e-mail address for " + username);
 					userEmail = results.getString(1);
 				}
-			} finally {
-				results.close();
 			}
-		} finally {
-			catConn.close();
 		}
 		return userEmail;
 	}

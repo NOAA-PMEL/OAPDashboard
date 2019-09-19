@@ -92,13 +92,8 @@ public class UserFileHandler extends VersionedFileHandler {
 			File propFile) throws IllegalArgumentException {
 		// Read the column name to type properties file
 		Properties colProps = new Properties();
-		try {
-			FileReader propsReader = new FileReader(propFile);
-			try {
-				colProps.load(propsReader);
-			} finally {
-				propsReader.close();
-			}
+		try ( FileReader propsReader = new FileReader(propFile); ) {
+			colProps.load(propsReader);
 		} catch (IOException ex) {
 			throw new IllegalArgumentException(ex);
 		}
@@ -150,16 +145,11 @@ public class UserFileHandler extends VersionedFileHandler {
 		String commitMessage = "";
 		// Read the cruise expocodes from the cruise list file
 		HashSet<String> dataIdsSet = new HashSet<String>();
-		try {
-			BufferedReader idsReader = new BufferedReader(new FileReader(userDataFile));
-			try {
-				String datasetId = idsReader.readLine();
-				while ( ! StringUtils.emptyOrNull(datasetId)) {
-					dataIdsSet.add(datasetId);
-					datasetId = idsReader.readLine();
-				}
-			} finally {
-				idsReader.close();
+		try ( BufferedReader idsReader = new BufferedReader(new FileReader(userDataFile)); ) {
+			String datasetId = idsReader.readLine();
+			while ( ! StringUtils.emptyOrNull(datasetId)) {
+				dataIdsSet.add(datasetId);
+				datasetId = idsReader.readLine();
 			}
 		} catch ( FileNotFoundException ex ) {
 			// Return a valid cruise listing with no cruises
@@ -230,13 +220,9 @@ public class UserFileHandler extends VersionedFileHandler {
 			throw new IllegalArgumentException("invalid username");
 		File userDataFile = new File(filesDir, username + USER_CRUISE_LIST_NAME_EXTENSION);
 		// Write the IDs of the datasets in the listing to the file
-		try {
-			PrintWriter idsWriter = new PrintWriter(userDataFile);
-			try {
-				for ( String datasetId : datasetList.keySet() )
-					idsWriter.println(datasetId);
-			} finally {
-				idsWriter.close();
+		try ( PrintWriter idsWriter = new PrintWriter(userDataFile); ) {
+			for ( String datasetId : datasetList.keySet() ) {
+				idsWriter.println(datasetId);
 			}
 		} catch ( Exception ex ) {
 			throw new IllegalArgumentException("Problems saving the dataset listing for " + 
@@ -582,13 +568,8 @@ public class UserFileHandler extends VersionedFileHandler {
 					"," + thisColType.getSelectedMissingValue());
 		}
 		// Save this Properties object to file
-		try {
-			FileWriter propsWriter = new FileWriter(propsFile);
-			try {
-				colProps.store(propsWriter, null);
-			} finally {
-				propsWriter.close();
-			}
+		try ( FileWriter propsWriter = new FileWriter(propsFile); ) {
+			colProps.store(propsWriter, null);
 		} catch (IOException ex) {
 			throw new IllegalArgumentException("Problems saving the data column names to types, units, " +
 					"and missing values file for " + username + "\n" + ex.getMessage());

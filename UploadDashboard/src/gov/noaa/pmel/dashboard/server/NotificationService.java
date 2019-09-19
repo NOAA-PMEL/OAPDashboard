@@ -64,7 +64,7 @@ public class NotificationService extends HttpServlet {
         String location = request.getHeader("Location");
         String docId = location.substring(location.lastIndexOf('/')+1);
         String datasetId = path.substring(1);
-        System.out.println("Notified of update to " + datasetId + " at location: " + location +", path: " + path);
+        System.out.println(new Date() + "Notified of update to " + datasetId + " at location: " + location +", path: " + path);
 //        setupRetrieveMetadataFile(location, datasetId);
         response.getOutputStream().write(("gotcha baby #"+docId+"@"+location).getBytes());
         response.flushBuffer();
@@ -99,7 +99,7 @@ public class NotificationService extends HttpServlet {
 	 * @throws  
      */
     private static void retrieveMetadataFile(String location, String datasetId) throws IOException {
-        System.out.println("Retrieving " + datasetId + " from " + location);
+        System.out.println(new Date() + " Retrieving " + datasetId + " from " + location);
         MetadataFileHandler metaHandler = DashboardConfigStore.get().getMetadataFileHandler();
         File metaFile = metaHandler.getMetadataFile(datasetId);
         HttpClient client = HttpClients.createDefault();
@@ -120,7 +120,7 @@ public class NotificationService extends HttpServlet {
         DataFileHandler df = DashboardConfigStore.get().getDataFileHandler();
         DashboardDataset dataset = df.getDatasetFromInfoFile(datasetId);
         dataset.setMdTimestamp(localTimestamp);
-        String msg = "Updating metadata timestamp on user upload metadata file.";
+        String msg = new Date() + " Updating metadata timestamp on user upload metadata file.";
         System.out.println(msg);
         df.saveDatasetInfoToFile(dataset, msg);
     }

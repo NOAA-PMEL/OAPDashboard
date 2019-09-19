@@ -110,13 +110,8 @@ public class OmePdfGenerator {
 		// Get the full path filename for the PI_OME.pdf file
 		File pdfFile = metadataHandler.getMetadataFile(upperExpo, DashboardUtils.metadataFilename(expocode));
 		// Output stream for the PDF that will be generated
-		BufferedOutputStream pdfOut;
-		try {
-			pdfOut = new BufferedOutputStream(new FileOutputStream(pdfFile));
-		} catch (Exception ex) {
-			throw new IOException("Cannot create a new PDF for the PI-provided OME: " + ex.getMessage());
-		}
-		try {
+			
+		try ( BufferedOutputStream pdfOut = new BufferedOutputStream(new FileOutputStream(pdfFile)); ) {
 			// Get the Fop for converting XSL-FORMAT into PDF to be written to the PDF output stream
 			FOUserAgent foUserAgent;
 			try {
@@ -153,8 +148,8 @@ public class OmePdfGenerator {
 			} catch (Throwable ex) {
 				throw new IOException("Unable to to transform: " + ex.getMessage());
 			}
-		} finally {
-			pdfOut.close();
+		} catch (Exception ex) {
+			throw new IOException("Cannot create a new PDF for the PI-provided OME: " + ex.getMessage());
 		}
 		// Add a properties file for the successfully generated PDF
 		mdata.setFilename(DashboardUtils.metadataFilename(expocode));

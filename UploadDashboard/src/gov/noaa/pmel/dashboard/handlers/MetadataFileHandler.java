@@ -31,6 +31,8 @@ import gov.noaa.pmel.dashboard.server.DashboardConfigStore;
 import gov.noaa.pmel.dashboard.server.DashboardServerUtils;
 import gov.noaa.pmel.dashboard.shared.DashboardMetadata;
 import gov.noaa.pmel.dashboard.shared.DashboardUtils;
+import gov.noaa.pmel.tws.util.FileUtils;
+import gov.noaa.pmel.tws.util.TimeUtils;
 
 /**
  * Handles storage and retrieval of metadata files.
@@ -343,17 +345,12 @@ public class MetadataFileHandler extends VersionedFileHandler {
 		// Get an input stream for source metadata document file
 		File srcFile = getMetadataFile(srcMetadata.getDatasetId(), uploadName);
 		DashboardMetadata mdata;
-		try {
-			FileInputStream src = new FileInputStream(srcFile);
-			try {
-				// Create the metadata document from this input stream
-				// allowing overwrite if permissions permit it
-				mdata = saveMetadataInputStream(destDatasetId, owner, uploadName, 
-						srcMetadata.getUploadTimestamp(), srcMetadata.getVersion(), 
-						src, allowOverwrite);
-			} finally {
-				src.close();
-			}
+		try ( FileInputStream src = new FileInputStream(srcFile); ) {
+			// Create the metadata document from this input stream
+			// allowing overwrite if permissions permit it
+			mdata = saveMetadataInputStream(destDatasetId, owner, uploadName, 
+					srcMetadata.getUploadTimestamp(), srcMetadata.getVersion(), 
+					src, allowOverwrite);
 		} catch (IOException ex) {
 			// file not found; negligible possibility comes from close()
 			throw new IllegalArgumentException("Problems with the metadata source file " + 
@@ -413,14 +410,10 @@ public class MetadataFileHandler extends VersionedFileHandler {
 					"\n    index.html unlikely to be valid");
 		String timestamp = DATETIME_FORMATTER.format(new Date());
 		DashboardMetadata mdata;
-		InputStream src = link.openStream();
-		try {
-			try {
-				mdata = saveMetadataInputStream(datasetId, owner, origName, 
-						timestamp, version, src, allowOverwrite);
-			} finally {
-				src.close();
-			}
+		
+		try ( InputStream src = link.openStream(); ) {
+			mdata = saveMetadataInputStream(datasetId, owner, origName, 
+					timestamp, version, src, allowOverwrite);
 		} catch (IOException ex) {
 			throw new IllegalArgumentException("Unable to read from the URL: " + 
 					urlString + "\n    " + ex.getMessage());
@@ -483,18 +476,12 @@ public class MetadataFileHandler extends VersionedFileHandler {
 		}
 
 		// Copy the metadata document
-		try {
-			FileOutputStream dest = new FileOutputStream(destFile);
-			try {
-				byte[] buff = new byte[4096];
-				int numRead = src.read(buff);
-				while ( numRead > 0 ) {
-					dest.write(buff, 0, numRead);
-					numRead = src.read(buff);
-				}
-			} finally {
-				if ( dest != null )
-					dest.close();
+		try ( FileOutputStream dest = new FileOutputStream(destFile); ) {
+			byte[] buff = new byte[4096];
+			int numRead = src.read(buff);
+			while ( numRead > 0 ) {
+				dest.write(buff, 0, numRead);
+				numRead = src.read(buff);
 			}
 		} catch ( IOException ex ) {
 			throw new IllegalArgumentException(
@@ -574,14 +561,8 @@ public class MetadataFileHandler extends VersionedFileHandler {
 		File metadataFile = getMetadataFile(datasetId, metaname);
 		// Read the properties associated with this metadata document
 		Properties metaProps = new Properties();
-		try {
-			FileReader propsReader = new FileReader(
-					new File(metadataFile.getPath() + INFOFILE_SUFFIX));
-			try {
-				metaProps.load(propsReader);
-			} finally {
-				propsReader.close();
-			}
+		try ( FileReader propsReader = new FileReader(new File(metadataFile.getPath() + INFOFILE_SUFFIX)); ) {
+			metaProps.load(propsReader);
 		} catch ( FileNotFoundException fex ) {
 		    return null;
 		} catch ( IOException ex ) {
@@ -652,13 +633,8 @@ public class MetadataFileHandler extends VersionedFileHandler {
 		metaProps.setProperty(METADATA_VERSION_ID, metadata.getVersion());
 		metaProps.setProperty(METADATA_DOI_ID, metadata.getDOI());
 		// Save the properties to the metadata properties file
-		try {
-			FileWriter propsWriter = new FileWriter(propsFile);
-			try {
-				metaProps.store(propsWriter, null);
-			} finally {
-				propsWriter.close();
-			}
+		try ( FileWriter propsWriter = new FileWriter(propsFile); ) {
+			metaProps.store(propsWriter, null);
 		} catch ( Exception ex ) {
 			throw new IllegalArgumentException("Problems writing metadata information for " + 
 					metadata.getFilename() + " to " + propsFile.getPath() + 
@@ -786,11 +762,13 @@ public class MetadataFileHandler extends VersionedFileHandler {
 							String metaname) throws IllegalArgumentException {
 		File metadataFile = getMetadataFile(datasetId, metaname);
 		File propsFile = new File(metadataFile.getPath() + INFOFILE_SUFFIX);
+        File extractedInfoFile = getAutoExtractedMetadataFile(datasetId);
 		// Do not throw an error if the props file does not exist
 		if ( propsFile.exists() ) { 
 			// Throw an exception if not allowed to overwrite
 			verifyOkayToDelete(username, datasetId, metaname);
 			try {
+                backupFile(propsFile, propsFile.getPath(), "."+TimeUtils.format_ISO_COMPRESSED(new Date())+"_bak");
 				deleteVersionedFile(propsFile, "Deleted metadata properties " + propsFile.getPath());
 			} catch ( Exception ex ) {
 				throw new IllegalArgumentException(
@@ -801,7 +779,18 @@ public class MetadataFileHandler extends VersionedFileHandler {
 		// If the props file does not exist, assume it is okay to delete the metadata file.
 		if ( metadataFile.exists() ) { 
 			try {
+                backupFile(metadataFile, metadataFile.getPath(), "."+TimeUtils.format_ISO_COMPRESSED(new Date())+"_bak");
 				deleteVersionedFile(metadataFile, "Deleted metadata document " + metadataFile.getPath());
+			} catch ( Exception ex ) {
+				throw new IllegalArgumentException(
+						"Unable to delete metadata file " + metadataFile.getPath());
+			}
+		}
+		if ( extractedInfoFile.exists() ) { 
+			try {
+                extractedInfoFile.delete();
+//              backupFile(metadataFile, metadataFile.getPath(), "."+TimeUtils.format_ISO_COMPRESSED(new Date())+"_bak");
+//				deleteVersionedFile(metadataFile, "Deleted metadata document " + metadataFile.getPath());
 			} catch ( Exception ex ) {
 				throw new IllegalArgumentException(
 						"Unable to delete metadata file " + metadataFile.getPath());
@@ -810,6 +799,18 @@ public class MetadataFileHandler extends VersionedFileHandler {
 	}
 
 	/**
+     * @param propsFile
+     * @param path
+     * @param string
+	 * @throws IOException 
+     */
+    private static void backupFile(File file, String filePath, String backupExtension) throws IOException {
+        String dotExtension = backupExtension.startsWith(".") ? backupExtension : "." + backupExtension;
+        File outFile = new File(file.getParent(), file.getName()+dotExtension);
+        FileUtils.copyFile(file, outFile);
+    }
+
+    /**
 	 * Save the OME XML document created by {@link DashboardOmeMetadata#createOmeXmlDoc()} 
 	 * as the document file for this metadata.  The parent directory for this file is 
 	 * expected to exist and this method will overwrite any existing OME metadata file.
@@ -870,12 +871,9 @@ public class MetadataFileHandler extends VersionedFileHandler {
 		try {
 			// Generate the OADS XML 
 			String xml = OADSMetadata.createOadsMetadataXml(mdata);
-			FileOutputStream out = new FileOutputStream(mdataFile);
-			try {
+			try ( FileOutputStream out = new FileOutputStream(mdataFile); ) {
 				out.write(xml.getBytes());
 //				(new XMLOutputter(Format.getPrettyFormat())).output(omeDoc, out);
-			} finally {
-				out.close();
 			}
 		} catch (Exception ex) {
 			throw new IllegalArgumentException( "Problems writing the metadata document: " + ex.getMessage());

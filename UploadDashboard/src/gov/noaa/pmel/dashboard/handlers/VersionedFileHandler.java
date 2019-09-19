@@ -129,7 +129,9 @@ public class VersionedFileHandler {
 					}
 					if ( commitFiles != null ) {
 						if ( (parent != null) && (message != null) ) {
-							try {
+							try ( PrintWriter cmdsWriter = 
+							        new PrintWriter(new FileWriter(
+							            new File(filesDir, SVN_COMMIT_COMMANDS_FILENAME), true)); ) {
 								/*
 								 * TODO: still having issues with the lock still being present
 								 * when committing and adding files to be committed
@@ -143,8 +145,7 @@ public class VersionedFileHandler {
 										SVNRevision.HEAD, SVNDepth.INFINITY, false, false);
 								*/
 								// Or just write the svn commands to file to be dealt with manually
-								PrintWriter cmdsWriter = new PrintWriter(new FileWriter(
-										new File(filesDir, SVN_COMMIT_COMMANDS_FILENAME), true));
+								
 								// Need to fix issues with single quotes in message
 								cmdsWriter.print("svn commit --depth=empty -m '" + message + "'");
 								for ( File svnfile : commitFiles )

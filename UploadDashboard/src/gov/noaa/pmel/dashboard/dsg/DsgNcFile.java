@@ -89,7 +89,7 @@ public abstract class DsgNcFile extends File {
 	 * 		if creating the NetCDF file throws one
 	 */
 	public void create(DsgMetadata metaData, StdUserDataArray userStdData, KnownDataTypes dataFileTypes) 
-			throws IllegalArgumentException, IOException, InvalidRangeException, IllegalAccessException {
+			throws Exception, IllegalArgumentException, IOException, InvalidRangeException, IllegalAccessException {
 		if ( metaData == null )
 			throw new IllegalArgumentException("no metadata given");
 		metadata = metaData;
@@ -128,7 +128,7 @@ public abstract class DsgNcFile extends File {
 	 * 		if creating the NetCDF file throws one
 	 */
 	public abstract void create(DsgMetadata metaData, StdDataArray fileData) 
-		throws IllegalArgumentException, IOException, InvalidRangeException, IllegalAccessException;
+		throws Exception, IllegalArgumentException, IOException, InvalidRangeException, IllegalAccessException;
 	
 	/**
 	 * See {@link java.io.File#File(java.lang.String)}
@@ -254,8 +254,8 @@ public abstract class DsgNcFile extends File {
 		if ( (metadataTypes == null) || metadataTypes.isEmpty() )
 			throw new IllegalArgumentException("no metadata file types given");
 		ArrayList<String> namesNotFound = new ArrayList<String>();
-		NetcdfFile ncfile = NetcdfFile.open(getPath());
-		try {
+		
+		try ( NetcdfFile ncfile = NetcdfFile.open(getPath()); ) {
 			// Create the metadata with default (missing) values
 			metadata = new DsgMetadata(metadataTypes);
 
@@ -299,8 +299,6 @@ public abstract class DsgNcFile extends File {
 					throw new IllegalArgumentException("invalid metadata file type " + dtype.getVarName());
 				}
 			}
-		} finally {
-			ncfile.close();
 		}
 		return namesNotFound;
 	}
@@ -341,8 +339,8 @@ public abstract class DsgNcFile extends File {
 		}
 
 		ArrayList<String> namesNotFound = new ArrayList<String>();
-		NetcdfFile ncfile = NetcdfFile.open(getPath());
-		try {
+		
+		try ( NetcdfFile ncfile = NetcdfFile.open(getPath()); ) {
 			// Get the number of samples from the length of the time 1D array
 			String varName = DashboardServerUtils.TIME.getVarName();
 			Variable var = ncfile.findVariable(varName);
@@ -407,8 +405,6 @@ public abstract class DsgNcFile extends File {
 				}
 			}
 			stddata = new StdDataArray(dataTypesArray, dataArray);
-		} finally {
-			ncfile.close();
 		}
 		return namesNotFound;
 	}
@@ -448,8 +444,8 @@ public abstract class DsgNcFile extends File {
 	public char[] readCharVarDataValues(String varName) 
 								throws IOException, IllegalArgumentException {
 		char[] dataVals;
-		NetcdfFile ncfile = NetcdfFile.open(getPath());
-		try {
+		
+		try ( NetcdfFile ncfile = NetcdfFile.open(getPath()); ) {
 			Variable var = ncfile.findVariable(varName);
 			if ( var == null )
 				throw new IllegalArgumentException("Unable to find variable '" + 
@@ -462,8 +458,6 @@ public abstract class DsgNcFile extends File {
 			dataVals = new char[numVals];
 			for (int k = 0; k < numVals; k++)
 				dataVals[k] = cvar.get(k,0);
-		} finally {
-			ncfile.close();
 		}
 		return dataVals;
 	}
@@ -486,8 +480,8 @@ public abstract class DsgNcFile extends File {
 	public int[] readIntVarDataValues(String varName) 
 								throws IOException, IllegalArgumentException {
 		int[] dataVals;
-		NetcdfFile ncfile = NetcdfFile.open(getPath());
-		try {
+		
+		try ( NetcdfFile ncfile = NetcdfFile.open(getPath()); ) {
 			Variable var = ncfile.findVariable(varName);
 			if ( var == null )
 				throw new IllegalArgumentException("Unable to find variable '" + 
@@ -497,8 +491,6 @@ public abstract class DsgNcFile extends File {
 			dataVals = new int[numVals];
 			for (int k = 0; k < numVals; k++)
 				dataVals[k] = dvar.get(k);
-		} finally {
-			ncfile.close();
 		}
 		return dataVals;
 	}
@@ -522,8 +514,8 @@ public abstract class DsgNcFile extends File {
 	public double[] readDoubleVarDataValues(String varName) 
 								throws IOException, IllegalArgumentException {
 		double[] dataVals;
-		NetcdfFile ncfile = NetcdfFile.open(getPath());
-		try {
+		
+		try ( NetcdfFile ncfile = NetcdfFile.open(getPath()); ) {
 			Variable var = ncfile.findVariable(varName);
 			if ( var == null )
 				throw new IllegalArgumentException("Unable to find variable '" + 
@@ -537,8 +529,6 @@ public abstract class DsgNcFile extends File {
 					value = DashboardUtils.FP_MISSING_VALUE;
 				dataVals[k] = value;
 			}
-		} finally {
-			ncfile.close();
 		}
 		return dataVals;
 	}
@@ -560,8 +550,8 @@ public abstract class DsgNcFile extends File {
 	 */
 	public void updateStringVarValue(String varName, String newValue) 
 		throws IllegalArgumentException, IOException, InvalidRangeException {
-		NetcdfFileWriter ncfile = NetcdfFileWriter.openExisting(getPath());
-		try {
+		
+		try ( NetcdfFileWriter ncfile = NetcdfFileWriter.openExisting(getPath()); ) {
 			Variable var = ncfile.findVariable(varName);
 			if ( var == null ) 
 				throw new IllegalArgumentException("Unable to find variable '" + 
@@ -574,8 +564,6 @@ public abstract class DsgNcFile extends File {
 			ArrayChar.D2 valArray = new ArrayChar.D2(1, varLen);
 			valArray.setString(0, newValue);
 			ncfile.write(var, valArray);
-		} finally {
-			ncfile.close();
 		}
 	}
 
@@ -595,8 +583,8 @@ public abstract class DsgNcFile extends File {
 	 */
 	public void writeCharVarDataValues(String varName, char[] values) 
 								throws IOException, IllegalArgumentException {
-		NetcdfFileWriter ncfile = NetcdfFileWriter.openExisting(getPath());
-		try {
+		
+		try ( NetcdfFileWriter ncfile = NetcdfFileWriter.openExisting(getPath()); ) {
 			Variable var = ncfile.findVariable(varName);
 			if ( var == null )
 				throw new IllegalArgumentException("Unable to find variable '" + 
@@ -618,8 +606,6 @@ public abstract class DsgNcFile extends File {
 			} catch (InvalidRangeException ex) {
 				throw new IllegalArgumentException(ex);
 			}
-		} finally {
-			ncfile.close();
 		}
 	}
 

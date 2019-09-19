@@ -76,8 +76,8 @@ public class TrajectoryDsgFile extends DsgNcFile {
 			throw new IllegalArgumentException("no data sample time found");
         }
 
-		NetcdfFileWriter ncfile = NetcdfFileWriter.createNew(Version.netcdf3, getPath());
-		try {
+		
+		try ( NetcdfFileWriter ncfile = NetcdfFileWriter.createNew(Version.netcdf3, getPath()); ) {
 			// According to the CF standard if a file only has one trajectory, 
 			// then the trajectory dimension is not necessary.
 			// However, who knows what would break downstream from this process without it...
@@ -358,8 +358,6 @@ public class TrajectoryDsgFile extends DsgNcFile {
 			}
 		} catch (Exception ex) {
 		    ex.printStackTrace();
-		} finally {
-			ncfile.close();
 		}
 	}
 

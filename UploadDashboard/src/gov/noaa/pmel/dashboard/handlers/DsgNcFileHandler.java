@@ -92,16 +92,16 @@ public class DsgNcFileHandler {
 		this.knownMetadataTypes = knownMetadataTypes;
 		this.knownDataFileTypes = knownDataFileTypes;
 
-		try {
-			Path dsgFilesDirPath = dsgFilesDir.toPath();
-			watcher = FileSystems.getDefault().newWatchService();
-			dsgFilesDirPath.register(watcher, StandardWatchEventKinds.ENTRY_MODIFY).cancel();
-			watcher.close();
-			watcher = null;
-		} catch (Exception ex) {
-			throw new IllegalArgumentException("Problems creating a watcher for the DSG files directory: " + 
-					ex.getMessage(), ex);
-		}
+//		try {
+//			Path dsgFilesDirPath = dsgFilesDir.toPath();
+//			watcher = FileSystems.getDefault().newWatchService();
+//			dsgFilesDirPath.register(watcher, StandardWatchEventKinds.ENTRY_MODIFY).cancel();
+//			watcher.close();
+//			watcher = null;
+//		} catch (Exception ex) {
+//			throw new IllegalArgumentException("Problems creating a watcher for the DSG files directory: " + 
+//					ex.getMessage(), ex);
+//		}
 	}
 
 	/**
@@ -219,7 +219,7 @@ public class DsgNcFileHandler {
 			}
 
 			// Tell ERDDAP there are changes
-			flagErddap(true);
+			flagErddap();
 		}
 
 	}
@@ -261,16 +261,12 @@ public class DsgNcFileHandler {
 	 * @return
 	 * 		true if successful
 	 */
-	public boolean flagErddap(boolean flagDsg) {
-		try {
-			if ( flagDsg ) {
-				FileOutputStream touchFile = new FileOutputStream(erddapDsgFlagFile);
-				touchFile.close();
-			}
+	public boolean flagErddap() {
+		try ( FileOutputStream touchFile = new FileOutputStream(erddapDsgFlagFile); ) {
+    		return true;
 		} catch (IOException ex) {
 			return false;
 		}
-		return true;
 	}
 
 	/**

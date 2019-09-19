@@ -44,18 +44,13 @@ public class GenerateOrigFileBundles {
 		String idsFilename = args[0];
 
 		TreeSet<String> idsSet = new TreeSet<String>();
-		try {
-			BufferedReader reader = new BufferedReader(new FileReader(idsFilename));
-			try {
-				String dataline = reader.readLine();
-				while ( dataline != null ) {
-					dataline = dataline.trim();
-					if ( ! ( dataline.isEmpty() || dataline.startsWith("#") ) )
-						idsSet.add(dataline);
-					dataline = reader.readLine();
-				}
-			} finally {
-				reader.close();
+		try ( BufferedReader reader = new BufferedReader(new FileReader(idsFilename)); ) {
+			String dataline = reader.readLine();
+			while ( dataline != null ) {
+				dataline = dataline.trim();
+				if ( ! ( dataline.isEmpty() || dataline.startsWith("#") ) )
+					idsSet.add(dataline);
+				dataline = reader.readLine();
 			}
 		} catch (Exception ex) {
 			System.err.println("Error reading dataset IDs from " + idsFilename + ": " + ex.getMessage());

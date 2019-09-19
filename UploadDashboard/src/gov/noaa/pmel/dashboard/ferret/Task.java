@@ -171,11 +171,9 @@ public class Task {
 	 */
 	protected void finish(Process process, long startTime) throws Exception {
 
-		BufferedReader outstream = new BufferedReader(new InputStreamReader(
-				process.getInputStream()));
-		BufferedReader errstream = new BufferedReader(new InputStreamReader(
-				process.getErrorStream()));
-		try {
+		try ( BufferedReader outstream = new BufferedReader(new InputStreamReader(process.getInputStream()));
+        	  BufferedReader errstream = new BufferedReader(new InputStreamReader(process.getErrorStream()));
+		    ) {
 			char[] buffer = new char[1024];
 
 			while (true) {
@@ -187,6 +185,7 @@ public class Task {
 					try {
 						Thread.sleep(10);
 					} catch (InterruptedException ie) {
+                        // ignore
 					}
 
 					// pass along any stdout and stderr
@@ -196,6 +195,7 @@ public class Task {
 							output.append(buffer, 0, charsRead);
 						}
 					} catch (IOException ioe) {
+                        // ignore
 					}
 					try {
 						if (errstream.ready()) {
@@ -203,6 +203,7 @@ public class Task {
 							stderr.append(buffer, 0, charsRead);
 						}
 					} catch (IOException ioe) {
+                        // ignore
 					}
 
 					// check if we have waited too long
@@ -229,6 +230,7 @@ public class Task {
 					output.append(buffer, 0, charsRead);
 				}
 			} catch (IOException ioe) {
+                // ignore
 			}
 			try {
 				while (errstream.ready()) {
@@ -236,14 +238,11 @@ public class Task {
 					stderr.append(buffer, 0, charsRead);
 				}
 			} catch (IOException ioe) {
+                // ignore
 			}
 
 			// check if any error messages were output by the process
 			checkErrors();
-
-		} finally {
-			outstream.close();
-			errstream.close();
 		}
 	}
 
