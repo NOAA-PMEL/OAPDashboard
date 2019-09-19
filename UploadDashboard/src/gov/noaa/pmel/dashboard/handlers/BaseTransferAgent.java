@@ -16,6 +16,7 @@ public abstract class BaseTransferAgent {
     protected final String SPACE = " ";
     private String userid;
     private String host;
+    private String idFileSpecifier;
     private String idFileLocation;
     private String targetDestination;
     
@@ -36,6 +37,15 @@ public abstract class BaseTransferAgent {
             host = ApplicationConfiguration.getProperty("oap.archive."+_protocol.value()+".hostname");
         }
         return host;
+    }
+    
+    protected String getIdFileSpecifier() throws PropertyNotFoundException {
+        if ( idFileSpecifier == null ) {
+            String id_file_flag=ApplicationConfiguration.getProperty("oap.archive."+_protocol.value()+".id_file_flag", "-o");
+            String id_file = getIdFileLocation();
+            idFileSpecifier = id_file_flag + ("-o".equals(id_file_flag) ? "IdentityFile=" : SPACE) + id_file;
+        }
+        return idFileSpecifier;
     }
     protected String getIdFileLocation() throws PropertyNotFoundException {
         if ( idFileLocation == null ) {

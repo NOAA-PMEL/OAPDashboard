@@ -39,8 +39,7 @@ public class SftpTransfer extends BaseTransferAgent implements FileTransferOp {
                    .append(command)
                    .append(" -b - ");
         if ( ! StringUtils.emptyOrNull(idFile)) {
-            transferCmd.append(" -i ")
-                        .append(idFile)
+            transferCmd.append(getIdFileSpecifier())
                         .append(SPACE);
         }
         transferCmd.append(user);
