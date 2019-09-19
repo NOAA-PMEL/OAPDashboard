@@ -7,7 +7,7 @@
 	<ui:style src="FullWidth.css" />
 
 			<g:DockLayoutPanel unit="EM" addStyleNames="{style.fullpagecontainer}" >
-                <g:north size="5"><oap:ApplicationHeaderTemplate ui:field="header"/> </g:north>
+                <g:north size="5" addStyleNames="{style.applicationHeader}"><oap:ApplicationHeaderTemplate ui:field="header"/> </g:north>
 				<g:west size="8">
 					<g:FlowPanel addStyleNames="{style.cruisebuttonspanel}">
 						<g:Button addStyleNames="{style.cruisepanelmainbutton}" ui:field="uploadButton" />

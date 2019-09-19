@@ -6,9 +6,21 @@ body {
 	margin: 0;
 	padding: 0;
 }
+.none {
+	
+}
 .askDialogIcon {
 	height: 32px;
 /* 	width: 32px; */
+}
+.feedbackChoiceBox {
+    float:left;
+    margin: 1em 2em;
+}
+.feedbackTextBox {
+	width: 38em;
+    height: 10em;
+	margin: 1em 2em;
 }
 .fixedwidthcontainer {
 	width: 35em;

@@ -8,9 +8,16 @@
             <g:FlowPanel addStyleNames="{style.pageheader}">
                 <g:Image styleName="{style.headerLogo}" url="images/noaa_logo_50x50.gif" />
                 <g:FlowPanel addStyleNames="{style.headerInfo}">
-                    <g:Button addStyleNames="{style.titlelogoutbutton}" ui:field="logoutButton" />
-                    <g:InlineLabel addStyleNames="{style.headeruserlabel}" ui:field="userInfoLabel" />
                     <g:InlineLabel addStyleNames="{style.headerpagelabel}" ui:field="titleLabel" />
+                    <g:FlowPanel addStyleNames="{style.titleRightGroup}">
+                        <g:InlineLabel addStyleNames="{style.headeruserlabel}" ui:field="userInfoLabel" />
+                        <g:Image url="images/down_arrow_icon.png" addStyleNames="{style.titlePasswordMenuItem}" ui:field="askChangePasswordBtn"/>
+                         <g:FlowPanel ui:field="askPasswdChangePnl" addStyleNames="{style.titleAskPasswordChangePnl}">
+                            <g:Button addStyleNames="{style.titleChangePasswordBtn}" ui:field="changePasswordBtn">Change Password</g:Button>
+                        </g:FlowPanel>
+                        <g:Anchor addStyleNames="{style.titlefeedbackbutton}" ui:field="sendFeedbackButton">Send Feedback</g:Anchor>
+                        <g:Button addStyleNames="{style.titlelogoutbutton}" ui:field="logoutButton" />
+                    </g:FlowPanel>
                     <g:Label addStyleNames="{style.titlereset}" />
                 </g:FlowPanel>
             </g:FlowPanel>
