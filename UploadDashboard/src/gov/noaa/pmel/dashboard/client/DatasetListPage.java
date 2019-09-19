@@ -848,7 +848,8 @@ public class DatasetListPage extends CompositeWithUsername {
 					// Only proceed only if yes button was selected
 					if ( okay ) {
 						// never delete the metadata or supplemental documents
-						continueDeleteDatasets(false);
+                        // why? ? now deleting.
+						continueDeleteDatasets(true);
 					}
 				}
 				@Override
