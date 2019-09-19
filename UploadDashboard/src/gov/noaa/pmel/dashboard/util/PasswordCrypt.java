@@ -29,6 +29,9 @@ public class PasswordCrypt {
         credible.setSaltLength(saltLength);
         credible.setKeyLength(keyLength);
         String creds = credible.mutate(forPassword);
+        if ( ! tomcatPasswdMatches(creds, forPassword)) {
+            throw new GeneralSecurityException("Password generation failure: Match Fail!");
+        }
         return creds;
     }
     
