@@ -389,28 +389,40 @@ public class DataFileHandler extends VersionedFileHandler {
 
 		CSVFormat format = CSVFormat.EXCEL.withIgnoreSurroundingSpaces()
 										  .withIgnoreEmptyLines()
+//                                          .withTrailingDelimiter()
+//                                          .withCommentMarker('#')
 										  .withDelimiter(spacer);
-		CSVParser dataParser = new CSVParser(dataReader, format);
-		try {
+		
+		try ( CSVParser dataParser = new CSVParser(dataReader, format); ) {
 
 			ArrayList<String> columnNames = null;
 			boolean checkForUnits = false;
 			ArrayList<DataColumnType> columnTypes = null;
 			int datasetNameColIdx = -1;
 			String version = null;
+            boolean hasTrailer = false;
 
 			for ( CSVRecord record : dataParser ) {
 
+                if ( isComment(record)) {
+                    continue;
+                }
 				// Still looking for headers?
 				if ( columnNames == null ) {
 					if ( record.size() >= MIN_NUM_DATA_COLUMNS ) {
 						// These could be the column names headers
 						// column names must not be blank or pure numeric
 						boolean isHeader = true;
+                        int fieldNum = 0;
 						for ( String val : record ) {
+                            fieldNum += 1;
 							if ( val.isEmpty() ) {
-								isHeader = false;
-								break;
+                                if ( fieldNum == record.size()) { // last / extra column ignored
+                                    hasTrailer = true;
+                                } else {
+    								isHeader = false;
+    								break;
+                                }
 							}
 							try {
 								Double.parseDouble(val);
@@ -423,10 +435,12 @@ public class DataFileHandler extends VersionedFileHandler {
 						}
 						if ( isHeader ) {
 							// These indeed are the column headers
-							numDataColumns = record.size();
+							numDataColumns = hasTrailer ? record.size() -1 : record.size();
 							columnNames = new ArrayList<String>(numDataColumns);
-							for ( String val : record )
+							for ( String val : record ) {
 								columnNames.add(val);
+							}
+                            
 						}
 						// Check for units in the next record
 						checkForUnits = true;
@@ -435,120 +449,123 @@ public class DataFileHandler extends VersionedFileHandler {
 					continue;
 				}
 
-				// Check that the number of columns is consistent
-				if ( record.size() != numDataColumns )
-					throw new IOException("Inconsistent number of data columns (" + 
-							record.size() + " instead of " + numDataColumns + 
-							") for measurement " + dataParser.getRecordNumber() + ":\n    " +
-							rebuildDataline(record, spacer));
-
-				if ( checkForUnits ) {
-					// The line immediately following the data column names could be units
-					checkForUnits = false;
-					boolean isUnits = true;
-					// A unit specification cannot be pure numeric
-					for ( String val : record ) {
-						try {
-							Double.valueOf(val);
-							isUnits = false;
-							break;
-						} catch (NumberFormatException ex) {
-							// Expected result for a units specification
-							;
-						}
-					}
-					if ( isUnits ) {
-						// Add the units to the column header names 
-						ArrayList<String> namesWithUnits = new ArrayList<String>(numDataColumns);
-						int k = 0;
-						for ( String units : record ) {
-							if ( units.isEmpty() )
-								namesWithUnits.add(columnNames.get(k));
-							else
-								namesWithUnits.add(columnNames.get(k) + " [" + units + "]");
-							k++;
-						}
-						columnNames = namesWithUnits;
-					}
-					
-					// Assign the data column types from the column names (including customizations for this user)
-					DashboardDataset fakeDataset = new DashboardDataset();
-					fakeDataset.setOwner(owner);
-					fakeDataset.setUserColNames(columnNames);
-					DashboardConfigStore configStore;
-					try {
-						configStore = DashboardConfigStore.get(false);
-					} catch ( IOException ex ) {
-						throw new IOException("Unexpected failure to get the dashboard configuration");
-					}
-					configStore.getUserFileHandler().assignDataColumnTypes(fakeDataset, datasetIdColName);
-					columnTypes = fakeDataset.getDataColTypes();
-					int k = 0;
-					for ( DataColumnType dtype : columnTypes ) {
-						if ( ( ! DashboardUtils.isEmptyNull(datasetIdColName) && columnNames.get(k).equalsIgnoreCase(datasetIdColName)) ||
-								DashboardServerUtils.DATASET_NAME.typeNameEquals(dtype) ) {
-							datasetNameColIdx = k;
-							break;
-						} 
-						
-						k++;
-					}
-					if ( datasetNameColIdx < 0 ) {
-						String msg = "Dataset name column not found";
-						if ( ! DashboardUtils.isEmptyNull(datasetIdColName)) {
-							msg += ": " + datasetIdColName;
-						}
-						throw new IOException(msg);
-					}
-
-					// Get the version to record in the datasets
-					version = configStore.getUploadVersion();
-
-					// If this was indeed a line of units, go on to the next line;
-					// otherwise this is the first line of data values to parse
-					if ( isUnits )
-						continue;
-				}
-
-				ArrayList<String> datavals = new ArrayList<String>(numDataColumns);
-				boolean allBlank = true;
-				for ( String val : record ) {
-					datavals.add(val);
-					if ( allBlank && ! val.isEmpty() )
-						allBlank = false;
-				}
-				if ( allBlank ) 
-					continue;
-
-				// Actual data line with values
-				String datasetName = datavals.get(datasetNameColIdx);
-				String datasetId = DashboardServerUtils.getDatasetIDFromName(datasetName);
-				if ( (datasetId.length() < DashboardServerUtils.MIN_DATASET_ID_LENGTH) ||
-					 (datasetId.length() > DashboardServerUtils.MAX_DATASET_ID_LENGTH) ) 
-					throw new IOException("Invalid dataset ID \"" + datasetId + "\" from dataset name \"" + 
-										   datasetName + "\" at record number: " + dataParser.getRecordNumber());
-
-				DashboardDatasetData dataset = datasetsMap.get(datasetId);
-				if ( dataset == null ) {
-					dataset = new DashboardDatasetData();
-					dataset.setDatasetId(datasetId);
-					dataset.setOwner(owner);
-					dataset.setUploadFilename(filename);
-					dataset.setUploadTimestamp(timestamp);
-					dataset.setUserColNames(columnNames);
-					dataset.setDataColTypes(columnTypes);
-					dataset.setVersion(version);
-				}
-				int rowNum = dataset.getNumDataRows();
-				dataset.getRowNums().add(rowNum);
-				dataset.getDataValues().add(datavals);
-                dataset.setNumDataRows(rowNum+1);
-				datasetsMap.put(datasetId, dataset);
-			}
-		} finally {
-			dataParser.close();
+                if ( ! isEndTag(record)) {
+    
+    				if ( checkForUnits ) {
+    					// The line immediately following the data column names could be units
+    					checkForUnits = false;
+    					boolean isUnits = true;
+    					// A unit specification cannot be pure numeric
+    					for ( String val : record ) {
+    						try {
+    							Double.valueOf(val);
+    							isUnits = false;
+    							break;
+    						} catch (NumberFormatException ex) {
+    							// Expected result for a units specification
+    							;
+    						}
+    					}
+    					if ( isUnits ) {
+    						// Add the units to the column header names 
+    						ArrayList<String> namesWithUnits = new ArrayList<String>(numDataColumns);
+    						int k = 0;
+    						for ( String units : record ) {
+    							if ( units.isEmpty() )
+    								namesWithUnits.add(columnNames.get(k));
+    							else
+    								namesWithUnits.add(columnNames.get(k) + " [" + units + "]");
+    							k++;
+    						}
+    						columnNames = namesWithUnits;
+    					}
+    					
+    					// Assign the data column types from the column names (including customizations for this user)
+    					DashboardDataset fakeDataset = new DashboardDataset();
+    					fakeDataset.setOwner(owner);
+    					fakeDataset.setUserColNames(columnNames);
+    					DashboardConfigStore configStore;
+    					try {
+    						configStore = DashboardConfigStore.get(false);
+    					} catch ( IOException ex ) {
+    						throw new IOException("Unexpected failure to get the dashboard configuration");
+    					}
+    					configStore.getUserFileHandler().assignDataColumnTypes(fakeDataset, datasetIdColName);
+    					columnTypes = fakeDataset.getDataColTypes();
+    					int k = 0;
+    					for ( DataColumnType dtype : columnTypes ) {
+    						if ( ( ! DashboardUtils.isEmptyNull(datasetIdColName) && columnNames.get(k).equalsIgnoreCase(datasetIdColName)) ||
+    								DashboardServerUtils.DATASET_NAME.typeNameEquals(dtype) ) {
+    							datasetNameColIdx = k;
+    							break;
+    						} 
+    						
+    						k++;
+    					}
+    					if ( datasetNameColIdx < 0 ) {
+    						String msg = "Dataset name column not found";
+    						if ( ! DashboardUtils.isEmptyNull(datasetIdColName)) {
+    							msg += ": " + datasetIdColName;
+    						}
+    						throw new IOException(msg);
+    					}
+    
+    					// Get the version to record in the datasets
+    					version = configStore.getUploadVersion();
+    
+    					// If this was indeed a line of units, go on to the next line;
+    					// otherwise this is the first line of data values to parse
+    					if ( isUnits )
+    						continue;
+    				}
+    
+    				// Check that the number of columns is consistent
+                    // We don't check the (possible) units row, as it may have empty columns at the end
+    				// which may get trimmed off.
+    				if ( record.size() != numDataColumns ) {
+        					throw new IOException("Inconsistent number of data columns (" + 
+        							record.size() + " instead of " + numDataColumns + 
+        							") for measurement " + dataParser.getRecordNumber() + ":\n    " +
+        							rebuildDataline(record, spacer));
+        			}
+                    
+    				ArrayList<String> datavals = new ArrayList<String>(numDataColumns);
+    				boolean allBlank = true;
+    				for ( String val : record ) {
+    					datavals.add(val);
+    					if ( allBlank && ! val.isEmpty() )
+    						allBlank = false;
+    				}
+    				if ( allBlank ) 
+    					continue;
+    
+    				// Actual data line with values
+    				String datasetName = datavals.get(datasetNameColIdx);
+    				String datasetId = DashboardServerUtils.getDatasetIDFromName(datasetName);
+    				if ( (datasetId.length() < DashboardServerUtils.MIN_DATASET_ID_LENGTH) ||
+    					 (datasetId.length() > DashboardServerUtils.MAX_DATASET_ID_LENGTH) ) 
+    					throw new IOException("Invalid dataset ID \"" + datasetId + "\" from dataset name \"" + 
+    										   datasetName + "\" at record number: " + dataParser.getRecordNumber());
+    
+    				DashboardDatasetData dataset = datasetsMap.get(datasetId);
+    				if ( dataset == null ) {
+    					dataset = new DashboardDatasetData();
+    					dataset.setDatasetId(datasetId);
+    					dataset.setOwner(owner);
+    					dataset.setUploadFilename(filename);
+    					dataset.setUploadTimestamp(timestamp);
+    					dataset.setUserColNames(columnNames);
+    					dataset.setDataColTypes(columnTypes);
+    					dataset.setVersion(version);
+    				}
+    				int rowNum = dataset.getNumDataRows();
+    				dataset.getRowNums().add(rowNum);
+    				dataset.getDataValues().add(datavals);
+                    dataset.setNumDataRows(rowNum+1);
+    				datasetsMap.put(datasetId, dataset);
+    			}
+		    }
 		}
-
 		if ( numDataColumns < MIN_NUM_DATA_COLUMNS )
 			throw new IOException("No data columns found, possibly due to incorrect format");
 		if ( datasetsMap.isEmpty() )
@@ -556,7 +573,23 @@ public class DataFileHandler extends VersionedFileHandler {
 		return datasetsMap;
 	}
 
+    /**
+     * @param record
+     * @return
+     */
+    private static boolean isComment(CSVRecord record) {
+        String firstField = record.get(0);
+        return ( firstField.trim().startsWith("#"));
+    }
+
 	/**
+     * @return
+     */
+    private boolean isEndTag(CSVRecord record) {
+        return ( record.get(0).toUpperCase().contains("END"));
+    }
+
+    /**
 	 * Returns a new DashboardDataset assigned from the dataset information
 	 * file without reading any of the data in dataset data file.
 	 * 
@@ -617,14 +650,9 @@ public class DataFileHandler extends VersionedFileHandler {
 		}
 		// Read the cruise data file
 		File dataFile = datasetDataFile(datasetId);
-		try {
-			BufferedReader cruiseReader = new BufferedReader(new FileReader(dataFile));
-			try {
-				// Assign values from the cruise data file
-				assignDataFromInput(cruiseData, cruiseReader, firstDataRow, numDataRows);
-			} finally {
-				cruiseReader.close();
-			}
+		try ( BufferedReader cruiseReader = new BufferedReader(new FileReader(dataFile)); ) {
+			// Assign values from the cruise data file
+			assignDataFromInput(cruiseData, cruiseReader, firstDataRow, numDataRows);
 		} catch ( FileNotFoundException ex ) {
 			return null;
 		} catch ( IOException ex ) {
@@ -735,13 +763,8 @@ public class DataFileHandler extends VersionedFileHandler {
 				DashboardUtils.encodeQCFlagSet(dataset.getUserFlags()));
 
 		// Save the properties to the cruise information file
-		try {
-			PrintWriter propsWriter = new PrintWriter(infoFile);
-			try {
-				datasetProps.store(propsWriter, null);
-			} finally {
-				propsWriter.close();
-			}
+		try ( PrintWriter propsWriter = new PrintWriter(infoFile); ) {
+			datasetProps.store(propsWriter, null);
 		} catch ( IOException ex ) {
 			throw new IllegalArgumentException("Problems writing dataset information for " + 
 					datasetId + " to " + infoFile.getPath() + ": " + ex.getMessage());
@@ -796,35 +819,30 @@ public class DataFileHandler extends VersionedFileHandler {
 		}
 
 		// Save the data to the data file
-		try {
-			PrintWriter writer = new PrintWriter(dataFile);
-			try {
-				// The data column headers
-				String dataline = "";
-				boolean first = true;
-				for ( String name : dataset.getUserColNames() ) {
+		try ( PrintWriter writer = new PrintWriter(dataFile); ) {
+			// The data column headers
+			String dataline = "";
+			boolean first = true;
+			for ( String name : dataset.getUserColNames() ) {
+				if ( ! first )
+					dataline += TAB;
+				else
+					first = false;
+				dataline += name;
+			}
+			writer.println(dataline);
+			// The data measurements (rows of data)
+			for ( ArrayList<String> datarow : dataset.getDataValues() ) {
+				dataline = "";
+				first = true;
+				for ( String datum : datarow ) {
 					if ( ! first )
 						dataline += TAB;
 					else
 						first = false;
-					dataline += name;
+					dataline += datum;
 				}
 				writer.println(dataline);
-				// The data measurements (rows of data)
-				for ( ArrayList<String> datarow : dataset.getDataValues() ) {
-					dataline = "";
-					first = true;
-					for ( String datum : datarow ) {
-						if ( ! first )
-							dataline += TAB;
-						else
-							first = false;
-						dataline += datum;
-					}
-					writer.println(dataline);
-				}
-			} finally {
-				writer.close();
 			}
 		} catch ( IOException ex ) {
 			throw new IllegalArgumentException("Problems writing dataset data for " + 
@@ -873,56 +891,52 @@ public class DataFileHandler extends VersionedFileHandler {
 		}
 
 		// Save the data to the data file
-		try {
-		    String spacer = "";
-			PrintWriter writer = new PrintWriter(dataFile);
-			try {
-			    String[] userColumns = stdData.getUserColumnNames();
-			    List<DashDataType<?>> dataTypes = stdData.getDataTypes();
-			    List<Integer> columnIndexes = new ArrayList<>();
-				// The data column headers
-				String dataline = "";
-				int idx = 0;
-				for ( String usrName : userColumns ) {
-			        DashDataType<?> colType = dataTypes.get(idx);
-				    if ( columns.contains(usrName)) {
-				        columnIndexes.add(idx);
-					    dataline += spacer;
-					    spacer = COMMA;
-				        String stdName = colType.getStandardName();
-				        if ( stdName.equals(DashboardUtils.STRING_MISSING_VALUE)) {
-				            stdName = usrName ;
-				        } else if ( colType.hasUnits()) {
-				            stdName += " ("+ colType.getUnits().get(0) + ")";
-				        }
-						dataline += stdName;
-				    }
-					idx += 1;
+	    String spacer = "";
+		
+		try ( PrintWriter writer = new PrintWriter(dataFile); ) {
+		    String[] userColumns = stdData.getUserColumnNames();
+		    List<DashDataType<?>> dataTypes = stdData.getDataTypes();
+		    List<Integer> columnIndexes = new ArrayList<>();
+			// The data column headers
+			String dataline = "";
+			int idx = 0;
+			for ( String usrName : userColumns ) {
+		        DashDataType<?> colType = dataTypes.get(idx);
+			    if ( columns.contains(usrName)) {
+			        columnIndexes.add(idx);
+				    dataline += spacer;
+				    spacer = COMMA;
+			        String stdName = colType.getStandardName();
+			        if ( stdName.equals(DashboardUtils.STRING_MISSING_VALUE)) {
+			            stdName = usrName ;
+			        } else if ( colType.hasUnits()) {
+			            stdName += " ("+ colType.getUnits().get(0) + ")";
+			        }
+					dataline += stdName;
+			    }
+				idx += 1;
+			}
+			writer.println(dataline);
+			// The data measurements (rows of data)
+			for (int rowIdx = 0; rowIdx < stdData.getNumSamples(); rowIdx ++ ) {
+				spacer = "";
+				dataline = "";
+				int originalRow = stdData.getOriginalRowIndex(rowIdx);
+				if ( originalRow < 0 || originalRow >= stdData.getNumSamples()) {
+				    originalRow = 0; // XXX
+				}
+				for ( Integer colInt : columnIndexes ) {
+				    int colIdx = colInt.intValue();
+				    DashDataType<?> colType = stdData.getDataTypes().get(colIdx);
+				    Object rawValue = stdData.isStandardized(colIdx) ? 
+					                    String.valueOf(stdData.getStdVal(rowIdx, colIdx)) :
+					                    datasetData.getDataValues().get(originalRow).get(colIdx);
+				    String datum = String.valueOf(DashboardUtils.isEmptyNullOrNull(rawValue) ? colType.missingValue() : rawValue);
+				    dataline += spacer;
+				    spacer = COMMA;
+					dataline += datum;
 				}
 				writer.println(dataline);
-				// The data measurements (rows of data)
-				for (int rowIdx = 0; rowIdx < stdData.getNumSamples(); rowIdx ++ ) {
-					spacer = "";
-					dataline = "";
-					int originalRow = stdData.getOriginalRowIndex(rowIdx);
-					if ( originalRow < 0 || originalRow >= stdData.getNumSamples()) {
-					    originalRow = 0; // XXX
-					}
-					for ( Integer colInt : columnIndexes ) {
-					    int colIdx = colInt.intValue();
-					    DashDataType<?> colType = stdData.getDataTypes().get(colIdx);
-					    Object rawValue = stdData.isStandardized(colIdx) ? 
-						                    String.valueOf(stdData.getStdVal(rowIdx, colIdx)) :
-						                    datasetData.getDataValues().get(originalRow).get(colIdx);
-					    String datum = String.valueOf(DashboardUtils.isEmptyNullOrNull(rawValue) ? colType.missingValue() : rawValue);
-					    dataline += spacer;
-					    spacer = COMMA;
-						dataline += datum;
-					}
-					writer.println(dataline);
-				}
-			} finally {
-				writer.close();
 			}
 		} catch ( IOException ex ) {
 			throw new IllegalArgumentException("Problems writing dataset data for " + 
@@ -1145,7 +1159,7 @@ public class DataFileHandler extends VersionedFileHandler {
 		// If they exist, delete the DSG files and notify ERDDAP
 		DsgNcFileHandler dsgHandler = configStore.getDsgNcFileHandler();
 		if ( dsgHandler.deleteCruise(datasetId) )
-			dsgHandler.flagErddap(true);
+			dsgHandler.flagErddap();
 
 		// If it exists, delete the messages file
 		configStore.getCheckerMsgHandler().deleteMsgsFile(datasetId);
@@ -1179,21 +1193,13 @@ public class DataFileHandler extends VersionedFileHandler {
 				metadataHandler.deleteMetadata(username, datasetId, DashboardUtils.metadataFilename(datasetId));
 			} catch (Exception ex) {
 				// Ignore - may not exist
-				;
 			}
-//			try {
-//				metadataHandler.deleteMetadata(username, datasetId, DashboardUtils.PI_OME_FILENAME);
-//			} catch (Exception ex) {
-//				// Ignore - may not exist
-//				;
-//			}
 			for ( String mdataTitle : dataset.getAddlDocs() ) {
 				String filename = DashboardMetadata.splitAddlDocsTitle(mdataTitle)[0];
 				try {
 					metadataHandler.deleteMetadata(username, datasetId, filename);
 				} catch (Exception ex) {
 					// Ignore
-					;
 				}
 			}
 		}
@@ -1220,11 +1226,9 @@ public class DataFileHandler extends VersionedFileHandler {
 		File infoFile = datasetInfoFile(dataset.getDatasetId());
 		// Get the properties given in this file
 		Properties cruiseProps = new Properties();
-		FileReader infoReader = new FileReader(infoFile);
-		try {
+		
+		try ( FileReader infoReader = new FileReader(infoFile); ) {
 			cruiseProps.load(infoReader);
-		} finally {
-			infoReader.close();
 		}
 
 		// Assign the DashboardDataset from the values in the properties file
@@ -1449,10 +1453,10 @@ public class DataFileHandler extends VersionedFileHandler {
 		ArrayList<ArrayList<String>> dataValues = new ArrayList<ArrayList<String>>();
 		// Create the parser for the data lines
 		CSVFormat format = CSVFormat.EXCEL.withIgnoreSurroundingSpaces()
-				  .withIgnoreEmptyLines()
-				  .withDelimiter('\t');
-		CSVParser dataParser = new CSVParser(datasetReader, format);
-		try {
+                        				  .withIgnoreEmptyLines()
+                        				  .withDelimiter('\t');
+		
+		try ( CSVParser dataParser = new CSVParser(datasetReader, format); ) {
 			int numDataColumns = 0;
 			boolean firstLine = true;
 			int dataRowNum = 0;
@@ -1488,8 +1492,6 @@ public class DataFileHandler extends VersionedFileHandler {
 						break;
 				}
 			}
-		} finally {
-			dataParser.close();
 		}
 
 		datasetData.setRowNums(rowNums);

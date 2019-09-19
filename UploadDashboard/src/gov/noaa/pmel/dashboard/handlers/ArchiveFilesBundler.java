@@ -225,8 +225,8 @@ public class ArchiveFilesBundler extends VersionedFileHandler {
 		// Generate the bundle as a zip file
 		File bundleFile = getBundleFile(stdId);
 		String infoMsg = "Created files bundle " + bundleFile.getName() + " containing files:\n";
-		ZipOutputStream zipOut = new ZipOutputStream(new FileOutputStream(bundleFile));
-		try {
+		
+		try ( ZipOutputStream zipOut = new ZipOutputStream(new FileOutputStream(bundleFile)); ) {
 			copyFileToBundle(zipOut, dataFile);
 			infoMsg += "    " + dataFile.getName() + "\n";
 //			File oadsMetaFile = metadataHandler.getMetadataFile(stdId);
@@ -236,8 +236,6 @@ public class ArchiveFilesBundler extends VersionedFileHandler {
 				copyFileToBundle(zipOut, metaFile);
 				infoMsg += "    " + metaFile.getName() + "\n";
 			}
-		} finally {
-			zipOut.close();
 		}
 
 		// Commit the bundle to version control
@@ -413,13 +411,13 @@ public class ArchiveFilesBundler extends VersionedFileHandler {
 			throw new IOException("No metadata/supplemental documents for " + stdId);
 
 		File bundleFile = getBundleFile(stdId);
-		ZipOutputStream zipOut = new ZipOutputStream(new FileOutputStream(bundleFile));
-		copyFileToBundle(zipOut, dataFile);
-		for ( File metaFile : addlDocs ) {
-			copyFileToBundle(zipOut, metaFile);
-//				infoMsg += "    " + metaFile.getName() + "\n";
+		try ( ZipOutputStream zipOut = new ZipOutputStream(new FileOutputStream(bundleFile)); ) {
+    		copyFileToBundle(zipOut, dataFile);
+    		for ( File metaFile : addlDocs ) {
+    			copyFileToBundle(zipOut, metaFile);
+    //				infoMsg += "    " + metaFile.getName() + "\n";
+    		}
 		}
-		zipOut.close();
 		return bundleFile;
 	}
 
@@ -586,15 +584,15 @@ public class ArchiveFilesBundler extends VersionedFileHandler {
 	 * 		if reading from the data files throws one, or
 	 * 		if writing to the bundle file throws one
 	 */
-	private void copyFileToBundle(ZipOutputStream zipOut, File dataFile) throws IOException {
+	private static void copyFileToBundle(ZipOutputStream zipOut, File dataFile) throws IOException {
 		// Create the entry in the zip file
 		ZipEntry entry = new ZipEntry(dataFile.getName());
 		entry.setTime(dataFile.lastModified());
 		zipOut.putNextEntry(entry);
 
 		// Copy the contents of the data file to the zip file
-		FileInputStream dataIn = new FileInputStream(dataFile);
-		try {
+		
+		try ( FileInputStream dataIn = new FileInputStream(dataFile); ) {
 			byte[] data = new byte[4096];
 			int numRead;
 			while ( true ) {
@@ -603,8 +601,6 @@ public class ArchiveFilesBundler extends VersionedFileHandler {
 					break;
 				zipOut.write(data, 0, numRead);
 			}
-		} finally {
-			dataIn.close();
 		}
 
 		// End this entry

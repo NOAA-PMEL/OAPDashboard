@@ -570,7 +570,7 @@ public class ProfileDsgFile extends DsgNcFile {
 		
 	@Override
 	public void create(DsgMetadata metaData, StdUserDataArray fileData, KnownDataTypes dataTypes) 
-			throws IllegalArgumentException, IOException, InvalidRangeException, IllegalAccessException {
+			throws Exception, IllegalArgumentException, IOException, InvalidRangeException, IllegalAccessException {
 		if ( metaData == null )
 			throw new IllegalArgumentException("no metadata given");
 		metadata = metaData;
@@ -582,8 +582,8 @@ public class ProfileDsgFile extends DsgNcFile {
 		
 		checkIndeces(stddata);
 		
-		NetcdfFileWriter ncfile = NetcdfFileWriter.createNew(Version.netcdf3, getPath());
-		try {
+		
+		try ( NetcdfFileWriter ncfile = NetcdfFileWriter.createNew(Version.netcdf3, getPath()); ) {
 			_casts = CastSet.extractCastSetsFrom(_stdUser);
 			
 			createDimensions(ncfile);
@@ -602,15 +602,6 @@ public class ProfileDsgFile extends DsgNcFile {
 			writeMetadataVariables(ncfile);
 			writeProfileVariables(ncfile);
 			writeObservationVariables(ncfile);
-			
-		} catch (Exception ex) {
-			ex.printStackTrace();
-		} finally {
-			try {
-				ncfile.close();
-			} catch (Exception ex) { // Can throw NPE if failure occurs before create()
-				System.err.println(ex);
-			}
 		}
 	}
 	

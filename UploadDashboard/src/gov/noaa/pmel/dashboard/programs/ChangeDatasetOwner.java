@@ -55,37 +55,32 @@ public class ChangeDatasetOwner {
 
 			// Get the IDs and new owners of the datasets to update
 			TreeMap<String,String> idOwnerMap = new TreeMap<String,String>();
-			try {
-				BufferedReader idOwnerReader = new BufferedReader(new FileReader(idOwnerFilename));
-				try {
-					String dataline = idOwnerReader.readLine();
-					while ( dataline != null ) {
-						dataline = dataline.trim();
-						if ( dataline.isEmpty() || dataline.startsWith("#") )
-							continue;
-						String[] tokens = dataline.split("\\s+");
-						if ( tokens.length != 2 ) {
-							System.err.println("Unable to get dataset ID and new owner from: " + dataline);
-							System.exit(1);
-						}
-						if ( ! configStore.validateUser(tokens[1]) ) {
-							System.err.println("Invalid dashboard username given in: " + dataline);
-							System.exit(1);
-						}
-						try {
-							String stdId = DashboardServerUtils.checkDatasetID(tokens[0]);
-							if ( idOwnerMap.put(stdId, tokens[1]) != null ) {
-								System.err.println("More than one owner specified for " + stdId);
-								System.exit(1);
-							}
-						} catch (Exception ex) {
-							System.err.println("Invalid dataset ID given in: " + dataline);
-							System.exit(1);
-						}
-						dataline = idOwnerReader.readLine();
+			try ( BufferedReader idOwnerReader = new BufferedReader(new FileReader(idOwnerFilename)); ) {
+				String dataline = idOwnerReader.readLine();
+				while ( dataline != null ) {
+					dataline = dataline.trim();
+					if ( dataline.isEmpty() || dataline.startsWith("#") )
+						continue;
+					String[] tokens = dataline.split("\\s+");
+					if ( tokens.length != 2 ) {
+						System.err.println("Unable to get dataset ID and new owner from: " + dataline);
+						System.exit(1);
 					}
-				} finally {
-					idOwnerReader.close();
+					if ( ! configStore.validateUser(tokens[1]) ) {
+						System.err.println("Invalid dashboard username given in: " + dataline);
+						System.exit(1);
+					}
+					try {
+						String stdId = DashboardServerUtils.checkDatasetID(tokens[0]);
+						if ( idOwnerMap.put(stdId, tokens[1]) != null ) {
+							System.err.println("More than one owner specified for " + stdId);
+							System.exit(1);
+						}
+					} catch (Exception ex) {
+						System.err.println("Invalid dataset ID given in: " + dataline);
+						System.exit(1);
+					}
+					dataline = idOwnerReader.readLine();
 				}
 			} catch (Exception ex) {
 				System.err.println("Error getting dataset IDs and new owners from " + 

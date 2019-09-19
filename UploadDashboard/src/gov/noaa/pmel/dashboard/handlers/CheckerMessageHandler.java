@@ -190,14 +190,8 @@ public class CheckerMessageHandler {
 		File parentFile = msgsFile.getParentFile();
 		if ( ! parentFile.exists() )
 			parentFile.mkdirs();
-		PrintWriter msgsWriter;
-		try {
-			msgsWriter = new PrintWriter(msgsFile);
-		} catch (FileNotFoundException ex) {
-			throw new RuntimeException("Unexpected error opening messages file " + 
-					msgsFile.getPath() + "\n    " + ex.getMessage(), ex);
-		}
-		try {
+			
+		try ( PrintWriter msgsWriter = new PrintWriter(msgsFile); ) {
 
 			TreeMap<String,Integer> errorCnt = new TreeMap<String,Integer>();
 			TreeMap<String,Integer> warnCnt = new TreeMap<String,Integer>();
@@ -343,8 +337,9 @@ public class CheckerMessageHandler {
 
 			dataset.setCheckerFlags(woceFlags);
 
-		} finally {
-			msgsWriter.close();
+		} catch (FileNotFoundException ex) {
+			throw new RuntimeException("Unexpected error opening messages file " + 
+					msgsFile.getPath() + "\n    " + ex.getMessage(), ex);
 		}
 
 		// Assign any user-provided QC flags.

@@ -136,7 +136,7 @@ public class RegenerateDsgs {
 	 * Flag ERDDAP that the full-data and decimated-data DSG files have changed
 	 */
 	public void flagErddap() {
-		dsgHandler.flagErddap(true);
+		dsgHandler.flagErddap();
 	}
 
 	/**
@@ -164,18 +164,13 @@ public class RegenerateDsgs {
 
 		// Get the IDs of the datasets to update
 		TreeSet<String> idsSet = new TreeSet<String>();
-		try {
-			BufferedReader idsReader = new BufferedReader(new FileReader(idsFilename));
-			try {
-				String dataline = idsReader.readLine();
-				while ( dataline != null ) {
-					dataline = dataline.trim();
-					if ( ! ( dataline.isEmpty() || dataline.startsWith("#") ) )
-						idsSet.add(dataline);
-					dataline = idsReader.readLine();
-				}
-			} finally {
-				idsReader.close();
+		try ( BufferedReader idsReader = new BufferedReader(new FileReader(idsFilename)); ) {
+			String dataline = idsReader.readLine();
+			while ( dataline != null ) {
+				dataline = dataline.trim();
+				if ( ! ( dataline.isEmpty() || dataline.startsWith("#") ) )
+					idsSet.add(dataline);
+				dataline = idsReader.readLine();
 			}
 		} catch (Exception ex) {
 			System.err.println("Error reading dataset IDs from " + idsFilename + ": " + ex.getMessage());

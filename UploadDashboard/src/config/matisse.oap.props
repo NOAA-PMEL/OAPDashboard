@@ -1,7 +1,22 @@
 #
 # definitions and overrides when running on machine matisse
 #
-# metadata_editor.url=http://matisse:8080/OAPMetadataEditor/OAPMetadataEditor.html
-# metadata_editor.post.url=matisse=http://matisse:8080/OAPMetadataEditor/document/postit
-oap.env=localhost
+
+# for debuging / changing config files
+# remove for production or change to PERIODIC
+config.reload.policy=ALWAYS
+
+oap.archive.sftp.id_file_flag=-i
+oap.archive.sftp.id_file=/Users/kamb/.ssh/oap-key-rsa
+
+# metadata_editor.url=http://localhost:8383/oap/OAPMetadataEditor.html
+# metadata_editor.post.url=http://localhost:8383/oap/document/postit
+metadata_editor.url=http://matisse:8080/oa/MetadataEditor/OAPMetadataEditor.html
+metadata_editor.post.url=http://matisse:8080/oa/MetadataEditor/document/postit
+# oap.env=localhost
+
+oap.email.password=wdmwoceljmvecbct
+oap.archive.notification.list=linus.kamb@noaa.gov
+#,john.relph@noaa.gov
+
 

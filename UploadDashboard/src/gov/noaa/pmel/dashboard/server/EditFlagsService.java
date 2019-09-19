@@ -107,17 +107,15 @@ public class EditFlagsService extends HttpServlet {
         }
         
         StringBuilder mbuf = new StringBuilder();
-        BufferedReader reader = request.getReader();
+        
         String postMsg;
         JsonObject jsonMsg;
-        try {
+        try ( BufferedReader reader = request.getReader(); ) {
 	        postMsg = reader.lines().collect(Collectors.joining());
         } catch (Exception ex) {
             logger.warn("Error reading POST data.", ex);
             response.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Error reading POST data.");
             return;
-        } finally {
-            reader.close();
         }
         try {
 	        jsonMsg = (JsonObject) new JsonParser().parse(postMsg);
@@ -187,7 +185,7 @@ public class EditFlagsService extends HttpServlet {
         DsgMetadata dsgMData = oadsMd.createDsgMetadata();
         dsgMData.setVersion("1.0");
         dsgHandler.saveDatasetDsg(dsgMData, stdUsr);
-        dsgHandler.flagErddap(true);
+        dsgHandler.flagErddap();
     }
 
     private static int getColumnIdx(String qcFlagName, StdUserDataArray preStdUsr, DashboardDatasetData ddd) {

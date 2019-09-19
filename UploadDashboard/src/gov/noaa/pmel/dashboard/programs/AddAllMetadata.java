@@ -42,18 +42,13 @@ public class AddAllMetadata {
 
 		// Get the IDs of the datasets to update
 		TreeSet<String> idsSet = new TreeSet<String>();
-		try {
-			BufferedReader idsReader = new BufferedReader(new FileReader(idsFilename));
-			try {
-				String dataline = idsReader.readLine();
-				while ( dataline != null ) {
-					dataline = dataline.trim();
-					if ( ! ( dataline.isEmpty() || dataline.startsWith("#") ) )
-						idsSet.add(dataline);
-					dataline = idsReader.readLine();
-				}
-			} finally {
-				idsReader.close();
+		try ( BufferedReader idsReader = new BufferedReader(new FileReader(idsFilename)); ) {
+			String dataline = idsReader.readLine();
+			while ( dataline != null ) {
+				dataline = dataline.trim();
+				if ( ! ( dataline.isEmpty() || dataline.startsWith("#") ) )
+					idsSet.add(dataline);
+				dataline = idsReader.readLine();
 			}
 		} catch (Exception ex) {
 			System.err.println("Error reading dataset IDs from " + idsFilename + ": " + ex.getMessage());
