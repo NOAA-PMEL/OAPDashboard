@@ -12,7 +12,6 @@ import org.apache.logging.log4j.Logger;
 
 import gov.noaa.pmel.tws.util.ApplicationConfiguration;
 import gov.noaa.pmel.tws.util.ApplicationConfiguration.PropertyNotFoundException;
-import gov.noaa.pmel.tws.util.Logging;
 import gov.noaa.pmel.tws.util.process.CommandRunner;
 
 /**
@@ -21,6 +20,8 @@ import gov.noaa.pmel.tws.util.process.CommandRunner;
  */
 public class FileXferService {
 
+    private static Logger logger = LogManager.getLogger(FileXferService.class);
+    
     private XFER_PROTOCOL _protocol;
     private FileTransferOp _transferOp;
     
@@ -43,10 +44,11 @@ public class FileXferService {
      * @param archiveBundle
      * @param userRealName
      * @param userEmail
+     * @throws Exception 
      */
-    public static void putArchiveBundle(String stdId, File archiveBundle, String userRealName, String userEmail) {
+    public static int putArchiveBundle(String stdId, File archiveBundle, String userRealName, String userEmail) throws Exception {
         System.out.println("Submitting " + stdId + " archive bundle " + archiveBundle + " to FTP site." );
-        new FileXferService().submitArchiveBundle(stdId, archiveBundle, userRealName, userEmail);
+        return new FileXferService().submitArchiveBundle(stdId, archiveBundle, userRealName, userEmail);
     }
 
     public FileXferService(XFER_PROTOCOL protocol) {
@@ -75,18 +77,38 @@ public class FileXferService {
         }
     }
 
-    public void submitArchiveBundle(String stdId, File archiveBundle, String userRealName, String userEmail) {
-        try {
+    public int submitArchiveBundle(String stdId, File archiveBundle, String userRealName, String userEmail) throws Exception {
+//        try {
             String command = _transferOp.getTransferCommand(archiveBundle);
+            logger.debug("xfer cmd: " + command);
             CommandRunner runner = new CommandRunner(command);
-            runner.runCommand();
-        } catch (PropertyNotFoundException pex) {
-            pex.printStackTrace();
-        } catch (Exception ex) {
-            ex.printStackTrace();
-        }
+            int exitStatus = runner.runCommand();
+            if ( exitStatus == 0 ) {
+                exitStatus = submitHash(archiveBundle);
+            }
+            return exitStatus;
+//        } catch (PropertyNotFoundException pex) {
+//            pex.printStackTrace();
+//        } catch (Exception ex) {
+//            ex.printStackTrace();
+//        }
     }
         
+    /**
+     * @param archiveBundle
+     * @return
+     */
+    private int submitHash(File archiveBundle) throws Exception {
+        String fname = archiveBundle.getName();
+        String fbase = fname.substring(0, fname.lastIndexOf('.'));
+        File hashFile = new File(archiveBundle.getParentFile(), fbase+"-sha256.txt");
+        String command = _transferOp.getTransferCommand(hashFile);
+        logger.debug("xfer cmd: " + command);
+        CommandRunner runner = new CommandRunner(command);
+        int exitStatus = runner.runCommand();
+        return exitStatus;
+    }
+
     public static void main(String[] args) {
         try {
             File archiveBundle = new File("/local/tomcat/oap_content/OAPUploadDashboard/MetadataDocs/NEMO/NEMOPRE052012/extracted_NEMOPRE052012_OADS.xml");
