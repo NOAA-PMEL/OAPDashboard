@@ -8,6 +8,7 @@ import java.io.FileInputStream;
 import java.io.FileReader;
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.URLDecoder;
 import java.nio.file.FileSystems;
 import java.nio.file.Path;
 import java.nio.file.StandardWatchEventKinds;
@@ -138,7 +139,6 @@ public class DashboardConfigStore {
     private static File appContentDir;
 
 	private TripleDesCipher cipher;
-	private String encryptionSalt;
 	// Map of username to user info
 	private HashMap<String,DashboardUserInfo> userInfoMap;
 	private String uploadVersion;
@@ -167,15 +167,32 @@ public class DashboardConfigStore {
 	private WatchService watcher;
 	private boolean needToRestart;
 
+    public static File getWebappDir() {
+        File webappDir;
+        String serverAppName;
+        File webAppSubDir = new File(DashboardConfigStore.class.getProtectionDomain().getCodeSource().getLocation().getPath());
+        do {
+            webAppSubDir = webAppSubDir.getParentFile();
+            serverAppName = webAppSubDir.getName();
+        } while ( ! serverAppName.equals("WEB-INF") );
+        webAppSubDir = webAppSubDir.getParentFile();
+        String dirName = webAppSubDir.getAbsolutePath();
+        try {
+            dirName = URLDecoder.decode(dirName, "utf8");
+        } catch (Exception ex) {
+            logger.warn(ex,ex);
+            dirName = webAppSubDir.getAbsolutePath();
+        }
+        webappDir = new File(dirName);
+        return webappDir;
+    }
     public static File getAppContentDir() throws PropertyNotFoundException {
         if ( appContentDir == null ) {
     		String baseDir = getBaseDir();
     
     		// First check is UPLOAD_DASHBOARD_SERVER_NAME is defined for alternate configurations 
     		// when running the dashboard.program.* applications
-    		String serverAppName = System.getenv("UPLOAD_DASHBOARD_SERVER_NAME");
-    		if ( serverAppName == null )
-    			serverAppName = System.getProperty("UPLOAD_DASHBOARD_SERVER_NAME");
+    		String serverAppName = tryProperty("UPLOAD_DASHBOARD_SERVER_NAME");
     		if ( serverAppName == null ) {
     			// Get the app name from the location of this class source in tomcat;
     			// e.g., "/home/users/tomcat/webapps/SocatUploadDashboard/WEB-INF/classes/gov/noaa/pmel/dashboard/server/DashboardConfigStore.class"
@@ -317,22 +334,6 @@ public class DashboardConfigStore {
 					ex.getMessage() + "\n" + CONFIG_FILE_INFO_MSG);
 		}
 
-		// Read the salt string from the data store
-		try {
-			propVal = configProps.getProperty(ENCRYPTION_SALT_NAME_TAG);
-			if ( propVal == null )
-				throw new IllegalArgumentException("value not defined");
-			propVal = propVal.trim();
-			if ( propVal.length() < 16 )
-				throw new IllegalArgumentException(
-						"string must have 16 or more characters");
-			encryptionSalt = propVal;
-		} catch ( Exception ex ) {
-			throw new IOException("Invalid " + ENCRYPTION_SALT_NAME_TAG + 
-					" value specified in " + configFile.getPath() + "\n" + 
-					ex.getMessage() + "\n" + CONFIG_FILE_INFO_MSG);
-		}
-
 		// Read the SOCAT versions
 		try {
 			propVal = configProps.getProperty(UPLOAD_VERSION_NAME_TAG);
@@ -399,11 +400,11 @@ public class DashboardConfigStore {
 					" value specified in " + configFile.getPath() + "\n" + 
 					ex.getMessage() + "\n" + CONFIG_FILE_INFO_MSG);
 		}
-		if ( logger.isInfoEnabled() ) {
+		if ( logger.isDebugEnabled() ) {
 			logger.info("Known user-provided data types: ");
 			TreeSet<DashDataType<?>> knownTypes = knownUserDataTypes.getKnownTypesSet();
 			for ( DashDataType<?> dtype : knownTypes )
-				logger.info("    " + dtype.getVarName() + "=" + dtype.toPropertyValue());			
+				logger.debug("    " + dtype.getVarName() + "=" + dtype.toPropertyValue());			
 		}
 
 		try {
@@ -623,7 +624,7 @@ public class DashboardConfigStore {
 		} catch ( Exception ex ) {
 			throw new IOException("Invalid " + DATABASE_CONFIG_FILE_NAME_TAG + 
 					" value specified in " + configFile.getPath() + "\n" + 
-					ex.getMessage() + "\n" + CONFIG_FILE_INFO_MSG);
+					ex.getMessage() + "\n" + CONFIG_FILE_INFO_MSG, ex);
 		}
 
 		// SanityChecker initialization from this same properties file 
@@ -698,11 +699,17 @@ public class DashboardConfigStore {
         }
         return propertyValue;
     }
-	private String getPreviewDirName(String baseDir, String serverAppName) {
+	private static String getPreviewDirName(String baseDir, String serverAppName) {
 		
 		String dirname = tryProperty("PREVIEW_DIR");
 		if ( dirname == null ) {
-			dirname = baseDir + "webapps" + File.separator + serverAppName + File.separator + "preview" + File.separator;
+            File contextDir = getWebappDir();
+            try {
+                dirname = new File(contextDir, "preview").getCanonicalPath();
+            } catch (Exception ex) {
+                logger.warn(ex.toString());
+    			dirname = baseDir + "webapps" + File.separator + serverAppName + File.separator + "preview" + File.separator;
+            }
 		}
 		return dirname;
 	}
@@ -993,7 +1000,7 @@ public class DashboardConfigStore {
 	public DatasetChecker getDashboardDatasetChecker(FeatureType featureType) {
 		DatasetChecker datasetChecker;
         switch (featureType) {
-            case OPAQUE:
+            case OTHER:
                 datasetChecker = opaqueDatasetChecker;
                 break;
             case PROFILE:
