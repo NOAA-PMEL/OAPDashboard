@@ -7,7 +7,6 @@ import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-import com.gargoylesoftware.htmlunit.javascript.host.Console;
 import com.google.gwt.core.client.EntryPoint;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.Document;
@@ -21,7 +20,6 @@ import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.logging.client.ConsoleLogHandler;
 import com.google.gwt.safehtml.shared.SafeHtmlUtils;
 import com.google.gwt.user.client.History;
-import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.google.gwt.user.client.ui.Button;
 import com.google.gwt.user.client.ui.HTML;
@@ -104,6 +102,9 @@ public class UploadDashboard implements EntryPoint, ValueChangeHandler<String> {
     
 	private DashboardBlankPagePopup blankMsgPopup;
 
+    private DashboardFeedbackPopup feedbackPopup;
+    private ChangePasswordPopup changePasswordPopup;
+    
 	/**
 	 * Create the manager for the UploadDashboard pages.
 	 * Do not use this constructor; instead use the static
@@ -124,6 +125,17 @@ public class UploadDashboard implements EntryPoint, ValueChangeHandler<String> {
 		singleton = this;
 	}
 
+    private static boolean DEBUG = true;
+    public static void debugLog(String msg) {
+        if ( DEBUG ) {
+            logToConsole(msg);
+        }
+    }
+    static native void logToConsole(String msg) /*-{
+        console.log(msg);
+    }-*/;
+
+ 
 	/**
 	 * Shows the message in a popup panel centered on the page.
 	 * 
@@ -258,7 +270,7 @@ public class UploadDashboard implements EntryPoint, ValueChangeHandler<String> {
 	 * 		exception whose message is to be shown
 	 */
 	public static void showFailureMessage(String htmlMsg, Throwable ex) {
-		String exceptMsg = ex.getMessage();
+		String exceptMsg = ex != null ? ex.getMessage() : null;
 		if ( exceptMsg == null )
 			exceptMsg = htmlMsg;
 		else
@@ -502,6 +514,84 @@ public class UploadDashboard implements EntryPoint, ValueChangeHandler<String> {
     public static void closeLoginPopup() {
         logger.info("Closing login popup");
         singleton.blankMsgPopup.dismiss();
+    }
+    /**
+     * 
+     */
+    public static void showFeedbackPopup() {
+		if ( singleton == null )
+			singleton = new UploadDashboard();
+		if ( singleton.feedbackPopup == null ) {
+			singleton.feedbackPopup = new DashboardFeedbackPopup(new AsyncCallback<Boolean>() {
+                @Override
+                public void onSuccess(Boolean sendIt) {
+                    if ( sendIt.booleanValue()) {
+                        service.submitFeedback(singleton.currentPage.getUsername(), 
+                                             singleton.feedbackPopup.getFeedbackType(),
+                                             singleton.feedbackPopup.getMessage(), new AsyncCallback<Void>() {
+                            @Override
+                            public void onFailure(Throwable arg0) {
+                                GWT.log("send feedback failed: " + arg0);
+                            }
+
+                            @Override
+                            public void onSuccess(Void arg0) {
+                                GWT.log("send feedback success:" + arg0);
+                            }
+                        });
+                    } else {
+                        GWT.log("feedback cancelled");
+                    }
+                }
+                @Override
+                public void onFailure(Throwable arg0) {
+                    GWT.log("Feedback failure: " + arg0);
+                }
+            });
+		}
+        singleton.feedbackPopup.reset();
+		singleton.feedbackPopup.show();
+    }
+    public static void showChangePasswordPopup() {
+		if ( singleton == null )
+			singleton = new UploadDashboard();
+		if ( singleton.changePasswordPopup == null ) {
+			singleton.changePasswordPopup = new ChangePasswordPopup(new AsyncCallback<Boolean>() {
+                @Override
+                public void onSuccess(Boolean sendIt) {
+                    if ( sendIt.booleanValue()) {
+                        service.changePassword(singleton.currentPage.getUsername(), 
+                                               singleton.changePasswordPopup.getCurrentPassword(),
+                                               singleton.changePasswordPopup.getNewPassword(), new AsyncCallback<Boolean>() {
+                            @Override
+                            public void onFailure(Throwable arg0) {
+                                GWT.log("Change Password failed: " + arg0);
+                                showFailureMessage("There was an error changing your password.", arg0);
+                            }
+
+                            @Override
+                            public void onSuccess(Boolean changed) {
+                                GWT.log("Change Password success:" + changed);
+                                if ( changed.booleanValue()) {
+                                    showMessage("Password changed.");
+                                } else {
+                                    showFailureMessage("Failed to change password.", null);
+                                }
+                            }
+                        });
+                    } else {
+                        GWT.log("Change Password cancelled");
+                    }
+                }
+                @Override
+                public void onFailure(Throwable arg0) {
+                    GWT.log("Change Password failure: " + arg0);
+                    showFailureMessage("There was a service error changing your password.", arg0);
+                }
+            });
+		}
+        singleton.changePasswordPopup.reset();
+		singleton.changePasswordPopup.show(singleton.currentPage.getUsername());
     }
 
 }
