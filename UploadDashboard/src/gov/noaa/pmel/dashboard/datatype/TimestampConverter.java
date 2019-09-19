@@ -45,6 +45,7 @@ public class TimestampConverter extends ValueConverter<String> {
 		SUPPORTED_FROM_UNITS.add("from \"dd-mon-yy\" to \"yyyy-mm-dd\"");
 		// time only
 		SUPPORTED_FROM_UNITS.add("from \"hh:mm:ss\" to \"hh:mm:ss\"");
+		SUPPORTED_FROM_UNITS.add("from \"hh:mm\" to \"hh:mm:ss\"");
 
 		// recognized month names
 		MONTH_NAMES_MAP = new TreeMap<String,Integer>(String.CASE_INSENSITIVE_ORDER);
@@ -209,7 +210,7 @@ public class TimestampConverter extends ValueConverter<String> {
 						pieces[2] = valueString.substring(6);
 					}
 					else
-						throw new Exception();
+						throw new IllegalArgumentException("Invalid date string " + valueString + " for given format: " + fromUnit);
 				}
 				year = Integer.valueOf(pieces[0]);
 				month = Integer.valueOf(pieces[1]);
@@ -232,7 +233,7 @@ public class TimestampConverter extends ValueConverter<String> {
 						pieces[2] = valueString.substring(4);
 					}
 					else
-						throw new Exception();
+						throw new IllegalArgumentException("Invalid date string " + valueString + " for given format: " + fromUnit);
 				}
 				month = Integer.valueOf(pieces[0]);
 				day = Integer.valueOf(pieces[1]);
@@ -255,7 +256,7 @@ public class TimestampConverter extends ValueConverter<String> {
 						pieces[2] = valueString.substring(4);
 					}
 					else
-						throw new Exception();
+						throw new IllegalArgumentException("Invalid date string " + valueString + " for given format: " + fromUnit);
 				}
 				day = Integer.valueOf(pieces[0]);
 				month = Integer.valueOf(pieces[1]);
@@ -267,7 +268,9 @@ public class TimestampConverter extends ValueConverter<String> {
 			}
 		}
 		else if ( "dd-mon-yyyy".equalsIgnoreCase(fromUnit) || 
-				  "dd-mon-yyyy hh:mm:ss".equalsIgnoreCase(fromUnit) ) {
+                  "dd-mon-yy".equalsIgnoreCase(fromUnit) || 
+				  "dd-mon-yyyy hh:mm:ss".equalsIgnoreCase(fromUnit) ||
+				  "dd-mon-yy hh:mm:ss".equalsIgnoreCase(fromUnit) ) {
 			try {
 				String[] pieces = DATE_SPLIT_PATTERN.split(valueString, 0);
 				if ( pieces.length != 3 ) {
@@ -294,11 +297,18 @@ public class TimestampConverter extends ValueConverter<String> {
 						pieces[2] = valueString.substring(yearIdx);
 					}
 					else
-						throw new Exception();
+						throw new IllegalArgumentException("Invalid date string " + valueString + " for given format: " + fromUnit);
 				}
 				day = Integer.valueOf(pieces[0]);
 				month = MONTH_NAMES_MAP.get(pieces[1]);
 				year = Integer.valueOf(pieces[2]);
+                if ( pieces[2].length() == 2) {
+    				int century = currYear / 100;
+    				year += century * 100;
+    				if ( year > currYear ) {
+    					year -= 100;
+    				}
+                }
 			} catch ( Exception ex ) {
 				day = -1;
 				month = -1;
@@ -324,7 +334,7 @@ public class TimestampConverter extends ValueConverter<String> {
 						pieces[2] = valueString.substring(dayIdx+2);
 					}
 					else
-						throw new Exception();
+						throw new IllegalArgumentException("Invalid date string " + valueString + " for given format: " + fromUnit);
 				}
 				month = MONTH_NAMES_MAP.get(pieces[0]);
 				day = Integer.valueOf(pieces[1]);
@@ -347,7 +357,7 @@ public class TimestampConverter extends ValueConverter<String> {
 						pieces[2] = valueString.substring(4);
 					}
 					else {
-						throw new Exception();
+						throw new IllegalArgumentException("Invalid date string " + valueString + " for given format: " + fromUnit);
 					}
 				}
 				month = Integer.valueOf(pieces[0]);
@@ -375,7 +385,7 @@ public class TimestampConverter extends ValueConverter<String> {
 						pieces[2] = valueString.substring(4);
 					}
 					else {
-						throw new Exception();
+						throw new IllegalArgumentException("Invalid date string " + valueString + " for given format: " + fromUnit);
 					}
 				}
 				day = Integer.valueOf(pieces[0]);
@@ -419,7 +429,7 @@ public class TimestampConverter extends ValueConverter<String> {
 						pieces[2] = valueString.substring(yearIdx);
 					}
 					else
-						throw new Exception();
+						throw new IllegalArgumentException("Invalid date string " + valueString + " for given format: " + fromUnit);
 				}
 				day = Integer.valueOf(pieces[0]);
 				month = MONTH_NAMES_MAP.get(pieces[1]);
@@ -453,7 +463,7 @@ public class TimestampConverter extends ValueConverter<String> {
 						pieces[2] = valueString.substring(dayIdx+2);
 					}
 					else
-						throw new Exception();
+						throw new IllegalArgumentException("Invalid date string " + valueString + " for given format: " + fromUnit);
 				}
 				month = MONTH_NAMES_MAP.get(pieces[0]);
 				day = Integer.valueOf(pieces[1]);
@@ -474,7 +484,7 @@ public class TimestampConverter extends ValueConverter<String> {
 		if ( (year == null) || (year < 1900) || (year > currYear) || 
 			 (month == null) || (month < 1) || (month > 12) ||
 			 (day == null) || (day < 1) || (day > 31) )
-			throw new IllegalArgumentException("invalid date value");
+			throw new IllegalArgumentException("invalid date value " + valueString + " for format: " + fromUnit);
 		try {
 			// Check if the year-month-day is a valid combination
 			utcCalendar.set(year, GregorianCalendar.JANUARY + month - 1, day, 0, 0, 0);
@@ -482,7 +492,7 @@ public class TimestampConverter extends ValueConverter<String> {
 			if ( utcCalendar.getTimeInMillis() > millisNow )
 				throw new Exception();
 		} catch ( Exception ex ) {
-			throw new IllegalArgumentException("invalid date value");
+			throw new IllegalArgumentException("invalid date value: " + valueString);
 		}
 		String stdVal = String.format("%04d-%02d-%02d", year, month, day);		
 		return stdVal;
@@ -503,7 +513,7 @@ public class TimestampConverter extends ValueConverter<String> {
 		Integer hour;
 		Integer minute;
 		Double second;
-		if ( "hh:mm:ss".equalsIgnoreCase(fromUnit) ) {
+		if ( "hh:mm:ss".equalsIgnoreCase(fromUnit) || "hh:mm".equalsIgnoreCase(fromUnit)) {
 			try {
 				String[] pieces = TIME_SPLIT_PATTERN.split(valueString,0);
 				if ( (pieces.length < 2) || (pieces.length > 3) ) {
@@ -520,7 +530,7 @@ public class TimestampConverter extends ValueConverter<String> {
 						pieces[0] = hend > 0 ? valueString.substring(0, hend) : "0";
 						pieces[1] = valueString.substring(hend, valueString.length());
 					} else
-						throw new Exception("Invalid Time String: " + valueString + " - Does not match \"hh:mm:ss\"");
+						throw new Exception("Invalid Time String: " + valueString + " - Does not match \"" + fromUnit + "\"" ) ; // \"hh:mm:ss\"");
 				}
 				hour = Integer.valueOf(pieces[0]);
 				minute = Integer.valueOf(pieces[1]);
