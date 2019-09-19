@@ -9,41 +9,35 @@ package gov.noaa.pmel.dashboard.upload;
  */
 public class FileUploadProcessorFactory {
 
-    private StandardUploadFields _stdFields;
-    
-    public FileUploadProcessorFactory(StandardUploadFields stdFields) {
-        _stdFields = stdFields;
+    public static FileUploadProcessorFactory getFactory() {
+        return new FileUploadProcessorFactory();
     }
-    
-    public static FileUploadProcessorFactory getFactory(StandardUploadFields stdFields) {
-        return new FileUploadProcessorFactory(stdFields);
-    }
-    public FileUploadProcessor getProcessor() {
+    public FileUploadProcessor getProcessor(StandardUploadFields stdFields) {
         FileUploadProcessor processor = null;
-        switch (_stdFields.featureType()) {
+        switch (stdFields.featureType()) {
             case UNSPECIFIED:
-                processor = new FileTypeGuesserUploadProcessor(_stdFields);
+                processor = new FileTypeGuesserUploadProcessor(stdFields);
                 break;
             case TIMESERIES:
-                processor = new TimeseriesUploadProcessor(_stdFields);
+                processor = new TimeseriesUploadProcessor(stdFields);
                 break;
             case TRAJECTORY:
-                processor = new TrajectoryUploadProcessor(_stdFields);
+                processor = new TrajectoryUploadProcessor(stdFields);
                 break;
             case PROFILE:
-                processor = new ProfileUploadProcessor(_stdFields);
+                processor = new ProfileUploadProcessor(stdFields);
                 break;
             case PROFILE_TIMESERIES:
-                processor = new ProfileTimeseriesUploadProcessor(_stdFields);
+                processor = new ProfileTimeseriesUploadProcessor(stdFields);
                 break;
             case TRAJECTORY_PROFILE:
-                processor = new TrajectoryProfileUploadProcessor(_stdFields);
+                processor = new TrajectoryProfileUploadProcessor(stdFields);
                 break;
             case OTHER:
-                processor = new OpaqueFileUploadProcessor(_stdFields);
+                processor = new OpaqueFileUploadProcessor(stdFields);
                 break;
             default:
-                throw new IllegalArgumentException("Unknown Feature Type: " + _stdFields.featureType());
+                throw new IllegalArgumentException("Unknown Feature Type: " + stdFields.featureType());
         }
         return processor;
     }

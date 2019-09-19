@@ -37,7 +37,7 @@ public class TrajectoryUploadProcessor extends FileUploadProcessor {
         String timestamp = uploadFields.timestamp();
         String encoding = uploadFields.fileDataEncoding();
         String dataFormat = FormUtils.getFormField("dataformat", uploadFields.parameterMap());
-        String datasetIdColName = FormUtils.getFormField("datasetIdColName", uploadFields.parameterMap());
+        String datasetIdColName = FormUtils.getFormField("datasetIdCol", uploadFields.parameterMap());
         DataFileHandler datasetHandler = configStore.getDataFileHandler();
         
         for ( FileItem item : datafiles ) {

@@ -233,13 +233,13 @@ public class DataUploadPage extends CompositeWithUsername {
 		setUsername(null);
 
         featureTypeSelector.addItem("-- Observation Type --");
-//      featureTypeSelector.addItem("Timeseries");
+        featureTypeSelector.addItem("Timeseries", FeatureType.TIMESERIES.name());
         featureTypeSelector.addItem("Trajectory (Underway)", FeatureType.TRAJECTORY.name());
         featureTypeSelector.addItem("Profile", FeatureType.PROFILE.name());
         featureTypeSelector.addItem("Profile Timeseries (Mooring)", FeatureType.PROFILE_TIMESERIES.name());
         featureTypeSelector.addItem("Other", FeatureType.OTHER.name());
         featureTypeSelector.getElement().<SelectElement>cast().getOptions().getItem(0).setDisabled(true); // Please select...
-        featureTypeSelector.getElement().<SelectElement>cast().getOptions().getItem(3).setDisabled(true); // Mooring
+//        featureTypeSelector.getElement().<SelectElement>cast().getOptions().getItem(3).setDisabled(true); // make sure to disable the correct element, if you do
         featureTypeSelector.addChangeHandler(new ChangeHandler() {
           @Override
           public void onChange(ChangeEvent event) {
@@ -328,23 +328,19 @@ public class DataUploadPage extends CompositeWithUsername {
             fieldsPanel = _featureSpecificPanels.get(selectedType);
         } else {
             switch ( selectedType ) {
-              case TIMESERIES:
-                  break;
               case OTHER:
                   fieldsPanel = new OpaqueUploadFeatureFields();
                   break;
-              case PROFILE_TIMESERIES:
-                  break;
               case PROFILE:
-                  fieldsPanel = new ProfileFeatureFields();
+                  fieldsPanel = new ProfileFeatureFields(); // TODO: Right now, this is really only a container for CommonFields
                   break;
+              case TIMESERIES:
+              case PROFILE_TIMESERIES:
               case TRAJECTORY:
               case TRAJECTORY_PROFILE:
                   fieldsPanel = new CommonFeatureFields();
                   break;
-              default:
-                  fieldsPanel = null;
-                  break;
+              default: // just to shut-up the code checker
             }
             if ( fieldsPanel != null ) {
                 _featureSpecificPanels.put(selectedType, fieldsPanel);
