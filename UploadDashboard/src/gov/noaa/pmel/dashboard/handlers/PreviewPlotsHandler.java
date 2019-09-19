@@ -124,7 +124,9 @@ public class PreviewPlotsHandler {
 		// Check and standardize the dataset ID
 		String stdId = DashboardServerUtils.checkDatasetID(datasetId);
 		// Create the preview plots subdirectory if it does not exist
-		File datasetPlotsDir = new File(plotsFilesDir, stdId.substring(0,4));
+		File datasetPlotsParent = new File(plotsFilesDir, stdId.substring(0,4));
+		File datasetPlotsDir = new File(datasetPlotsParent, stdId);
+        logger.debug("Plots dir:"+datasetPlotsDir);
 		if ( datasetPlotsDir.exists() ) {
 			if ( ! datasetPlotsDir.isDirectory() ) {
 				throw new IllegalArgumentException("Plots directory exists but is not a directory: " + 
@@ -160,15 +162,14 @@ public class PreviewPlotsHandler {
 	public void createPreviewPlots(String datasetId, String timetag) 
 										throws IllegalArgumentException {
 		String stdId = DashboardServerUtils.checkDatasetID(datasetId);
-		Logger log = LogManager.getLogger("PreviewPlotsHandler");
-		log.debug("reading data for " + stdId);
+		logger.debug("reading data for " + stdId);
 
 		// Get the complete original cruise data
 		DashboardDatasetData dataset = dataHandler.getDatasetDataFromFiles(stdId, 0, -1);
         featureType = dataset.getFeatureType();
 		DatasetChecker dataChecker = _configStore.getDashboardDatasetChecker(featureType);
 
-		log.debug("standardizing data for " + stdId);
+		logger.debug("standardizing data for " + stdId);
 
 		// Just create a minimal DsgMetadata to create the preview DSG file
 		DsgMetadata dsgMData = new DsgMetadata(knownMetadataTypes);
@@ -184,6 +185,7 @@ public class PreviewPlotsHandler {
 
 		// Get the preview DSG filename, creating the parent directory if it does not exist
 		File dsgDir = getDatasetPreviewDsgDir(stdId);
+        logger.debug("Preview DSG dir:"+ dsgDir);
         DsgNcFile dsgFile;
         if ( FeatureType.PROFILE.equals(dataset.getFeatureType())) {
     		dsgFile = DsgNcFile.createProfileFile(dsgDir, stdId + "_" + timetag + ".nc");
@@ -193,23 +195,23 @@ public class PreviewPlotsHandler {
             throw new IllegalArgumentException("Cannot create preview plots for feature type: " + dataset.getFeatureTypeName());
         }
 
-		log.debug("generating preview DSG file " + dsgFile.getPath());
+		logger.debug("created preview DSG file " + dsgFile.getPath());
 
 		// Create the preview NetCDF DSG file
 		try {
 			dsgFile.create(dsgMData, stdUserData, knownDataFileTypes);
 			createSymlink(dsgFile, dsgDir, stdId);
 		} catch (Exception ex) {
-            log.warn(ex, ex);
+            logger.warn(ex, ex);
             ex.printStackTrace();
-			dsgFile.delete();
+//			dsgFile.delete();
 			throw new IllegalArgumentException("Problems creating the preview DSG file for " + 
 					datasetId + ": " + ex.getMessage(), ex);
 		}
 
 //		boolean DO_COMPUTED_VARS = false;
 //		if ( DO_COMPUTED_VARS ) {
-//			log.debug("adding computed variables to preview DSG file " + dsgFile.getPath());
+//			logger.debug("adding computed variables to preview DSG file " + dsgFile.getPath());
 //			// Call Ferret to add the computed variables to the preview DSG file
 //			SocatTool tool = new SocatTool(ferretConfig);
 //			ArrayList<String> scriptArgs = new ArrayList<String>(1);
@@ -221,7 +223,7 @@ public class PreviewPlotsHandler {
 //						datasetId + ": " + tool.getErrorMessage());
 //		}
 
-		log.debug("generating preview plots for " + dsgFile.getPath());
+		logger.debug("generating preview plots for " + dsgFile.getPath());
 
 		// Get the location for the preview plots, creating the directory if it does not exist
 		File cruisePlotsDir = getDatasetPreviewPlotsDir(stdId);
@@ -247,13 +249,17 @@ public class PreviewPlotsHandler {
                                             FerretConfig.Action.PLOTS :
                                             FerretConfig.Action.trajectory_PLOTS;
 			tool.init(scriptArgs, stdId, action);
-			tool.run();
+            try {
+    			tool.run();
+            } catch (Exception ex) {
+                logger.warn(ex, ex);
+            }
 			if ( tool.hasError() )
 				throw new IllegalArgumentException("Failure generating data preview plots for " + 
 						datasetId + ": " + tool.getErrorMessage());
 		}
 
-		log.debug("preview plots generated in " + cruisePlotsDirname);
+		logger.debug("preview plots generated in " + cruisePlotsDirname);
 	}
 
 	private void clearDir(File cruisePlotsDir) {
