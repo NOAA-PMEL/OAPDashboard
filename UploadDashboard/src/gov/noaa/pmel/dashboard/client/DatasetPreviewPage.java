@@ -259,7 +259,7 @@ public class DatasetPreviewPage extends CompositeWithUsername {
 	private void resetImageUrls() {
 		String imagePrefix;
 		// XXX This should really come from the server...
-		imagePrefix = "preview/plots/" + datasetId.substring(0,4) + "/";
+		imagePrefix = "preview/plots/" + datasetId.substring(0,4) + "/" + datasetId + "/";
 		clearTabImages();
 		if ( availablePlots == null || availablePlots.isEmpty()) {
 			showLoadingImg();
