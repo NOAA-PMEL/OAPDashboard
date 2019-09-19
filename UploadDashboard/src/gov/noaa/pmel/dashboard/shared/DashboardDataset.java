@@ -628,8 +628,7 @@ XXX This allows the possibility that numDataRows != the actual number of data ro
 		return true;
 	}
 
-	@Override
-	public String toString() {
+	public String fullDetaiString() {
 		return "DashboardDataset" +
 				"[ selected=" + Boolean.toString(selected) + 
 				",\n    version = " + version +
@@ -652,6 +651,11 @@ XXX This allows the possibility that numDataRows != the actual number of data ro
 				";\n    checkerFlags = " + checkerFlags.toString() +
 				";\n    userFlags = " + userFlags.toString() +
 				" ]";
+	}
+	
+	@Override
+	public String toString() {
+	    return "datasetId:"+datasetId;
 	}
 
 	/**
