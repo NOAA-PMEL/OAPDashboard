@@ -16,7 +16,7 @@
         &nbsp;|&nbsp;
         <a href="http://www.noaa.gov/disclaimer.html" target="_blank" title="">Disclaimer</a>
         &nbsp;|&nbsp;
-        <a href="/accessibility">Accessibility</a>
+        <a href="http://www.noaa.gov/accessibility" target="_blank">Accessibility</a>
     </g:HTMLPanel>
         
 </ui:UiBinder>
