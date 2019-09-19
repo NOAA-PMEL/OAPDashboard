@@ -149,6 +149,7 @@ public class DashboardUtils {
 					"yyyy-mm-dd hh:mm:ss", 
 					"mm-dd-yyyy hh:mm:ss", 
 					"dd-mm-yyyy hh:mm:ss", 
+					"dd-mon-yyyy hh:mm:ss", 
 					"mm-dd-yy hh:mm:ss", 
 					"dd-mm-yy hh:mm:ss"));
 
@@ -158,8 +159,11 @@ public class DashboardUtils {
 					"yyyy-mm-dd", 
 					"mm-dd-yyyy", 
 					"dd-mm-yyyy", 
+					"dd-mon-yyyy", 
 					"mm-dd-yy", 
-					"dd-mm-yy"));
+					"dd-mm-yy",
+					"dd-mon-yy"
+					));
 
 	/** Formats for time-of-day */
 	public static final ArrayList<String> TIME_OF_DAY_UNITS = 
