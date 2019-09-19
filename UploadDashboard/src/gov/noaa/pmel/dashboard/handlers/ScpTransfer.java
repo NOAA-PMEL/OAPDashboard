@@ -34,8 +34,7 @@ public class ScpTransfer extends BaseTransferAgent implements FileTransferOp {
         String command = ApplicationConfiguration.getProperty("oap.archive.scp.command", _protocol.value());
         String user = getUserId()+"@"+getHost();
         transferCmd.append(command)
-                   .append(" -i ")
-                   .append(getIdFileLocation()).append(SPACE)
+                   .append(getIdFileSpecifier()).append(SPACE)
                    .append(transferFile.getCanonicalPath()).append(SPACE)
                    .append(user).append(":").append(dest);
 
