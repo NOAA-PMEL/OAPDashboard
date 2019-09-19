@@ -8,6 +8,8 @@ import java.util.Date;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.IFrameElement;
 import com.google.gwt.event.dom.client.ClickEvent;
+import com.google.gwt.event.dom.client.LoadEvent;
+import com.google.gwt.event.dom.client.LoadHandler;
 import com.google.gwt.i18n.client.DateTimeFormat;
 import com.google.gwt.safehtml.shared.SafeHtmlUtils;
 import com.google.gwt.uibinder.client.UiBinder;
@@ -26,6 +28,8 @@ import gov.noaa.pmel.dashboard.shared.DashboardDatasetList;
 import gov.noaa.pmel.dashboard.shared.DashboardServicesInterface;
 import gov.noaa.pmel.dashboard.shared.DashboardServicesInterfaceAsync;
 import gov.noaa.pmel.dashboard.shared.DashboardUtils;
+import gov.noaa.pmel.dashboard.shared.FileInfo;
+import gov.noaa.pmel.dashboard.shared.MetadataPreviewInfo;
 import gov.noaa.pmel.dashboard.shared.NotFoundException;
 
 /**
@@ -130,15 +134,7 @@ public class MetadataManagerPage extends CompositeWithUsername {
     private void onPostMessage(String data, String origin) {
        GWT.log("DB: msg " + data + " from " + origin); 
        if ( isAck(data, "closing")) {
-            metadataEditorFrame.setUrl("about:_blank");
-            Timer t = new Timer() {
-                @Override
-                public void run() {
-            		DatasetListPage.showPage();
-            		UploadDashboard.showAutoCursor();
-                }
-            };
-            t.schedule(500);
+            getUpdatedMetadata();
        } else if ( isAck(data, "dirty")) {
            String dirtyReply = data.substring(data.indexOf("dirty")+6);
            boolean isDirty = Boolean.parseBoolean(dirtyReply);
@@ -151,6 +147,58 @@ public class MetadataManagerPage extends CompositeWithUsername {
        }
     }
     
+    private int callCount = 0;
+    private int MAX_CALLS = 10;
+    private void getUpdatedMetadata() {
+		UploadDashboard.showWaitCursor();
+        callCount = 0;
+        _doGetUpdatedMetadata();
+    }
+        
+    private AsyncCallback<MetadataPreviewInfo> getUpdatedMetadataCallback = new AsyncCallback<MetadataPreviewInfo>() {
+            @Override
+            public void onFailure(Throwable ex) {
+                ex.printStackTrace();
+            }
+
+            @Override
+            public void onSuccess(MetadataPreviewInfo info) {
+                UploadDashboard.debugLog("response: "+ callCount);
+                if ( info != null ) {
+                    FileInfo finfo = info.getMetadataFileInfo();
+                    Date fmod = finfo.getFileModTime();
+                    if ( fmod.after(lastUpdateTime)) {
+                        UploadDashboard.debugLog("Got it on " + callCount + " at: " + fmod);
+                        Timer t = new Timer() {
+                            @Override
+                            public void run() {
+                                showDataListPage();
+                            }
+                        };
+                        t.schedule(50);
+                        return;
+                    }
+                }
+                if ( callCount < MAX_CALLS ) {
+                    Timer t = new Timer() {
+                        @Override
+                        public void run() {
+                            _doGetUpdatedMetadata();
+                        }
+                    };
+                    t.schedule(2000);
+                } else {
+                    UploadDashboard.showMessage("There seems to be a failure updating the metadata.<br/>Please check with your administrator.");
+                    showDataListPage();
+                }
+            }
+        };
+	private void _doGetUpdatedMetadata() {
+        callCount += 1;
+        UploadDashboard.debugLog("Calling for metadata " + callCount);
+        service.getMetadataPreviewInfo(getUsername(), datasetId, getUpdatedMetadataCallback);
+    }
+
     private static boolean isAck(String response, String command) {
         return response.startsWith("Roger That:" + command);
     }
@@ -177,6 +225,7 @@ public class MetadataManagerPage extends CompositeWithUsername {
 	 * 		add/replace the metadata for the cruise in this list 
 	 */
 	static void showPage(DashboardDatasetList cruises) {
+        UploadDashboard.showWaitCursor();
 		if ( singleton == null )
 			singleton = new MetadataManagerPage();
 		singleton.updateDataset(cruises);
@@ -197,6 +246,8 @@ public class MetadataManagerPage extends CompositeWithUsername {
 	}
 
     private String datasetId;
+    private Date lastUpdateTime;
+    
 	/**
 	 * Updates this page with the username and the cruise in the given set of cruise.
 	 * 
@@ -290,8 +341,6 @@ public class MetadataManagerPage extends CompositeWithUsername {
 //		uploadForm.reset();
 		UploadDashboard.showWaitCursor();
         sendIFrameMessage("closing");
-//        metadataEditorFrame.setUrl("about:_blank");
-//		DatasetListPage.showPage();
 	}
     
 	@UiHandler("cancelButton")
@@ -332,21 +381,27 @@ public class MetadataManagerPage extends CompositeWithUsername {
 	}
     
     private void showDataListPage() {
-//        metadataEditorFrame.setUrl("about:_blank");
+        metadataEditorFrame.setUrl("about:_blank");
+        UploadDashboard.showAutoCursor();
 		DatasetListPage.showPage();
     }
     
     private void sendCurrentMetadataToMetaEd(String datasetId) {
         try {
-            service.sendMetadataInfo(getUsername(), datasetId, new OAPAsyncCallback<String>() {
+            service.sendMetadataInfo(getUsername(), datasetId, new OAPAsyncCallback<MetadataPreviewInfo>() {
                 @Override
-                public void onSuccess(String result) {
+                public void onSuccess(MetadataPreviewInfo result) {
             		UploadDashboard.updateCurrentPage(singleton);
             		History.newItem(PagesEnum.EDIT_METADATA.name(), false);
                     confirmCancel = true;
                     doneButton.setEnabled(true);
+                    lastUpdateTime = result.getMetadataFileInfo().getFileModTime();
+                    if ( lastUpdateTime == null ) {
+                        UploadDashboard.logToConsole("No md file mod time.  Using current time.");
+                        lastUpdateTime = new Date();
+                    }
                     // Validate response for valid url...
-                    openMetadataEditorWindow(result);
+                    openMetadataEditorWindow(result.getMdDocId());
                 }
                 @Override
                 public void customFailure(Throwable caught) {
@@ -369,16 +424,15 @@ public class MetadataManagerPage extends CompositeWithUsername {
      * @param meDocId
      */
     private void openMetadataEditorWindow(String meDocId) {
+        metadataEditorFrame.addLoadHandler(new LoadHandler() {
+            @Override
+            public void onLoad(LoadEvent arg0) {
+                GWT.log("loaded msg");
+                UploadDashboard.showAutoCursor();
+//                sendIFrameMessage("You're loaded!");
+            }
+        });
         metadataEditorFrame.setUrl(meDocId);
-//        metadataEditorFrame.addLoadHandler(new LoadHandler() {
-//            
-//            @Override
-//            public void onLoad(LoadEvent arg0) {
-//                GWT.log("loaded msg");
-////                sendIFrameMessage("You're loaded!");
-//            }
-//        });
-//        Window.open(meDocId, "Metadata Editor", "");
     }
 
     /**
