@@ -148,8 +148,8 @@ public class DataUploadService extends HttpServlet {
 	}
     
     private static FileUploadProcessor getUploadFileProcessor(StandardUploadFields stdFields) {
-        FileUploadProcessorFactory processorFactory = FileUploadProcessorFactory.getFactory(stdFields);
-        FileUploadProcessor uploadProcessor = processorFactory.getProcessor();
+        FileUploadProcessorFactory processorFactory = FileUploadProcessorFactory.getFactory();
+        FileUploadProcessor uploadProcessor = processorFactory.getProcessor(stdFields);
         return uploadProcessor;
     }
 
