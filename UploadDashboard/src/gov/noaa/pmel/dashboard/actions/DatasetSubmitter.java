@@ -28,6 +28,7 @@ import gov.noaa.pmel.dashboard.oads.DashboardOADSMetadata;
 import gov.noaa.pmel.dashboard.oads.OADSMetadata;
 import gov.noaa.pmel.dashboard.server.DashboardConfigStore;
 import gov.noaa.pmel.dashboard.server.DashboardServerUtils;
+import gov.noaa.pmel.dashboard.server.util.OapMailSender;
 import gov.noaa.pmel.dashboard.shared.DashboardDataset;
 import gov.noaa.pmel.dashboard.shared.DashboardDatasetData;
 import gov.noaa.pmel.dashboard.shared.DashboardMetadata;
@@ -42,6 +43,8 @@ import gov.noaa.pmel.tws.util.ApplicationConfiguration;
  */
 public class DatasetSubmitter {
 
+	static Logger logger = LogManager.getLogger(DatasetSubmitter.class);
+    
     DashboardConfigStore configStore;
 	DataFileHandler dataHandler;
 	MetadataFileHandler metadataHandler;
@@ -50,7 +53,7 @@ public class DatasetSubmitter {
 	DatabaseRequestHandler databaseHandler;
 	ArchiveFilesBundler filesBundler;
 	String version;
-	Logger logger;
+    
     private DashboardConfigStore _configStore;
 
 	/**
@@ -66,7 +69,6 @@ public class DatasetSubmitter {
 		databaseHandler = configStore.getDatabaseRequestHandler();
 		filesBundler = configStore.getArchiveFilesBundler();
 		version = configStore.getUploadVersion();
-		logger = LogManager.getLogger(getClass());
         _configStore = configStore;
 	}
 
@@ -197,7 +199,7 @@ public class DatasetSubmitter {
 
 		// notify ERDDAP of new/updated dataset
 		if ( ! ingestIds.isEmpty() )
-			dsgHandler.flagErddap(true);
+			dsgHandler.flagErddap();
 
 		// If any dataset submit had errors, return the error messages
 		// TODO: do this in a return message, not an IllegalArgumentException
@@ -256,9 +258,10 @@ public class DatasetSubmitter {
 					// filesBundler.sendOrigFilesBundle(datasetId, commitMsg, userRealName, userEmail);
 //					File archiveBundle = filesBundler.createAndSendArchiveFilesBundle(datasetId, columnsList, commitMsg, userRealName, userEmail);
                     File archiveBundle = getArchiveBundle(datasetId, columnsList, submitMsg);
-                    doSubmitAchiveBundleFile(datasetId, archiveBundle, datasetId, userRealName, userEmail);
-                    String archiveStatusMsg = "Submitted " + archiveBundle + " to " + userEmail + " at " + DashboardServerUtils.formatTime(new Date());
+                    doSubmitAchiveBundleFile(datasetId, archiveBundle, userRealName, userEmail);
+                    String archiveStatusMsg = "Submitted " + archiveBundle + " for " + userRealName + " at " + DashboardServerUtils.formatTime(new Date());
                     logger.info(archiveStatusMsg);
+                    sendSubmitEmail(datasetId, archiveBundle, userRealName, userEmail);
 					thisStatus = "Submitted " + DashboardServerUtils.formatTime(new Date());
 				} catch (Exception ex) {
 					ex.printStackTrace();
@@ -289,6 +292,37 @@ public class DatasetSubmitter {
 	}
 
 	/**
+     * @param datasetId
+     * @param archiveBundle
+     * @param userRealName
+     * @param userEmail
+	 * @throws Exception 
+     */
+    private static void sendSubmitEmail(String datasetId, File archiveBundle, String userRealName, String userEmail) throws Exception {
+        String notificationList = ApplicationConfiguration.getLatestProperty("oap.archive.notification.list", null);
+        logger.debug("notification to list:" + notificationList);
+        if ( notificationList != null )  {
+            sendArchiveMessage(datasetId, archiveBundle, userRealName, userEmail);
+            sendUserMessage(datasetId, archiveBundle, userRealName, userEmail);
+        }
+     }
+
+    private static void sendArchiveMessage(String datasetId, File archiveBundle, String userRealName, String userEmail) throws Exception {
+        String subject = "TESTING: Archive bundle posted for dataset ID: " + datasetId;
+        String message = "A dataset archive bundle for " + userRealName + " was posted to the SFTP site for pickup.\n"
+                       + "The archive bundle is available for pickup at ncei_sftp@sftp.pmel.noaa.gov/data/oap/" + archiveBundle.getName();
+            String toList = ApplicationConfiguration.getLatestProperty("oap.archive.notification.list");
+            new OapMailSender().sendMessage(toList, subject, message);
+    }
+    private static void sendUserMessage(String datasetId, File archiveBundle, String userRealName, String userEmail) throws Exception {
+        String subject = "Archive bundle submitted for dataset ID: " + datasetId;
+        String message = userRealName + ",\n\n" + "An archive bundle for dataset " + datasetId + " has been submitted for archival at NCEI.\n\n" 
+//                         + "The archive bundle is available for pickup at ncei_sftp@sftp.pmel.noaa.gov/data/oap/" + archiveBundle.getName();
+                            + "Regards, \n\nThe OAP Dashboard System.";
+            String toList = userEmail;
+            new OapMailSender().sendMessage(toList, subject, message);
+    }
+    /**
      * @param archiveBundle
      * @param datasetId
      * @param userRealName
@@ -296,24 +330,27 @@ public class DatasetSubmitter {
      * @return
 	 * @throws IOException 
      */
-    private void doSubmitAchiveBundleFile(String stdId, File archiveBundle, String archiveMessage, 
-                                          String userRealName, String userEmail) throws IOException {
-        try {
-            String achiveMethod = ApplicationConfiguration.getProperty("oap.archive.mode", "bad");
+    private void doSubmitAchiveBundleFile(String stdId, File archiveBundle, 
+                                          String userRealName, String userEmail) throws Exception {
+//        try {
+            String achiveMethod = ApplicationConfiguration.getProperty("oap.archive.mode", "sftp");
             XFER_PROTOCOL protocol = XFER_PROTOCOL.from(achiveMethod);
             switch (protocol) {
                 case SFTP:
                 case SCP:
                 case CP:
-                    FileXferService.putArchiveBundle(stdId, archiveBundle, userRealName, userEmail);
+                    int result = FileXferService.putArchiveBundle(stdId, archiveBundle, userRealName, userEmail);
+                    if ( result != 0) {
+                        throw new Exception("Failed to submit archive bundle: result " + result);
+                    }
                     break;
                 case EMAIL:
                     filesBundler.sendArchiveBundle(stdId, archiveBundle, userRealName, userEmail);
                     break;
             }
-        } catch (Exception ex) {
-            ex.printStackTrace();
-        }
+//        } catch (Exception ex) {
+//            ex.printStackTrace();
+//        }
     }
 
     /**
@@ -332,7 +369,7 @@ public class DatasetSubmitter {
         return archiveBundle;
     }
 
-    public static void main(String[] args) {
+    public static void _main(String[] args) {
         try {
             DatasetSubmitter ds = DashboardConfigStore.get(false).getDashboardDatasetSubmitter();
             ArrayList<String> ids = new ArrayList<String>() {{ add("PRISM082008"); }};
