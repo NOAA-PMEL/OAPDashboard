@@ -40,11 +40,16 @@ public class CastChecker {
 	private List<CastSet> _casts;
 	
 	public CastChecker(StdUserDataArray dataset) {
+	    this(dataset, true);
+	}
+	public CastChecker(StdUserDataArray dataset, boolean reorderCasts) {
 		_dataset = dataset;
 		_casts = CastSet.extractCastSetsFrom(_dataset);
 		logger.debug("unordered casts:" + _casts);
-		_casts = orderCasts(_casts);
-		logger.debug("ordered casts:" + _casts);
+        if ( reorderCasts ) {
+    		_casts = orderCasts(_casts);
+    		logger.debug("ordered casts:" + _casts);
+        }
 	}
 	
 	/**
@@ -163,7 +168,7 @@ public class CastChecker {
 			// TODO: Warn
 			ADCMessage msg = new ADCMessage();
 			msg.setRowIndex(row);
-			msg.setSeverity(Severity.ERROR);
+			msg.setSeverity(Severity.WARNING);
 			msg.setGeneralComment("Excessive time interval");
 			msg.setDetailedComment("Excessive apparent time of " + deltaTh + " hours between casts " + cast.id() + " and " + lastId);
 			addTimeAndLocation(msg, cast);
@@ -186,7 +191,7 @@ public class CastChecker {
 			if ( Math.abs(deltaTh) > MAX_REASONABLE_TIME_BETWEEN_SAMPLES_h) {
 				ADCMessage msg = new ADCMessage();
 				msg.setRowIndex(row);
-				msg.setSeverity(Severity.ERROR);
+				msg.setSeverity(Severity.WARNING);
 				msg.setGeneralComment("Excessive time interval");
 				msg.setDetailedComment("Excessive apparent time of " + deltaTh + " hours between samples");
 				addTimeAndLocation(msg, cast, i);
@@ -426,7 +431,7 @@ public class CastChecker {
             Object bottle = bottles != null ? bottles[checkRow] : null;
 			if ( depth != null &&    // missing depths are reported in StdUserDataArray.checkMissingLatLonDepthTime() // ! XXX
 			     ! checkDepths.add(depth)) {
-                if ( bottle == null || !checkBottles.add(bottle)) {
+                if ( bottle == null ) {
     				String genlComment = "Duplicate depths in cast.";
     				String detailMsg =  "Duplicate depths in cast " + cs.toString() + " at row " + (checkRow + 1); 
     				ADCMessage amsg = new ADCMessage();
@@ -434,6 +439,18 @@ public class CastChecker {
     				amsg.setRowIndex(checkRow);
     				amsg.setColIndex(depthCol);
     				amsg.setColName(columnName);
+    				amsg.setDetailedComment(detailMsg);
+    				amsg.setGeneralComment(genlComment);
+    				addTimeAndLocation(amsg, cs, check);
+    				stda.addStandardizationMessage(amsg);
+                } else if ( ! checkBottles.add(bottle)) {
+    				String genlComment = "Duplicate bottles in cast.";
+    				String detailMsg =  "Duplicate bottles in cast " + cs.toString() + " at row " + (checkRow + 1); 
+    				ADCMessage amsg = new ADCMessage();
+    				amsg.setSeverity(Severity.ERROR); 
+    				amsg.setRowIndex(checkRow);
+    				amsg.setColIndex(bottleIdx);
+    				amsg.setColName("niskin");
     				amsg.setDetailedComment(detailMsg);
     				amsg.setGeneralComment(genlComment);
     				addTimeAndLocation(amsg, cs, check);
