@@ -18,6 +18,8 @@ public class MetadataPreviewInfo implements Serializable, IsSerializable {
 	private FileInfo metadataFileInfo;
 	
 	private String metadataPreview;
+    
+	private String mdDocId;
 
 	public MetadataPreviewInfo() {}
 	
@@ -42,6 +44,14 @@ public class MetadataPreviewInfo implements Serializable, IsSerializable {
 	public void setMetadataPreview(String metadata) {
 		this.metadataPreview = metadata;
 	}
+
+    public String getMdDocId() {
+        return mdDocId;
+    }
+
+    public void setMdDocId(String mdDocId) {
+        this.mdDocId = mdDocId;
+    }
 
 	
 }

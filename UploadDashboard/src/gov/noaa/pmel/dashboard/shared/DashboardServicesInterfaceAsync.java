@@ -34,6 +34,10 @@ public interface DashboardServicesInterfaceAsync {
 	 */
     void ping(AsyncCallback<Void> callback);
     
+    void submitFeedback(String username, String type, String message, AsyncCallback<Void> callback);
+
+    void changePassword(String username, String currentpw, String newpw, AsyncCallback<Boolean> callback);
+
 	/**
 	 * Client side request to get the current user's list of cruises.
 	 * 
@@ -298,7 +302,7 @@ public interface DashboardServicesInterfaceAsync {
 
 	void getMetadataPreviewInfo(String username, String datasetId, AsyncCallback<MetadataPreviewInfo> callback);
 	
-    void sendMetadataInfo(String username, String datasetId, AsyncCallback<String> callback);
+    void sendMetadataInfo(String username, String datasetId, AsyncCallback<MetadataPreviewInfo> callback);
     
 	/**
 	 * Client side request to generate the preview images for a dataset.
