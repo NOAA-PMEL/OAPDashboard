@@ -31,6 +31,10 @@ public interface DashboardServicesInterface extends RemoteService {
      */
 	void ping();
 	
+    void submitFeedback(String username, String type, String message);
+    
+    boolean changePassword(String username, String currentpw, String newpw);
+    
 	/**
 	 * Gets the current user's list of datasets.
 	 * 
@@ -283,7 +287,7 @@ public interface DashboardServicesInterface extends RemoteService {
 	MetadataPreviewInfo getMetadataPreviewInfo(String username, String datasetId)
 			throws NotFoundException, IllegalArgumentException;
     
-	String sendMetadataInfo(String username, String datasetId)
+	MetadataPreviewInfo sendMetadataInfo(String username, String datasetId)
 			throws NotFoundException, IllegalArgumentException;
                             
 	/**

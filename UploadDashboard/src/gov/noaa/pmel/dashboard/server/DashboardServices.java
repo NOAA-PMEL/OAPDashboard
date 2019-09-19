@@ -44,6 +44,7 @@ import gov.noaa.pmel.dashboard.datatype.DashDataType;
 import gov.noaa.pmel.dashboard.datatype.KnownDataTypes;
 import gov.noaa.pmel.dashboard.dsg.StdUserDataArray;
 import gov.noaa.pmel.dashboard.handlers.DataFileHandler;
+import gov.noaa.pmel.dashboard.handlers.FeedbackHandler;
 import gov.noaa.pmel.dashboard.handlers.MetadataFileHandler;
 import gov.noaa.pmel.dashboard.handlers.PreviewPlotsHandler;
 import gov.noaa.pmel.dashboard.handlers.UserFileHandler;
@@ -130,6 +131,23 @@ public class DashboardServices extends RemoteServiceServlet implements Dashboard
 		logger.debug("ping from user: " + username);
 	}
 
+    public void submitFeedback(String pageUsername, String type, String message) {
+        validateRequest(pageUsername);
+        FeedbackHandler.logFeedbackMessage(pageUsername, type, message);
+        FeedbackHandler.notifyFeedbackMessage(pageUsername, type, message);
+    }
+
+    public boolean changePassword(String pageUsername, String currentpw, String newpw) {
+        validateRequest(pageUsername);
+        logger.info("Changing password for user: " + pageUsername);
+        boolean changed = false;
+        try {
+            changed = Users.changeUserPassword(pageUsername, currentpw, newpw);
+        } catch (DashboardException ex) {
+            logger.info(ex,ex);
+        }
+        return changed;
+    }
 	/**
 	 * Validates the given request by retrieving the current username from the request
 	 * and verifying that username with the Dashboard data store.  If pageUsername is
@@ -509,6 +527,8 @@ public class DashboardServices extends RemoteServiceServlet implements Dashboard
 			configStore.getMetadataFileHandler().saveAsOadsXmlDoc(mdata, 
 			                                                      DashboardUtils.autoExtractedMdFilename(datasetId), 
 			                                                      "Initial Auto-extraction");
+		} else {
+		    logger.info("Dataset " + dataset.getDatasetId() + " has critical error.  Unable to extract metadata.");
 		}
 		
 		// ??? Is this possible at this point for a user to be editing another user's dataset ?
@@ -670,28 +690,38 @@ public class DashboardServices extends RemoteServiceServlet implements Dashboard
 
 	@SuppressWarnings("resource")
     @Override
-	public String sendMetadataInfo(String pageUsername, String datasetId)
+	public MetadataPreviewInfo sendMetadataInfo(String pageUsername, String datasetId)
     		throws NotFoundException, IllegalArgumentException {
         String docId = null;
         String metadataEditorPostEndpoint = null;
         try {
+    		HttpServletRequest request = getThreadLocalRequest();
 			File mdFile = OADSMetadata.getMetadataFile(datasetId);
 			if ( !mdFile.exists()) {
 				mdFile = OADSMetadata.getExtractedMetadataFile(datasetId);
 			} 
-			if ( !mdFile.exists()) {
+			if ( !mdFile.exists()) { // dataset has either not been checked or critically failed check.
+//                try {
+//                    StdUserDataArray stdArray = 
+//                    DashboardOADSMetadata mdata = OADSMetadata.extractOADSMetadata(stdArray);
+//                    configStore.getMetadataFileHandler().saveAsOadsXmlDoc(mdata, 
+//                                                                          DashboardUtils.autoExtractedMdFilename(datasetId), 
+//                                                                          "Initial Auto-extraction");
+//                }
+                
                 mdFile = OADSMetadata.createEmptyOADSMetadataFile(datasetId);
 			}
             // XXX HttpClient and stuff coming (currently) from netcdfAll jar 
             @SuppressWarnings("resource")
             HttpClient client = HttpClients.createDefault();
-            metadataEditorPostEndpoint = getMetadataPostPoint(datasetId);
+            metadataEditorPostEndpoint = getMetadataPostPoint(request, datasetId);
             logger.debug("metadataPost: " + metadataEditorPostEndpoint);
             HttpPost post = new HttpPost(metadataEditorPostEndpoint);
             FileBody body = new FileBody(mdFile, ContentType.APPLICATION_XML);
             MultipartEntityBuilder builder = MultipartEntityBuilder.create();
             builder.addPart("xmlFile", body);
             String notifyUrl = getNotificationUrl(getThreadLocalRequest().getRequestURL().toString(), datasetId);
+            System.out.println("noticationUrl: " + notifyUrl);
             StringBody notificationUrl = new StringBody(notifyUrl, ContentType.MULTIPART_FORM_DATA);
             builder.addPart("notificationUrl", notificationUrl);
             HttpEntity postit = builder.build();
@@ -710,32 +740,78 @@ public class DashboardServices extends RemoteServiceServlet implements Dashboard
                 throw new IllegalArgumentException(msg);
             }
             docId = new String(bbuf);
-            return getMetadataEditorPage(docId);
+            MetadataPreviewInfo mdInfo = getMetadataPreviewInfo(pageUsername, datasetId); 
+//            ServletContext context = request.getSession().getServletContext();
+            String mdDocId = getMetadataEditorPage(request, docId);
+            mdInfo.setMdDocId(mdDocId);
+            return mdInfo;
         } catch (HttpHostConnectException hcex) {
             logger.warn("Unable to connect to MetadataEditor at " + metadataEditorPostEndpoint + ": " + hcex);
             throw new NotFoundException("Unable to connect to MetadataEditor. <br/>Please contact your administrator.");
         } catch (Exception ex) {
             ex.printStackTrace();
             throw new RuntimeException(ex);
+        } catch (Throwable t) {
+            t.printStackTrace();
+            throw new RuntimeException(t);
         }
 	}
     
     // request URL is in the form: http://matisse:8080/OAPUploadDashboard/OAPUploadDashboard/DashboardServices
+    // or http://dunkel.pmel.noaa.gov:5680/oa/Dashboard/OAPUploadDashboard/DashboardServices
+	// And notification URL should be http://dunkel.pmel.noaa.gov:5680/oa/Dashboard/DashboardUpdateService/notify/<datasetId>
     private static String getNotificationUrl(String requestUrl, String datasetId) {
-        String notifyUrl = requestUrl.substring(0, requestUrl.lastIndexOf("OAPUploadDashboard"));
-        notifyUrl = notifyUrl + "DashboardUpdateService/notify/"+datasetId;
+        System.out.println("get notify URL request: " + requestUrl);
+        String notifyUrl = null;
+        if ( requestUrl.indexOf("pmel") > 0 ) {
+            notifyUrl = "https://www.pmel.noaa.gov/sdig" + requestUrl.substring(requestUrl.indexOf("/oa"));
+            System.out.println("n1: " + notifyUrl);
+            notifyUrl = notifyUrl.substring(0, notifyUrl.indexOf("OAPUploadDashboard"));
+            System.out.println("n2: " + notifyUrl);
+            notifyUrl = notifyUrl + "DashboardUpdateService/notify/"+datasetId;
+        } else {
+            notifyUrl = requestUrl.substring(0, requestUrl.lastIndexOf("OAPUploadDashboard"));
+            notifyUrl = notifyUrl + "DashboardUpdateService/notify/"+datasetId;
+        }
+        System.out.println("nofity url: " + notifyUrl);
         return notifyUrl;
     }
 
-    private static String getMetadataEditorPage(String docId) throws Exception {
-        String url = ApplicationConfiguration.getProperty(DashboardConfigStore.METADATA_EDITOR_URL);
-        return url + "?id="+docId;
+    private static String getMetadataEditorPage(HttpServletRequest request, String docId) throws Exception {
+        String requestUrl = request.getRequestURL().toString();
+        System.out.println("get ME page request: " + requestUrl);
+        String context = request.getContextPath();
+        System.out.println("get ME context: " + context);
+        String meUrlProp = ApplicationConfiguration.getProperty(DashboardConfigStore.METADATA_EDITOR_URL);
+        String url;
+        if ( meUrlProp.toLowerCase().startsWith("http")) {
+            url = meUrlProp;
+        } else {
+            String requestBase = requestUrl.substring(0, requestUrl.indexOf(context));
+            url = requestBase + meUrlProp;
+        }
+        url = url + "?id="+docId;
+        System.out.println("Editor page: " + url);
+        return url;
     }
     
-    private static String getMetadataPostPoint(String datasetId) throws Exception {
-        String url = ApplicationConfiguration.getProperty(DashboardConfigStore.METADATA_EDITOR_POST_ENDPOINT);
+    private static String getMetadataPostPoint(HttpServletRequest request, String datasetId) throws Exception {
+        String requestUrl = request.getRequestURL().toString();
+        System.out.println("get ME post point request: " + requestUrl);
+        String context = request.getContextPath();
+        System.out.println("get ME post point context: " + context);
+        String meUrlProp = ApplicationConfiguration.getProperty(DashboardConfigStore.METADATA_EDITOR_POST_ENDPOINT);
+        String url;
+        if ( meUrlProp.toLowerCase().startsWith("http")) {
+            url = meUrlProp;
+        } else {
+            String requestBase = requestUrl.substring(0, requestUrl.indexOf(context));
+            url = requestBase + meUrlProp;
+        }
         String slash = url.endsWith("/") ? "" : "/";
-        return url + slash + datasetId;
+        url = url + slash + datasetId;
+        System.out.println("Post point: " + url);
+        return url;
     }
 
     @Override
