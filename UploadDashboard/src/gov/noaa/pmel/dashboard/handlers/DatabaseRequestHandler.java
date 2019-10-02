@@ -196,7 +196,7 @@ public class DatabaseRequestHandler {
         String pass = selectPass;
 		if ( canUpdate ) {
             user = updateUser;
-            pass = selectPass;
+            pass = updatePass;
 		}
         System.out.println("Trying " + databaseUrl +" with " + user + ", " + pass);
 		Connection catConn = DriverManager.getConnection(databaseUrl, user, pass);
