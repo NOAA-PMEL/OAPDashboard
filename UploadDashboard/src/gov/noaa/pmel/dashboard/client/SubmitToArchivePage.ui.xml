@@ -24,11 +24,9 @@
         }
 	</ui:style>
 	
-	<g:DockLayoutPanel unit="EM">
-		<g:north size="5">
-            <oap:ApplicationHeaderTemplate ui:field="header"/>
-		</g:north>
-        <g:center addStyleNames="{style.fullpagecontainer}">
+    <g:DockLayoutPanel unit="EM" addStyleNames="{style.fullpagecontainer} {style.letItOverFlow}" >
+        <g:north size="4.0" ><oap:ApplicationHeaderTemplate ui:field="header" /> </g:north>
+        <g:center>
             <g:FlowPanel addStyleNames="{style.fullpagecontainer}">
                 <g:FlowPanel addStyleNames="{style.archiveFileListPanel}">
                     <g:HTML ui:field="fileListLabel" addStyleNames="{style.archiveFileListLabel}"/>

@@ -20,6 +20,7 @@ import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.google.gwt.user.client.ui.Button;
 import com.google.gwt.user.client.ui.Frame;
+import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.Widget;
 
 import gov.noaa.pmel.dashboard.client.UploadDashboard.PagesEnum;
@@ -42,6 +43,7 @@ public class MetadataManagerPage extends CompositeWithUsername {
 	private static final String DOWNLOAD_TEXT = "Download";
 	private static final String DONE_TEXT = "Done";
 	private static final String CANCEL_TEXT = "Cancel";
+	private static final String PREVIEW_TEXT = "Preview";
 	private static final String OPEN_ME_TEXT = "Metadata Editor";
 
 	private static final String CRUISE_HTML_INTRO_PROLOGUE = 
@@ -89,6 +91,8 @@ public class MetadataManagerPage extends CompositeWithUsername {
     @UiField ApplicationHeaderTemplate header;
 	@UiField Button doneButton;
 	@UiField Button cancelButton;
+	@UiField Label buttonPanelSpacerLabel;
+//	@UiField Button previewButton;
     private boolean confirmCancel = true;
     @UiField Frame metadataEditorFrame;
     IFrameElement meIFrame;
@@ -108,7 +112,7 @@ public class MetadataManagerPage extends CompositeWithUsername {
 		askOverwritePopup = null;
 
 		header.setPageTitle(TITLE_TEXT);
-		header.logoutButton.setText(LOGOUT_TEXT);
+//		header.logoutButton.setText(LOGOUT_TEXT);
 
 		clearTokens();
 
@@ -116,6 +120,8 @@ public class MetadataManagerPage extends CompositeWithUsername {
 		doneButton.setEnabled(true);
 		
         cancelButton.setText(CANCEL_TEXT);
+        buttonPanelSpacerLabel.setText(" ");
+//        previewButton.setText(PREVIEW_TEXT);
         
         metadataEditorFrame.getElement().setId("__metadataEditorFrame");
         

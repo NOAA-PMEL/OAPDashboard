@@ -6,66 +6,61 @@
 
 	<ui:style src="FullWidth.css" />
 
-	<g:ScrollPanel addStyleNames="{style.fullpagecontainer}">
-		<g:FlowPanel>
-            <oap:ApplicationHeaderTemplate ui:field="header"/>
-            <!--
-			<g:FlowPanel addStyleNames="{style.titlepanel}">
-				<g:Button addStyleNames="{style.titlelogoutbutton}" ui:field="logoutButton" />
-				<g:InlineLabel addStyleNames="{style.titleuserlabel}" ui:field="userInfoLabel" />
-				<g:InlineLabel addStyleNames="{style.titlepagelabel}" ui:field="titleLabel" />
-				<g:Label addStyleNames="{style.titlereset}" />
-			</g:FlowPanel>
-             --> 
-			<g:HTML addStyleNames="{style.introhtml}" ui:field="introHtml" />
-			<g:ResizeLayoutPanel ui:field="resizePanel" addStyleNames="{style.plotspanel}">
-					<g:TabLayoutPanel barUnit='EM' barHeight='2' ui:field="tabsPanel">
-						<g:tab>
-							<g:customHeader>
-								<g:HTML addStyleNames="{style.plotslabel}" ui:field="tab0Html" />
-							</g:customHeader>
-							<g:ScrollPanel addStyleNames="{style.previewscrollpanel}">
-								<g:FlowPanel ui:field="tab0Panel">
-								</g:FlowPanel>
-							</g:ScrollPanel>
-						</g:tab>
-						<g:tab>
-							<g:customHeader>
-								<g:HTML addStyleNames="{style.plotslabel}" ui:field="tab1Html" />
-							</g:customHeader>
-<!--							<g:Image addStyleNames="{style.plotsimage}" ui:field="latVsLonImage" />  -->
-							<g:ScrollPanel addStyleNames="{style.previewscrollpanel}">
-								<g:FlowPanel ui:field="tab1Panel">
-								</g:FlowPanel>
-							</g:ScrollPanel>
-						</g:tab>
-						<g:tab>
-							<g:customHeader>
-								<g:HTML addStyleNames="{style.plotslabel}" ui:field="tab2Html" />
-							</g:customHeader>
-<!--							<g:Image addStyleNames="{style.plotsimage}" ui:field="latLonImage" />  -->
-							<g:ScrollPanel addStyleNames="{style.previewscrollpanel}">
-								<g:FlowPanel ui:field="tab2Panel">
-								</g:FlowPanel>
-							</g:ScrollPanel>
-						</g:tab>
-						<g:tab>
-							<g:customHeader>
-								<g:HTML addStyleNames="{style.plotslabel}" ui:field="tab3Html" />
-							</g:customHeader>
-<!--							<g:Image addStyleNames="{style.plotsimage}" ui:field="sampleVsTimeImage" />  -->
-							<g:ScrollPanel addStyleNames="{style.previewscrollpanel}">
-								<g:FlowPanel ui:field="tab3Panel">
-								</g:FlowPanel>
-							</g:ScrollPanel>
-						</g:tab>
-					</g:TabLayoutPanel>
-			</g:ResizeLayoutPanel>
-			<g:FlowPanel addStyleNames="{style.horizontalbuttonpanel}">
-				<g:Button addStyleNames="{style.horizontalbutton}" ui:field="refreshButton" />
-				<g:Button addStyleNames="{style.horizontalbutton}" ui:field="doneButton" />
-			</g:FlowPanel>
-		</g:FlowPanel>
-	</g:ScrollPanel>
+	<g:DockLayoutPanel unit="EM" addStyleNames="{style.fullpagecontainer} {style.letItOverFlow}" >
+        <g:north size="4"> <oap:ApplicationHeaderTemplate ui:field="header"/></g:north>
+        <g:center>
+    		<g:FlowPanel>
+    			<g:HTML addStyleNames="{style.introhtml}" ui:field="introHtml" />
+    			<g:ResizeLayoutPanel ui:field="resizePanel" addStyleNames="{style.plotspanel}">
+    					<g:TabLayoutPanel barUnit='EM' barHeight='2' ui:field="tabsPanel">
+    						<g:tab>
+    							<g:customHeader>
+    								<g:HTML addStyleNames="{style.plotslabel}" ui:field="tab0Html" />
+    							</g:customHeader>
+    							<g:ScrollPanel addStyleNames="{style.previewscrollpanel}">
+    								<g:FlowPanel ui:field="tab0Panel">
+    								</g:FlowPanel>
+    							</g:ScrollPanel>
+    						</g:tab>
+    						<g:tab>
+    							<g:customHeader>
+    								<g:HTML addStyleNames="{style.plotslabel}" ui:field="tab1Html" />
+    							</g:customHeader>
+    <!--							<g:Image addStyleNames="{style.plotsimage}" ui:field="latVsLonImage" />  -->
+    							<g:ScrollPanel addStyleNames="{style.previewscrollpanel}">
+    								<g:FlowPanel ui:field="tab1Panel">
+    								</g:FlowPanel>
+    							</g:ScrollPanel>
+    						</g:tab>
+    						<g:tab>
+    							<g:customHeader>
+    								<g:HTML addStyleNames="{style.plotslabel}" ui:field="tab2Html" />
+    							</g:customHeader>
+    <!--							<g:Image addStyleNames="{style.plotsimage}" ui:field="latLonImage" />  -->
+    							<g:ScrollPanel addStyleNames="{style.previewscrollpanel}">
+    								<g:FlowPanel ui:field="tab2Panel">
+    								</g:FlowPanel>
+    							</g:ScrollPanel>
+    						</g:tab>
+    						<g:tab>
+    							<g:customHeader>
+    								<g:HTML addStyleNames="{style.plotslabel}" ui:field="tab3Html" />
+    							</g:customHeader>
+    <!--							<g:Image addStyleNames="{style.plotsimage}" ui:field="sampleVsTimeImage" />  -->
+    							<g:ScrollPanel addStyleNames="{style.previewscrollpanel}">
+    								<g:FlowPanel ui:field="tab3Panel">
+    								</g:FlowPanel>
+    							</g:ScrollPanel>
+    						</g:tab>
+    					</g:TabLayoutPanel>
+    			</g:ResizeLayoutPanel>
+    			<g:FlowPanel addStyleNames="{style.horizontalbuttonpanel}">
+    				<g:Button addStyleNames="{style.horizontalbutton}" ui:field="refreshButton" />
+    				<g:Button addStyleNames="{style.horizontalbutton}" ui:field="doneButton" />
+    			</g:FlowPanel>
+    		</g:FlowPanel>
+        </g:center>
+        <g:south size="3"> <oap:ApplicationFooter/> </g:south>
+	</g:DockLayoutPanel>
 
 </ui:UiBinder>

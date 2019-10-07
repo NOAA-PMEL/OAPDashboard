@@ -1,25 +1,35 @@
 <!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
 <ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
              xmlns:g="urn:import:com.google.gwt.user.client.ui" 
+             xmlns:oa="urn:import:gov.noaa.pmel.dashboard.client" 
              xmlns:cell="urn:import:com.google.gwt.user.cellview.client">
 
 	<ui:style src="FullWidth.css" />
     
             <g:FlowPanel addStyleNames="{style.pageheader}">
-                <g:Image styleName="{style.headerLogo}" url="images/noaa_logo_50x50.gif" />
+                <g:Image styleName="{style.headerLogo}" url="images/noaa_logo_50x50.png" />
                 <g:FlowPanel addStyleNames="{style.headerInfo}">
-                    <g:InlineLabel addStyleNames="{style.headerpagelabel}" ui:field="titleLabel" />
-                    <g:FlowPanel addStyleNames="{style.titleRightGroup}">
-                        <g:InlineLabel addStyleNames="{style.headeruserlabel}" ui:field="userInfoLabel" />
-                        <g:Image url="images/down_arrow_icon.png" addStyleNames="{style.titlePasswordMenuItem}" ui:field="askChangePasswordBtn"/>
-                         <g:FlowPanel ui:field="askPasswdChangePnl" addStyleNames="{style.titleAskPasswordChangePnl}">
-                            <g:Button addStyleNames="{style.titleChangePasswordBtn}" ui:field="changePasswordBtn">Change Password</g:Button>
-                        </g:FlowPanel>
-                        <g:Anchor addStyleNames="{style.titlefeedbackbutton}" ui:field="sendFeedbackButton">Send Feedback</g:Anchor>
-                        <g:Button addStyleNames="{style.titlelogoutbutton}" ui:field="logoutButton" />
+                    <g:InlineLabel  ui:field="titleLabel" addStyleNames="{style.headerpagelabel}" >DataSet List</g:InlineLabel> <!-- -->
+                    <g:FlowPanel ui:field="headerRightPanel" addStyleNames="{style.titleRightGroup}">
+                        <g:Label ui:field="userInfoLabel" addStyleNames="{style.headeruserlabel}">Not Logged In</g:Label>
+                        <g:Label addStyleNames="{style.titlereset}" />
+                        <g:MenuBar addStyleNames="{style.headerMenuBar}" ui:field="menuBar" >
+                            <g:MenuItem addStyleNames="{style.normalText}" >Preferences
+                                <g:MenuBar vertical="true">
+                                    <!-- <g:MenuItem ui:field="userInfoBtn">User Profile</g:MenuItem> -->
+                                    <g:MenuItem ui:field="changePasswordBtn">Change Password</g:MenuItem>
+                                </g:MenuBar>
+                            </g:MenuItem>
+                            <g:MenuItemSeparator/>
+                            <g:MenuItem addStyleNames="{style.normalText}" ui:field="sendFeedbackBtn" >Send Feedback</g:MenuItem>
+                            <g:MenuItemSeparator/>
+                            <g:MenuItem addStyleNames="{style.headerMenuSeparator}"  ui:field="logoutSeparator" > </g:MenuItem>
+                            <g:MenuItemSeparator/>
+                            <g:MenuItem addStyleNames="{style.normalText}" ui:field="logoutBtn" >Logout</g:MenuItem>
+                        </g:MenuBar>
                     </g:FlowPanel>
-                    <g:Label addStyleNames="{style.titlereset}" />
                 </g:FlowPanel>
+                <g:Label addStyleNames="{style.titlereset}" />
             </g:FlowPanel>
         
 </ui:UiBinder>

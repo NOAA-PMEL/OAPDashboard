@@ -25,10 +25,14 @@ body {
 .fixedwidthcontainer {
 	width: 35em;
 }
+.floatRight {
+	float: right;
+}
 .horizontalpanel {
     display: block;
 	margin-top: 0.5em;
 	margin-bottom: 1em;
+    align-content: center;
 }
 .adjustingbutton {
     display: inline-block;
@@ -89,8 +93,19 @@ body {
     margin: 1em 2em;
 }
 .infopanel {
-	background-color: #CCCCCC;
+	background-color: #9eb9d7; /* #CCCCCC; */
+    padding: 1em 2em;
 	width: 35em;
+}
+.infoPanelLeftLabel {
+	vertical-align: middle !important;
+}
+.infoPanelTextBox {
+}
+.infoTableRow {
+    display: block;
+	width: 100%;
+	margin: 3px 5px 5px;
 }
 .infohtml {
 	/* text-align: justify; */

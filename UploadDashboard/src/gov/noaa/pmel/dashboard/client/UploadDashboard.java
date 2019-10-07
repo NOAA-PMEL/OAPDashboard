@@ -10,16 +10,27 @@ import java.util.logging.Logger;
 import com.google.gwt.core.client.EntryPoint;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.Document;
+import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.FormElement;
+import com.google.gwt.dom.client.InputElement;
+import com.google.gwt.dom.client.NodeList;
 import com.google.gwt.dom.client.Style;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.event.logical.shared.ValueChangeHandler;
 import com.google.gwt.event.shared.HandlerRegistration;
+import com.google.gwt.http.client.Request;
+import com.google.gwt.http.client.RequestBuilder;
+import com.google.gwt.http.client.RequestCallback;
+import com.google.gwt.http.client.RequestException;
+import com.google.gwt.http.client.Response;
 import com.google.gwt.logging.client.ConsoleLogHandler;
 import com.google.gwt.safehtml.shared.SafeHtmlUtils;
+import com.google.gwt.safehtml.shared.UriUtils;
+import com.google.gwt.user.client.Cookies;
 import com.google.gwt.user.client.History;
+import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.google.gwt.user.client.ui.Button;
 import com.google.gwt.user.client.ui.HTML;
@@ -29,9 +40,12 @@ import com.google.gwt.user.client.ui.UIObject;
 import com.google.gwt.user.client.ui.VerticalPanel;
 
 import gov.noaa.pmel.dashboard.client.DashboardAskPopup.QuestionType;
+import gov.noaa.pmel.dashboard.shared.DashboardServiceResponse;
 import gov.noaa.pmel.dashboard.shared.DashboardServicesInterface;
 import gov.noaa.pmel.dashboard.shared.DashboardServicesInterfaceAsync;
 import gov.noaa.pmel.dashboard.shared.PreviewPlotImage;
+import gov.noaa.pmel.dashboard.shared.SessionServicesInterface;
+import gov.noaa.pmel.dashboard.shared.SessionServicesInterfaceAsync;
 
 public class UploadDashboard implements EntryPoint, ValueChangeHandler<String> {
 
@@ -42,6 +56,8 @@ public class UploadDashboard implements EntryPoint, ValueChangeHandler<String> {
     }
 	private static DashboardServicesInterfaceAsync service = 
 			GWT.create(DashboardServicesInterface.class);
+    private static SessionServicesInterfaceAsync sesh =
+            GWT.create(SessionServicesInterface.class);
     
 	static final boolean DO_PING = true;
     
@@ -289,21 +305,15 @@ public class UploadDashboard implements EntryPoint, ValueChangeHandler<String> {
 	public static void updateCurrentPage(CompositeWithUsername newPage) {
         updateCurrentPage(newPage, false);
 	}
-	public static void updateCurrentPage(CompositeWithUsername newPage, boolean doPing) {
-        if ( doPing ) {
-        service.ping(new OAPAsyncCallback<Void>() {
-            @Override
-            public void onSuccess(Void arg0) {
-        		if ( singleton == null )
-        			singleton = new UploadDashboard();
-        		if ( singleton.currentPage != null )
-        			RootLayoutPanel.get().remove(singleton.currentPage);
-        		singleton.currentPage = newPage;
-        		if ( singleton.currentPage != null )
-        			RootLayoutPanel.get().add(singleton.currentPage);
-            }
-        });
-        } else {
+    public static void pingService(OAPAsyncCallback<Void> callback) {
+        for (String cookie : Cookies.getCookieNames()) {
+            GWT.log("cookie: " + cookie);
+        }
+        String sessionId = Cookies.getCookie("JSESSIONID");
+        GWT.log("JSESSIONID:" + sessionId);
+        sesh.ping(sessionId, callback);
+    }
+	public static void _updateCurrentPage(CompositeWithUsername newPage) {
             if ( singleton == null )
                 singleton = new UploadDashboard();
             if ( singleton.currentPage != null )
@@ -311,6 +321,17 @@ public class UploadDashboard implements EntryPoint, ValueChangeHandler<String> {
             singleton.currentPage = newPage;
             if ( singleton.currentPage != null )
                 RootLayoutPanel.get().add(singleton.currentPage);
+	}
+	public static void updateCurrentPage(CompositeWithUsername newPage, boolean doPing) {
+        if ( doPing ) {
+            pingService(new OAPAsyncCallback<Void>() {
+                @Override
+                public void onSuccess(Void arg0) {
+                    _updateCurrentPage(newPage);
+                }
+            });
+        } else {
+            _updateCurrentPage(newPage);
         }
 	}
 	
@@ -350,6 +371,9 @@ public class UploadDashboard implements EntryPoint, ValueChangeHandler<String> {
 
 	@Override
 	public void onModuleLoad() {
+//        RootLayoutPanel.get().add(new HeaderTest());
+//	}
+//	public void _onModuleLoad() {
 		if ( historyHandlerReg != null )
 			historyHandlerReg.removeHandler();
 		// setup history management
@@ -436,7 +460,7 @@ public class UploadDashboard implements EntryPoint, ValueChangeHandler<String> {
     }
     
     static String loginFormHtml = 
-      "<form id=\"reloginForm\" method=\"post\" action=\"j_security_check\">" +
+      "<form id=\"reloginForm\" method=\"post\" action=\"j_security_check\"  >" + // onsubmit=\"closeLoginPopup()\" 
         "<table class=\"login_table\" border=\"0\" cellspacing=\"5\">" +
           "<tr>" +
             "<td style=\"text-align:center; padding-bottom: .5em;\" colspan=\"2\"><b>Your session has expired.</b></td>" +
@@ -456,18 +480,12 @@ public class UploadDashboard implements EntryPoint, ValueChangeHandler<String> {
             "<td><input type=\"password\" name=\"j_password\" /></td>" +
           "</tr>" +
           "<tr>" +
-            "<td style=\"text-align:center;\" colspan=\"2\"><input onclick=\"completeRelogin()\" type=\"submit\" value=\"Submit\" /></td>" +
+            "<td style=\"text-align:center;\" colspan=\"2\"><input type=\"submit\" onclick=\"completeRelogin()\" value=\"Submit\" /></td>" + // completeRelogin submitAndClosePopup onclick=\"completeRelogin()\" 
           "</tr>" +
         "</table>" +
       "</form>" ;
   
-    static native void submitAndClosePopup()/*-{
-        var loginForm = document.getElementById("reloginForm");
-        console.log("reloginForm: "+ loginForm);
-        closeLoginPopup();
-        loginForm.submit();
-    }-*/;
-        
+    // This sets up so submit button onclick can call completeRelogin()
     static native void setupLoginPopupClose()/*-{
         console.log("setupClose");
         if ( ! $wnd.completeRelogin ) {
@@ -479,15 +497,53 @@ public class UploadDashboard implements EntryPoint, ValueChangeHandler<String> {
     
     public static void completeRelogin() {
        logger.info("Completing relogin submission");
-       submitForm();
+       forceSubmittal();
        closeLoginPopup();
     }
     
-    private static void submitForm() {
-        logger.info("Submitting login form");
+    // Doing it this way because FF won't submit the form
+    private static void forceSubmittal() {
         FormElement form = (FormElement)Document.get().getElementById("reloginForm");
-        logger.info("Form: " + form);
-        form.submit();
+        GWT.log("force form:"+form);
+        StringBuilder postData = new StringBuilder();
+        NodeList<Element>nodeList = form.getElementsByTagName("input");
+        GWT.log("nodeList:"+nodeList+"["+nodeList.getLength());
+        String amp = "";
+        for (int i = 0; i < nodeList.getLength(); i++ ) {
+            InputElement in = (InputElement)nodeList.getItem(i);
+            GWT.log("element:"+i);
+            String name = in.getName();
+            String value = in.getValue();
+            GWT.log("name:"+name+", val:"+value);
+            if ( name != null && name.trim().length() > 0 ) {
+                String encoded = UriUtils.encode(value);
+                postData.append(amp).append(name).append("=").append(encoded);
+                amp = "&";
+            }
+        }
+        
+        RequestBuilder builder = new RequestBuilder(RequestBuilder.POST, "j_security_check");
+
+        try {
+          builder.setHeader("Content-Type", "application/x-www-form-urlencoded");
+          Request response = builder.sendRequest(postData.toString(), new RequestCallback() {
+            
+            @Override
+            public void onResponseReceived(Request respRequest, Response resp) {
+                GWT.log("reponse request:"+respRequest);
+                GWT.log("reponse :"+resp);
+            }
+            
+            @Override
+            public void onError(Request errRequest, Throwable t) {
+                GWT.log("reponse request:"+errRequest);
+                GWT.log("reponse :"+t);
+            }
+        }); 
+          GWT.log("response:"+response);
+        } catch (RequestException e) {
+          Window.alert("Failed to send the request: " + e.getMessage());
+        }
     }
 
     public static void showPopupMessage(String htmlMsg) {
@@ -509,11 +565,15 @@ public class UploadDashboard implements EntryPoint, ValueChangeHandler<String> {
     public static void showLoginPopup() {
         setupLoginPopupClose();
         showPopupMessage(loginFormHtml, "Cancel"); 
+//        FormElement form = (FormElement)Document.get().getElementById("reloginForm");
+//        Document.get().getBody().appendChild(form);
     }
     
     public static void closeLoginPopup() {
         logger.info("Closing login popup");
-        singleton.blankMsgPopup.dismiss();
+        if ( singleton.blankMsgPopup != null ) {
+            singleton.blankMsgPopup.dismiss();
+        }
     }
     /**
      * 
@@ -553,6 +613,21 @@ public class UploadDashboard implements EntryPoint, ValueChangeHandler<String> {
 		singleton.feedbackPopup.show();
     }
     public static void showChangePasswordPopup() {
+        GWT.log("pinging before change password");
+        pingService(new OAPAsyncCallback<Void>() {
+            @Override
+            public void onSuccess(Void arg0) {
+                GWT.log("successful pinging before change password");
+                _showChangePasswordPopup();
+            }
+            @Override
+            public void customFailure(Throwable t) {
+                GWT.log("ping fail: "+ t);
+            }
+        });
+    }
+    private static void _showChangePasswordPopup() {
+        GWT.log("show change password");
 		if ( singleton == null )
 			singleton = new UploadDashboard();
 		if ( singleton.changePasswordPopup == null ) {
@@ -562,7 +637,7 @@ public class UploadDashboard implements EntryPoint, ValueChangeHandler<String> {
                     if ( sendIt.booleanValue()) {
                         service.changePassword(singleton.currentPage.getUsername(), 
                                                singleton.changePasswordPopup.getCurrentPassword(),
-                                               singleton.changePasswordPopup.getNewPassword(), new AsyncCallback<Boolean>() {
+                                               singleton.changePasswordPopup.getNewPassword(), new AsyncCallback<DashboardServiceResponse>() {
                             @Override
                             public void onFailure(Throwable arg0) {
                                 GWT.log("Change Password failed: " + arg0);
@@ -570,12 +645,12 @@ public class UploadDashboard implements EntryPoint, ValueChangeHandler<String> {
                             }
 
                             @Override
-                            public void onSuccess(Boolean changed) {
+                            public void onSuccess(DashboardServiceResponse changed) {
                                 GWT.log("Change Password success:" + changed);
-                                if ( changed.booleanValue()) {
+                                if ( changed.wasSuccessful()) {
                                     showMessage("Password changed.");
                                 } else {
-                                    showFailureMessage("Failed to change password.", null);
+                                    showFailureMessage("Failed to change password:\n" + changed.error(), null);
                                 }
                             }
                         });

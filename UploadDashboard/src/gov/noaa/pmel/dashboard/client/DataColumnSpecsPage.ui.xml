@@ -6,40 +6,35 @@
 
 	<ui:style src="FullWidth.css" />
 
-	<g:ScrollPanel addStyleNames="{style.fullpagecontainer}">
-		<g:FlowPanel>
-			<g:FlowPanel>
-            <oap:ApplicationHeaderTemplate ui:field="header"/>
-<!-- 				<g:FlowPanel addStyleNames="{style.titlepanel}">
-					<g:Button addStyleNames="{style.titlelogoutbutton}" ui:field="logoutButton" />
-					<g:InlineLabel addStyleNames="{style.titleuserlabel}" ui:field="userInfoLabel" />
-					<g:InlineLabel addStyleNames="{style.titlepagelabel}" ui:field="titleLabel" />
-					<g:Label addStyleNames="{style.titlereset}" />
-				</g:FlowPanel>
-				<g:HTML addStyleNames="{style.introhtml}" ui:field="introHtml" />
- -->			</g:FlowPanel>
-			<g:ScrollPanel ui:field="dgScroll">
-				<cell:DataGrid addStyleNames="{style.datagrid}" ui:field="dataGrid" />
-			</g:ScrollPanel>
-			<g:FlowPanel>
-				<g:FlowPanel addStyleNames="{style.datamsgpanel}" >
-					<g:InlineLabel addStyleNames="{style.datapagerlabel}" ui:field="pagerLabel" />
-					<g:InlineLabel addStyleNames="{style.datamsglabel}" ui:field="messagesLabel" />
-					<g:Label addStyleNames="{style.datamsgreset}" />
-				</g:FlowPanel>
-				<g:FlowPanel addStyleNames="{style.datamsgpanel}" >
-					<cell:SimplePager location="CENTER" addStyleNames="{style.datapager}" ui:field="gridPager" />
-					<g:Button addStyleNames="{style.datamsgbutton}" ui:field="messagesButton" />
-					<g:Label addStyleNames="{style.datamsgreset}" />
-				</g:FlowPanel>
-				<g:FlowPanel addStyleNames="{style.horizontalbuttonpanel}">
-					<g:Button addStyleNames="{style.horizontalbutton}" ui:field="submitButton" />
-					<g:Button addStyleNames="{style.horizontalbutton}" ui:field="doneButton" />
-					<g:Button addStyleNames="{style.horizontalbutton}" ui:field="saveButton" />
-				</g:FlowPanel>
-			</g:FlowPanel>
+    <g:DockLayoutPanel unit="EM" addStyleNames="{style.fullpagecontainer} {style.letItOverFlow}" >
+        <g:north size="4.0" ><oap:ApplicationHeaderTemplate ui:field="header" /> </g:north>
+        <g:center>
+            <g:FlowPanel>
+    			<g:ScrollPanel ui:field="dgScroll">
+    				<cell:DataGrid addStyleNames="{style.datagrid}" ui:field="dataGrid" />
+    			</g:ScrollPanel>
+    			<g:FlowPanel>
+    				<g:FlowPanel addStyleNames="{style.datamsgpanel}" >
+    					<g:InlineLabel addStyleNames="{style.datapagerlabel}" ui:field="pagerLabel" />
+    					<g:InlineLabel addStyleNames="{style.datamsglabel}" ui:field="messagesLabel" />
+    					<g:Label addStyleNames="{style.datamsgreset}" />
+    				</g:FlowPanel>
+    				<g:FlowPanel addStyleNames="{style.datamsgpanel}" >
+    					<cell:SimplePager location="CENTER" addStyleNames="{style.datapager}" ui:field="gridPager" />
+    					<g:Button addStyleNames="{style.datamsgbutton}" ui:field="messagesButton" />
+    					<g:Label addStyleNames="{style.datamsgreset}" />
+    				</g:FlowPanel>
+    				<g:FlowPanel addStyleNames="{style.horizontalbuttonpanel}">
+    					<g:Button addStyleNames="{style.horizontalbutton}" ui:field="submitButton" />
+    					<g:Button addStyleNames="{style.horizontalbutton}" ui:field="doneButton" />
+    					<g:Button addStyleNames="{style.horizontalbutton}" ui:field="saveButton" />
+    				</g:FlowPanel>
+    			</g:FlowPanel>
+            </g:FlowPanel>
+        </g:center>  
+        <g:south size="3">
             <oap:ApplicationFooter/>
-		</g:FlowPanel>
-	</g:ScrollPanel>
+       </g:south> 
+   </g:DockLayoutPanel>
 
 </ui:UiBinder>

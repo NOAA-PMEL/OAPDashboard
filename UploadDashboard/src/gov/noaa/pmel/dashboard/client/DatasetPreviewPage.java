@@ -158,7 +158,6 @@ public class DatasetPreviewPage extends CompositeWithUsername {
 		};
 
 		header.setPageTitle(TITLE_TEXT);
-        header.handleLogout();
 		
 		refreshButton.setText(REFRESH_TEXT);
 		refreshButton.setTitle(REFRESH_HOVER_HELP);

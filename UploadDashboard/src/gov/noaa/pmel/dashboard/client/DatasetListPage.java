@@ -346,7 +346,6 @@ public class DatasetListPage extends CompositeWithUsername {
 		datasetIdsSet = new TreeSet<String>();
 
         header.setPageTitle(TITLE_TEXT);
-//        header.handleLogout();
 
 		uploadButton.setText(UPLOAD_TEXT);
 		uploadButton.setTitle(UPLOAD_HOVER_HELP);
