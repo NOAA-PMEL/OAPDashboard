@@ -1,0 +1,207 @@
+#!/bin/bash
+
+DIR="$( cd "$( dirname "$0" )" && pwd )"
+
+# VERBOSE=true
+
+# echo $0 $* >&2
+# echo $0 DIR $DIR >&2
+
+usage() {
+	echo "$0 [options] <property.name> [config dir path] [properties.file]"
+	echo "  options:"
+	echo "    -q : Do not report errors"
+	echo "    -v : verbose"
+	echo "    -d : default value"
+	echo "    -m : module name"
+}
+	
+if [ $# == 0 ] ; then
+	usage
+	exit
+fi
+
+while [ ${1:0:1} == "-" ] ; do
+	if [ $1 == -q ] ; then
+#		echo be quiet
+		BE_QUIET=false
+	elif [[ $1 == -v || $1 == -V ]] ; then
+#		echo be noisy
+		VERBOSE=true
+	elif [ $1 == -d ] ; then
+		shift
+		DEFAULT_VALUE=$1
+#		echo default: $DEFAULT_VALUE
+	elif [[ $1 == -m ]] ; then
+		shift
+		MODULE_NAME=$1
+	fi
+	shift
+done
+
+HOST_NAME=`hostname -s`
+
+warn() {
+	if [ ! $BE_QUIET ] ; then
+		echo WARNING: $* >&2
+	fi
+}
+log() {
+	if [ $VERBOSE ] ; then
+		echo $*
+	fi
+}
+
+try_file() {
+	tPROP=$1
+	tFILE=$2
+	unset tPVAL
+	log looking for $tPROP in $tFILE
+	if [ -e $tFILE ] ; then
+		PROP_LINE=`grep $tPROP $tFILE | grep -v "#"`
+		log found property definition line: $PROP_LINE
+
+		if [ $PROP_LINE ] ; then
+			tPVAL=${PROP_LINE#*=}
+			log property value: $tPVAL
+			return 0
+		fi
+	else
+		log $tFILE not found
+	fi
+	return 1
+}
+
+try_env() {
+	ePROP=$1
+	if [ ! $eFILE ] ; then
+		ENV_PROP=${MODULE_NAME}.env
+		eFILE=${CONFIG_DIR}/${HOST_NAME}.${FNAME}
+		try_file $ENV_PROP $eFILE
+		if [ ! $tPVAL ] ; then
+			eFILE=${CONFIG_DIR}/${FNAME}
+			try_file $ENV_PROP $eFILE
+		fi	
+		if [ $tPVAL ] ; then
+			eFILE=${CONFIG_DIR}/${tPVAL}.${FNAME}
+		else
+			unset eFILE
+			return 1
+		fi
+	fi
+	if [ -e $eFILE ] ; then
+		try_file $ePROP $eFILE
+		return $?
+	else
+		warn Environment file $eFILE not found!
+		exit 1
+	fi	
+}
+
+
+find_property() {
+	fPROP=$1
+	fFILE=${CONFIG_DIR}/${HOST_NAME}.${FNAME}
+	try_file $fPROP $fFILE
+	if [ $? -eq 0 ] ; then
+		PVAL=$tPVAL
+		return 0
+	fi
+	try_env $fPROP
+	if [ $? -eq 0 ] ; then
+		PVAL=$tPVAL
+		return 0
+	fi
+	fFILE=${CONFIG_DIR}/${FNAME}
+	try_file $fPROP $fFILE
+	if [ $? -eq 0 ] ; then
+		PVAL=$tPVAL
+		return 0
+	fi
+	return 1
+}
+
+replace_var() {
+	oVAL=$1
+	log Replacing var in $oVAL
+	unset PVAL
+	prop_var=${oVAL#*\{}
+	prop_var=${prop_var%\}*}
+	log prop_var: $prop_var
+	vPROP=${MODULE_NAME}.$prop_var
+	find_property $vPROP
+	if [ $? -eq 0 ] ; then
+		vVAL=$PVAL
+		nVAL=${oVAL/\{$prop_var\}/$vVAL}
+		log nVAL: $nVAL
+		PVAL=$nVAL
+		return 0
+	else
+		warn No value found for $prop_var in $oVAL
+		return 1
+	fi
+}
+
+# where to look for config files to get configuration properties
+CONFIG_DIR=war/WEB-INF/classes/config
+
+PROPERTY=$1
+shift
+
+log Looking for property: $PROPERTY
+
+if [ $1 ] ; then
+	CONFIG_DIR=$1
+	shift
+fi
+
+PFILE=$1
+
+if [ ! $PROPERTY ] ; then
+	usage
+	exit 1
+fi
+
+if [ ! -e ${CONFIG_DIR} ] ; then
+	TRY="${DIR}/../${CONFIG_DIR}"
+	if [ ! -e ${TRY} ] ; then
+		warn $CONFIG_DIR not found.
+		echo Current dir: `pwd -P` >&2
+		exit 1
+	else 
+		CONFIG_DIR=$TRY
+	fi
+fi
+
+log config dir: $CONFIG_DIR
+
+if [ ! $MODULE_NAME ] ; then
+	MODULE_NAME=${PROPERTY%%.*}
+fi
+
+log module: $MODULE_NAME
+
+if [ $PFILE ] ; then
+	FNAME=$PFILE
+else
+	FNAME=${MODULE_NAME}.props
+fi
+
+find_property $PROPERTY
+
+if [[ $PVAL && ${PVAL} != ${PVAL#*\{} ]] ; then
+	replace_var $PVAL
+fi
+
+if [[ ! $PVAL && $DEFAULT_VALUE ]] ; then
+	log $PROPERTY not found.  Using default value.
+	PVAL=$DEFAULT_VALUE
+fi
+
+if [ ! $PVAL ] ; then
+	warn $PROPERTY not found
+	exit 3
+fi
+
+echo $PVAL
+
