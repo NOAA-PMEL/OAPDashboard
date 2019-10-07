@@ -22,6 +22,8 @@
 # In this way, variable values can also be overridden.
 #
 
+oap.env=prod
+
 oap.email.from=OAP Dashboard System <linus.kamb@noaa.gov>
 oap.archive.notification.list=linus.kamb@noaa.gov
 # ,john.relph@noaa.gov
@@ -45,5 +47,14 @@ oap.archive.cp.destination=/Users/kamb/scratch
 
 oap.feedback.recipients=linus.kamb@noaa.gov
 
+# Only use this if you are using a non-collocated or non-standard path instance
+# Standard path is <host>//<root context>/MetadataEditor
 # metadata_editor.url=
 # metadata_editor.post.url=
+
+# selects db access parameters
+# (current) options are:
+#  development (mysql:localhost:3306/oapdashboard?oapadmin)
+#  my-dashboard (mysql:localhost:3306/oapdashboard?scientist)
+# 
+oap.db.environment=my-dashboard

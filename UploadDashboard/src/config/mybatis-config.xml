@@ -30,6 +30,15 @@
   </typeHandlers>
            --> 
   <environments default="development">
+    <environment id="development">
+      <transactionManager type="JDBC"/>
+      <dataSource type="POOLED">
+        <property name="driver" value="${my.driver}"/>
+        <property name="url" value="${my.url}"/>
+        <property name="username" value="${matisse.username}"/>
+        <property name="password" value="${matisse.password}"/>
+      </dataSource>
+    </environment>
     <environment id="oapdashboard">
       <transactionManager type="JDBC"/>
       <dataSource type="POOLED">
