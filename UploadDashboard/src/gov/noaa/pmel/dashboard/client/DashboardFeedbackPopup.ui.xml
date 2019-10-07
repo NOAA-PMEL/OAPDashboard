@@ -4,11 +4,12 @@
 	<ui:style src="FixedWidth.css" />
 
 	<g:VerticalPanel addStyleNames="{style.infopanel}" horizontalAlignment="ALIGN_CENTER">
+        <g:Label>Send us feedback!  All feedback is welcome.</g:Label>
         <g:ListBox addStyleNames="{style.feedbackChoiceBox}" ui:field="feedbackChoiceBox"/>
 		<g:TextArea addStyleNames="{style.feedbackTextBox}" ui:field="feedbackTextBox" />
 		<g:FlowPanel addStyleNames="{style.horizontalpanel}">
-			<g:Button addStyleNames="{style.adjustingbutton}" ui:field="yesButton" />
 			<g:Button addStyleNames="{style.adjustingbutton}" ui:field="noButton" />
+			<g:Button addStyleNames="{style.adjustingbutton}" ui:field="yesButton" />
 		</g:FlowPanel>
 	</g:VerticalPanel>
 

@@ -6,26 +6,28 @@
 
 	<ui:style src="FullWidth.css" />
 
-	<g:ScrollPanel addStyleNames="{style.fullpagecontainer}">
-		<g:FlowPanel>
-		  <oap:ApplicationHeaderTemplate ui:field="header"/>
-			<g:HTML addStyleNames="{style.introhtml}" ui:field="introHtml" />
-			<cell:DataGrid addStyleNames="{style.addldocsgrid}" ui:field="addlDocsGrid" />
-			<g:FormPanel ui:field="uploadForm">
-				<g:FlowPanel>
-					<g:FileUpload name="metadataupload" addStyleNames="{style.uploadfile}"
-							ui:field="docUpload" />
-					<g:Hidden name="timestamp" ui:field="timestampToken" /> 
-					<g:Hidden name="datasetids" ui:field="datasetIdsToken" />
-					<g:Hidden name="supplemental" ui:field="supplementalFlag" />
-				</g:FlowPanel>
-			</g:FormPanel>
-			<g:FlowPanel addStyleNames="{style.horizontalbuttonpanel}">
-				<g:Button addStyleNames="{style.horizontalbutton}" ui:field="uploadButton" />
-				<g:Button addStyleNames="{style.horizontalbutton}" ui:field="dismissButton" />
+	<g:DockLayoutPanel unit="EM" addStyleNames="{style.fullpagecontainer} {style.letItOverFlow}" >
+		<g:north size="4"> <oap:ApplicationHeaderTemplate ui:field="header"/></g:north>
+        <g:center>
+			<g:FlowPanel>
+    			<g:HTML addStyleNames="{style.introhtml}" ui:field="introHtml" />
+    			<cell:DataGrid addStyleNames="{style.addldocsgrid}" ui:field="addlDocsGrid" />
+    			<g:FormPanel ui:field="uploadForm">
+    				<g:FlowPanel>
+    					<g:FileUpload name="metadataupload" addStyleNames="{style.uploadfile}"
+    							ui:field="docUpload" />
+    					<g:Hidden name="timestamp" ui:field="timestampToken" /> 
+    					<g:Hidden name="datasetids" ui:field="datasetIdsToken" />
+    					<g:Hidden name="supplemental" ui:field="supplementalFlag" />
+    				</g:FlowPanel>
+    			</g:FormPanel>
+    			<g:FlowPanel addStyleNames="{style.horizontalbuttonpanel}">
+    				<g:Button addStyleNames="{style.horizontalbutton}" ui:field="uploadButton" />
+    				<g:Button addStyleNames="{style.horizontalbutton}" ui:field="dismissButton" />
+    			</g:FlowPanel>
 			</g:FlowPanel>
-            <oap:ApplicationFooter/>
-		</g:FlowPanel>
-	</g:ScrollPanel>
+        </g:center>
+        <g:south size="3"> <oap:ApplicationFooter/></g:south>
+	</g:DockLayoutPanel>
 
 </ui:UiBinder>

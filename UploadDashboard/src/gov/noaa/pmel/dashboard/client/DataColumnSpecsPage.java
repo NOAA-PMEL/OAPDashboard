@@ -235,12 +235,6 @@ public class DataColumnSpecsPage extends CompositeWithUsername {
 		wasLoggingOut = false;
 
 		header.setPageTitle(TITLE_TEXT);
-		header.setClickHandler(new ClickHandler() {
-            @Override
-            public void onClick(ClickEvent event) {
-                logoutOnClick(event);
-            }
-        });
 		messagesButton.setText(MESSAGES_TEXT);
 		pagerLabel.setText(PAGER_LABEL_TEXT);
 		submitButton.setText(SUBMIT_TEXT);
