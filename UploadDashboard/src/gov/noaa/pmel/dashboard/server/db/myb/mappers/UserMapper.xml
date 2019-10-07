@@ -258,8 +258,11 @@
 		<include refid="select_full_profile"/> where u.db_id = #{_userId} and u.db_id = ua.db_id
 	</select>
 	<select id="retrieveByUsername" parameterType="String" resultMap="UserMap">
-		<include refid="select_user"/> where username = #{_username} <!--and u.db_id = ua.db_id  -->
+		<include refid="select_user"/> where username = #{_username} 
 	</select>
+    <select id="retrieveByEmail" parameterType="String" resultMap="UserMap">
+		<include refid="select_user"/> where email = #{_email} 
+    </select>
 	
 	<!--
 	<select id="retrieveFullUserProfileByUsername" parameterType="String" resultMap="FullUserProfileMap">

@@ -45,7 +45,9 @@ public class LoginRedirectFilter implements Filter {
         String contentType = request.getHeader("Content-Type");
         String method = request.getMethod();
 		logger.debug(method + ": target:" + target + ", referer: " + referer + ", content: " + contentType);
-        if (( target.indexOf("DashboardServices") > 0 || target.indexOf("DataUploadService") > 0 ) &&
+        if (( target.indexOf("DashboardServices") > 0 || 
+              target.indexOf("DataUploadService") > 0 ||
+              target.indexOf("SessionServices") > 0 ) &&
             ( "GET".equals(method) || contentType == null || referer.indexOf("dashboardlogin") > 0 )) {
             response.setStatus(HttpServletResponse.SC_NO_CONTENT);
             logger.debug("j_security_check bogus GET request.  Sending NO_CONTENT");

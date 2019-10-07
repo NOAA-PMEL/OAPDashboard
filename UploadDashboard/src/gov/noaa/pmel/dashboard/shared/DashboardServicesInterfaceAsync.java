@@ -26,17 +26,9 @@ public interface DashboardServicesInterfaceAsync {
 	 */
 	void logoutUser(AsyncCallback<Void> callback);
 
-	/**
-	 * Client side request to check user session.
-	 * 
-	 * @param callback
-	 * 		the callback to make after the ping.
-	 */
-    void ping(AsyncCallback<Void> callback);
-    
     void submitFeedback(String username, String type, String message, AsyncCallback<Void> callback);
 
-    void changePassword(String username, String currentpw, String newpw, AsyncCallback<Boolean> callback);
+    void changePassword(String username, String currentpw, String newpw, AsyncCallback<DashboardServiceResponse> callback);
 
 	/**
 	 * Client side request to get the current user's list of cruises.

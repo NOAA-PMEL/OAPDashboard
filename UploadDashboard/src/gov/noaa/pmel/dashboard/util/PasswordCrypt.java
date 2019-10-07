@@ -29,9 +29,9 @@ public class PasswordCrypt {
         credible.setSaltLength(saltLength);
         credible.setKeyLength(keyLength);
         String creds = credible.mutate(forPassword);
-        if ( ! tomcatPasswdMatches(creds, forPassword)) {
-            throw new GeneralSecurityException("Password generation failure: Match Fail!");
-        }
+//        if ( ! tomcatPasswdMatches(creds, forPassword)) {
+//            throw new GeneralSecurityException("Password generation failure: Match Fail!");
+//        }
         return creds;
     }
     
@@ -41,7 +41,6 @@ public class PasswordCrypt {
         credible.setIterations(iterations);
         credible.setSaltLength(saltLength);
         credible.setKeyLength(keyLength);
-        JWhich.which("org.apache.tomcat.util.buf.HexUtils");
         return credible.matches(raw, crypt);
     }
     public static String generateJettyPasswd(String username, String forPassword) throws GeneralSecurityException {
@@ -74,11 +73,15 @@ public class PasswordCrypt {
     public static void main(String[] args) {
         String passwd = args.length > 0 ? args[0] : "password";
                 
+        String crypt = "6d9e04ea1979cbce94913043258080c9$100000$3ab634810abf91f8db19752590f37b2ab4234fe4c5fa53d1c4b75a157e5f08b8";
+        crypt = "acfa5a1b03aa02dfef694698a4cd427c$100000$aca45514f9438829aa176f0c027845509633522e401fac8f406146725a73a9da";
+//        crypt = "716bff1f86c88400762268019dfbd519$100000$8563bfcd1d81dbd689c02b450896274e76d173b9d91b84130dacec3a498e8885";
         try {
-            JWhich.which("gov.noaa.pmel.tsunami.util.JWhich");
-            JWhich.which("org.apache.logging.log4j.Logger");
-            JWhich.which("org.apache.tomcat.util.http.fileupload.servlet.ServletFileUpload");
-            System.out.println(generateJettyPasswd("username", passwd));
+//            JWhich.which("gov.noaa.pmel.tsunami.util.JWhich");
+//            JWhich.which("org.apache.logging.log4j.Logger");
+//            JWhich.which("org.apache.tomcat.util.http.fileupload.servlet.ServletFileUpload");
+//            System.out.println(generateTomcatPasswd(passwd));
+            System.out.println("matches: " + tomcatPasswdMatches(crypt, passwd));
         } catch (GeneralSecurityException ex) {
             ex.printStackTrace();
         }

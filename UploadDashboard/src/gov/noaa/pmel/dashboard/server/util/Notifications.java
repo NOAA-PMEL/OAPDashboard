@@ -13,9 +13,6 @@ import gov.noaa.pmel.tws.util.StringUtils;
 
 import org.apache.logging.log4j.Logger;
 
-import com.kamb.utils.email.EmailMessage;
-import com.kamb.utils.email.MailSender;
-//import com.twilio.sdk.resource.instance.Sms;
 
 /**
  * @author kamb
@@ -81,36 +78,13 @@ public class Notifications {
 		if (StringUtils.emptyOrNull(toList)) {
 			throw new IllegalArgumentException("empty to list");
 		}
-		MailSender sender = null;
-		EmailMessage email = null;
 		try {
-			sender = new MailSender(getSmtpServer(), from);
-			email = new EmailMessage(subject, message);
-			sender.sendMessageTo(email, toList, RecipientType.BCC);
+            OapMailSender oams = new OapMailSender();
+            oams.sendMessage(toList, subject, message);
 		} catch (Exception e) {
 			logger.warn("Failed to send \""+ subject + "\" message to: " + toList, e);
-		} finally {
-			if ( sender != null ) {
-				sender.close();
-			}
 		}
 	}
-	
-//	private static String emailTestMessage(TwUserInfo user, String msg) {
-//		return new StringBuilder()
-//			.append("Hello, ").append(user.getFullName()).append(".\n\n")
-//			.append(msg)
-//			.toString();
-//	}
-//	public static void TestNotifications(TwUserInfo user, UserPreferences userPrefs) {
-//		String message = "TWeb notification test. Initiated by Tweb user associated with email address " + user.getEmail();
-//		if ( userPrefs.emailNotificationsEnabled() && !StringUtils.emptyOrNull(user.getEmail())) {
-//			SendEmail(message, emailTestMessage(user, message), user.getEmail(), OADB_RETURN_ADDR);
-//		}
-//		if ( userPrefs.smsNotificationsEnabled() && !StringUtils.emptyOrNull(userPrefs.getNotificationSms())) {
-//			SendSMS(message, userPrefs.getNotificationSms());
-//		}
-//	}
 	
 	/**
 	 * @param args

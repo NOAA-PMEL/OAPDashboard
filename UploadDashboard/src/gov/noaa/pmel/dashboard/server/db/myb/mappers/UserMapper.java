@@ -37,6 +37,7 @@ public interface UserMapper {
 	
 	public User retrieveByUserId(Integer userid) throws SQLException;
 	public User retrieveByUsername(String username) throws SQLException;
+	public User retrieveByEmail(String email) throws SQLException;
 	
 	public String retrieveHashByUsername(String username);
 	public String retrieveHashByUserId(Integer userid);

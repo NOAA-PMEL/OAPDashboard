@@ -24,9 +24,11 @@ public interface UsersDao {
 
     public User retrieveUserById(Integer userDbId) throws SQLException;
     
+    public User retrieveUserByEmail(String email) throws SQLException;
+    
     public void updateUser(User changedUser) throws SQLException;
     
-    public void resetUserPassword(int userId, String newAuthString) throws SQLException;
+    public void setUserPassword(int userId, String newAuthString) throws SQLException;
     public String retrieveUserAuthString(int userId) throws SQLException;
     
     public void deleteUserByUsername(String username) throws SQLException;

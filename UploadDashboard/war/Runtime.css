@@ -64,4 +64,17 @@
 .popupDialogButton {
 	float: right;
 	margin: 1em !important;
- }
+}
+.slideIn {
+   display: block;
+   z-index: 25;
+}
+.slideOut {
+	display: none;
+}
+.showInline {
+    display: inline;
+}
+/* .hide {
+	display: none;
+} */
