@@ -54,6 +54,8 @@ import gov.noaa.pmel.dashboard.shared.DashboardDataset;
 import gov.noaa.pmel.dashboard.shared.DashboardDatasetData;
 import gov.noaa.pmel.dashboard.shared.DashboardDatasetList;
 import gov.noaa.pmel.dashboard.shared.DashboardMetadata;
+import gov.noaa.pmel.dashboard.shared.DashboardServiceResponse;
+import gov.noaa.pmel.dashboard.shared.DashboardServiceResponse.DashboardServiceResponseBuilder;
 import gov.noaa.pmel.dashboard.shared.DashboardServicesInterface;
 import gov.noaa.pmel.dashboard.shared.DashboardUtils;
 import gov.noaa.pmel.dashboard.shared.DataColumnType;
@@ -119,34 +121,28 @@ public class DashboardServices extends RemoteServiceServlet implements Dashboard
 		logger.info("logged out " + username);
 	}
 
-	@Override
-	public void ping() {
-		HttpServletRequest request = getThreadLocalRequest();
-		username = null;
-		try {
-			username = DashboardUtils.cleanUsername(request.getUserPrincipal().getName().trim());
-		} catch (Exception ex) {
-            logger.info(ex);
-		}
-		logger.debug("ping from user: " + username);
-	}
-
+    @Override
     public void submitFeedback(String pageUsername, String type, String message) {
         validateRequest(pageUsername);
         FeedbackHandler.logFeedbackMessage(pageUsername, type, message);
         FeedbackHandler.notifyFeedbackMessage(pageUsername, type, message);
     }
 
-    public boolean changePassword(String pageUsername, String currentpw, String newpw) {
+    @Override
+    public DashboardServiceResponse changePassword(String pageUsername, String currentpw, String newpw) {
         validateRequest(pageUsername);
+        DashboardServiceResponseBuilder response = DashboardServiceResponse.builder();
         logger.info("Changing password for user: " + pageUsername);
         boolean changed = false;
         try {
-            changed = Users.changeUserPassword(pageUsername, currentpw, newpw);
+            Users.changeUserPassword(pageUsername, currentpw, newpw);
+            changed = true;
         } catch (DashboardException ex) {
             logger.info(ex,ex);
+            response.error(ex.getMessage());
         }
-        return changed;
+        response.wasSuccessful(changed);
+        return response.build();
     }
 	/**
 	 * Validates the given request by retrieving the current username from the request
@@ -777,6 +773,7 @@ public class DashboardServices extends RemoteServiceServlet implements Dashboard
         return notifyUrl;
     }
 
+    // inside url typically looks like <host>//<root context>/Dashboard
     private static String getMetadataEditorPage(HttpServletRequest request, String docId) throws Exception {
         String requestUrl = request.getRequestURL().toString();
         System.out.println("get ME page request: " + requestUrl);

@@ -21,8 +21,16 @@
         <filter-name>LoginPageMisdirectFilter</filter-name>
         <url-pattern>/OAPUploadDashboard/DashboardServices</url-pattern>
         <url-pattern>/OAPUploadDashboard/DataUploadService</url-pattern>
+        <url-pattern>/OAPUploadDashboard/SessionServices</url-pattern>
     </filter-mapping>
 	
+<!--     <multipart-config>
+      ~150MB max
+      <max-file-size>152428800</max-file-size>
+      <max-request-size>152428800</max-request-size>
+      <file-size-threshold>0</file-size-threshold>
+    </multipart-config>
+ -->  
 	<!-- Servlets -->
 	<servlet>
 		<servlet-name>DashboardServlet</servlet-name>
@@ -32,6 +40,15 @@
 		<servlet-name>DashboardServlet</servlet-name>
 		<url-pattern>/OAPUploadDashboard/DashboardServices</url-pattern>
 	</servlet-mapping>
+	<servlet>
+		<servlet-name>SessionServlet</servlet-name>
+		<servlet-class>gov.noaa.pmel.dashboard.server.SessionServices</servlet-class>
+	</servlet>
+	<servlet-mapping>
+		<servlet-name>SessionServlet</servlet-name>
+		<url-pattern>/OAPUploadDashboard/SessionServices</url-pattern>
+	</servlet-mapping>
+
 
 	<servlet>
 		<servlet-name>DashboardDataUploadServlet</servlet-name>
@@ -78,11 +95,22 @@
 		<url-pattern>/DashboardUpdateService/notify/*</url-pattern>
 	</servlet-mapping>
 
+    <servlet>
+        <servlet-name>PwResetServlet</servlet-name>
+		<servlet-class>gov.noaa.pmel.dashboard.server.ws.PwResetService</servlet-class>
+    </servlet>
+	<servlet-mapping>
+		<servlet-name>PwResetServlet</servlet-name>
+		<url-pattern>/tx/*</url-pattern>
+	</servlet-mapping>
+  
 	<security-constraint>
 		<web-resource-collection>
 			<web-resource-name>DashboardServices</web-resource-name>
 			<url-pattern>/DashboardUpdateService/*</url-pattern>
 			<url-pattern>/images/*</url-pattern>
+            <url-pattern>/passwordhelp.html</url-pattern>
+            <url-pattern>/tx/*</url-pattern>
 			<http-method>GET</http-method>
 			<http-method>POST</http-method>
 		</web-resource-collection>
@@ -92,7 +120,6 @@
 		<web-resource-collection>
 			<web-resource-name>OAP Dashboard</web-resource-name>
 			<url-pattern>/*</url-pattern>
-			<http-method>*</http-method>
             <!--
 			<http-method>DELETE</http-method>
 			<http-method>GET</http-method>

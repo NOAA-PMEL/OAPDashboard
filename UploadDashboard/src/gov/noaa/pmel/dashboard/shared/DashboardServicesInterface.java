@@ -26,14 +26,9 @@ public interface DashboardServicesInterface extends RemoteService {
 	 */
 	void logoutUser();
 	
-    /**
-     * Checks session.
-     */
-	void ping();
-	
     void submitFeedback(String username, String type, String message);
     
-    boolean changePassword(String username, String currentpw, String newpw);
+    DashboardServiceResponse changePassword(String username, String currentpw, String newpw);
     
 	/**
 	 * Gets the current user's list of datasets.
