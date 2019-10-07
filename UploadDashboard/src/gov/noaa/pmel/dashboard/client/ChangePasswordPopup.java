@@ -4,25 +4,24 @@
 package gov.noaa.pmel.dashboard.client;
 
 import com.google.gwt.core.client.GWT;
-import com.google.gwt.dom.client.SelectElement;
 import com.google.gwt.event.dom.client.ClickEvent;
+import com.google.gwt.event.dom.client.FocusEvent;
+import com.google.gwt.event.dom.client.FocusHandler;
 import com.google.gwt.event.logical.shared.CloseEvent;
 import com.google.gwt.event.logical.shared.CloseHandler;
 import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.uibinder.client.UiHandler;
+import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.google.gwt.user.client.ui.Button;
 import com.google.gwt.user.client.ui.Composite;
-import com.google.gwt.user.client.ui.HTML;
-import com.google.gwt.user.client.ui.Image;
 import com.google.gwt.user.client.ui.Label;
-import com.google.gwt.user.client.ui.ListBox;
 import com.google.gwt.user.client.ui.PasswordTextBox;
 import com.google.gwt.user.client.ui.PopupPanel;
-import com.google.gwt.user.client.ui.TextArea;
+import com.google.gwt.user.client.ui.TextBox;
 import com.google.gwt.user.client.ui.Widget;
 
 /**
@@ -39,9 +38,13 @@ public class ChangePasswordPopup extends Composite {
 			GWT.create(ChangePasswordPopupUiBinder.class);
 
     @UiField Label prologue;
-    @UiField PasswordTextBox currentPasswordBox;
-    @UiField PasswordTextBox newPasswordBox;
-    @UiField PasswordTextBox confirmPasswordBox;
+    // attempts to defeat password auto-fill...
+    @UiField Label cpLbl;
+    @UiField Label npLbl;
+    @UiField Label cnfLbl;
+    @UiField PasswordTextBox cpBx;
+    @UiField PasswordTextBox newPdBox;
+    @UiField PasswordTextBox confirmPdBox;
 	@UiField Button yesButton;
 	@UiField Button noButton;
 
@@ -63,6 +66,18 @@ public class ChangePasswordPopup extends Composite {
 	public ChangePasswordPopup(final AsyncCallback<Boolean> callback) {
 		initWidget(uiBinder.createAndBindUi(this));
 
+        cpBx.setReadOnly(true);
+        newPdBox.setReadOnly(true);
+        confirmPdBox.setReadOnly(true);
+        FocusHandler fh = new FocusHandler() {
+            @Override
+            public void onFocus(FocusEvent focusEvent) {
+                ((TextBox)focusEvent.getSource()).setReadOnly(false);
+            }
+        };
+        cpBx.addFocusHandler(fh);
+        newPdBox.addFocusHandler(fh);
+        confirmPdBox.addFocusHandler(fh);
 		parentPanel = new PopupPanel(false, true);
 		parentPanel.setWidget(this);
 
@@ -83,7 +98,13 @@ public class ChangePasswordPopup extends Composite {
 
 	void show(String username) {
         setPrologue(username);
-		currentPasswordBox.setFocus(true);
+        Timer t = new Timer() {
+            @Override
+            public void run() {
+        		cpBx.setFocus(true);
+            }
+        };
+        t.schedule(500);
 		parentPanel.center();
 	}
     
@@ -93,7 +114,7 @@ public class ChangePasswordPopup extends Composite {
 
 	@UiHandler("yesButton")
 	void yesOnClick(ClickEvent e) {
-        if ( ! newPasswordBox.getText().equals(confirmPasswordBox.getText())) {
+        if ( ! newPdBox.getText().equals(confirmPdBox.getText())) {
             Window.alert("Passwords do not match!");
             clearNewPasswords();
             return;
@@ -106,8 +127,8 @@ public class ChangePasswordPopup extends Composite {
      * 
      */
     private void clearNewPasswords() {
-        newPasswordBox.setText("");
-        confirmPasswordBox.setText("");
+        newPdBox.setText("");
+        confirmPdBox.setText("");
     }
 
     @UiHandler("noButton")
@@ -117,14 +138,14 @@ public class ChangePasswordPopup extends Composite {
 	}
 
     public void reset() {
-        currentPasswordBox.setText("");
-        newPasswordBox.setText("");
-        confirmPasswordBox.setText("");
+        cpBx.setText("");
+        newPdBox.setText("");
+        confirmPdBox.setText("");
     }
     public String getCurrentPassword() {
-        return currentPasswordBox.getText();
+        return cpBx.getText();
     }
     public String getNewPassword() {
-        return newPasswordBox.getText();
+        return newPdBox.getText();
     }
 }
