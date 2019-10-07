@@ -1,0 +1,25 @@
+#!/bin/bash
+##
+# Runs BaseRealm.main 
+
+HOME=/Users/kamb
+
+user_passwd=$1
+if [ ! $user_passwd ] ; then
+	echo -n "Please enter user password: "
+	read -s user_passwd
+	echo
+fi
+
+# tomcat digest password:
+TOMCAT=/${HOME}/tomcat/85
+
+EPASS=`${TOMCAT}/bin/digest.sh -a "PBKDF2WithHmacSHA512" -i 100000 -s 16 -k 256 -h "org.apache.catalina.realm.SecretKeyCredentialHandler" $user_passwd`
+# echo T8: $EPASS
+
+EPASS=${EPASS//" "/""}
+IFS=":"; read -ra parts <<< "$EPASS"
+# echo parts: ${#parts[@]} ${parts[@]}
+encrypted=${parts[${#parts[@]}-1]}
+echo $encrypted
+

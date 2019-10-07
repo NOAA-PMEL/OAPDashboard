@@ -1,0 +1,154 @@
+#!/bin/bash
+#
+# This script makes all the changes necessary to add a user to the SADashboard
+# Tomcat db users and roles, OAPDashboard user files, etc.
+
+PROG=$0
+DIR=`dirname $PROG`/
+
+# 
+# dunkel:
+#	mysql:
+#		database: oapdashboard
+#			table:	TomcatUsers
+#				username, password
+#			table:	Roles
+#				role, description
+#			table: TomcatRoles
+#				user_dbid, username, role_dbid, userrole
+#		database: OAPFlags
+#			table: Reviewers
+#				username, realname, email
+#
+#	tomcat:
+#		NOT USING: TomcatRoles.xml
+#		using JDBCRealm
+#		using MySQL or Postgres
+#	
+#	dashboard:
+#		~kamb/tomcat/70/content/OAPUploadDashboard/config/OAPUploadDashboard.properties
+#			RoleFor_[user_name]=[Admin|ManagerOf<groupNum>|MemberOf<groupNum>]
+
+OS=`uname -a | awk '{ print $1 }'`
+
+DB=mysql
+
+SQL_FILE=add_user-tomcat.sql
+
+DASH_DB=oapdashboard
+FLAG_DB=OAPFlags
+OA_USER_ROLE=oapdashboarduser
+USE=use
+
+usage() {
+	echo add_user [username] [real name] [email]
+}
+
+echo args $#  $@
+
+if [ $# -lt 3 ] ; then
+	usage
+	exit
+fi
+
+username=$1
+realname=$2
+email=$3
+
+echo -n "Please enter user password: "
+read -s user_passwd
+echo
+
+EPASS=`${DIR}/epass $user_passwd`
+
+# if [ 'Darwin' == "$OS" ] ; then
+#	echo "Running on Darwin.  Using Postgres"
+
+HOST=`hostname`
+if [[ $HOST =~ matisse* ]] ; then
+	OA_FILE=/local/tomcat/content/OAPUploadDashboard/config/OAPUploadDashboard.properties
+    echo Using matisse OAP properties file: $OA_FILE
+else
+    echo -n "Please enter path to OAPUploadDashboard.properties file: "
+    read OA_FILE
+fi
+
+if [[ ! $OA_FILE =~ OAPUploadDashboard.properties ]] ; then
+    OA_FILE=${OA_FILE}/OAPUploadDashboard.properties
+fi
+
+echo username: $username
+echo Real Name: $realname
+echo user email: $email
+echo -n "Is this correct? [yN] "
+read yesno
+
+if [ "y" != "$yesno" ] ; then
+	echo exiting
+	exit
+fi
+
+echo checking for $username in $OA_FILE
+
+if [ -e $OA_FILE ] ; then
+	exists=`grep $username $OA_FILE`
+	if [ $exists ] ; then
+		echo $username already added to OA config file as: $exists
+	else
+		echo adding $username as Admin to OA config
+		echo "RoleFor_"${username}"=Admin" >> $OA_FILE
+	fi
+else
+	echo "OA config file not found: " + $OA_FILE
+fi
+
+echo creating sql file $SQL_FILE
+if [ -e $SQL_FILE ] ; then
+	rm $SQL_FILE
+fi
+
+echo "$USE  $DASH_DB;" > $SQL_FILE
+echo "insert into TomcatUsers ( username, password ) values ( '$username', '$EPASS' );" >> $SQL_FILE
+echo "insert into TomcatRoles ( user_dbid, username, role_dbid, userrole ) values ("\
+"(select db_id from TomcatUsers where username = '${username}'), '${username}', "\
+"(select db_id from Roles where role='$OA_USER_ROLE'), '$OA_USER_ROLE');" >> $SQL_FILE
+
+echo "$USE  $FLAG_DB;" >> $SQL_FILE
+echo "insert into Reviewers ( username, realname, email ) values ( '$username', '$realname', '$email' );" >> $SQL_FILE
+
+if [ $APPLY ] ; then
+    echo -n "Please enter $DB password: "
+    read -s db_passwd
+    echo
+    
+    # DB_USER="-u scientist"
+    # PASSWD="--password=${db_passwd}"
+    DB_USER="-u oapadmin"
+    PASSWD="--password=${db_passwd}"
+    
+    # if [ 'X_Darwin' == "$OS" ] ; then
+    if [ 'psql' == $DB ] ; then
+    	DB=psql
+    	DB_USER="-U oapweb"
+    	PASSWD="-w"
+    	USE="\connect"
+    fi
+
+    echo "command: ${DB} ${DB_USER} $PASSWD $DASH_DB < $SQL_FILE"
+
+    echo -n "Is this correct? [yN] "
+    read yesno
+    
+    if [ "y" != "$yesno" ] ; then
+    	echo exiting
+    	exit
+    fi
+
+    ${DB} ${DB_USER} $PASSWD $DASH_DB < $SQL_FILE
+else
+    echo Created add user sql file: $SQL_FILE
+    echo "Use command: ${DB} ${DB_USER} $PASSWD $DASH_DB < $SQL_FILE"
+fi
+
+# rm $SQL_FILE
+
