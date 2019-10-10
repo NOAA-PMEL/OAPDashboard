@@ -6,6 +6,7 @@ package gov.noaa.pmel.dashboard.handlers;
 import gov.noaa.pmel.dashboard.handlers.FileXferService.XFER_PROTOCOL;
 import gov.noaa.pmel.tws.util.ApplicationConfiguration;
 import gov.noaa.pmel.tws.util.ApplicationConfiguration.PropertyNotFoundException;
+import gov.noaa.pmel.tws.util.StringUtils;
 
 /**
  * @author kamb
@@ -53,9 +54,16 @@ public abstract class BaseTransferAgent {
         }
         return idFileLocation;
     }
-    protected String getTargetDestination() throws PropertyNotFoundException {
+    protected String getTargetDestinationDir(String stdId) throws PropertyNotFoundException {
         if ( targetDestination == null ) {
-            targetDestination = ApplicationConfiguration.getProperty("oap.archive."+_protocol.value()+".destination");
+            targetDestination = ApplicationConfiguration.getProperty("oap.archive."+_protocol.value()+".destination", "");
+            if ( ! StringUtils.emptyOrNull(targetDestination) && !targetDestination.endsWith("/")) {
+                targetDestination += "/";
+            }
+            targetDestination += stdId;
+            if ( !targetDestination.endsWith("/")) {
+                targetDestination += "/";
+            }
         }
         return targetDestination;
     }

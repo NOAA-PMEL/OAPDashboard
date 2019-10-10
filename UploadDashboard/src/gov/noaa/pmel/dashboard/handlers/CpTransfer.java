@@ -24,17 +24,18 @@ public class CpTransfer extends BaseTransferAgent implements FileTransferOp {
      * @see gov.noaa.pmel.dashboard.handlers.FileTransferOp#getTransferCommand()
      */
     @Override
-    public String getTransferCommand(File transferFile) throws Exception {
-        String dest = getTargetDestination();
-        return buildCommand(transferFile, dest);
+    public String getTransferCommand(String stdId, File transferFile) throws Exception {
+        String destDir = getTargetDestinationDir(stdId);
+        return buildCommand(transferFile, destDir);
     }
     
-    private String buildCommand(File transferFile, String dest) throws IOException, PropertyNotFoundException {
+    private String buildCommand(File transferFile, String destDir) throws IOException, PropertyNotFoundException {
         StringBuilder transferCmd = new StringBuilder();
         String command = "cp";
-        transferCmd.append(command).append(SPACE)
+        transferCmd.append("([ -e ").append(destDir).append(" ] || mkdir -p ").append(destDir).append(" ) && ")
+                   .append(command).append(SPACE)
                    .append(transferFile.getCanonicalPath()).append(SPACE)
-                   .append(dest);
+                   .append(destDir);
 
         return transferCmd.toString();
     }

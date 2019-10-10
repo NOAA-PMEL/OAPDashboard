@@ -79,12 +79,12 @@ public class FileXferService {
 
     public int submitArchiveBundle(String stdId, File archiveBundle, String userRealName, String userEmail) throws Exception {
 //        try {
-            String command = _transferOp.getTransferCommand(archiveBundle);
+            String command = _transferOp.getTransferCommand(stdId, archiveBundle);
             logger.debug("xfer cmd: " + command);
             CommandRunner runner = new CommandRunner(command);
             int exitStatus = runner.runCommand();
             if ( exitStatus == 0 ) {
-                exitStatus = submitHash(archiveBundle);
+                exitStatus = submitHash(stdId, archiveBundle);
             }
             return exitStatus;
 //        } catch (PropertyNotFoundException pex) {
@@ -98,11 +98,11 @@ public class FileXferService {
      * @param archiveBundle
      * @return
      */
-    private int submitHash(File archiveBundle) throws Exception {
+    private int submitHash(String stdId, File archiveBundle) throws Exception {
         String fname = archiveBundle.getName();
         String fbase = fname.substring(0, fname.lastIndexOf('.'));
         File hashFile = new File(archiveBundle.getParentFile(), fbase+"-sha256.txt");
-        String command = _transferOp.getTransferCommand(hashFile);
+        String command = _transferOp.getTransferCommand(stdId, hashFile);
         logger.debug("xfer cmd: " + command);
         CommandRunner runner = new CommandRunner(command);
         int exitStatus = runner.runCommand();
@@ -112,7 +112,7 @@ public class FileXferService {
     public static void main(String[] args) {
         try {
             File archiveBundle = new File("/local/tomcat/oap_content/OAPUploadDashboard/MetadataDocs/NEMO/NEMOPRE052012/extracted_NEMOPRE052012_OADS.xml");
-            new FileXferService(XFER_PROTOCOL.SFTP).submitArchiveBundle("datasetID", archiveBundle, "Real Name", "real.name@noaa.gov");
+//            new FileXferService(XFER_PROTOCOL.SFTP).submitArchiveBundle("datasetID", archiveBundle, "Real Name", "real.name@noaa.gov");
             new FileXferService(XFER_PROTOCOL.SCP).submitArchiveBundle("datasetID", archiveBundle, "Real Name", "real.name@noaa.gov");
             new FileXferService(XFER_PROTOCOL.CP).submitArchiveBundle("datasetID", archiveBundle, "Real Name", "real.name@noaa.gov");
         } catch (Exception ex) {
