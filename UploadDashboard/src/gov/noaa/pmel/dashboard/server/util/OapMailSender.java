@@ -68,8 +68,8 @@ public class OapMailSender {
     
     public OapMailSender() throws PropertyNotFoundException {
         logSentMessages = ApplicationConfiguration.getProperty("oap.email.log_sent_messages", false);
-        acct = ApplicationConfiguration.getProperty("oap.email.account", "linus.kamb@noaa.gov" ); // "\"OAPDashboard\" <no_reply@pmel.noaa.gov>");
-        from = ApplicationConfiguration.getProperty("oap.email.from", "OAPDashboard <no_reply@pmel.noaa.gov>");
+        acct = ApplicationConfiguration.getProperty("oap.email.account", "pmel.sdis@noaa.gov");
+        from = ApplicationConfiguration.getProperty("oap.email.from", "OAPDashboard <pmel.sdis@noaa.gov>");
         dapw = ApplicationConfiguration.getProperty("oap.email.password");
     }
     
@@ -110,6 +110,7 @@ public class OapMailSender {
 		msg.setHeader("X-Mailer", MAILER);
 		msg.setSentDate(new Date());
 		msg.setRecipients(RecipientType.TO, InternetAddress.parse(to, false));
+//		msg.setRecipients(RecipientType.BCC, InternetAddress.parse(to, false));
 		// set title and body
 		msg.setSubject(subject);
         MimeBodyPart mimeBody = new MimeBodyPart();
