@@ -22,6 +22,14 @@
 	       font-weight: bold;
            color: red;
         }
+        .genDOI_msg_panel {
+            padding: 0em 0em 1em 2em;
+        }
+        .generateDOIchkBx {
+            padding-left: 1.1em;
+	        font-size: larger;
+	        font-weight: bold;
+        }
 	</ui:style>
 	
     <g:DockLayoutPanel unit="EM" addStyleNames="{style.fullpagecontainer} {style.letItOverFlow}" >
@@ -38,6 +46,9 @@
                         <g:TextArea  ui:field="submitCommentTextArea" addStyleNames="{style.submit_msg_text}"/>
                     </g:ScrollPanel>
                 </g:FlowPanel>
+                <g:HorizontalPanel addStyleNames="{style.genDOI_msg_panel}">
+                    <g:CheckBox ui:field="generateDOIchkBx" addStyleNames="{style.generateDOIchkBx}">&nbsp;Have NCEI generate DOI for submitted dataset.</g:CheckBox>
+                </g:HorizontalPanel>
     			<g:FlowPanel addStyleNames="{style.horizontalbuttonpanel}">
     				<g:Button addStyleNames="{style.horizontalbutton}"
     					ui:field="submitButton" />

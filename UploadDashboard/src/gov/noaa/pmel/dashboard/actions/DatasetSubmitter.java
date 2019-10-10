@@ -34,6 +34,7 @@ import gov.noaa.pmel.dashboard.shared.DashboardDatasetData;
 import gov.noaa.pmel.dashboard.shared.DashboardMetadata;
 import gov.noaa.pmel.dashboard.shared.DashboardUtils;
 import gov.noaa.pmel.tws.util.ApplicationConfiguration;
+import gov.noaa.pmel.tws.util.StringUtils;
 
 /**
  * Submits a dataset.  At this time this just means creating the 
@@ -225,8 +226,9 @@ public class DatasetSubmitter {
 //        }
 //    }
     
-	public void archiveDatasets(List<String> datasetIds, List<String> columnsList, String submitMsg,
-	                            String archiveStatus, String timestamp, boolean repeatSend, String submitter) {
+	public void archiveDatasets(List<String> datasetIds, List<String> columnsList, String submitMsg, 
+	                            boolean generateDOI, String archiveStatus, String timestamp, 
+	                            boolean repeatSend, String submitter) {
 		ArrayList<String> errorMsgs = new ArrayList<String>();
 		
 		// Send dataset data and metadata for archival where user requested immediate archival
@@ -257,7 +259,7 @@ public class DatasetSubmitter {
 				try {
 					// filesBundler.sendOrigFilesBundle(datasetId, commitMsg, userRealName, userEmail);
 //					File archiveBundle = filesBundler.createAndSendArchiveFilesBundle(datasetId, columnsList, commitMsg, userRealName, userEmail);
-                    File archiveBundle = getArchiveBundle(datasetId, columnsList, submitMsg);
+                    File archiveBundle = getArchiveBundle(datasetId, columnsList, submitMsg, generateDOI);
                     doSubmitAchiveBundleFile(datasetId, archiveBundle, userRealName, userEmail);
                     String archiveStatusMsg = "Submitted " + archiveBundle + " for " + userRealName + " at " + DashboardServerUtils.formatTime(new Date());
                     logger.info(archiveStatusMsg);
@@ -275,6 +277,7 @@ public class DatasetSubmitter {
 				cruise.setArchiveStatus(thisStatus);
 				cruise.setArchiveDate(timestamp);
                 cruise.setArchiveSubmissionMessage(submitMsg);
+                cruise.setArchiveDOIrequested(generateDOI);
 				dataHandler.saveDatasetInfoToFile(cruise, commitMsg);
 			}
 		}
@@ -356,13 +359,18 @@ public class DatasetSubmitter {
     /**
      * @param datasetId
      * @param columnsList
+     * @param generateDOI 
      * @return
 	 * @throws Exception
      */
-    private File getArchiveBundle(String datasetId, List<String> columnsList, String submitMsg) throws Exception {
+    private File getArchiveBundle(String datasetId, List<String> columnsList, String submitMsg, boolean generateDOI) throws Exception {
         File archiveBundle = null;
         if ( ApplicationConfiguration.getProperty("oap.archive.use_bagit", true)) {
-            archiveBundle = Bagger.Bag(datasetId, submitMsg);
+            String submitComment = "generate_doi: " + String.valueOf(generateDOI) + "\n";
+            if ( ! StringUtils.emptyOrNull(submitMsg)) {
+                submitComment += submitMsg;
+            }
+            archiveBundle = Bagger.Bag(datasetId, submitComment);
         } else {
             archiveBundle = filesBundler.createArchiveDataFile(datasetId, columnsList);
         }
