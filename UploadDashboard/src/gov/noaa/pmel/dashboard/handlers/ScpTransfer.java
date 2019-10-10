@@ -24,21 +24,28 @@ public class ScpTransfer extends BaseTransferAgent implements FileTransferOp {
      * @see gov.noaa.pmel.dashboard.handlers.FileTransferOp#getTransferCommand()
      */
     @Override
-    public String getTransferCommand(File transferFile) throws Exception {
-        String dest = getTargetDestination();
-        return buildCommand(transferFile, dest);
+    public String getTransferCommand(String stdId, File transferFile) throws Exception {
+        String destDir = getTargetDestinationDir(stdId);
+        return buildCommand(transferFile, destDir);
     }
     
-    private String buildCommand(File transferFile, String dest) throws IOException, PropertyNotFoundException {
+    private String buildCommand(File transferFile, String destDir) throws IOException, PropertyNotFoundException {
         StringBuilder transferCmd = new StringBuilder();
-        String command = ApplicationConfiguration.getProperty("oap.archive.scp.command", _protocol.value());
         String user = getUserId()+"@"+getHost();
-        transferCmd.append(command)
+        StringBuilder mkCmd = new StringBuilder()
+                .append("ssh").append(SPACE)
+                   .append(getIdFileSpecifier()).append(SPACE)
+                   .append(user).append(SPACE)
+                   .append("\" [ -e ").append(destDir).append(" ] ||  mkdir ").append(destDir).append("\"");
+        String scpCmd = ApplicationConfiguration.getProperty("oap.archive.scp.command", _protocol.value());
+        transferCmd.append(scpCmd).append(SPACE)
                    .append(getIdFileSpecifier()).append(SPACE)
                    .append(transferFile.getCanonicalPath()).append(SPACE)
-                   .append(user).append(":").append(dest);
+                   .append(user).append(":").append(destDir);
 
-        return transferCmd.toString();
+        StringBuilder fullCmd = new StringBuilder();
+        fullCmd.append(mkCmd.toString()).append(" && ").append(transferCmd.toString());
+        return fullCmd.toString();
     }
 
 }
