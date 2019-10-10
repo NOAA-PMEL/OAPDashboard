@@ -1134,6 +1134,7 @@ public class DatasetListPage extends CompositeWithUsername {
 
 		// Make the columns sortable
 		expocodeColumn.setSortable(true);
+        featureTypeColumn.setSortable(true);
 		timestampColumn.setSortable(true);
 		dataCheckColumn.setSortable(true);
 		metadataColumn.setSortable(true);
@@ -1149,6 +1150,8 @@ public class DatasetListPage extends CompositeWithUsername {
 				new ListHandler<DashboardDataset>(listProvider.getList());
 		columnSortHandler.setComparator(expocodeColumn, 
 				DashboardDataset.datasetIdComparator);
+		columnSortHandler.setComparator(featureTypeColumn, 
+				DashboardDataset.featureTypeComparator);
 		columnSortHandler.setComparator(timestampColumn, 
 				DashboardDataset.timestampComparator);
 		columnSortHandler.setComparator(dataCheckColumn, 
