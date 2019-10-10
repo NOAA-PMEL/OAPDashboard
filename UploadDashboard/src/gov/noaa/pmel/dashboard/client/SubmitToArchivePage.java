@@ -58,6 +58,7 @@ public class SubmitToArchivePage extends CompositeWithUsername implements DataSu
 //	@UiField HTML introHtml;
 //	@UiField Panel columnsPanel;
 //	@UiField DataGrid<DataColumnType> columnsGrid;
+    @UiField CheckBox generateDOIchkBx;
 	@UiField Button cancelButton;
 	@UiField Button submitButton;
 	
@@ -258,6 +259,7 @@ public class SubmitToArchivePage extends CompositeWithUsername implements DataSu
         singleton.header.addDatasetIds(datasets);
         singleton.setUsername(datasets.getUsername());
 		singleton.updateDatasetColumns(datasets);
+        singleton.submitButton.setEnabled(true);
 		UploadDashboard.updateCurrentPage(singleton, UploadDashboard.DO_PING);
 		History.newItem(PagesEnum.SUBMIT_TO_ARCHIVE.name(), false);
 	}
@@ -288,6 +290,7 @@ public class SubmitToArchivePage extends CompositeWithUsername implements DataSu
 		header.userInfoLabel.setText(WELCOME_INTRO + getUsername());
 		
         submitCommentTextArea.setText(dataset.getArchiveSubmissionMessage());
+        generateDOIchkBx.setValue(dataset.getArchiveDOIrequested());
 //		columnsPanel.clear();
         
         setFilesToBeArchived(dataset);
@@ -369,6 +372,7 @@ public class SubmitToArchivePage extends CompositeWithUsername implements DataSu
 	@UiHandler("submitButton")
 	void submitOnClick(ClickEvent event) {
 	    
+        submitButton.setEnabled(false);
 	    // check that all datasets (if more than 1 selected) have the selected columns
 //	    if ( checkDatasetColumns()) {
 	        continueSubmit();
@@ -437,15 +441,17 @@ public class SubmitToArchivePage extends CompositeWithUsername implements DataSu
 //		}
 
 		boolean repeatSend = true; // XXX
+        boolean requestDOI = generateDOIchkBx.getValue().booleanValue();
 		// Submit the dataset
 		UploadDashboard.showWaitCursor();
 		service.submitDatasetsToArchive(getUsername(), _submitIdsList, _submitColsList, 
 		                                archiveStatus, localTimestamp, repeatSend, 
-                                        submitCommentTextArea.getText(),
+                                        submitCommentTextArea.getText(), requestDOI,
 			new AsyncCallback<Void>() {
 				@Override
 				public void onSuccess(Void result) {
 					// Success - go back to the cruise list page
+					UploadDashboard.showMessage("Dataset submitted.");
 					DatasetListPage.showPage();
 					UploadDashboard.showAutoCursor();
 				}

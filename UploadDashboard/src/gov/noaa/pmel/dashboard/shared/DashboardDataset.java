@@ -33,6 +33,7 @@ public class DashboardDataset implements Serializable, IsSerializable {
 	protected String archiveStatus;
 	protected String archiveSubmissionMessage;
 	protected String archiveDate;
+    protected boolean archiveDOIrequested;
 	protected String uploadFilename;
 	protected String uploadTimestamp;
 	protected String doi;
@@ -322,7 +323,14 @@ public class DashboardDataset implements Serializable, IsSerializable {
 			this.archiveSubmissionMessage = submissionMessage.trim();
 	}
 	
+    public boolean getArchiveDOIrequested() {
+        return archiveDOIrequested;
+    }
 
+    public void setArchiveDOIrequested(boolean doiRequested) {
+        archiveDOIrequested = doiRequested;
+    }
+    
 	/**
 	 * @return 
 	 * 		the archive submission date; 
@@ -732,6 +740,20 @@ XXX This allows the possibility that numDataRows != the actual number of data ro
 			if ( d2 == null )
 				return 1;
 			return d1.getUploadTimestamp().compareTo(d2.getUploadTimestamp());
+		}
+	};
+
+	public static Comparator<DashboardDataset> featureTypeComparator = 
+			new Comparator<DashboardDataset>() {
+		@Override
+		public int compare(DashboardDataset d1, DashboardDataset d2) {
+			if ( d1 == d2 )
+				return 0;
+			if ( d1 == null )
+				return -1;
+			if ( d2 == null )
+				return 1;
+			return d1.getFeatureTypeName().compareTo(d2.getFeatureTypeName());
 		}
 	};
 

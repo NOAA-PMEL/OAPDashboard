@@ -251,7 +251,7 @@ public class Bagger implements ArchiveBundler {
         if ( StringUtils.emptyOrNull(submitMsg)) {
             return;
         }
-        File msgFile = new File(staged.toFile(), _datasetId + "_SubmissionComment.txt");
+        File msgFile = new File(staged.toFile(), _datasetId + "_SubmissionInstructions.txt");
         try (FileWriter fout = new FileWriter(msgFile)) {
             fout.write(submitMsg);
         }
@@ -267,9 +267,10 @@ public class Bagger implements ArchiveBundler {
                                         MaliciousPathException, UnsupportedAlgorithmException, 
                                         InvalidBagitFileFormatException, 
                                         CorruptChecksumException, VerificationException {
-        BagVerifier bv = new BagVerifier();
-        bv.isComplete(bag, _includeHiddenFiles);
-        bv.isValid(bag, _includeHiddenFiles);
+        try ( BagVerifier bv = new BagVerifier(); ) { 
+            bv.isComplete(bag, _includeHiddenFiles);
+            bv.isValid(bag, _includeHiddenFiles);
+        }
     }
 
     /**
