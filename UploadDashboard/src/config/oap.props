@@ -24,7 +24,8 @@
 
 oap.env=prod
 
-oap.email.from=OAP Dashboard System <linus.kamb@noaa.gov>
+oap.email.from=OAP Dashboard System <pmel.sdis@noaa.gov>
+oap.email.account=pmel.sdis@noaa.gov
 oap.archive.notification.list=linus.kamb@noaa.gov
 # ,john.relph@noaa.gov
 
