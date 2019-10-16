@@ -313,7 +313,7 @@ public class DatasetSubmitter {
     private static void sendArchiveMessage(String datasetId, File archiveBundle, String userRealName, String userEmail) throws Exception {
         String subject = "TESTING: Archive bundle posted for dataset ID: " + datasetId;
         String message = "A dataset archive bundle for " + userRealName + " was posted to the SFTP site for pickup.\n"
-                       + "The archive bundle is available for pickup at ncei_sftp@sftp.pmel.noaa.gov/data/oap/" + archiveBundle.getName();
+                       + "The archive bundle is available for pickup at ncei_sftp@sftp.pmel.noaa.gov/data/oap/" + datasetId + "/" + archiveBundle.getName();
             String toList = ApplicationConfiguration.getLatestProperty("oap.archive.notification.list");
             new OapMailSender().sendMessage(toList, subject, message);
     }
