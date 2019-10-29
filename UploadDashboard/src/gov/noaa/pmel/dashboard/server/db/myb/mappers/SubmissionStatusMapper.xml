@@ -1,0 +1,98 @@
+<?xml version='1.0' encoding='UTF-8' ?>
+<!DOCTYPE mapper PUBLIC '-//mybatis.org//DTD Mapper 3.0//EN'
+  'http://mybatis.org/dtd/mybatis-3-mapper.dtd'>
+
+<mapper namespace='gov.noaa.pmel.dashboard.server.db.myb.mappers.SubmissionStatusMapper'>
+
+	<sql id="SUBMISSION_STATUS_TABLE_NAME">submission_status</sql>
+
+    <sql id="SubmissionStatus_ResultMap">
+    </sql>
+	<resultMap type="SubmissionStatus" id="SubmissionStatusMap">
+		<constructor>
+			<idArg column="db_id" javaType="java.lang.Long"/>
+			<arg column="submission_id" javaType="java.lang.Long"/>
+			<arg column="status_time" javaType="java.util.Date"/>
+			<arg column="status" javaType="SubmissionStatusState" /> <!-- gov.noaa.pmel.dashboard.server.model. -->
+			<arg column="message" javaType="java.lang.String" />
+		</constructor>
+		<result property="_submissionId" column="submission_id"/>
+		<result property="_statusTime" column="status_time"/>
+		<result property="_status" column="status"/>
+		<result property="_message" column="message"/>
+	</resultMap>
+	
+    <sql id="stdColumns">
+        submission_id,
+        status_time,
+        status,
+        message
+    </sql>
+    <sql id="stdFields">
+        #{_submissionId},
+        #{_statusTime},
+        #{_status},
+        #{_message}
+    </sql>
+    
+    <sql id="minColumns">
+        submission_id,
+        status
+    </sql>
+    <sql id="minFields">
+        #{_submissionId},
+        #{_status}
+    </sql>
+    
+	<sql id="insertFrag">insert into <include refid="SUBMISSION_STATUS_TABLE_NAME"/> </sql>
+	<sql id="empty"> </sql>
+	<sql id="param1">#{param1}</sql>
+	<sql id="param2">#{param2}</sql>
+	<sql id="dbColumn">db_id</sql>
+	<sql id="dbColumn_c">db_id,</sql>
+	<sql id="dbField">#{_dbId}</sql>
+	<sql id="dbField_c">#{_dbId},</sql>
+    <sql id="usernameField">#{_username}</sql>
+	<sql id="modColumn">modified_time,</sql>
+	<sql id="modField">#{_modifiedTime},</sql>
+	<sql id="equalsFrag"> = </sql>
+	<sql id="valuesFrag"> values </sql>
+	<sql id="now"> now() </sql>
+	<sql id="select_next_id"> select nextval('users_db_id_seq'::regclass) </sql>
+	<sql id="pg_select_next_id"> select nextval('#{seq_name}'::regclass) </sql>
+	<sql id="my_select_next_id"> 
+	   select AUTO_INCREMENT 
+        FROM information_schema.TABLES
+        WHERE TABLE_SCHEMA = "#{database_name}"
+        AND TABLE_NAME = "#{table_name}"
+	</sql>
+	
+	<sql id="myParameterizedInsert">
+		<include refid="${insert_or_update}"/> (
+            <include refid="${insertColumns}"/>
+		) <include refid="${assignment_values}"/> (
+            <include refid="${insertFields}"/>
+		)
+	</sql>
+  
+    <insert id="insertStatus" parameterType="SubmissionStatus"
+        useGeneratedKeys="true" keyColumn="db_id" keyProperty="_dbId">
+        <include refid="myParameterizedInsert">
+			<property name="insert_or_update" value="insertFrag"/>
+			<property name="insertColumns" value="stdColumns"/>
+			<property name="assignment_values" value="valuesFrag"/>
+			<property name="insertFields" value="stdFields"/>
+        </include>
+    </insert>
+    
+    <select id="getLatestForSubmission" parameterType="long" resultMap="SubmissionStatusMap">
+        select * from <include refid="SUBMISSION_STATUS_TABLE_NAME"/> 
+        where submission_id = #{param1} order by status_time DESC limit 1
+    </select>
+    
+    <select id="getAllForSubmission" parameterType="long" resultMap="SubmissionStatusMap">
+        select * from <include refid="SUBMISSION_STATUS_TABLE_NAME"/> 
+        where submission_id = #{param1} order by status_time DESC
+    </select>
+    
+</mapper>

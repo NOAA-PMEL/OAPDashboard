@@ -24,8 +24,8 @@ public class CpTransfer extends BaseTransferAgent implements FileTransferOp {
      * @see gov.noaa.pmel.dashboard.handlers.FileTransferOp#getTransferCommand()
      */
     @Override
-    public String getTransferCommand(String stdId, File transferFile) throws Exception {
-        String destDir = getTargetDestinationDir(stdId);
+    public String getTransferCommand(File transferFile, String targetFilePath) throws Exception {
+        String destDir = getTargetDestinationDir(targetFilePath);
         return buildCommand(transferFile, destDir);
     }
     

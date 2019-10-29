@@ -1,0 +1,172 @@
+<?xml version='1.0' encoding='UTF-8' ?>
+<!DOCTYPE mapper PUBLIC '-//mybatis.org//DTD Mapper 3.0//EN'
+  'http://mybatis.org/dtd/mybatis-3-mapper.dtd'>
+
+<mapper namespace='gov.noaa.pmel.dashboard.server.db.myb.mappers.SubmissionMapper'>
+
+	<sql id="SUBMISSIONS_TABLE_NAME">archive_submissions</sql>
+  
+	<resultMap type="SubmissionRecord" id="SubmissionBaseMap">
+		<constructor>
+			<idArg column="db_id" javaType="java.lang.Long"/>
+      <!--
+			<arg column="submit_time" javaType="java.util.Date"/>
+			<arg column="submitter_id" javaType="java.lang.Long"/>
+			<arg column="dataset_id" javaType="java.lang.String"/>
+			<arg column="version" javaType="java.lang.Integer" />
+			<arg column="submission_key" javaType="java.lang.String" />
+			<arg column="submit_msg" javaType="java.lang.String" />
+			<arg column="archive_bag" javaType="java.lang.String" />
+			<arg column="package_location" javaType="java.lang.String" />
+       --> 
+		</constructor>
+		<result property="_submissionTime" column="submit_time"/>
+		<result property="_submitterId" column="submitter_id"/>
+		<result property="_datasetId" column="dataset_id"/>
+		<result property="_version" column="version"/>
+		<result property="_submissionKey" column="submission_key"/>
+		<result property="_submitMsg" column="submit_msg"/>
+		<result property="_archiveBag" column="archive_bag"/>
+		<result property="_pkgLocation" column="package_location"/>
+    </resultMap>
+	<resultMap type="SubmissionRecord" id="SubmissionFullMap" extends="SubmissionBaseMap">
+		<collection property="_statusHistory" ofType="SubmissionStatus" javaType="ArrayList" 
+            column="db_id" select="gov.noaa.pmel.dashboard.server.db.myb.mappers.SubmissionStatusMapper.getAllForSubmission" />
+	</resultMap>
+	
+    <sql id="stdColumns">
+        dataset_id,
+        submitter_id,
+        version,
+        submission_key,
+        submit_msg,
+        archive_bag,
+        package_location
+    </sql>
+    <sql id="stdFields">
+        #{_datasetId},
+        #{_submitterId},
+        #{_version},
+        #{_submissionKey},
+        #{_submitMsg},
+        #{_archiveBag},
+        #{_pkgLocation}
+    </sql>
+    
+    <sql id="initialColumns">
+        dataset_id,
+        submitter_id,
+        submit_msg,
+        archive_bag,
+        package_location
+    </sql>
+    <sql id="initialFields">
+        #{_datasetId},
+        #{_submitterId},
+        #{_submitMsg},
+        #{_archiveBag},
+        #{_pkgLocation}
+    </sql>
+    <sql id="minParams">
+        <include refid="param1"/>,
+        <include refid="param2"/>
+    </sql>
+    
+	<sql id="insertFrag">insert into <include refid="SUBMISSIONS_TABLE_NAME"/> </sql>
+	<sql id="updateFrag">update <include refid="SUBMISSIONS_TABLE_NAME"/> set </sql>
+	<sql id="empty"> </sql>
+	<sql id="param1">#{param1}</sql>
+	<sql id="param2">#{param2}</sql>
+	<sql id="dbColumn">db_id</sql>
+	<sql id="dbColumn_c">db_id,</sql>
+	<sql id="dbField">#{_dbId}</sql>
+	<sql id="dbField_c">#{_dbId},</sql>
+    <sql id="usernameField">#{_username}</sql>
+	<sql id="modColumn">modified_time,</sql>
+	<sql id="modField">#{_modifiedTime},</sql>
+	<sql id="equalsFrag"> = </sql>
+	<sql id="valuesFrag"> values </sql>
+	<sql id="now"> now() </sql>
+	<sql id="select_next_id"> select nextval('users_db_id_seq'::regclass) </sql>
+	<sql id="pg_select_next_id"> select nextval('#{seq_name}'::regclass) </sql>
+	<sql id="my_select_next_id"> 
+	   select AUTO_INCREMENT 
+        FROM information_schema.TABLES
+        WHERE TABLE_SCHEMA = "#{database_name}"
+        AND TABLE_NAME = "#{table_name}"
+	</sql>
+	
+	<sql id="myParameterizedInsert">
+		<include refid="${insert_or_update}"/> (
+            <include refid="${insertColumns}"/>
+		) <include refid="${assignment_values}"/> (
+            <include refid="${insertFields}"/>
+		)
+	</sql>
+  
+    <insert id="insertSubmission" parameterType="SubmissionRecord">
+        <include refid="myParameterizedInsert">
+			<property name="insert_or_update" value="insertFrag"/>
+			<property name="insertColumns" value="stdColumns"/>
+			<property name="assignment_values" value="valuesFrag"/>
+			<property name="insertFields" value="stdFields"/>
+        </include>
+    </insert>
+    
+    <insert id="addDatasetSubmission" parameterType="java.util.HashMap"
+     useGeneratedKeys="true" keyColumn="db_id" keyProperty="_dbId"  >
+        <!--   selectKey order="AFTER" resultType="long" >select LAST_INSERT_ID()</selectKey> -->
+        <include refid="myParameterizedInsert">
+			<property name="insert_or_update" value="insertFrag"/>
+			<property name="insertColumns" value="initialColumns"/>
+			<property name="assignment_values" value="valuesFrag"/>
+			<property name="insertFields" value="initialFields"/>
+        </include>
+    </insert>
+    <insert id="initialSubmission" parameterType="SubmissionRecord"
+        useGeneratedKeys="true" keyColumn="db_id" keyProperty="_dbId" >
+        <include refid="myParameterizedInsert">
+			<property name="insert_or_update" value="insertFrag"/>
+			<property name="insertColumns" value="stdColumns"/>
+			<property name="assignment_values" value="valuesFrag"/>
+			<property name="insertFields" value="stdFields"/>
+        </include> 
+    </insert>
+    
+    <select id="getById" parameterType="long" resultMap="SubmissionFullMap">
+        select * from <include refid="SUBMISSIONS_TABLE_NAME"/> 
+        where db_id = #{param1}
+    </select>
+<!--     
+    <select id="getFullById" parameterType="long" resultMap="SubmissionFullMap">
+        select * from <include refid="SUBMISSIONS_TABLE_NAME"/> 
+        where db_id = #{param1}
+    </select>
+ -->    
+    <select id="getVersionByKey" resultMap="SubmissionFullMap">
+        select * from <include refid="SUBMISSIONS_TABLE_NAME"/> 
+        where submission_key = #{param1} and version = #{param2} 
+    </select>
+    <select id="getLatestByKey" parameterType="String" resultMap="SubmissionFullMap">
+        select * from <include refid="SUBMISSIONS_TABLE_NAME"/> 
+        where submission_key = #{param1} order by version DESC limit 1
+    </select>
+    <select id="getVersionForDatasetId" resultMap="SubmissionFullMap">
+        select * from <include refid="SUBMISSIONS_TABLE_NAME"/> 
+        where dataset_id = #{param1} and version = #{param2} 
+    </select>
+    <select id="getLatestForDatasetId" parameterType="String" resultMap="SubmissionFullMap">
+        select * from <include refid="SUBMISSIONS_TABLE_NAME"/> 
+        where dataset_id = #{param1} order by version DESC limit 1
+    </select>
+    
+<!-- 
+    <update id="updateSubmission" parameterType="SubmissionRecord">
+		<include refid="updateFrag"/> (
+            <include refid="stdColumns"/>
+		) <include refid="equalsFrag"/> (
+            <include refid="stdFields"/>
+		) where db_id = #{_dbId} 
+    </update>
+--> 
+</mapper>

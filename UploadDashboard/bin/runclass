@@ -2,7 +2,7 @@
 # usage: runclass [-] <java class name> <classes dir> <libs dir>
 
 # echo rc star : "$*"
-# echo rc at : "$@"
+@ echo rc at : "$@"
 
 VERBOSE=false 
 checkVerbose() {
@@ -63,20 +63,22 @@ shift
 
 log $CP
 
-ARGS=""
+ARGS=()
 DEFS=""
 JVM_ARGS=""
 
+whitespace="[[:space:]]"
+
 while [ "$1" != "" ] ; do
 log "arg: $1"
-	arg=$1
+	arg="$1"
 	${PROG_PATH}/makecp $arg > /dev/null
 	hasJars=$?
 	# echo $arg hasJars : $hasJars
 	if [ ${arg:0:2} == "-D" ] ; then
 		DEFS="$DEFS $arg"
 log "Defined: $arg"
-	elif [ ${arg:0:2} == "-d" ] ; then
+	elif [ "${arg}" == "-d" ] ; then
 		DEBUG="-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=9109"
 log "Debug as $DEBUG"
 	elif [ ${arg:0:2} == "-X" ] ; then
@@ -85,14 +87,19 @@ log "JVM arg $arg"
 	elif [ $hasJars -eq 0 ] ; then
 		log "skipping presumed classpath arg $arg"
 	else
-		ARGS="$ARGS $arg"
+        if [[ "$arg" =~ $whitespace ]] ; then
+            arg=\"$arg\"
+            log "quoting arg to: $arg"
+        fi
+		ARGS+=($arg)
+log "ARGS: ${ARGS[@]}"
 	fi
 	shift
 done
 
-log CMD: java -D${CLASS} ${DEBUG} $JVM_ARGS $DEFS -classpath $CP ${CLASS} $ARGS 
+log CMD: java -D${CLASS} ${DEBUG} $JVM_ARGS $DEFS -classpath $CP ${CLASS} ${ARGS[@]}
 
-java -D${CLASS} ${DEBUG} $JVM_ARGS $DEFS -classpath .:$CP ${CLASS} $ARGS 
+eval "java -D${CLASS} ${DEBUG} $JVM_ARGS $DEFS -classpath .:$CP ${CLASS} ${ARGS[@]}"
 RESULT=$?
 PID=$!
 log run result: $RESULT

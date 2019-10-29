@@ -27,10 +27,9 @@ import javax.mail.internet.MimeBodyPart;
 import javax.mail.internet.MimeMessage;
 import javax.mail.internet.MimeMultipart;
 
-import gov.noaa.pmel.dashboard.dsg.StdUserDataArray;
 import gov.noaa.pmel.dashboard.server.DashboardConfigStore;
 import gov.noaa.pmel.dashboard.server.DashboardServerUtils;
-import gov.noaa.pmel.dashboard.shared.DashboardDataset;
+import gov.noaa.pmel.dashboard.server.model.SubmissionRecord;
 import gov.noaa.pmel.dashboard.shared.DashboardDatasetData;
 import gov.noaa.pmel.dashboard.shared.DashboardMetadata;
 import gov.noaa.pmel.dashboard.shared.DashboardUtils;
@@ -421,6 +420,11 @@ public class ArchiveFilesBundler extends VersionedFileHandler {
 		return bundleFile;
 	}
 
+	public void sendArchiveBundle(SubmissionRecord submitRec, File bundleFile, String userRealName, String userEmail) throws IOException {
+        String stdId = submitRec.submissionKey();
+        sendArchiveBundle(stdId, bundleFile, userRealName, userEmail);
+	}
+    
 	public void sendArchiveBundle(String stdId, File bundleFile, String userRealName, String userEmail) throws IOException {
         // Create a Session for sending out the email
         Properties props = System.getProperties();

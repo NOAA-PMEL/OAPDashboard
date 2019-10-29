@@ -1,0 +1,13 @@
+#!/bin/bash
+
+DS_ID=$1
+
+if [ $DS_ID ] ; then
+	sftp -i /Users/kamb/.ssh/ncei-key-rsa  ncei_sftp@sftp.pmel.noaa.gov << end_sftp_check
+cd data/oap
+ls -l $1
+end_sftp_check
+else
+	sftp -i /Users/kamb/.ssh/ncei-key-rsa  ncei_sftp@sftp.pmel.noaa.gov
+fi
+
