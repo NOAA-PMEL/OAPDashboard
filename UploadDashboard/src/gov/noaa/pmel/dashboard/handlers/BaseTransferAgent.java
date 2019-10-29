@@ -20,6 +20,7 @@ public abstract class BaseTransferAgent {
     private String idFileSpecifier;
     private String idFileLocation;
     private String targetDestination;
+    private String protocolDestRoot;
     
     protected FileXferService.XFER_PROTOCOL _protocol;
     
@@ -54,13 +55,37 @@ public abstract class BaseTransferAgent {
         }
         return idFileLocation;
     }
-    protected String getTargetDestinationDir(String stdId) throws PropertyNotFoundException {
+    protected String _getTargetDestinationDir(String stdId) throws PropertyNotFoundException {
         if ( targetDestination == null ) {
             targetDestination = ApplicationConfiguration.getProperty("oap.archive."+_protocol.value()+".destination", "");
             if ( ! StringUtils.emptyOrNull(targetDestination) && !targetDestination.endsWith("/")) {
                 targetDestination += "/";
             }
             targetDestination += stdId;
+            if ( !targetDestination.endsWith("/")) {
+                targetDestination += "/";
+            }
+        }
+        return targetDestination;
+    }
+    protected String getProtocolDestinationRoot() throws PropertyNotFoundException {
+        if ( protocolDestRoot == null ) {
+            protocolDestRoot = ApplicationConfiguration.getProperty("oap.archive."+_protocol.value()+".destination", "");
+            if ( ! StringUtils.emptyOrNull(protocolDestRoot) && !protocolDestRoot.endsWith("/")) {
+                protocolDestRoot += "/";
+            }
+        }
+        return protocolDestRoot;
+    }
+    protected String getTargetDestinationDir(String targetFilePath) throws PropertyNotFoundException {
+        if ( targetDestination == null ) {
+            // We'll leave how to handle the root up to the protocol-specific handlers.
+//            targetDestination = getProtocolDestinationRoot();
+//            if ( ! StringUtils.emptyOrNull(targetDestination) && !targetDestination.endsWith("/")) {
+//                targetDestination += "/";
+//            }
+            String destDir = targetFilePath.indexOf("/", 1) > 0 ? targetFilePath.substring(0, targetFilePath.lastIndexOf('/')) : "";
+            targetDestination = destDir;
             if ( !targetDestination.endsWith("/")) {
                 targetDestination += "/";
             }

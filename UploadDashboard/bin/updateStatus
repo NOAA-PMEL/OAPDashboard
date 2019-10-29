@@ -1,0 +1,7 @@
+#!/bin/bash
+
+DIR=`dirname $0`
+
+cpRoot=${DIR}/../war/WEB-INF
+
+${DIR}/runclass gov.noaa.pmel.dashboard.server.util.StatusUpdater ${cpRoot}/classes ${cpRoot}/lib "$@"

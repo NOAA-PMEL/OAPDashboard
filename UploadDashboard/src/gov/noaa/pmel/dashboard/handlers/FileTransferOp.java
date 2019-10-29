@@ -11,5 +11,5 @@ import java.io.File;
  */
 public interface FileTransferOp {
 
-    public String getTransferCommand(String stdId, File transferFile) throws Exception;
+    public String getTransferCommand(File transferFile, String targetFilePath) throws Exception;
 }
