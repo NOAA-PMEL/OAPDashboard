@@ -12,7 +12,7 @@ import java.util.Arrays;
 import java.util.Date;
 import java.util.Properties;
 
-import javax.mail.Message;
+import javax.mail.Address;
 import javax.mail.Message.RecipientType;
 import javax.mail.Session;
 import javax.mail.Transport;
@@ -25,6 +25,7 @@ import org.apache.log4j.Logger;
 
 import gov.noaa.pmel.tws.util.ApplicationConfiguration;
 import gov.noaa.pmel.tws.util.ApplicationConfiguration.PropertyNotFoundException;
+import gov.noaa.pmel.tws.util.StringUtils;
 import gov.noaa.pmel.tws.util.TimeUtils;
 
 /**
@@ -74,6 +75,10 @@ public class OapMailSender {
     }
     
     public void sendMessage(String to, String subject, String message) throws Exception {
+        sendMessage(to, null, null, subject, message);
+    }
+    
+    public void sendMessage(String to, String cc, String bcc, String subject, String message) throws Exception {
 		logger.info("Attempting to send msg " + subject + " to: " + to);
         Properties mailProps = setup();
         session = Session.getInstance(mailProps, null);
@@ -82,11 +87,15 @@ public class OapMailSender {
         try ( Transport transport = session.getTransport()) {
             String passwd = dapw;
             transport.connect(acct, passwd);
-            _sendMessage(transport, to, subject, message, (String[])null);
+            _sendMessage(transport, to, cc, bcc, subject, message, (String[])null);
         }
     }
         
     private void sendAttachment(String to, String subject, String attachmentName) throws Exception {
+        sendAttachment(to, null, null, subject, attachmentName);
+    }
+    private void sendAttachment(String to, String cc, String bcc,
+                                String subject, String attachmentName) throws Exception {
         Properties mailProps = setup();
         session = Session.getInstance(mailProps, null);
         session.setDebug(ApplicationConfiguration.getLatestProperty("oap.email.debug", false));
@@ -94,11 +103,12 @@ public class OapMailSender {
         try ( Transport transport = session.getTransport()) {
             String passwd = dapw;
             transport.connect(acct, passwd);
-            _sendMessage(transport, to, subject, "textmail", attachmentName);
+            _sendMessage(transport, to, cc, bcc, subject, "textmail", attachmentName);
         }
     }
 
-	private void _sendMessage(Transport transport, String to, String subject, String body, String... attachments)
+	private void _sendMessage(Transport transport, String to, String cc, String bcc,
+	                          String subject, String body, String... attachments)
 			throws Exception {
 		try {
 		MimeMessage msg = new MimeMessage(session);
@@ -109,8 +119,15 @@ public class OapMailSender {
         }
 		msg.setHeader("X-Mailer", MAILER);
 		msg.setSentDate(new Date());
-		msg.setRecipients(RecipientType.TO, InternetAddress.parse(to, false));
-//		msg.setRecipients(RecipientType.BCC, InternetAddress.parse(to, false));
+        if ( ! StringUtils.emptyOrNull(to)) {
+    		msg.setRecipients(RecipientType.TO, InternetAddress.parse(to, false));
+        }
+        if ( ! StringUtils.emptyOrNull(cc)) {
+    		msg.setRecipients(RecipientType.CC, InternetAddress.parse(cc, false));
+        }
+        if ( ! StringUtils.emptyOrNull(bcc)) {
+    		msg.setRecipients(RecipientType.BCC, InternetAddress.parse(bcc, false));
+        }
 		// set title and body
 		msg.setSubject(subject);
         MimeBodyPart mimeBody = new MimeBodyPart();
@@ -129,7 +146,8 @@ public class OapMailSender {
         
         msg.setContent(mm);
 		
-		logger.info("Sending " + msg.getSubject() + " from: " + from + " to: " + Arrays.asList(msg.getAllRecipients()));
+        Address[] recipients = msg.getAllRecipients();
+		logger.info("Sending " + msg.getSubject() + " from: " + from + " to: " + Arrays.asList(recipients));
 
 		// off goes the message...
 		transport.sendMessage(msg, msg.getAllRecipients());
@@ -173,9 +191,11 @@ public class OapMailSender {
             String userRealName = "Linus Kamb";
             String subject = "TESTING: Archive bundle posted for dataset ID: " + datasetId;
             String message = "A dataset archive bundle for " + userRealName + " was posted to the SFTP site for pickup.\n"
-                           + "The archive bundle is available for pickup at ncei_sftp@sftp.pmel.noaa.gov/data/oap/" + "06AQ20150817_baggit.zip";
-                String toList = ApplicationConfiguration.getProperty("oap.archive.notification.list");
-                new OapMailSender().sendMessage(toList, subject, message);
+                           + "The archive bundle is available for pickup at ncei_sftp@sftp.pmel.noaa.gov/data/oap/" + "06AQ20150817_bagit.zip";
+                String toList = ApplicationConfiguration.getProperty("oap.archive.notification.list", null);
+                String ccList = ApplicationConfiguration.getProperty("oap.archive.notification.cc_list", null);
+                String bccList = ApplicationConfiguration.getProperty("oap.archive.notification.bcc_list", null);
+                new OapMailSender().sendMessage(toList, ccList, bccList, subject, message);
 
         } catch (Exception ex) {
             ex.printStackTrace();

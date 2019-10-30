@@ -54,6 +54,8 @@ public class DatasetSubmitter {
 
 	static Logger logger = LogManager.getLogger(DatasetSubmitter.class);
     
+    static final String USER_COMMENT_HEADER = "==== User Submission Comments ====\n";
+
     DashboardConfigStore configStore;
 	DataFileHandler dataHandler;
 	MetadataFileHandler metadataHandler;
@@ -406,7 +408,9 @@ public class DatasetSubmitter {
         String message = "A dataset archive bundle for " + userRealName + " was posted to the SFTP site for pickup.\n"
                        + "The archive bundle is available for pickup at sftp.pmel.noaa.gov/data/oap/" + submitKey + "/" + sRecord.version();
             String toList = ApplicationConfiguration.getLatestProperty("oap.archive.notification.list");
-            new OapMailSender().sendMessage(toList, subject, message);
+            String ccList = ApplicationConfiguration.getLatestProperty("oap.archive.notification.cc_list");
+            String bccList = ApplicationConfiguration.getLatestProperty("oap.archive.notification.bcc_list");
+            new OapMailSender().sendMessage(toList, ccList, bccList, subject, message);
     }
     private static void sendUserMessage(String datasetId, File archiveBundle, String userRealName, String userEmail) throws Exception {
         String subject = "Archive bundle submitted for dataset ID: " + datasetId;
@@ -458,9 +462,9 @@ public class DatasetSubmitter {
         if ( ApplicationConfiguration.getProperty("oap.archive.use_bagit", true)) {
             String submitComment = "generate_doi: " + String.valueOf(generateDOI) + "\n";
             if ( ! StringUtils.emptyOrNull(submitMsg)) {
-                submitComment += submitMsg;
+                submitComment += USER_COMMENT_HEADER + submitMsg;
             }
-            archiveBundle = Bagger.Bag(datasetId, submitComment);
+            archiveBundle = Bagger.Bag(submitRecord, datasetId, submitComment);
         } else {
             archiveBundle = filesBundler.createArchiveDataFile(datasetId, columnsList);
         }

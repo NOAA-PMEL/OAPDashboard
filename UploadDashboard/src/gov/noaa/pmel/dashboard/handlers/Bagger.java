@@ -55,7 +55,7 @@ import gov.loc.repository.bagit.writer.BagWriter;
 import gov.noaa.pmel.dashboard.dsg.StdUserDataArray;
 import gov.noaa.pmel.dashboard.server.DashboardConfigStore;
 import gov.noaa.pmel.dashboard.server.DashboardConfigStore.PropertyNotFoundException;
-import gov.noaa.pmel.dashboard.shared.DashboardDataset;
+import gov.noaa.pmel.dashboard.server.model.SubmissionRecord;
 import gov.noaa.pmel.dashboard.shared.DashboardDatasetData;
 import gov.noaa.pmel.dashboard.shared.FeatureType;
 import gov.noaa.pmel.tws.util.ApplicationConfiguration;
@@ -68,6 +68,7 @@ import gov.noaa.pmel.tws.util.StringUtils;
  */
 public class Bagger implements ArchiveBundler {
 
+    private SubmissionRecord _submitRecord;
     private String _datasetId;
     private FeatureType _featureType;
     private boolean _includeHiddenFiles = false;
@@ -75,16 +76,16 @@ public class Bagger implements ArchiveBundler {
     private SimpleDateFormat _tsFormatter;
     private DashboardConfigStore _store;
 
-    public static File Bag(String datasetId) throws Exception {
-        return Bag(datasetId, "");
+    public static File Bag(SubmissionRecord submitRecord, String datasetId) throws Exception {
+        return Bag(submitRecord, datasetId, "");
     }
     
-    public static File Bag(String datasetId, String submitMsg) throws Exception {
+    public static File Bag(SubmissionRecord submitRecord, String datasetId, String submitMsg) throws Exception {
         DashboardConfigStore store = DashboardConfigStore.get();
         Bagger bagger = null;
         Path staged = null;
         try {
-            bagger = new Bagger(datasetId, false, store);
+            bagger = new Bagger(submitRecord, datasetId, false, store);
             staged = bagger.stuffit();
             Bag bag = bagger.bagit(staged);
             bagger.addSubmissionComment(staged, submitMsg);
@@ -106,18 +107,19 @@ public class Bagger implements ArchiveBundler {
      * @see gov.noaa.pmel.dashboard.handlers.ArchiveBundler#createArchiveFilesBundle(java.lang.String, java.io.File)
      */
     @Override
-    public File createArchiveFilesBundle(String stdId, File dataFile) throws Exception {
-        return Bag(stdId);
+    public File createArchiveFilesBundle(SubmissionRecord submitRecord, String stdId, File dataFile) throws Exception {
+        return Bag(submitRecord, stdId);
     }
 
     /**
      * 
      */
-    public Bagger(String datasetId, DashboardConfigStore store) throws PropertyNotFoundException {
-        this(datasetId, false, store);
+    public Bagger(SubmissionRecord submitRecord, String datasetId, DashboardConfigStore store) throws PropertyNotFoundException {
+        this(submitRecord, datasetId, false, store);
     }
     
-    public Bagger(String datasetId, boolean includeHiddenFiles, DashboardConfigStore store) throws PropertyNotFoundException {
+    public Bagger(SubmissionRecord submitRecord, String datasetId, boolean includeHiddenFiles, DashboardConfigStore store) throws PropertyNotFoundException {
+        _submitRecord = submitRecord;
         _datasetId = datasetId.toUpperCase();
         _includeHiddenFiles = includeHiddenFiles;
         _store = store;
@@ -251,7 +253,7 @@ public class Bagger implements ArchiveBundler {
         if ( StringUtils.emptyOrNull(submitMsg)) {
             return;
         }
-        File msgFile = new File(staged.toFile(), _datasetId + "_SubmissionInstructions.txt");
+        File msgFile = new File(staged.toFile(), _submitRecord.submissionKey() + "_SubmissionInstructions.txt");
         try (FileWriter fout = new FileWriter(msgFile)) {
             fout.write(submitMsg);
         }
@@ -301,7 +303,7 @@ public class Bagger implements ArchiveBundler {
         String bagArchiveDirName = getBagArchiveName(bagFile.getName());
         File archiveRoot = new File(_contentRoot, "ArchiveBundles/bags/"+_datasetId+"/"+bagArchiveDirName);
         archiveRoot.mkdirs();
-        File bagArchiveFile = new File(archiveRoot, _datasetId+"_baggit.zip");
+        File bagArchiveFile = new File(archiveRoot, _datasetId+"_bagit.zip");
         try ( FileOutputStream fos = new FileOutputStream(bagArchiveFile);
               ZipOutputStream zipOut = new ZipOutputStream(fos); ) {
             zipDirFiles(bagFile, "", zipOut);
@@ -335,7 +337,7 @@ public class Bagger implements ArchiveBundler {
         String bagArchiveDirName = getBagArchiveName(bagFile.getName());
         File archiveRoot = new File(_contentRoot, "ArchiveBundles/bags/"+_datasetId+"/"+bagArchiveDirName);
         archiveRoot.mkdirs();
-        File bagArchiveFile = new File(archiveRoot, _datasetId+"_baggit.tar.gz");
+        File bagArchiveFile = new File(archiveRoot, _datasetId+"_bagit.tar.gz");
         FileOutputStream fos = new FileOutputStream(bagArchiveFile);
         BufferedOutputStream bufOS = new BufferedOutputStream(fos);
         GzipCompressorOutputStream gzOS = (GzipCompressorOutputStream) 
@@ -540,11 +542,11 @@ public class Bagger implements ArchiveBundler {
      */
     public static void main(String[] args) {
         try {
-            File configDir = new File("/Users/kamb/tomcat/7/content/OAPUploadDashboard/config");
-            ApplicationConfiguration.Initialize(configDir, "oap");
-            String datasetId = "PRISM082008";
-            File bagArchive = Bagger.Bag(datasetId, "Bagit Test Submission");
-            System.out.println("Archive: " + bagArchive.getAbsolutePath());
+//            File configDir = new File("/Users/kamb/tomcat/7/content/OAPUploadDashboard/config");
+//            ApplicationConfiguration.Initialize(configDir, "oap");
+//            String datasetId = "PRISM082008";
+//            File bagArchive = Bagger.Bag(datasetId, "Bagit Test Submission");
+//            System.out.println("Archive: " + bagArchive.getAbsolutePath());
 //            DashboardConfigStore store = DashboardConfigStore.get();
 //            Bagger bagger = new Bagger(datasetId, false, store);
 ////            Path bagPath = new File(store.getAppContentDir(), "bags/"+datasetId).toPath();
