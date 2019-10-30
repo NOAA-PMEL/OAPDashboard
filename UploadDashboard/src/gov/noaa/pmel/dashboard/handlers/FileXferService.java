@@ -83,17 +83,17 @@ public class FileXferService {
 
     public String submitArchiveBundle(String stdId, String version, File archiveBundle)  throws Exception {
         String targetDir = stdId + "/" + version + "/";
-        String targetFile = stdId + "_baggit.zip";
+        String targetFile = stdId + "_bagit.zip";
         String targetFilePath = targetDir + targetFile;
         String command = _transferOp.getTransferCommand(archiveBundle, targetFilePath);
         logger.debug("xfer cmd: " + command);
         CommandRunner runner = new CommandRunner(command);
         int exitStatus = runner.runCommand();
         if ( exitStatus != 0 ) {
-            throw new Exception("Failed to transfer baggit file " + archiveBundle.getPath());
+            throw new Exception("Failed to transfer bagit file " + archiveBundle.getPath());
         }
         if ( exitStatus == 0 ) {
-            String hashFilePath = targetDir + stdId + "_baggit-sha256.txt";
+            String hashFilePath = targetDir + stdId + "_bagit-sha256.txt";
             exitStatus = submitHash(archiveBundle, hashFilePath);
             if ( exitStatus != 0 ) {
                 throw new Exception("Failed to transfer hash file for bag " + archiveBundle.getPath());
