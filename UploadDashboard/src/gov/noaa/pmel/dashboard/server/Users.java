@@ -4,8 +4,8 @@ package gov.noaa.pmel.dashboard.server;
 import java.security.GeneralSecurityException;
 import java.security.NoSuchAlgorithmException;
 import java.sql.SQLException;
-import java.util.Random;
-import java.util.regex.Matcher;
+import java.util.Map;
+import java.util.Map.Entry;
 
 import javax.security.auth.login.AccountNotFoundException;
 import javax.security.auth.login.CredentialException;
@@ -13,7 +13,6 @@ import javax.security.auth.login.LoginException;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.apache.tools.ant.taskdefs.condition.Not;
 
 import gov.noaa.pmel.dashboard.server.db.dao.DaoFactory;
 import gov.noaa.pmel.dashboard.server.db.dao.UsersDao;
@@ -235,5 +234,32 @@ public class Users {
             throw new RuntimeException("Server Error");
         }
         return user;
+    }
+    
+    /**
+     * @param parameterMap
+     */
+    public static void requestAccount(Map<String, String[]> parameterMap) {
+        String message = buildNewAcctReqMsg(parameterMap);
+        logger.info("New account request:"+ message);
+        String toList = ApplicationConfiguration.getProperty("oap.admin.email.list", "linus.kamb@noaa.gov");
+        Notifications.SendEmail("New SDIS Account Request", message, toList);
+    }
+    /**
+     * @param parameterMap
+     * @return
+     */
+    private static String buildNewAcctReqMsg(Map<String, String[]> parameterMap) {
+        StringBuilder sb = new StringBuilder("New Account Request:\n");
+        for (Entry<String, String[]> entry : parameterMap.entrySet()) {
+            String comma = "";
+            sb.append(entry.getKey()).append("\t: ");
+            for (String v : entry.getValue()) {
+                sb.append(comma).append(v);
+                comma = ", " ;
+            }
+            sb.append("\n");
+        }
+        return sb.toString();
     }
 }
