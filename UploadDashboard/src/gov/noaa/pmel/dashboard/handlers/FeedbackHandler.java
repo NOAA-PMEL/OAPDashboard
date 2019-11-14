@@ -45,7 +45,7 @@ public class FeedbackHandler {
                       "SENT: " + new Date().toString() + "\n" +
                       " ------ MSG ------ \n" +
                       message;
-        Notifications.SendEmail(subject, msg, toList, "\"OADashboard\" <noreply@pmel.noaa.gov>");
+        Notifications.SendEmail(subject, msg, toList);
     }
 
 }
