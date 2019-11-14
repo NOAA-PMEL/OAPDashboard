@@ -2,18 +2,18 @@
 <!DOCTYPE mapper PUBLIC '-//mybatis.org//DTD Mapper 3.0//EN'
   'http://mybatis.org/dtd/mybatis-3-mapper.dtd'>
 
-<mapper namespace='gov.noaa.pmel.dashboard.server.db.myb.mappers.SubmissionStatusMapper'>
+<mapper namespace='gov.noaa.pmel.dashboard.server.db.myb.mappers.StatusRecordMapper'>
 
 	<sql id="SUBMISSION_STATUS_TABLE_NAME">submission_status</sql>
 
-    <sql id="SubmissionStatus_ResultMap">
+    <sql id="StatusRecord_ResultMap">
     </sql>
-	<resultMap type="SubmissionStatus" id="SubmissionStatusMap">
+	<resultMap type="StatusRecord" id="StatusRecordMap">
 		<constructor>
 			<idArg column="db_id" javaType="java.lang.Long"/>
 			<arg column="submission_id" javaType="java.lang.Long"/>
 			<arg column="status_time" javaType="java.util.Date"/>
-			<arg column="status" javaType="SubmissionStatusState" /> <!-- gov.noaa.pmel.dashboard.server.model. -->
+			<arg column="status" javaType="StatusState" /> <!-- gov.noaa.pmel.dashboard.server.model. -->
 			<arg column="message" javaType="java.lang.String" />
 		</constructor>
 		<result property="_submissionId" column="submission_id"/>
@@ -75,7 +75,7 @@
 		)
 	</sql>
   
-    <insert id="insertStatus" parameterType="SubmissionStatus"
+    <insert id="insertStatus" parameterType="StatusRecord"
         useGeneratedKeys="true" keyColumn="db_id" keyProperty="_dbId">
         <include refid="myParameterizedInsert">
 			<property name="insert_or_update" value="insertFrag"/>
@@ -85,12 +85,12 @@
         </include>
     </insert>
     
-    <select id="getLatestForSubmission" parameterType="long" resultMap="SubmissionStatusMap">
+    <select id="getLatestForSubmission" parameterType="long" resultMap="StatusRecordMap">
         select * from <include refid="SUBMISSION_STATUS_TABLE_NAME"/> 
         where submission_id = #{param1} order by status_time DESC limit 1
     </select>
     
-    <select id="getAllForSubmission" parameterType="long" resultMap="SubmissionStatusMap">
+    <select id="getAllForSubmission" parameterType="long" resultMap="StatusRecordMap">
         select * from <include refid="SUBMISSION_STATUS_TABLE_NAME"/> 
         where submission_id = #{param1} order by status_time DESC
     </select>

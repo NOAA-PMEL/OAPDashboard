@@ -9,6 +9,9 @@ import java.util.Date;
 import java.util.List;
 import java.util.Stack;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonProperty;
+
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -31,39 +34,48 @@ import lombok.Singular;
 public class SubmissionRecord {
 
     private transient Long _dbId;
+    @JsonProperty("submit_time")
     private Date _submissionTime;
+    @JsonIgnore
     private Long _submitterId;
 
+    @JsonProperty("dataset_id")
     private String _datasetId;
     
     @Default
+    @JsonProperty("version")
     private Integer _version = 1;
+    @JsonProperty("submission_record")
     private String _submissionKey;
     
+    @JsonProperty("submit_message")
     private String _submitMsg;
     
     @Setter(AccessLevel.PUBLIC)
+    @JsonIgnore
     private String _archiveBag;
     
     @Setter(AccessLevel.PUBLIC)
+    @JsonIgnore
     private String _pkgLocation;
     
     @Singular("addStatus")
-    private List<SubmissionStatus> _statusHistory;
+    @JsonProperty("status_history")
+    private List<StatusRecord> _statusHistory;
     
-    public SubmissionStatus status() {
+    public StatusRecord status() {
         return _statusHistory != null && ! _statusHistory.isEmpty() ?
                 _statusHistory.get(0) : null;
     }
     
-    public void updateStatus(SubmissionStatus newStatus) {
+    public void updateStatus(StatusRecord newStatus) {
         getStatusHistory().add(0,newStatus);
     }
     
     /**
      * @return _statusHistory list, guaranteed not to be null;
      */
-    public synchronized List<SubmissionStatus> getStatusHistory() {
+    public synchronized List<StatusRecord> getStatusHistory() {
         if ( _statusHistory == null ) {
             _statusHistory = new ArrayList<>();
         }

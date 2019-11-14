@@ -6,7 +6,8 @@ package gov.noaa.pmel.dashboard.server.util;
 import gov.noaa.pmel.dashboard.server.db.dao.DaoFactory;
 import gov.noaa.pmel.dashboard.server.db.dao.SubmissionsDao;
 import gov.noaa.pmel.dashboard.server.model.SubmissionRecord;
-import gov.noaa.pmel.dashboard.server.model.SubmissionStatus;
+import gov.noaa.pmel.dashboard.server.model.StatusRecord;
+import gov.noaa.pmel.dashboard.server.model.StatusState;
 
 /**
  * @author kamb
@@ -30,62 +31,11 @@ public class StatusUpdater {
         System.out.println( "usage: ( -ds <datasetID> | -k <submissionKey> ) [ -v <versionNum> ] -s status* [ -m <status message> ]\n" +
                             "Valid status states are:\n" + validStatusStatesList());
     }
-    /*
-     * status States:
-    INITIAL("Initiated"),
-    STAGED("Staged for delivery"),
-    RECEIVED("Received by archive"),
-    PENDING_INFO("Pending additional information"),
-    VALIDATED("Submission validated"),
-    ACCEPTED("Accepted by archive"),
-    REJECTED("Rejected by archive"),
-    PROCESSING_ERROR("Error processing submission");
-    */
 
-    private static enum StatusState {
-        initial("Initiated", SubmissionStatus.State.INITIAL),
-        staged("Staged for delivery", SubmissionStatus.State.STAGED),
-        received("Received by archive", SubmissionStatus.State.RECEIVED),
-        pending("Pending additional information", SubmissionStatus.State.PENDING_INFO),
-        valid("Submission validated", SubmissionStatus.State.VALIDATED),
-        accepted("Accepted by archive", SubmissionStatus.State.ACCEPTED),
-        rejected("Rejected by archive", SubmissionStatus.State.REJECTED),
-        error("Error processing submission", SubmissionStatus.State.PROCESSING_ERROR);
-        
-        private String _explanation;
-        private SubmissionStatus.State _ssState;
-        private StatusState(String explanation, SubmissionStatus.State ssState) {
-            _explanation = explanation;
-            _ssState = ssState;
-        }
-        @Override
-        public String toString() {
-            return this.name() + " :\t" + _explanation;
-        }
-        public String explanation() {
-            return _explanation;
-        }
-        public SubmissionStatus.State ssState() {
-            return _ssState;
-        }
-    }
-    
     private static StatusState getSubmissionState() {
-        StatusState sst = StatusState.valueOf(_status.toLowerCase());
+        StatusState sst = StatusState.from(_status);
         return sst;
     }
-    
-//    private static final String INITIAL("Initiated"),
-//    private static final String STAGED = "\"staged\"\t: Staged for delivery";
-//    private static final String RECEIVED = "\"received\"\t: Received by archive";
-//    private static final String PENDING_INFO = "\"pending\"\t: Pending additional information";
-//    private static final String VALIDATED = "\"valid\"\t: Submission package validated";
-//    private static final String ACCEPTED = "\"accepted\"\t: Accepted by archive";
-//    private static final String REJECTED = "\"rejected\"\t: Submission rejected by archive";
-//    private static final String PROCESSING_ERROR = "\"error\"\t: Error processing submission";
-//    private static final String[] statesList = new String[] {
-//            STAGED, RECEIVED, PENDING_INFO, VALIDATED, ACCEPTED, REJECTED, PROCESSING_ERROR
-//    };
     
     private static String validStatusStatesList() {
         StringBuilder sb = new StringBuilder();
@@ -148,12 +98,12 @@ public class StatusUpdater {
             StatusState sst = getSubmissionState();
             SubmissionsDao sdao = DaoFactory.SubmissionsDao();
             if ( _message == null ) {
-                _message = sst.explanation();
+                _message = sst.displayMsg();
             }
             SubmissionRecord srec = null;
             if ( _submitKey != null ) {
                 srec = _version != null ? 
-                        sdao.getByVersionKey(_submitKey, _version) :
+                        sdao.getVersionByKey(_submitKey, _version) :
                         sdao.getLatestByKey(_submitKey);
                 if ( srec == null ) {
                     throw new IllegalArgumentException("Unable to find submission record using submisison key: " + _submitKey + " and version: " + _version);
@@ -167,9 +117,9 @@ public class StatusUpdater {
                     System.exit(-1);
                 }
             }
-            SubmissionStatus ss = SubmissionStatus.builder()
+            StatusRecord ss = StatusRecord.builder()
                     .submissionId(srec.dbId())
-                    .status(sst.ssState())
+                    .status(sst)
                     .message(_message)
                     .build();
             DaoFactory.SubmissionsDao().updateSubmissionStatus(ss);

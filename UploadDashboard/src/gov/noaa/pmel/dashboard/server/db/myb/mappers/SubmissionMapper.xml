@@ -30,8 +30,8 @@
 		<result property="_pkgLocation" column="package_location"/>
     </resultMap>
 	<resultMap type="SubmissionRecord" id="SubmissionFullMap" extends="SubmissionBaseMap">
-		<collection property="_statusHistory" ofType="SubmissionStatus" javaType="ArrayList" 
-            column="db_id" select="gov.noaa.pmel.dashboard.server.db.myb.mappers.SubmissionStatusMapper.getAllForSubmission" />
+		<collection property="_statusHistory" ofType="StatusRecord" javaType="ArrayList" 
+            column="db_id" select="gov.noaa.pmel.dashboard.server.db.myb.mappers.StatusRecordMapper.getAllForSubmission" />
 	</resultMap>
 	
     <sql id="stdColumns">
