@@ -65,14 +65,18 @@ public class Notifications {
 		return addrList.toString();
 	}
 
-	public static void SendEmail(String subject, String message, Iterable<String> toList, String from) {
-		SendEmail(subject, message, buildRecipientListString(toList), from);
+	public static void SendEmail(String subject, String message, Iterable<String> toList) {
+		SendEmail(subject, message, buildRecipientListString(toList));
 	}
 	
 	public static String getSmtpServer() {
 		return ApplicationConfiguration.getProperty("email.smtp_host", "smtp.pmel.noaa.gov");
 	}
 	
+	public static void SendEmail(String subject, String message, String toList) {
+        String from = ApplicationConfiguration.getProperty("oap.email.from", "\"OAP Dashboard System\" <sdis.pmel@noaa.gov>");
+        SendEmail(subject, message, toList, from);
+	}
 	public static void SendEmail(String subject, String message, String toList, String from) {
 		logger.info("sending " + subject + " email to: " + toList);
 		if (StringUtils.emptyOrNull(toList)) {
