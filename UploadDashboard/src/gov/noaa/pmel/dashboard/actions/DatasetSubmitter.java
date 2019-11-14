@@ -31,8 +31,8 @@ import gov.noaa.pmel.dashboard.server.DashboardConfigStore;
 import gov.noaa.pmel.dashboard.server.DashboardServerUtils;
 import gov.noaa.pmel.dashboard.server.db.dao.DaoFactory;
 import gov.noaa.pmel.dashboard.server.model.SubmissionRecord;
-import gov.noaa.pmel.dashboard.server.model.SubmissionStatus;
-import gov.noaa.pmel.dashboard.server.model.SubmissionStatus.State;
+import gov.noaa.pmel.dashboard.server.model.StatusRecord;
+import gov.noaa.pmel.dashboard.server.model.StatusState;
 import gov.noaa.pmel.dashboard.server.model.User;
 import gov.noaa.pmel.dashboard.server.util.OapMailSender;
 import gov.noaa.pmel.dashboard.server.util.UIDGen;
@@ -277,7 +277,7 @@ public class DatasetSubmitter {
                                                " at " + DashboardServerUtils.formatTime(new Date()) +
                                                " to " + stagedPkg;
                     logger.info(archiveStatusMsg);
-                    updateStatus(sRecord.dbId().longValue(), SubmissionStatus.State.STAGED, "Submission package staged for pickup at:" + stagedPkg);
+                    updateStatus(sRecord.dbId().longValue(), StatusState.STAGED, "Submission package staged for pickup at:" + stagedPkg);
                     sendSubmitEmail(sRecord, archiveBundle, userRealName, userEmail);
 					thisStatus = "Submitted " + DashboardServerUtils.formatTime(new Date());
 				} catch (Exception ex) {
@@ -364,8 +364,8 @@ public class DatasetSubmitter {
      * @param archiveStatusMsg
 	 * @throws SQLException 
      */
-    private static void updateStatus(long submissionId, State statusState, String archiveStatusMsg) throws SQLException {
-        SubmissionStatus status = SubmissionStatus.builder().submissionId(submissionId)
+    private static void updateStatus(long submissionId, StatusState statusState, String archiveStatusMsg) throws SQLException {
+        StatusRecord status = StatusRecord.builder().submissionId(submissionId)
                                     .status(statusState)
                                     .message(archiveStatusMsg)
                                     .build();

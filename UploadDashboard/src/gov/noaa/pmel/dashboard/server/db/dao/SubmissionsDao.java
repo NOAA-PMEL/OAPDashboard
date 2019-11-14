@@ -7,7 +7,7 @@ import java.sql.SQLException;
 import java.util.List;
 
 import gov.noaa.pmel.dashboard.server.model.SubmissionRecord;
-import gov.noaa.pmel.dashboard.server.model.SubmissionStatus;
+import gov.noaa.pmel.dashboard.server.model.StatusRecord;
 
 /**
  * @author kamb
@@ -23,17 +23,18 @@ public interface SubmissionsDao {
 //    public void updateSubmission(SubmissionRecord submission) throws SQLException;
     
     /* Convenience method, uses SubmissionStatusMapper. */
-    public void updateSubmissionStatus(SubmissionStatus status) throws SQLException;
+    public void updateSubmissionStatus(StatusRecord status) throws SQLException;
     
     public SubmissionRecord getById(long id) throws SQLException;
 //    public SubmissionRecord getFullById(long id) throws SQLException;
 
-    public SubmissionRecord getByVersionKey(String key, int version) throws SQLException;
+    public SubmissionRecord getVersionByKey(String key, int version) throws SQLException;
     public SubmissionRecord getLatestByKey(String key) throws SQLException;
     
     public SubmissionRecord getVersionForDataset(String datasetId, int version) throws SQLException;
     public SubmissionRecord getLatestForDataset(String datasetId) throws SQLException;
     
     public List<SubmissionRecord> getAllVersionsByKey(String key) throws SQLException;
+    public List<SubmissionRecord> getAllVersionsForDataset(String datasetId) throws SQLException;
     
 }

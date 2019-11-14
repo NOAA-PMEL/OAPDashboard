@@ -10,14 +10,12 @@ import java.util.Map;
 
 import org.apache.ibatis.session.SqlSession;
 
-import com.fasterxml.uuid.Generators;
-
 import gov.noaa.pmel.dashboard.server.db.dao.SubmissionsDao;
 import gov.noaa.pmel.dashboard.server.db.myb.MybatisConnectionFactory;
 import gov.noaa.pmel.dashboard.server.db.myb.mappers.SubmissionMapper;
-import gov.noaa.pmel.dashboard.server.db.myb.mappers.SubmissionStatusMapper;
+import gov.noaa.pmel.dashboard.server.db.myb.mappers.StatusRecordMapper;
 import gov.noaa.pmel.dashboard.server.model.SubmissionRecord;
-import gov.noaa.pmel.dashboard.server.model.SubmissionStatus;
+import gov.noaa.pmel.dashboard.server.model.StatusRecord;
 
 /**
  * @author kamb
@@ -59,8 +57,8 @@ public class MybSubmissionsDao implements SubmissionsDao {
         try (SqlSession session = MybatisConnectionFactory.getDashboardDbSessionFactory().openSession();) {
             SubmissionMapper smapper = (SubmissionMapper) session.getMapper(SubmissionMapper.class);
             smapper.initialSubmission(submission);
-            SubmissionStatusMapper ssmapper = (SubmissionStatusMapper) session.getMapper(SubmissionStatusMapper.class);
-            SubmissionStatus initialStatus = SubmissionStatus.initialStatus(submission.dbId());
+            StatusRecordMapper ssmapper = (StatusRecordMapper) session.getMapper(StatusRecordMapper.class);
+            StatusRecord initialStatus = StatusRecord.initialStatus(submission.dbId());
             ssmapper.insertStatus(initialStatus);
             session.commit();
             SubmissionRecord inserted = smapper.getById(submission.dbId().longValue());
@@ -79,10 +77,10 @@ public class MybSubmissionsDao implements SubmissionsDao {
 //    }
     
     @Override
-    public void updateSubmissionStatus(SubmissionStatus status) throws SQLException
+    public void updateSubmissionStatus(StatusRecord status) throws SQLException
     {
         try (SqlSession session = MybatisConnectionFactory.getDashboardDbSessionFactory().openSession();) {
-            SubmissionStatusMapper ssmapper = (SubmissionStatusMapper) session.getMapper(SubmissionStatusMapper.class);
+            StatusRecordMapper ssmapper = (StatusRecordMapper) session.getMapper(StatusRecordMapper.class);
             ssmapper.insertStatus(status);
             session.commit();
         }
@@ -110,10 +108,10 @@ public class MybSubmissionsDao implements SubmissionsDao {
 //    }
 
     /* (non-Javadoc)
-     * @see gov.noaa.pmel.dashboard.server.db.dao.SubmissionsDao#getByVersionKey(java.lang.String, int)
+     * @see gov.noaa.pmel.dashboard.server.db.dao.SubmissionsDao#getVersionByKey(java.lang.String, int)
      */
     @Override
-    public SubmissionRecord getByVersionKey(String key, int version) throws SQLException {
+    public SubmissionRecord getVersionByKey(String key, int version) throws SQLException {
         try (SqlSession session = MybatisConnectionFactory.getDashboardDbSessionFactory().openSession();) {
             SubmissionMapper smapper = (SubmissionMapper) session.getMapper(SubmissionMapper.class);
             SubmissionRecord sr = smapper.getVersionByKey(key, version);
@@ -156,6 +154,12 @@ public class MybSubmissionsDao implements SubmissionsDao {
      */
     @Override
     public List<SubmissionRecord> getAllVersionsByKey(String key) throws SQLException {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    @Override
+    public List<SubmissionRecord> getAllVersionsForDataset(String datasetId) throws SQLException {
         // TODO Auto-generated method stub
         return null;
     }

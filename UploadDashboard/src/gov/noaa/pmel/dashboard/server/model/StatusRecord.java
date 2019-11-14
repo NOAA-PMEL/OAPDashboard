@@ -5,11 +5,13 @@ package gov.noaa.pmel.dashboard.server.model;
 
 import java.util.Date;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonFormat;
+import com.fasterxml.jackson.annotation.JsonIgnore;
+
 import lombok.AccessLevel;
-import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
-import lombok.NoArgsConstructor;
 import lombok.NonNull;
 import lombok.Setter;
 
@@ -20,40 +22,27 @@ import lombok.Setter;
 @Data
 @Setter(AccessLevel.NONE)
 @Builder(toBuilder=true)
-public class SubmissionStatus {
+public class StatusRecord {
 
     private transient Long _dbId;
     
     @NonNull
+    @JsonIgnore
     private Long _submissionId;
     
+    @JsonProperty("status_update")
+    @JsonFormat(shape=JsonFormat.Shape.STRING, pattern="yyyy-MM-dd'T'HH:mm:ss Z")
     private Date _statusTime;
     
-    private State _status;
+    @JsonProperty("status")
+    private StatusState _status;
     
+    @JsonProperty("message")
     private String _message;
     
-    public static enum State {
-        INITIAL("Initiated"),
-        STAGED("Staged for delivery"),
-        RECEIVED("Received by archive"),
-        PENDING_INFO("Pending additional information"),
-        VALIDATED("Submission validated"),
-        ACCEPTED("Accepted by archive"),
-        REJECTED("Rejected by archive"),
-        PROCESSING_ERROR("Error processing submission");
-        
-        private State(String displayMsg) {
-            _display = displayMsg;
-        }
-        private String _display;
-        
-        public String displayMsg() { return _display; }
-    }
-    
-    public static SubmissionStatus initialStatus(Long submissionId) {
-        return SubmissionStatus.builder().submissionId(submissionId)
-                    .status(State.INITIAL)
+    public static StatusRecord initialStatus(Long submissionId) {
+        return StatusRecord.builder().submissionId(submissionId)
+                    .status(StatusState.INITIAL)
                     .message("Archive submission initiated.")
                     .build();
     }
