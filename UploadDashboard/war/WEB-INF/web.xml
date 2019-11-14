@@ -24,7 +24,17 @@
         <url-pattern>/OAPUploadDashboard/SessionServices</url-pattern>
     </filter-mapping>
 	
-<!--     <multipart-config>
+    <filter>
+        <filter-name>WsRequestValidator</filter-name>
+        <filter-class>gov.noaa.pmel.dashboard.server.ws.SignedMsgVerifier</filter-class>
+    </filter>
+    <filter-mapping>
+        <filter-name>WsRequestValidator</filter-name>
+        <url-pattern>/tws/*</url-pattern>
+    </filter-mapping>
+    
+<!--
+   <multipart-config>
       ~150MB max
       <max-file-size>152428800</max-file-size>
       <max-request-size>152428800</max-request-size>
@@ -40,6 +50,7 @@
 		<servlet-name>DashboardServlet</servlet-name>
 		<url-pattern>/OAPUploadDashboard/DashboardServices</url-pattern>
 	</servlet-mapping>
+
 	<servlet>
 		<servlet-name>SessionServlet</servlet-name>
 		<servlet-class>gov.noaa.pmel.dashboard.server.SessionServices</servlet-class>
@@ -48,8 +59,7 @@
 		<servlet-name>SessionServlet</servlet-name>
 		<url-pattern>/OAPUploadDashboard/SessionServices</url-pattern>
 	</servlet-mapping>
-
-
+  
 	<servlet>
 		<servlet-name>DashboardDataUploadServlet</servlet-name>
 		<servlet-class>gov.noaa.pmel.dashboard.server.DataUploadService</servlet-class>
@@ -96,13 +106,40 @@
 	</servlet-mapping>
 
     <servlet>
-        <servlet-name>PwResetServlet</servlet-name>
-		<servlet-class>gov.noaa.pmel.dashboard.server.ws.PwResetService</servlet-class>
+        <servlet-name>PublicServices</servlet-name>
+		<servlet-class>gov.noaa.pmel.dashboard.server.ws.PublicServices</servlet-class>
     </servlet>
 	<servlet-mapping>
-		<servlet-name>PwResetServlet</servlet-name>
+		<servlet-name>PublicServices</servlet-name>
 		<url-pattern>/tx/*</url-pattern>
 	</servlet-mapping>
+  
+    <servlet>
+        <servlet-name>jersey</servlet-name>
+        <servlet-class>com.sun.jersey.spi.container.servlet.ServletContainer</servlet-class>
+        <init-param>
+          <param-name>com.sun.jersey.config.property.packages</param-name>
+          <param-value>gov.noaa.pmel.dashboard.server.ws</param-value>
+        </init-param>
+        <init-param>
+          <param-name>jersey.config.server.provider.classnames</param-name>
+          <param-value>com.fasterxml.jackson.jaxrs.json.JacksonJsonProvider</param-value>
+        </init-param>
+        <init-param>
+          <param-name>com.sun.jersey.api.json.POJOMappingFeature</param-name>
+          <param-value>true</param-value>
+        </init-param>
+<!--         <multipart-config>
+          <location>/home/data/web/tmp</location>
+          <max-file-size>524288000</max-file-size>
+          <file-size-threshold>1024000</file-size-threshold>
+        </multipart-config> -->
+    </servlet>
+    <servlet-mapping>
+        <servlet-name>jersey</servlet-name>
+        <url-pattern>/tws/*</url-pattern>
+        <url-pattern>/twx/*</url-pattern>
+    </servlet-mapping>
   
 	<security-constraint>
 		<web-resource-collection>
@@ -110,7 +147,10 @@
 			<url-pattern>/DashboardUpdateService/*</url-pattern>
 			<url-pattern>/images/*</url-pattern>
             <url-pattern>/passwordhelp.html</url-pattern>
+            <url-pattern>/requestlogin.html</url-pattern>
             <url-pattern>/tx/*</url-pattern>
+            <url-pattern>/tws/*</url-pattern>
+            <url-pattern>/twx/*</url-pattern>
 			<http-method>GET</http-method>
 			<http-method>POST</http-method>
 		</web-resource-collection>
@@ -120,21 +160,12 @@
 		<web-resource-collection>
 			<web-resource-name>OAP Dashboard</web-resource-name>
 			<url-pattern>/*</url-pattern>
-            <!--
-			<http-method>DELETE</http-method>
-			<http-method>GET</http-method>
-			<http-method>POST</http-method>
-			<http-method>PUT</http-method>
-              -->
 		</web-resource-collection>
 		<auth-constraint>
 			<role-name>oapdashboarduser</role-name>
 		</auth-constraint>
 	</security-constraint>
-            <!--
-			<url-pattern>/DashboardServices/*</url-pattern>
-             --> 
-
+  
 <!--
 <security-constraint>
 	<display-name>excluded</display-name>
