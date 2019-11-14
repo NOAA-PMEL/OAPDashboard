@@ -1,0 +1,223 @@
+<!DOCTYPE html PUBLIC "-//W3C//Ddiv XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/Ddiv/xhtml1-strict.ddiv">
+<html>
+
+<head>
+<meta http-equiv="content-type" content="text/html; charset=UTF-8" />
+<title>OAP Dashboard Login</title>
+<style type="">
+* {
+    font-family: Arial Unicode MS, Arial, sans-serif;
+    margin: 2px 0px;
+}
+.boxy {
+    -webkit-box-sizing: border-box;
+    -moz-box-sizing: border-box;
+    box-sizing: border-box;
+}
+.banner {
+    position: fixed;
+/*     height: 100px; */
+    width: 100%;
+    background: #bffffe;
+    top: 0px;
+    left: 0px;
+}
+.noaaLogo {
+    position: fixed;
+    padding: 10px;
+    height: 50px;
+    top: 0px;
+    left: 0px;
+}
+.login_form {
+    border: groove lightgray;
+    background: #e4ffff;
+    padding: 1.5em 1.75em 1.25em;
+    position: fixed;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -70%);
+    
+    display: flex;
+    flex-direction: column;
+    width: 25em;
+}
+.header_section {
+    text-align: center;
+    border-bottom: 1px solid black;
+    margin-bottom: 1em;
+}
+.name_block {
+}
+.row {
+    display: flex;
+    flex-direction: row;
+}
+.first {
+    flex: 0 0 6em;
+}
+.first_plus {
+    flex: 0 0 8em;
+}
+.indented {
+    padding-left: 1em;
+    flex-basis: 5em;
+}
+.remainder_width {
+    flex: 1 1 auto;
+}
+.telephone_block {
+    display: flex;
+    flex-direction: row;
+}
+.resid_block {
+}
+.horizontal_fill_space {
+    flex: 2;
+}
+.add_resid_button {
+    float: right;
+}
+.resid_line {
+} 
+.hidden {
+    display: none;
+}
+      
+
+ style="text-align:center; padding-bottom: 1em;"
+</style>
+</head>
+
+<body onload="resetFocus()" style="background-color:#BBDDFF">
+<script>
+var n_resid = 0;
+var row_id_num = 0;
+
+  function resetFocus() {
+    document.querySelector('.autofocus').focus();
+  }
+  function getResidRow(rowNum) {
+    var resid_row = '<div class="row" id="resid_row_'+rowNum+'">' +
+                        '<div class="first_plus" >' +
+                            '<select id="rid_select_'+rowNum+'" style="height:18px;" class="boxy" name="resid_type_'+rowNum+'" tabindex="'+(8+2*n_resid)+'">' + // onchange="selectChanged(this)" 
+                                '<option selected disabled>Select One</option>' +
+                                '<option>ORCID</option>' +
+                                '<option>ResearcherID</option>' +
+//                                '<option>Other...</option>' +
+                            '</select>' +
+                        '</div>' +
+                        '<input id="rid_input_'+rowNum+'"  tabindex="'+(9+2*n_resid)+'" style="height:21px; margin-right:5px;" class="boxy remainder_width" type="text" name="resid_'+rowNum+'" />' +
+                        '<button style="height:18px; margin-top:3px;" class="boxy" onclick="removeResidRow('+rowNum+')" style="cursor:pointer;" title="Remove Line">X</button>' +
+                    '</div>';
+     return resid_row;
+  }
+  function dismissDialog(btn) {
+	  console.log(btn);
+      Window.close();
+  }
+  function addResIdRow() {
+	  var rrows = document.getElementById("resid_rows");
+      console.log("rows:"+rrows);
+      var newRow = document.createElement("div");
+      var resid_row = getResidRow(row_id_num);
+      console.log(resid_row);
+      newRow.innerHTML = resid_row;
+      rrows.appendChild(newRow);
+      var selectorid = "rid_select_"+row_id_num;
+      document.getElementById(selectorid).focus();
+	  n_resid = rrows.childElementCount;
+      console.log("n_resid:"+n_resid);
+      if ( n_resid == 2 ) {
+    	  document.getElementById("add_resid_button").disabled = true;
+      }
+      row_id_num += 1;
+  }
+  function selectChanged(selector) {
+	  console.log(selector + "changed to:" + selector.value);
+  }
+  function showOther(selector, show) {
+	  console.log("that's it for " + selector + ":" + show);
+  }
+  function removeResidRow(rowNum) {
+	  var rowid = "resid_row_"+rowNum;
+	  var row = document.getElementById(rowid);
+      var rowParent = row.parentElement;
+	  rowParent.remove();
+	  document.getElementById("add_resid_button").disabled = false;
+      n_resid -= 1;
+      resetTabIndex(n_resid);
+  }
+  function resetTabIndex(rows) {
+      if ( rows == 0 ) { return; }
+      var tx = rows-1;
+	  var rrows = document.getElementById("resid_rows");
+      var row = rrows.childNodes[0].childNodes[0];
+      var rowid = row.id;     
+      var rownum = rowid.substr("resid_row_".length)
+      var selectid = "rid_select_"+rownum;
+      var selector = document.getElementById(selectid);
+      selector.tabIndex=8+2*tx;
+      var inputid = "rid_input_"+rownum;
+      var input = document.getElementById(inputid);
+      input.tabIndex=9+2*tx;
+  }
+  function cancelRequest() {
+	  window.location.assign("oap");
+  }
+</script>
+<form id="request_login_form" method="post" action="tx/request_account">
+  <div class="banner">
+    <img src="images/noaa_logo_50x50.gif" class="noaaLogo"/>
+  </div>
+  <div class="login_form" >
+    <div class="header_section"><b>Please enter the following information<br/>to request an OAP Dashboard user account:</b></div>
+    <div class="name_block">
+        <div>Name:</div>
+        <div class="row">
+            <div class="indented first">First:</div>
+            <input tabindex="1" class="autofocus remainder_width" type="text" name="fname" />
+        </div>
+        <div class="row">
+            <div class="indented first">Middle:</div>
+            <input tabindex="2" class="remainder_width" type="text" name="mname" />
+        </div>
+        <div class="row">
+            <div class="first indented">Last:</div>
+            <input tabindex="3" tabindex="1" class="remainder_width" type="text" name="lname" />
+        </div>
+    </div>
+    <div class="row">
+      <div class="first">Email:</div>
+      <input tabindex="4" class="remainder_width" type="text" name="email" />
+    </div>
+    <div class="row">
+      <div class="first">Telephone:</div>
+      <div class="remainder_width telephone_block">
+          <input tabindex="5" class="remainder_width" type="text" name="teln" />
+          <div style="padding-left:1.5em; padding-right:.5em;">Ext:</div>
+          <input tabindex="6" style="width: 3em;" type="text" name="extn" />
+      </div>
+    </div>
+    <div class="resid_block">
+        <div class="row">
+            <div class="first_plus">Researcher ID:</div>
+            <div class="horizontal_fill_space">&nbsp;</div>
+            <div class="add_resid_button"><button tabindex="7" id="add_resid_button" type="button" onclick="addResIdRow()" style="cursor:pointer;" alt="Add ID" >Add ID</button></div>
+        </div>
+        <div id="resid_rows" ></div>
+    </div>
+    <div class="row">
+      <div class="first_plus">Organization:</div>
+      <input tabindex="12" class="remainder_width" type="text" name="org" />
+    </div>
+    <div>
+      <div style="text-align:right;"><input tabindex="14" type="button" value="Cancel" onclick="cancelRequest()" />&nbsp;<input tabindex="13" type="submit" value="Submit" /></div> <!-- onclick="dismissDialog(this)"  -->
+    </div>
+    <div tabindex="15" onfocus="resetFocus()"></div>
+  </div>
+</form>
+</body>
+
+</html>
+
