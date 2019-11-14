@@ -91,7 +91,7 @@ public class ApplicationHeaderTemplate extends CompositeWithUsername {
     public void setDatasetIds(String datasetIds) {
         String currentText = titleLabel.getText();
         if ( currentText.indexOf(':') > 0 ) {
-            currentText = currentText.substring(0, currentText.indexOf(':') -1);
+            currentText = currentText.substring(0, currentText.indexOf(':'));
         }
         String newText = currentText + ": " + datasetIds;
         titleLabel.setText(newText);
