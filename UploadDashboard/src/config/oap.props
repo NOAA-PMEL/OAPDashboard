@@ -22,7 +22,11 @@
 # In this way, variable values can also be overridden.
 #
 
+# tws.pkauth.debug=true
+
 oap.env=prod
+
+oap.admin.email.list=linus.kamb@noaa.gov
 
 oap.email.from=OAP Dashboard System <pmel.sdis@noaa.gov>
 oap.email.account=pmel.sdis@noaa.gov
@@ -59,3 +63,5 @@ oap.feedback.recipients=linus.kamb@noaa.gov
 #  my-dashboard (mysql:localhost:3306/oapdashboard?scientist)
 # 
 oap.db.environment=my-dashboard
+
+tws.pkauth.certificates_dir=/usr/local/src/oads/apache-tomcat-8.5.34/content/OAPUploadDashboard/config
