@@ -3,7 +3,7 @@
   PUBLIC "-//mybatis.org//DTD Config 3.0//EN"
   "http://mybatis.org/dtd/mybatis-3-config.dtd">
 <configuration>
-  <properties resource="config/prod.database.properties"/>
+  <properties resource="config/database.properties"/>
   <settings>
   	<setting name="logImpl" value="LOG4J2" />
   </settings>
@@ -38,8 +38,8 @@
       <dataSource type="POOLED">
         <property name="driver" value="${my.driver}"/>
         <property name="url" value="${my.url}"/>
-        <property name="username" value="${matisse.username}"/>
-        <property name="password" value="${matisse.password}"/>
+        <property name="username" value="${matisse.my_username}"/>
+        <property name="password" value="${matisse.my_password}"/>
       </dataSource>
     </environment>
     <environment id="oapdashboard">
