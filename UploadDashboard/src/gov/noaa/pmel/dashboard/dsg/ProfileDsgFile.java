@@ -393,6 +393,7 @@ public class ProfileDsgFile extends DsgNcFile {
 		
 	private boolean excludeType(DashDataType<?> dtype) {
 		if ( dtype.getVarName().equals("other") ||
+		     dtype.typeNameLike("unknown") ||
 //		     dtype.isQCType() ||
 		     dtype.typeNameEquals("date") || dtype.typeNameEquals("time") || dtype.typeNameEquals("timestamp") ||
 		     dtype.typeNameEquals("dataset_id") || dtype.typeNameEquals("dataset_name") ||
