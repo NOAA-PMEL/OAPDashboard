@@ -27,6 +27,7 @@ import org.apache.logging.log4j.Logger;
 import gov.noaa.pmel.dashboard.server.db.dao.DaoFactory;
 import gov.noaa.pmel.dashboard.server.db.dao.SubmissionsDao;
 import gov.noaa.pmel.dashboard.server.model.SubmissionRecord;
+import gov.noaa.pmel.dashboard.server.util.Notifications;
 import gov.noaa.pmel.dashboard.server.model.StatusRecord;
 import gov.noaa.pmel.dashboard.server.model.StatusState;
 import gov.noaa.pmel.tws.util.StringUtils;
@@ -185,9 +186,13 @@ public class StatusServices extends ResourceBase {
                                         @FormParam("message") String fp_message) {
         Response response = null;
         try {
+            logger.debug(httpRequest);
             String statusStr = fp_status_state != null ? fp_status_state : qp_status_state;
             StatusState sstate = getState(statusStr.toUpperCase());
             String message = fp_message != null ? fp_message : qp_message;
+            String logMessage = "Status update for " + p_sid + " from " + httpRequest.getRemoteAddr() + " to " + sstate + ":" + message;
+            logger.info(logMessage);
+            Notifications.AdminEmail("Status update for " + p_sid, logMessage);
             SubmissionsDao sdao = DaoFactory.SubmissionsDao();
             SubmissionRecord srec;
             if ( isRecordKey(p_sid)) {
@@ -204,10 +209,12 @@ public class StatusServices extends ResourceBase {
                                             .message(message)
                                             .build();
                 sdao.updateSubmissionStatus(status);
+                response = Response.ok().build();
             }
             
         } catch (Exception ex) {
             logger.warn(ex.getMessage(), ex);
+            Notifications.AdminEmail("Status update failed!", ex.getMessage());
             response = Response.serverError().entity("An error occurred on the server. Please try again later.").build();
         }
         return response;
