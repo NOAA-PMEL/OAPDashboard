@@ -65,6 +65,12 @@ public class Notifications {
 		return addrList.toString();
 	}
 
+    public static void AdminEmail(String subject, String message) {
+        String defaultAdmin = ApplicationConfiguration.getProperty("oap.email.from", "\"OAP Dashboard System\" <sdis.pmel@noaa.gov>");
+        String adminList = ApplicationConfiguration.getLatestProperty("oap.admin.email.list", defaultAdmin);
+        SendEmail(subject, message, adminList);
+    }
+    
 	public static void SendEmail(String subject, String message, Iterable<String> toList) {
 		SendEmail(subject, message, buildRecipientListString(toList));
 	}
