@@ -43,4 +43,16 @@ public abstract class ResourceBase {
         }
         return b.toString();
     }
+    
+    /**
+     * @param httpRequest
+     * @return either the provided remote IP address or the x-forwarded-for address if provided
+     */
+    protected static String getRemoteAddress(HttpServletRequest httpRequest) {
+        String remoteAddr = httpRequest.getHeader("x-forwarded-for");
+        if ( remoteAddr == null ) {
+            remoteAddr = httpRequest.getRemoteAddr();
+        }
+        return remoteAddr;
+    }
 }
