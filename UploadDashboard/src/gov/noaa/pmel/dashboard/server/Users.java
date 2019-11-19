@@ -61,13 +61,9 @@ public class Users {
     }
     private static int _addUser(User user, String cryptPasswd, UserRole role) throws DashboardException {
         UsersDao udao = DaoFactory.UsersDao();
-//        boolean dConfig = false;
-        boolean reviewer = false;
         try {
 //            addUserToDashboardConfig(user, role);
 //            dConfig = true;
-            udao.insertReviewer(user.username(), user.firstName()+" "+user.lastName(), user.email());
-            reviewer = true;
             InsertUser inUser = user.asInsertUser().authString(cryptPasswd).build();
             int dbId = udao.insertUser(inUser);
             udao.addAccessRole(inUser.username());
@@ -78,10 +74,6 @@ public class Users {
 //                try { removeDashboardConfigUser(user); }
 //                catch ( Throwable t ) { System.err.println(t); }
 //            }
-            if ( reviewer ) {
-                try { udao.removeReviewer(user.username()); }
-                catch ( Throwable t ) { System.err.println(t); }
-            }
             throw new DashboardException(ex);
         }
     }
@@ -165,7 +157,6 @@ public class Users {
         try {
             udao.deleteUserByUsername(userid);
             udao.removeAccessRole(userid);
-            udao.removeReviewer(userid);
         } catch (SQLException ex) {
             throw new DashboardException(ex);
         }

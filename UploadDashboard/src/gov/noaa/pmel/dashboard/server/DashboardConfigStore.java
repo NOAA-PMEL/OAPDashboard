@@ -41,7 +41,6 @@ import gov.noaa.pmel.dashboard.ferret.FerretConfig;
 import gov.noaa.pmel.dashboard.handlers.ArchiveFilesBundler;
 import gov.noaa.pmel.dashboard.handlers.CheckerMessageHandler;
 import gov.noaa.pmel.dashboard.handlers.DataFileHandler;
-import gov.noaa.pmel.dashboard.handlers.DatabaseRequestHandler;
 import gov.noaa.pmel.dashboard.handlers.DsgNcFileHandler;
 import gov.noaa.pmel.dashboard.handlers.MetadataFileHandler;
 import gov.noaa.pmel.dashboard.handlers.PreviewPlotsHandler;
@@ -154,7 +153,6 @@ public class DashboardConfigStore {
 	private OpaqueDatasetChecker opaqueDatasetChecker;
 	private ProfileDatasetChecker profileDatasetChecker;
 	private TrajectoryDatasetChecker trajectoryDatasetChecker;
-	private DatabaseRequestHandler databaseRequestHandler;
 	private PreviewPlotsHandler plotsHandler;
 	private DatasetSubmitter datasetSubmitter;
 	private KnownDataTypes knownUserDataTypes;
@@ -267,25 +265,39 @@ public class DashboardConfigStore {
 
 		// First check is UPLOAD_DASHBOARD_SERVER_NAME is defined for alternate configurations 
 		// when running the dashboard.program.* applications
+		// and for when running individual programs in dev mode.
 		String serverAppName = System.getenv("UPLOAD_DASHBOARD_SERVER_NAME");
-		if ( serverAppName == null )
-			serverAppName = System.getProperty("UPLOAD_DASHBOARD_SERVER_NAME");
 		if ( serverAppName == null ) {
-			// Get the app name from the location of this class source in tomcat;
-			// e.g., "/home/users/tomcat/webapps/SocatUploadDashboard/WEB-INF/classes/gov/noaa/pmel/dashboard/server/DashboardConfigStore.class"
-			try {
-				File webAppSubDir = new File(getClass().getProtectionDomain().getCodeSource().getLocation().getPath());
-				do {
-					webAppSubDir = webAppSubDir.getParentFile();
-					serverAppName = webAppSubDir.getName();
-				} while ( ! serverAppName.equals("WEB-INF") );
-				webAppSubDir = webAppSubDir.getParentFile();
-				serverAppName = webAppSubDir.getName();
-			} catch ( Exception ex ) {
-				serverAppName = "";
-			}
-			if ( serverAppName.isEmpty() )
-				throw new IOException("Unable to obtain the upload dashboard server name");
+			serverAppName = System.getProperty("UPLOAD_DASHBOARD_SERVER_NAME");
+		}
+        // The serverAppName is only used to specify the content/<serverAppName> path,
+		// as well as the application configuration .properties file:
+		// <base_dir>/content/<serverAppName>/config/<serverAppName>.properties
+		// This is generally static and unchanging, other than the <base_dir>, 
+		// so if we want to change that, it should be through the property above.
+//        boolean useDefaultAppName = true;
+		if ( serverAppName == null ) {
+//            if ( useDefaultAppName ) {
+//                serverAppName = "OAPUploadDashboard";
+//            } else {
+    			// Get the app name from the location of this class source in tomcat;
+    			// e.g., "/home/users/tomcat/webapps/SocatUploadDashboard/WEB-INF/classes/gov/noaa/pmel/dashboard/server/DashboardConfigStore.class"
+            // This will not work in dev mode, so the above property must be defined.
+    			try {
+    				File webAppSubDir = new File(getClass().getProtectionDomain().getCodeSource().getLocation().getPath());
+    				do {
+    					webAppSubDir = webAppSubDir.getParentFile();
+    					serverAppName = webAppSubDir.getName();
+    				} while ( ! serverAppName.equals("WEB-INF") );
+    				webAppSubDir = webAppSubDir.getParentFile();
+    				serverAppName = webAppSubDir.getName();
+    			} catch ( Exception ex ) {
+    				serverAppName = "";
+    			}
+    			if ( serverAppName.isEmpty() ) {
+    				throw new IOException("Unable to obtain the upload dashboard server name");
+                }
+//            }
 		}
 		String appContentDirPath = baseDir + "content" + File.separator + serverAppName + File.separator;
         appContentDir = new File(appContentDirPath);
@@ -613,18 +625,6 @@ public class DashboardConfigStore {
 			                                        knownUserDataTypes, knownMetadataTypes, knownDataFileTypes);
 		} catch ( Exception ex ) {
 			throw new IOException(ex);
-		}
-
-		// Read the Database configuration filename
-		try {
-			propVal = getFilePathProperty(configProps, DATABASE_CONFIG_FILE_NAME_TAG, appConfigDir);
-			filesToWatch.add(new File(propVal));
-			databaseRequestHandler = new DatabaseRequestHandler(propVal);
-		    logger.info("read Database configuration file " + propVal);
-		} catch ( Exception ex ) {
-			throw new IOException("Invalid " + DATABASE_CONFIG_FILE_NAME_TAG + 
-					" value specified in " + configFile.getPath() + "\n" + 
-					ex.getMessage() + "\n" + CONFIG_FILE_INFO_MSG, ex);
 		}
 
 		// SanityChecker initialization from this same properties file 
@@ -982,14 +982,6 @@ public class DashboardConfigStore {
 	 */
 	public FerretConfig getFerretConfig() {
 		return ferretConf;
-	}
-
-	/**
-	 * @return
-	 * 		the database request handler
-	 */
-	public DatabaseRequestHandler getDatabaseRequestHandler() {
-		return databaseRequestHandler;
 	}
 
 	/**

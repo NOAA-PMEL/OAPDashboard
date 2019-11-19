@@ -15,14 +15,12 @@ import gov.noaa.pmel.dashboard.dsg.StdDataArray;
 import gov.noaa.pmel.dashboard.ferret.FerretConfig;
 import gov.noaa.pmel.dashboard.ferret.SocatTool;
 import gov.noaa.pmel.dashboard.handlers.DataFileHandler;
-import gov.noaa.pmel.dashboard.handlers.DatabaseRequestHandler;
 import gov.noaa.pmel.dashboard.handlers.DsgNcFileHandler;
 import gov.noaa.pmel.dashboard.handlers.MetadataFileHandler;
 import gov.noaa.pmel.dashboard.oads.DashboardOADSMetadata;
 import gov.noaa.pmel.dashboard.oads.OADSMetadata;
 import gov.noaa.pmel.dashboard.server.DashboardConfigStore;
 import gov.noaa.pmel.dashboard.server.DashboardServerUtils;
-import gov.noaa.pmel.dashboard.shared.DashboardUtils;
 
 /**
  * Regenerates the full-data DSG files with the current data values 
@@ -39,7 +37,6 @@ public class RegenerateDsgs {
 	MetadataFileHandler metaHandler;
 	KnownDataTypes knownMetadataTypes;
 	KnownDataTypes knownDataFileTypes;
-	DatabaseRequestHandler dbHandler;
 	FerretConfig ferretConfig;
 
 	/**
@@ -54,7 +51,6 @@ public class RegenerateDsgs {
 		metaHandler = configStore.getMetadataFileHandler();
 		knownMetadataTypes = configStore.getKnownMetadataTypes();
 		knownDataFileTypes = configStore.getKnownDataFileTypes();
-		dbHandler = configStore.getDatabaseRequestHandler();
 		ferretConfig = configStore.getFerretConfig();
 	}
 
