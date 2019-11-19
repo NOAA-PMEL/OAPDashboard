@@ -67,6 +67,10 @@ public class StatusServices extends ResourceBase {
     public Response statusForVersion(@PathParam("sid") String p_sid,
                                      @PathParam("version") String p_version) {
         Response response = null;
+        logger.debug(fullDump(httpRequest));
+        logger.debug("Status check for " + p_sid + 
+                     ( p_version != null ? "." + p_version : "" ) + 
+                     " from " + getRemoteAddress(httpRequest));
         try {
             SubmissionsDao sdao = DaoFactory.SubmissionsDao();
             SubmissionRecord srec;
@@ -190,7 +194,7 @@ public class StatusServices extends ResourceBase {
             String statusStr = fp_status_state != null ? fp_status_state : qp_status_state;
             StatusState sstate = getState(statusStr.toUpperCase());
             String message = fp_message != null ? fp_message : qp_message;
-            String logMessage = "Status update for " + p_sid + " from " + httpRequest.getRemoteAddr() + " to " + sstate + ":" + message;
+            String logMessage = "Status update for " + p_sid + " from " + getRemoteAddress(httpRequest) + " to " + sstate + ":" + message;
             logger.info(logMessage);
             Notifications.AdminEmail("Status update for " + p_sid, logMessage);
             SubmissionsDao sdao = DaoFactory.SubmissionsDao();
@@ -219,6 +223,7 @@ public class StatusServices extends ResourceBase {
         }
         return response;
     }
+
     /**
      * @param qp_status_state
      * @return
