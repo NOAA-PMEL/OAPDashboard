@@ -31,6 +31,10 @@ public class User {
     
     private String _email;
     
+    public String fullName() {
+        return _firstName + " " + _lastName;
+    }
+    
     public InsertUser.InsertUserBuilder asInsertUser() {
         return InsertUser.newUser()
                 .dbId(_dbId)

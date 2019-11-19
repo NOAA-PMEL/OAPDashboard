@@ -50,6 +50,7 @@ import gov.noaa.pmel.dashboard.handlers.PreviewPlotsHandler;
 import gov.noaa.pmel.dashboard.handlers.UserFileHandler;
 import gov.noaa.pmel.dashboard.oads.DashboardOADSMetadata;
 import gov.noaa.pmel.dashboard.oads.OADSMetadata;
+import gov.noaa.pmel.dashboard.server.model.User;
 import gov.noaa.pmel.dashboard.shared.DashboardDataset;
 import gov.noaa.pmel.dashboard.shared.DashboardDatasetData;
 import gov.noaa.pmel.dashboard.shared.DashboardDatasetList;
@@ -270,7 +271,8 @@ public class DashboardServices extends RemoteServiceServlet implements Dashboard
 		else {
 			// actual name given?
 			try {
-				newUsername = configStore.getDatabaseRequestHandler().getReviewerUsername(newOwner);
+                User newUser = Users.getUser(newOwner);
+                newUsername = newUser.username();
 			} catch (Exception ex) {
 				newUsername = null;
 			}

@@ -53,15 +53,6 @@ public class MybUsersDao implements UsersDao {
 		}
         
     }
-    @Override
-    public void insertReviewer(String username, String realName, String email) {
-		try (SqlSession session = MybatisConnectionFactory.getFlagsDbSessionFactory().openSession();) {
-			UserMapper umapper = (UserMapper) session.getMapper(UserMapper.class);
-			umapper.insertReviewer(username, realName, email);
-			session.commit();
-		}
-    }
-    
 	@Override
 	public User retrieveUser(String username) throws SQLException {
 		try (SqlSession session = MybatisConnectionFactory.getDashboardDbSessionFactory().openSession();) {
@@ -107,15 +98,6 @@ public class MybUsersDao implements UsersDao {
 		}
 	}
     
-    @Override
-    public void removeReviewer(String username) {
-        try (SqlSession session = MybatisConnectionFactory.getFlagsDbSessionFactory().openSession();) {
-            UserMapper umapper = (UserMapper) session.getMapper(UserMapper.class);
-            umapper.deleteReviewer(username);
-            session.commit();
-        }
-    }
-
     @Override
     public void removeAccessRole(String username) {
         try (SqlSession session = MybatisConnectionFactory.getDashboardDbSessionFactory().openSession();) {

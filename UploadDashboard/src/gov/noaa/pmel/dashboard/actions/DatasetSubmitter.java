@@ -20,7 +20,6 @@ import gov.noaa.pmel.dashboard.dsg.StdUserDataArray;
 import gov.noaa.pmel.dashboard.handlers.ArchiveFilesBundler;
 import gov.noaa.pmel.dashboard.handlers.Bagger;
 import gov.noaa.pmel.dashboard.handlers.DataFileHandler;
-import gov.noaa.pmel.dashboard.handlers.DatabaseRequestHandler;
 import gov.noaa.pmel.dashboard.handlers.DsgNcFileHandler;
 import gov.noaa.pmel.dashboard.handlers.FileXferService;
 import gov.noaa.pmel.dashboard.handlers.MetadataFileHandler;
@@ -29,6 +28,7 @@ import gov.noaa.pmel.dashboard.oads.DashboardOADSMetadata;
 import gov.noaa.pmel.dashboard.oads.OADSMetadata;
 import gov.noaa.pmel.dashboard.server.DashboardConfigStore;
 import gov.noaa.pmel.dashboard.server.DashboardServerUtils;
+import gov.noaa.pmel.dashboard.server.Users;
 import gov.noaa.pmel.dashboard.server.db.dao.DaoFactory;
 import gov.noaa.pmel.dashboard.server.model.SubmissionRecord;
 import gov.noaa.pmel.dashboard.server.model.StatusRecord;
@@ -61,7 +61,6 @@ public class DatasetSubmitter {
 	MetadataFileHandler metadataHandler;
 //	DatasetChecker datasetChecker;
 	DsgNcFileHandler dsgHandler;
-	DatabaseRequestHandler databaseHandler;
 	ArchiveFilesBundler filesBundler;
 	String version;
     
@@ -77,7 +76,6 @@ public class DatasetSubmitter {
 		metadataHandler = configStore.getMetadataFileHandler();
 //		datasetChecker = configStore.getDashboardDatasetChecker();
 		dsgHandler = configStore.getDsgNcFileHandler();
-		databaseHandler = configStore.getDatabaseRequestHandler();
 		filesBundler = configStore.getArchiveFilesBundler();
 		version = configStore.getUploadVersion();
         _configStore = configStore;
@@ -243,24 +241,20 @@ public class DatasetSubmitter {
 		
 		// Send dataset data and metadata for archival where user requested immediate archival
 		if ( ! datasetIds.isEmpty() ) {
-			String userRealName;
+            User user = null;
 			try {
-				userRealName = databaseHandler.getReviewerRealname(submitter);
+                user = Users.getUser(submitter);
 			} catch (Exception ex) {
                 logger.warn(ex);
-				userRealName = null;
 			}
-			if ( (userRealName == null) || userRealName.isEmpty() )
-				throw new IllegalArgumentException("Unknown real name for user " + submitter);
+			if ( user == null )
+				throw new IllegalArgumentException("No user found for: " + submitter);
 
-			String userEmail;
-			try {
-				userEmail = databaseHandler.getReviewerEmail(submitter);
-			} catch (Exception ex) {
-				userEmail = null;
-			}
+			String userRealName = user.fullName();
+			String userEmail = user.email();
+            
 			if ( (userEmail == null) || userEmail.isEmpty() )
-				throw new IllegalArgumentException("Unknown e-mail address for user " + submitter);
+				throw new IllegalArgumentException("No e-mail address for user " + submitter);
 
 			for ( String datasetId : datasetIds ) {
 			    String thisStatus = archiveStatus;
