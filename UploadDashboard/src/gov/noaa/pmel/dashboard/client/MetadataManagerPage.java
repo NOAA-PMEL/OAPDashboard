@@ -91,8 +91,6 @@ public class MetadataManagerPage extends CompositeWithUsername {
     @UiField ApplicationHeaderTemplate header;
 	@UiField Button doneButton;
 	@UiField Button cancelButton;
-	@UiField Label buttonPanelSpacerLabel;
-//	@UiField Button previewButton;
     private boolean confirmCancel = true;
     @UiField Frame metadataEditorFrame;
     IFrameElement meIFrame;
@@ -120,8 +118,6 @@ public class MetadataManagerPage extends CompositeWithUsername {
 		doneButton.setEnabled(true);
 		
         cancelButton.setText(CANCEL_TEXT);
-        buttonPanelSpacerLabel.setText(" ");
-//        previewButton.setText(PREVIEW_TEXT);
         
         metadataEditorFrame.getElement().setId("__metadataEditorFrame");
         
