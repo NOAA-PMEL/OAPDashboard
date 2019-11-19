@@ -89,17 +89,17 @@ public class DatasetListPage extends CompositeWithUsername {
 	private static final String ADDL_DOCS_HOVER_HELP =
 			"manage supplemental documents for the selected datasets";
 
-	private static final String QC_SUBMIT_TEXT = "Submit for QC";
-	private static final String QC_SUBMIT_HOVER_HELP =
-			"submit the selected datasets for quality control assessment";
+//	private static final String QC_SUBMIT_TEXT = "Submit for QC";
+//	private static final String QC_SUBMIT_HOVER_HELP =
+//			"submit the selected datasets for quality control assessment";
 
 	private static final String ARCHIVE_SUBMIT_TEXT = "Submit to Archive";
 	private static final String ARCHIVE_SUBMIT_HOVER_HELP =
 			"submit selected dataset to permanent data archive";
 
-	private static final String SUSPEND_TEXT = "Suspend Dataset";
-	private static final String SUSPEND_HOVER_HELP =
-			"suspend the selected datasets from quality control assessment to allow updates";
+//	private static final String SUSPEND_TEXT = "Suspend Dataset";
+//	private static final String SUSPEND_HOVER_HELP =
+//			"suspend the selected datasets from quality control assessment to allow updates";
 
 	private static final String REVIEW_TEXT = "Preview Dataset";
 	private static final String REVIEW_HOVER_HELP =
@@ -116,10 +116,10 @@ public class DatasetListPage extends CompositeWithUsername {
 			"hides the selected datasets from your list of displayed datasets; " +
 			"this will NOT delete the datasets from the system";
 
-	private static final String CHANGE_OWNER_TEXT =
-			"Change Datasets Owner";
-	private static final String CHANGE_OWNER_HOVER_HELP = 
-			"change the owner of the selected datasets to a dashboard user you specify";
+//	private static final String CHANGE_OWNER_TEXT =
+//			"Change Datasets Owner";
+//	private static final String CHANGE_OWNER_HOVER_HELP = 
+//			"change the owner of the selected datasets to a dashboard user you specify";
 
 	private static final String DELETE_TEXT = "Delete Datasets";
 	private static final String DELETE_HOVER_HELP =
@@ -299,7 +299,7 @@ public class DatasetListPage extends CompositeWithUsername {
 //	@UiField Label firstSeparator;
 	@UiField Button showDatasetButton;
 	@UiField Button hideDatasetButton;
-	@UiField Button changeOwnerButton;
+//	@UiField Button changeOwnerButton;
 	@UiField Label secondSeparator;
 	@UiField Button deleteButton;
 	@UiField DataGrid<DashboardDataset> datasetsGrid;
@@ -377,8 +377,8 @@ public class DatasetListPage extends CompositeWithUsername {
 		hideDatasetButton.setText(HIDE_DATASETS_TEXT);
 		hideDatasetButton.setTitle(HIDE_DATASETS_HOVER_HELP);
 
-		changeOwnerButton.setText(CHANGE_OWNER_TEXT);
-		changeOwnerButton.setTitle(CHANGE_OWNER_HOVER_HELP);
+//		changeOwnerButton.setText(CHANGE_OWNER_TEXT);
+//		changeOwnerButton.setTitle(CHANGE_OWNER_HOVER_HELP);
 
 		deleteButton.setText(DELETE_TEXT);
 		deleteButton.setTitle(DELETE_HOVER_HELP);
@@ -400,7 +400,7 @@ public class DatasetListPage extends CompositeWithUsername {
 			archiveSubmitButton,
 //			suspendDatasetButton,
 			hideDatasetButton,
-			changeOwnerButton,
+//			changeOwnerButton,
 			deleteButton
 		};
 		singleSet = new Button[] {
@@ -976,7 +976,11 @@ public class DatasetListPage extends CompositeWithUsername {
 		});
 	}
 
-	@UiHandler("changeOwnerButton")
+//	@UiHandler("changeOwnerButton")
+//  XXX This should really come out (along with continueChangeOwner)
+//  but commenting it out causes an exception to be thrown at runtime in debug mode
+//  at the first line of buildArchiveStatusColumn with error: ReferenceError: CYh_g$ is not defined
+//  Standard GWT-compiled war runs fine in tomcat...
 	void changeOwnerOnClick(ClickEvent event) {
 		getSelectedDatasets(null);
 		if ( datasetIdsSet.size() == 0 ) {
