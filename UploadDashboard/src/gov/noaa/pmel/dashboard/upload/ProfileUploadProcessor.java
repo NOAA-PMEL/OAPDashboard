@@ -38,7 +38,7 @@ public class ProfileUploadProcessor extends FileUploadProcessor {
         String timestamp = uploadFields.timestamp();
         String encoding = uploadFields.fileDataEncoding();
         String dataFormat = FormUtils.getFormField("dataformat", uploadFields.parameterMap());
-		String datasetIdColName = FormUtils.getFormField("datasetIdColumn", uploadFields.parameterMap());
+		String datasetIdColName = FormUtils.getFormField(DATASET_ID_COLUMN_FIELD_NAME, uploadFields.parameterMap());
 		DataFileHandler datasetHandler = configStore.getDataFileHandler();
 		TreeSet<String> successes = new TreeSet<String>();
         

@@ -3,6 +3,7 @@
  */
 package gov.noaa.pmel.dashboard.upload;
 
+import gov.noaa.pmel.dashboard.shared.FeatureType;
 
 /**
  * @author kamb
@@ -11,7 +12,7 @@ package gov.noaa.pmel.dashboard.upload;
 public class ProfileTimeseriesUploadProcessor extends BasicFileUploadProcessor {
 
     public ProfileTimeseriesUploadProcessor(StandardUploadFields uploadFields) {
-        super(uploadFields);
+        super(FeatureType.PROFILE_TIMESERIES, uploadFields);
     }
 
 //    @Override

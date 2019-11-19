@@ -26,8 +26,11 @@ import gov.noaa.pmel.dashboard.util.FormUtils;
  */
 public class BasicFileUploadProcessor extends FileUploadProcessor {
 
-    public BasicFileUploadProcessor(StandardUploadFields uploadFields) {
+    private FeatureType _type;
+    
+    public BasicFileUploadProcessor(FeatureType type, StandardUploadFields uploadFields) {
         super(uploadFields);
+        _type = type;
     }
 
     @Override
@@ -37,7 +40,8 @@ public class BasicFileUploadProcessor extends FileUploadProcessor {
         String timestamp = uploadFields.timestamp();
         String encoding = uploadFields.fileDataEncoding();
         String dataFormat = FormUtils.getFormField("dataformat", uploadFields.parameterMap());
-        String datasetIdColName = FormUtils.getFormField("datasetIdCol", uploadFields.parameterMap());
+        String datasetIdColName = FormUtils.getFormField(DATASET_ID_COLUMN_FIELD_NAME, uploadFields.parameterMap());
+        
         DataFileHandler datasetHandler = configStore.getDataFileHandler();
         
         for ( FileItem item : datafiles ) {
@@ -69,7 +73,7 @@ public class BasicFileUploadProcessor extends FileUploadProcessor {
             // Process all the datasets created from this file
             String datasetId = null;
             for ( DashboardDatasetData datasetData : datasetsMap.values() ) {
-                datasetData.setFeatureType(FeatureType.TRAJECTORY.name());
+                datasetData.setFeatureType(_type.name());
                 // Check if the dataset already exists
                 datasetId = datasetData.getDatasetId();
                 boolean datasetExists = datasetHandler.dataFileExists(datasetId);
