@@ -3,6 +3,7 @@
  */
 package gov.noaa.pmel.dashboard.upload;
 
+import gov.noaa.pmel.dashboard.shared.FeatureType;
 
 /**
  * @author kamb
@@ -11,7 +12,7 @@ package gov.noaa.pmel.dashboard.upload;
 public class TrajectoryProfileUploadProcessor extends BasicFileUploadProcessor {
 
     public TrajectoryProfileUploadProcessor(StandardUploadFields uploadFields) {
-        super(uploadFields);
+        super(FeatureType.TRAJECTORY_PROFILE, uploadFields);
     }
 
 //    @Override
