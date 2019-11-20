@@ -528,7 +528,7 @@ public class TimestampConverter extends ValueConverter<String> {
 						pieces = new String[2];
 						int hend = valueString.length()-2;
 						pieces[0] = hend > 0 ? valueString.substring(0, hend) : "0";
-						pieces[1] = valueString.substring(hend, valueString.length());
+						pieces[1] = hend > 0 ? valueString.substring(hend, valueString.length()) : "0";
 					} else
 						throw new Exception("Invalid Time String: " + valueString + " - Does not match \"" + fromUnit + "\"" ) ; // \"hh:mm:ss\"");
 				}
