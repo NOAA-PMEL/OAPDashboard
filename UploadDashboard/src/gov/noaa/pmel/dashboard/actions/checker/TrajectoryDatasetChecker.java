@@ -28,7 +28,7 @@ import gov.noaa.pmel.dashboard.shared.QCFlag.Severity;
  * 
  * @author Karl Smith
  */
-public class TrajectoryDatasetChecker implements DatasetChecker {
+public class TrajectoryDatasetChecker extends BaseDatasetChecker implements DatasetChecker {
 
 	private class RowColumn {
 		int row;
@@ -132,6 +132,8 @@ public class TrajectoryDatasetChecker implements DatasetChecker {
 		// Generate array of standardized data objects
 		StdUserDataArray stdUserData = new StdUserDataArray(dataset, knownUserDataTypes);
 
+        checkForUnknownColumns(stdUserData);
+        
 		if ( ! hasRequiredColumns(stdUserData)) {
 			msgHandler.processCheckerMessages(dataset, stdUserData);
 			throw new IllegalArgumentException("Dataset is missing required columns. See messages for details.");

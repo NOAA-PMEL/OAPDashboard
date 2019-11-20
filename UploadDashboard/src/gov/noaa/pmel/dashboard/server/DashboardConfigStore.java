@@ -32,6 +32,7 @@ import com.googlecode.gwt.crypto.client.TripleDesCipher;
 
 import gov.noaa.pmel.dashboard.actions.DatasetChecker;
 import gov.noaa.pmel.dashboard.actions.DatasetSubmitter;
+import gov.noaa.pmel.dashboard.actions.checker.MinimalDatasetChecker;
 import gov.noaa.pmel.dashboard.actions.checker.OpaqueDatasetChecker;
 import gov.noaa.pmel.dashboard.actions.checker.ProfileDatasetChecker;
 import gov.noaa.pmel.dashboard.actions.checker.TrajectoryDatasetChecker;
@@ -153,6 +154,7 @@ public class DashboardConfigStore {
 	private OpaqueDatasetChecker opaqueDatasetChecker;
 	private ProfileDatasetChecker profileDatasetChecker;
 	private TrajectoryDatasetChecker trajectoryDatasetChecker;
+	private MinimalDatasetChecker minimalDatasetChecker;
 	private PreviewPlotsHandler plotsHandler;
 	private DatasetSubmitter datasetSubmitter;
 	private KnownDataTypes knownUserDataTypes;
@@ -631,6 +633,7 @@ public class DashboardConfigStore {
 		opaqueDatasetChecker = new OpaqueDatasetChecker();
 		profileDatasetChecker = new ProfileDatasetChecker(knownUserDataTypes, checkerMsgHandler);
 		trajectoryDatasetChecker = new TrajectoryDatasetChecker(knownUserDataTypes, checkerMsgHandler);
+		minimalDatasetChecker = new MinimalDatasetChecker(knownUserDataTypes, checkerMsgHandler);
 
 		String previewDirname = getPreviewDirName(baseDir, serverAppName);
 
@@ -1002,7 +1005,8 @@ public class DashboardConfigStore {
                 datasetChecker = trajectoryDatasetChecker;
                 break;
             default:
-                throw new IllegalStateException("No checker available for observation type: " + featureType.name());
+                datasetChecker = minimalDatasetChecker;
+//                throw new IllegalStateException("No checker available for observation type: " + featureType.name());
         }
 		return datasetChecker;
 	}
