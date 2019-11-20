@@ -14,6 +14,7 @@ import gov.noaa.pmel.dashboard.actions.DatasetChecker;
 import gov.noaa.pmel.dashboard.data.sanity.CastChecker;
 import gov.noaa.pmel.dashboard.datatype.KnownDataTypes;
 import gov.noaa.pmel.dashboard.dsg.DsgMetadata;
+import gov.noaa.pmel.dashboard.dsg.StdDataArray;
 import gov.noaa.pmel.dashboard.dsg.StdUserDataArray;
 import gov.noaa.pmel.dashboard.handlers.CheckerMessageHandler;
 import gov.noaa.pmel.dashboard.handlers.DataFileHandler;
@@ -30,10 +31,11 @@ import gov.noaa.pmel.dashboard.shared.QCFlag.Severity;
  * Class for interpreting, standardizing, and checking user-provided data. 
  * 
  * @author Karl Smith
+ * @author Linus Kamb
  */
-public class ProfileDatasetChecker extends BaseDatasetChecker implements DatasetChecker {
+public class MinimalDatasetChecker extends BaseDatasetChecker implements DatasetChecker {
 
-    private static Logger logger = LogManager.getLogger(ProfileDatasetChecker.class);
+    private static Logger logger = LogManager.getLogger(MinimalDatasetChecker.class);
     
 	private class RowColumn {
 		int row;
@@ -52,7 +54,7 @@ public class ProfileDatasetChecker extends BaseDatasetChecker implements Dataset
 
 		@Override
 		public int hashCode() {
-			return 37 * row + column;
+			return 47 * row + column;
 		}
 
 		@Override
@@ -77,9 +79,6 @@ public class ProfileDatasetChecker extends BaseDatasetChecker implements Dataset
 		}
 	}
 
-	private CheckerMessageHandler msgHandler;
-	private KnownDataTypes knownUserDataTypes;
-
 	/**
 	 * @param userDataTypes
 	 * 		all known user data types
@@ -89,7 +88,7 @@ public class ProfileDatasetChecker extends BaseDatasetChecker implements Dataset
 	 * 		if either argument is null, or 
 	 * 		if there are no user data types given
 	 */
-	public ProfileDatasetChecker(KnownDataTypes userDataTypes, 
+	public MinimalDatasetChecker(KnownDataTypes userDataTypes, 
 			CheckerMessageHandler checkerMessageHandler) throws IllegalArgumentException {
 		if ( (userDataTypes == null) || userDataTypes.isEmpty() )
 			throw new IllegalArgumentException("no known user data types");
@@ -137,23 +136,23 @@ public class ProfileDatasetChecker extends BaseDatasetChecker implements Dataset
 		// Generate array of standardized data objects
 		StdUserDataArray stdUserData = new StdUserDataArray(dataset, knownUserDataTypes);
 
-        checkForUnknownColumns(stdUserData);
-        
 		if ( ! hasRequiredColumns(stdUserData)) {
 			msgHandler.processCheckerMessages(dataset, stdUserData);
 			throw new IllegalArgumentException("Dataset is missing required columns. See messages for details.");
 		}
+        
+		checkForUnknownColumns(stdUserData);
 		
 		// Check for missing lon/lat/time 
 		boolean timesAreOk = stdUserData.checkMissingLonLatTime();
-        boolean depthsOk = stdUserData.checkForMissingValues(DashboardServerUtils.SAMPLE_DEPTH) || 
-                           stdUserData.checkForMissingValues(DashboardServerUtils.CTD_PRESSURE);
+//        boolean depthsOk = stdUserData.checkForMissingValues(DashboardServerUtils.SAMPLE_DEPTH) || 
+//                           stdUserData.checkForMissingValues(DashboardServerUtils.CTD_PRESSURE);
 
 		// Bounds check the standardized data values
 		stdUserData.checkBounds();
 
 		// Perform any other data checks // TODO:
-		checkCastConsistency(stdUserData);
+//		checkCastConsistency(stdUserData);
 
 		// Save the messages accumulated in stdUserData for this dataset.
 		// Assigns the sets of checker-generated QC flags and user-provided QC flags 
@@ -247,7 +246,7 @@ public class ProfileDatasetChecker extends BaseDatasetChecker implements Dataset
 		return stdUserData;
 	}
     
-   public boolean hasRequiredColumns(StdUserDataArray stdUserData) {
+   public static boolean hasRequiredColumns(StdUserDataArray stdUserData) {
         boolean gotem = true;
         if ( ! stdUserData.hasDate()) {
             gotem = false;
@@ -281,15 +280,15 @@ public class ProfileDatasetChecker extends BaseDatasetChecker implements Dataset
             msg.setDetailedComment("The dataset does not identify the cast Longitude.");
             stdUserData.addStandardizationMessage(msg);
         }
-        if ( ! ( stdUserData.hasDataColumn(DashboardServerUtils.SAMPLE_DEPTH.getStandardName()) || 
-                 stdUserData.hasDataColumn("water_pressure"))) {
-            gotem = false;
-            ADCMessage msg = new ADCMessage();
-            msg.setSeverity(Severity.CRITICAL);
-            msg.setGeneralComment("missing column");
-            msg.setDetailedComment("The dataset does not identify either the sample Depth or Pressure.");
-            stdUserData.addStandardizationMessage(msg);
-        }
+//        if ( ! ( stdUserData.hasDataColumn(DashboardServerUtils.SAMPLE_DEPTH.getStandardName()) || 
+//                 stdUserData.hasDataColumn("water_pressure"))) {
+//            gotem = false;
+//            ADCMessage msg = new ADCMessage();
+//            msg.setSeverity(Severity.CRITICAL);
+//            msg.setGeneralComment("missing column");
+//            msg.setDetailedComment("The dataset does not identify either the sample Depth or Pressure.");
+//            stdUserData.addStandardizationMessage(msg);
+//        }
 //	      if ( ! ( hasDataColumn(DashboardServerUtils.EXPO_CODE.getStandardName()) || 
 //	               hasDataColumn(DashboardServerUtils.PLATFORM_CODE.getStandardName()))) {
 //	          gotem = false;
