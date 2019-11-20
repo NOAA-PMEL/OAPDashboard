@@ -18,8 +18,10 @@ import gov.noaa.pmel.dashboard.datatype.DoubleDashDataType;
 import gov.noaa.pmel.dashboard.datatype.IntDashDataType;
 import gov.noaa.pmel.dashboard.datatype.KnownDataTypes;
 import gov.noaa.pmel.dashboard.server.DashboardServerUtils;
+import gov.noaa.pmel.dashboard.shared.ADCMessage;
 import gov.noaa.pmel.dashboard.shared.DashboardUtils;
 import gov.noaa.pmel.dashboard.shared.DataColumnType;
+import gov.noaa.pmel.dashboard.shared.QCFlag.Severity;
 import gov.noaa.pmel.tws.util.StringUtils;
 
 /**
@@ -697,6 +699,17 @@ public class StdDataArray {
 					int min = Integer.parseInt(hms[1]);
 					Double value = Double.parseDouble(hms[2]);
 					int sec = value.intValue();
+                    if ( hour == 0 && min == 0 && sec == 0 
+                         && this.getClass().isAssignableFrom(StdUserDataArray.class )) {
+                        ADCMessage msg = new ADCMessage();
+                        msg.setSeverity(Severity.WARNING);
+                        msg.setRowIndex(j);
+                        msg.setColIndex(timeOfDayIndex);
+                        String comment = "Possible bad time value of 0";
+                        msg.setGeneralComment(comment);
+                        msg.setDetailedComment(comment);
+                        ((StdUserDataArray)this).getStandardizationMessages().add(msg);
+                    }
 					value -= sec;
 					value *= 1000.0;
 					int millisec = value.intValue();
