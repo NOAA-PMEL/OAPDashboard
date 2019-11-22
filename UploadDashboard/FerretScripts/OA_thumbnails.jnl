@@ -14,6 +14,7 @@
 ! or in batch mode, from the Unix command line (this is how LAS would run this script)
 !   > ferret -gif -server -script OA_thumbnails.jnl /home/users/ansley/data/PRISM022008BADCASTS.nc /home/users/ansley/images/
 
+
 ! ------------------
 !
 ! Set up to run with either PyFerret or Ferret
@@ -45,6 +46,9 @@ let varnames = ..varnames ! the list of variables in the file
 
 define symbol fname = `lon,return=dset`
 define symbol fnamepath = ($2)/`lon,return=dset`
+
+! Start a log file in the images directory. 
+SET REDIRECT/TEE/CLOBBER/FILE="($2)/`lon,return=dset`_($session_PID)_thumbnails.log"
 
 
 ! Map plot doesn't use the OA_thumbnail_pair.jnl script. The map 

@@ -1,6 +1,8 @@
 ! Plot a pair of variables for the OA thumbnail plots.
 ! If the second is the sample_depth, then draw lines
 ! connecting the data from each profile.
+! 11/20/2019 ACM Make this work for pairs on the instance axis (obs)
+! or the feature-axis (e.g. per profile).
 
 
 define symbol plotname = ($fnamepath)_($1)__($2).($plotextn)
@@ -27,6 +29,20 @@ ENDIF
 
 ! For profile plots, connect the samples in each profile
 
+let ngood = 0
+define symbol shape1 = `($1),return=shape`
+define symbol shape2 = `($2),return=shape`
+IF `($shape1"0|($shape2)>1|*>0") EQ 0` THEN 
+   PLOT/VS/NOLAB/NOAX  {0,1}, {0,1}
+   annotate/norm/size=0.14/xpos=0.5/ypos=0.5/halign=0 "($1) is along ($shape1) and ($2) is along ($shape2). Plot not drawn."
+   frame/file="($plotname)"
+   EXIT/SCRIPT
+ENDIF
+DEFINE SYMBOL ishape = ($shape1"|POINT>i|X>i|Y>j|Z>k|T>l|E>m|F>n")
+
+
+let ngood = MIN(($1)[($ishape)=@ngd], ($2)[($ishape)=@ngd]); say `ngood`
+
 cancel symbol vlimit
 IF ($2"0|sample_depth>1|*>0") then
    ppl %range 0 `sample_depth[i=@max]`
@@ -48,12 +64,12 @@ IF ($2"0|sample_depth>1|*>0") then
       if ($labnum_e"0|*>1") then go unlabel ($labnum_e)
    ppl plot
 
-   let ngood = MIN(($1)[i=@ngd], ($2)[i=@ngd]); say `ngood`
+   let ngood = MIN(($1)[($ishape)=@ngd], ($2)[($ishape)=@ngd]); say `ngood`
 
    IF `ngood EQ 0` THEN
       cancel symbol whichvar
-      if `($1)[i=@ngd] eq 0` then define symbol whichvar = `($1),return=title`
-      if `($2)[i=@ngd] eq 0` then define symbol whichvar = ($whichvar) and `($2),return=title`
+      if `($1)[($ishape)=@ngd] eq 0` then define symbol whichvar = `($1),return=title`
+      if `($2)[($ishape)=@ngd] eq 0` then define symbol whichvar = ($whichvar) and `($2),return=title`
       annotate/norm/x=0.5/y=0.5/halign=0 "No valid data in ($whichvar)"
    ELSE
       let ni = log(ngood)
@@ -92,12 +108,10 @@ else
 ! label the uper left with the # of obs
       if ($labnum_x"0|*>1") then 
          go unlabel ($labnum_x)
-	 let ngood = ($1)[i=@ngd]
 	 define symbol num_label = observations
       endif
       if ($labnum_e"0|*>1") then 
          go unlabel ($labnum_e)
-	 let ngood = ($1)[m=@ngd]
 	 define symbol num_label = `..featureType`
 	 IF `ngood gt 1` then define symbol num_label ($num_label)s
       endif
@@ -105,9 +119,10 @@ else
 
    IF `ngood EQ 0` THEN
       cancel symbol whichvar
-      if `($1)[i=@ngd] eq 0` then define symbol whichvar = `($1),return=title`
-      if `($2)[i=@ngd] eq 0` then define symbol whichvar = ($whichvar) and `($2),return=title`
-      annotate/norm/x=0.5/y=0.5/halign=0 "No valid data in ($whichvar)"
+      if `($1)[($ishape)=@ngd] eq 0` then define symbol whichvar = `($1),return=title`
+      define symbol twovar = `($2),return=title`
+      if `($2)[($ishape)=@ngd] eq 0` then define symbol whichvar = ($whichvar"($1)") and ($twovar"($2)")
+      annotate/norm/x=0.5/y=0.5/halign=0 "No valid data in ($whichvar%($twovar)%)"
    ELSE
       let ni = log(ngood)
       define symbol fmt = I3
@@ -125,3 +140,5 @@ ENDIF
 
 ! save the plot
 frame/file="($plotname)"
+
+ppl shaset reset
