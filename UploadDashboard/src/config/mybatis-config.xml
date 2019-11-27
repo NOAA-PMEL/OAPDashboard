@@ -49,6 +49,9 @@
         <property name="url" value="${db.url}"/>
         <property name="username" value="${db.username}"/>
         <property name="password" value="${db.password}"/>
+        <property name="poolPingQuery" value="SELECT 1"/>
+        <property name="poolPingEnabled" value="true"/>
+        <property name="poolPingConnectionsNotUsedFor" value="28000000"/>
       </dataSource>
     </environment>
     <environment id="OAPFlags">
@@ -67,6 +70,9 @@
         <property name="url" value="${my.url}"/>
         <property name="username" value="${my.username}"/>
         <property name="password" value="${my.password}"/>
+        <property name="poolPingQuery" value="SELECT 1"/>
+        <property name="poolPingEnabled" value="true"/>
+        <property name="poolPingConnectionsNotUsedFor" value="28000000"/>
       </dataSource>
     </environment>
     <environment id="my-Flags">
