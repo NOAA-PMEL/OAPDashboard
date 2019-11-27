@@ -41,7 +41,7 @@ public class PreviewPlotsHandler {
     private DashboardConfigStore _configStore;
     private FeatureType featureType;
 
-	private static Logger logger = LogManager.getLogger("PreviewPlotsHandler");
+	private static Logger logger = LogManager.getLogger(PreviewPlotsHandler.class);
 	
 	/**
 	 * Create with the given directories for the preview DSG files and plots.
