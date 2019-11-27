@@ -51,7 +51,7 @@ public class ProfileDsgFile extends DsgNcFile {
 
 	private static final long serialVersionUID = -7178421505101183090L;
 
-	private static Logger logger = LogManager.getLogger("ProfileDsgFile");
+	private static Logger logger = LogManager.getLogger(ProfileDsgFile.class);
 	
 	private static enum ElemCategory {
 		METADATA,
@@ -391,7 +391,7 @@ public class ProfileDsgFile extends DsgNcFile {
 		
 	}
 		
-	private boolean excludeType(DashDataType<?> dtype) {
+	private static boolean excludeType(DashDataType<?> dtype) {
 		if ( dtype.getVarName().equals("other") ||
 		     dtype.typeNameLike("unknown") ||
 //		     dtype.isQCType() ||
