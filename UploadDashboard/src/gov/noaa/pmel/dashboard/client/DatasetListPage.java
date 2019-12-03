@@ -1322,8 +1322,10 @@ public class DatasetListPage extends CompositeWithUsername {
 
 	private static void disableButtons(Button[] disableSet, String msg) {
 		for (Button button : disableSet) {
-			button.setTitle(msg+button.getTitle());
-			button.setEnabled(false);
+            if ( button.getTitle().indexOf("**") < 0 ) {
+    			button.setTitle(msg+button.getTitle());
+    			button.setEnabled(false);
+            }
 		}
 	}
 
