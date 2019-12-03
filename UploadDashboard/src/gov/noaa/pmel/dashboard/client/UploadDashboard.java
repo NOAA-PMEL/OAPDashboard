@@ -168,7 +168,7 @@ public class UploadDashboard implements EntryPoint, ValueChangeHandler<String> {
 	}
 
     public static void theresAproblem(String msg, String yesText, String noText, AsyncCallback<Boolean> callback) {
-        DashboardAskPopup dap = new DashboardAskPopup(yesText, noText, callback);
+        DashboardAskPopup dap = new DashboardAskPopup(yesText, noText, QuestionType.WARNING, callback);
         dap.askQuestion(msg);
     }
     
