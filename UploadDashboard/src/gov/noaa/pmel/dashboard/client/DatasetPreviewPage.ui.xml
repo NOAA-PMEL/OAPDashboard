@@ -11,7 +11,7 @@
         <g:center>
     		<g:FlowPanel>
     			<g:HTML addStyleNames="{style.introhtml}" ui:field="introHtml" />
-    			<g:ResizeLayoutPanel ui:field="resizePanel" addStyleNames="{style.plotspanel}">
+    			<g:ResizeLayoutPanel ui:field="resizePanel" addStyleNames="{style.plotspanel}" >
     					<g:TabLayoutPanel barUnit='EM' barHeight='2' ui:field="tabsPanel">
     						<g:tab>
     							<g:customHeader>
