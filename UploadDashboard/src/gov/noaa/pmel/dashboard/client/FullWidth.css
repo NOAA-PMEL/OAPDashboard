@@ -82,8 +82,16 @@ html, body {
 	margin-top: 0.5em;
 	margin-bottom: 0.5em;
 }
-
+.datacolsgrid {
+    margin-top: 1em;
+    margin-left: 1em;
+    margin-right: 0.5em;
+}
 .datagrid {
+	height: 27em;
+	margin: 1em;
+}
+.datagridscroll {
 	height: 27em;
 	margin: 1em;
 }
@@ -370,6 +378,11 @@ hr .hline {
 
 .plotspanel {
 	display: block;
+	height: 93%;
+	margin: 1em;
+}
+.Xplotspanel {
+	display: block;
 	width: 98%;
 	height: 710px;
 	margin-top: 1em;
@@ -399,9 +412,9 @@ hr .hline {
 	padding-bottom: 0em;
 }
 .previewscrollpanel {
-	height: 720px;
-	width: 98%;
-	/* height: 25em; */
+	height: 100%;
+	/* width: 98%;
+	height: 25em; */
 }
 .previewhtml {
 	padding: 0.25em;
