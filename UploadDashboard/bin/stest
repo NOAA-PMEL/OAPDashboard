@@ -1,0 +1,23 @@
+#!/bin/bash
+
+DS_ID=$1
+
+if [ $DS_ID ] ; then
+	mkfile=/tmp/mksftpdirs
+	cat /dev/null > ${mkfile}
+	echo "cd data/oap" >> ${mkfile}
+	cpath=""
+	_IFS="$IFS"
+	IFS='/' # hyphen (-) is set as delimiter
+	read -ra path <<< "$1" # str is read into an array as tokens separated by IFS
+	IFS="$_IFS"
+	for d in "${path[@]}" ; do
+		cpath="${cpath}${d}/"
+		echo "mkdir $cpath" >> ${mkfile}
+	done
+	sftp -i /Users/kamb/.ssh/ncei-key-rsa  ncei_sftp@sftp.pmel.noaa.gov < ${mkfile}
+	rm ${mkfile}
+else
+	sftp -i /Users/kamb/.ssh/ncei-key-rsa  ncei_sftp@sftp.pmel.noaa.gov
+fi
+

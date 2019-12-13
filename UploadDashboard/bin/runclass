@@ -2,7 +2,7 @@
 # usage: runclass [-] <java class name> <classes dir> <libs dir>
 
 # echo rc star : "$*"
-@ echo rc at : "$@"
+# echo rc at : "$@"
 
 VERBOSE=false 
 checkVerbose() {

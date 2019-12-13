@@ -41,7 +41,7 @@ OA_USER_ROLE=oapdashboarduser
 USE=use
 
 usage() {
-	echo add_user [username] [real name] [email]
+	echo add_user [username] [real name] [email] <role>
 }
 
 echo args $#  $@
