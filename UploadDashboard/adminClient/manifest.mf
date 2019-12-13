@@ -1,0 +1,2 @@
+Main-Class: gov.noaa.pmel.dashboard.server.admin.AdminClient
+
