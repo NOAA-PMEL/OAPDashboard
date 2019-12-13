@@ -1,0 +1,95 @@
+#!/bin/bash
+
+THIS=$0
+PROG_PATH=${THIS%/*}
+DIR="$( cd "$( dirname "$0" )" && pwd )"
+
+DEBUG=true
+
+debug() {
+	if [ "$DEBUG" = "true" ] ; then
+		echo $*
+	fi
+}
+
+CLIENT_DIR_ROOT=adminClient
+DEST_DIR=${CLIENT_DIR_ROOT}/build
+DEST_RELATIVE_BASE=../..
+SRC_DIR=src
+CLASS_DIR=war/WEB-INF/classes
+PKG_BASE_DIR=gov/noaa/pmel/dashboard
+
+JAR_FILE_NAME=dashboard-client.jar
+MANIFEST_FILE=${CLIENT_DIR_ROOT}/manifest.mf
+
+COPY_DIRS=(db server shared util)
+COPY_DIRS=(actions datatype db dsg ferret handlers server shared util)
+
+LIBS_DIR=war/WEB-INF/lib
+LIB_JARS=(catalina commons jackson log4j mybatis mysql tomcat tws)
+
+if [ -e ${DEST_DIR} ] ; then
+	debug Deleting ${DEST_DIR}
+	rm -Rf ${DEST_DIR}
+fi
+mkdir -p ${DEST_DIR}
+
+unpackJar() {
+	JAR_BASE=$1
+	debug "unpack jar $JAR_BASE"
+	JARS=`ls ${LIBS_DIR}/${JAR_BASE}*.jar`
+	debug "jars: $JARS"
+	pushd $DEST_DIR > /dev/null
+	debug pushed: `pwd`
+	for JAR in $JARS ; do
+		debug extracting ${DEST_RELATIVE_BASE}/${JAR}
+		jar xf ${DEST_RELATIVE_BASE}/${JAR}
+	done
+	popd > /dev/null
+}
+
+# hack because I don't want the tws_client in the WEB-INF lib
+cp lib/tws_client.jar ${LIBS_DIR}/
+cp scratch/tomcat-juli.jar ${LIBS_DIR}/
+for jar in ${LIB_JARS[*]} ; do
+	unpackJar $jar
+done
+rm ${LIBS_DIR}/tws_client.jar
+rm ${LIBS_DIR}/tomcat-juli.jar 
+
+copyDir() {
+	COPY_DIR=$1
+	SRC_ROOT=$2
+	DEST_ROOT=$3
+	debug "DIR $DIR"
+	debug "SRC_ROOT $SRC_ROOT"
+	debug "DEST_ROOT $DEST_ROOT"
+	SRC=${SRC_ROOT}/${PKG_BASE_DIR}/${COPY_DIR} 
+	DEST=${DEST_ROOT}/${PKG_BASE_DIR}/${COPY_DIR}/
+	debug Copying $SRC to $DEST
+	if [ ! -e $DEST ] ; then
+		debug Creating target dir $DEST
+		mkdir -p $DEST
+	fi
+
+	cp -R ${SRC}/* $DEST
+}
+
+for dir in ${COPY_DIRS[*]} ; do
+	copyDir $dir ${SRC_DIR} ${DEST_DIR}
+	copyDir $dir ${CLASS_DIR} ${DEST_DIR}
+done
+
+# more fixups...
+debug Cleaning up config dir
+rm ${DEST_DIR}/config/*
+cp ${SRC_ROOT}/config/* ${DEST_DIR}/config/
+cp ${SRC_ROOT}/log4j2.properties  ${DEST_DIR}/
+
+# echo DEST_DIR: ${DEST_DIR}
+debug JAR FILE: ${CLIENT_DIR_ROOT}/${JAR_FILE_NAME} 
+
+# echo current dir: `pwd`
+
+jar cmf ${MANIFEST_FILE} ${CLIENT_DIR_ROOT}/${JAR_FILE_NAME} -C ${DEST_DIR} .
+
