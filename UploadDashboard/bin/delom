@@ -1,0 +1,10 @@
+#!/bin/bash
+
+WHAT="src -d src-delomboked"
+if [ $1 ] ; then
+	WHAT="-p src/gov/noaa/pmel/dashboard/"$1
+fi
+
+CP="-c war/WEB=INF/lib/*.jar:war/WEB-INF/classes"
+java -jar war/WEB-INF/lib/lombok.jar delombok $CP $WHAT
+
