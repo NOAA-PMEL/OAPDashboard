@@ -3,10 +3,13 @@
  */
 package gov.noaa.pmel.dashboard.server;
 
+import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FilenameFilter;
 import java.io.IOException;
+import java.io.InputStream;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.attribute.BasicFileAttributeView;
@@ -50,6 +53,8 @@ import gov.noaa.pmel.dashboard.handlers.PreviewPlotsHandler;
 import gov.noaa.pmel.dashboard.handlers.UserFileHandler;
 import gov.noaa.pmel.dashboard.oads.DashboardOADSMetadata;
 import gov.noaa.pmel.dashboard.oads.OADSMetadata;
+import gov.noaa.pmel.dashboard.server.model.StatusRecord;
+import gov.noaa.pmel.dashboard.server.model.SubmissionRecord;
 import gov.noaa.pmel.dashboard.server.model.User;
 import gov.noaa.pmel.dashboard.shared.DashboardDataset;
 import gov.noaa.pmel.dashboard.shared.DashboardDatasetData;
@@ -70,6 +75,8 @@ import gov.noaa.pmel.dashboard.shared.ADCMessageList;
 import gov.noaa.pmel.dashboard.shared.TypesDatasetDataPair;
 import gov.noaa.pmel.dashboard.util.xml.XmlUtils;
 import gov.noaa.pmel.tws.util.ApplicationConfiguration;
+import gov.noaa.pmel.tws.util.StringUtils;
+import gov.noaa.pmel.tws.util.TimeUtils;
 
 /**
  * Implementation of DashboardServicesInterface
@@ -727,17 +734,16 @@ public class DashboardServices extends RemoteServiceServlet implements Dashboard
             HttpResponse response = client.execute(post);
             logger.debug("response: " + response);
             HttpEntity responseEntity = response.getEntity();
-            byte[] bbuf = new byte[4096];
-            int read = responseEntity.getContent().read(bbuf);
+            String responseContent = readFully(responseEntity.getContent());
             StatusLine statLine = response.getStatusLine();
             int responseStatus = statLine.getStatusCode();
             if ( responseStatus != HttpServletResponse.SC_OK ) {
                 logger.warn("ME response: " + statLine.getStatusCode() + ":" + statLine.getReasonPhrase());
-                String msg = new String(bbuf);
+                String msg = responseContent;
                 logger.warn("ME response content: " + msg);
                 throw new IllegalArgumentException(msg);
             }
-            docId = new String(bbuf);
+            docId = responseContent;
             MetadataPreviewInfo mdInfo = getMetadataPreviewInfo(pageUsername, datasetId); 
 //            ServletContext context = request.getSession().getServletContext();
             String mdDocId = getMetadataEditorPage(request, docId);
@@ -755,6 +761,26 @@ public class DashboardServices extends RemoteServiceServlet implements Dashboard
         }
 	}
     
+    /**
+     * @param inStream
+     * @return
+     * @throws IOException 
+     */
+    private static String readFully(InputStream inStream) throws IOException {
+        ByteArrayOutputStream buffer = new ByteArrayOutputStream();
+        int nRead;
+        byte[] data = new byte[1024];
+        while ((nRead = inStream.read(data, 0, data.length)) != -1) {
+            buffer.write(data, 0, nRead);
+        }
+     
+        buffer.flush();
+        byte[] byteArray = buffer.toByteArray();
+             
+        String text = new String(byteArray, StandardCharsets.UTF_8);
+        return text;
+    }
+
     // request URL is in the form: http://matisse:8080/OAPUploadDashboard/OAPUploadDashboard/DashboardServices
     // or http://dunkel.pmel.noaa.gov:5680/oa/Dashboard/OAPUploadDashboard/DashboardServices
 	// And notification URL should be http://dunkel.pmel.noaa.gov:5680/oa/Dashboard/DashboardUpdateService/notify/<datasetId>
@@ -898,7 +924,58 @@ public class DashboardServices extends RemoteServiceServlet implements Dashboard
     															   repeatSend, username);
     }
 	
-	@Override
+    @Override
+    public String getPackageArchiveStatus(String pageUsername, String datasetId) 
+        throws IllegalArgumentException {
+    	if ( ! validateRequest(pageUsername) ) 
+    		throw new IllegalArgumentException("Invalid user request");
+        try {
+            SubmissionRecord srec = Archive.getArchiveStatusForPackage(datasetId);
+            String statusHtml = buildStatusHtml(srec);
+            return statusHtml;
+        } catch (Exception ex) {
+            ex.printStackTrace();
+            throw new IllegalStateException(ex);
+        }
+    }
+    
+	/**
+     * @param srec
+     * @return
+     */
+    private static String buildStatusHtml(SubmissionRecord srec) {
+        StringBuilder sb = new StringBuilder();
+        if ( srec == null || srec.getStatusHistory() == null || srec.getStatusHistory().size() == 0 )  {
+            sb.append("<ul><li>No status history for dataset.</li></ul>");
+        } else {
+            List<StatusRecord> history = srec.getStatusHistory();
+            sb.append("<ul>");
+            for (StatusRecord rec : history) {
+                sb.append("<li>")
+                  .append(htmlView(rec))
+                  .append("</li>");
+            }
+            sb.append("</ul>");
+        }
+        return sb.toString();
+    }
+
+    /**
+     * @param rec
+     * @return
+     */
+    private static String htmlView(StatusRecord rec) {
+        StringBuilder sb = new StringBuilder();
+        sb.append(TimeUtils.formatUTC(rec.statusTime(), TimeUtils.non_std_ISO_8601_nofrac_noTz))
+          .append(" : ")
+          .append(rec.status().displayMsg());
+        if ( ! StringUtils.emptyOrNull(rec.message())) {
+            sb.append("<ul><li>").append(rec.message()).append("</li></ul>");
+        }
+        return sb.toString();
+    }
+
+    @Override
 	public void suspendDatasets(String pageUsername, Set<String> idsSet, String timestamp) throws IllegalArgumentException {
 		logger.debug("Suspending dataset ids " + idsSet);
 		// Get the dashboard data store and current username, and validate that username
