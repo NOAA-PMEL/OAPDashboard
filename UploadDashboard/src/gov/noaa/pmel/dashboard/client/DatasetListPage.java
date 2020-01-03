@@ -19,6 +19,8 @@ import com.google.gwt.cell.client.FieldUpdater;
 import com.google.gwt.cell.client.SelectionCell;
 import com.google.gwt.cell.client.ValueUpdater;
 import com.google.gwt.core.client.GWT;
+import com.google.gwt.dom.client.Document;
+import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.Style;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.i18n.client.DateTimeFormat;
@@ -450,6 +452,10 @@ public class DatasetListPage extends CompositeWithUsername {
 				}
 			}
 		});
+        if ( meLink != null ) {
+            meLink.setAttribute("style", "cursor:pointer;");
+            meLink = null;
+        }
 	}
 
 	/**
@@ -1463,7 +1469,9 @@ public class DatasetListPage extends CompositeWithUsername {
 		});
 		return dataCheckColumn;
 	}
-
+    
+	static Element meLink;
+	
 	/**
 	 * @return the metadata filename column for the table
 	 */
@@ -1480,7 +1488,9 @@ public class DatasetListPage extends CompositeWithUsername {
 			@Override
 			public void render(Cell.Context ctx, DashboardDataset cruise, 
 													SafeHtmlBuilder sb) {
-				sb.appendHtmlConstant("<div style=\"cursor:pointer;\"><u><em>");
+				String cid = cruise.getDatasetId();
+				String divid = "mecol_"+cid;
+			    sb.appendHtmlConstant("<div id=\""+ divid + "\" style=\"cursor:pointer;\"><u><em>");
 				sb.appendEscaped(getValue(cruise));
 				sb.appendHtmlConstant("</em></u></div>");
 			}
@@ -1488,6 +1498,11 @@ public class DatasetListPage extends CompositeWithUsername {
 		metadataColumn.setFieldUpdater(new FieldUpdater<DashboardDataset,String>() {
 			@Override
 			public void update(int index, DashboardDataset cruise, String value) {
+                UploadDashboard.logToConsole("load metadata editor for " + cruise + " with " + value + " at " + index);
+                String divid = "mecol_"+cruise.getDatasetId();
+                meLink = Document.get().getElementById(divid);
+                meLink.setAttribute("style", "cursor:wait;");
+                UploadDashboard.showWaitCursor();
 				// Save the currently selected cruises
 				getSelectedDatasets(null);
 				// Show the metadata manager page for this one cruise
