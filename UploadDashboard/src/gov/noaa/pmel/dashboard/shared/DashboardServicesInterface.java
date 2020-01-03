@@ -329,13 +329,17 @@ public interface DashboardServicesInterface extends RemoteService {
 	 * 		the dataset failed
 	 */
 	void submitDatasetsForQC(String username, HashSet<String> datasetIds, 
-			String archiveStatus, String localTimestamp, boolean repeatSend)
-					throws IllegalArgumentException;
+                			 String archiveStatus, String localTimestamp, boolean repeatSend)
+			throws IllegalArgumentException;
 
 	void submitDatasetsToArchive(String username, List<String> datasetIds, List<String> columnNames,
 								 String archiveStatus, String localTimestamp, boolean repeatSend,
 								 String submitComment, boolean requestDOI)
 			throws IllegalArgumentException;
+    
+	String getPackageArchiveStatus(String username, String datasetId) 
+			throws IllegalArgumentException;
+	
 	/**
 	 * Suspend a dataset from Quality Control.  This allows a user to remove a dataset
 	 * from the Quality Control process to allow further changes or resubmission to

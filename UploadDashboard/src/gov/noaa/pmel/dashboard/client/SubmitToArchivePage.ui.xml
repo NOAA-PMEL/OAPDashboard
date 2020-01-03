@@ -34,6 +34,11 @@
 	
     <g:DockLayoutPanel unit="EM" addStyleNames="{style.fullpagecontainer} {style.letItOverFlow}" >
         <g:north size="4.0" ><oap:ApplicationHeaderTemplate ui:field="header" /> </g:north>
+		<g:south size="3">
+            <g:FlowPanel>
+                <oap:ApplicationFooter/>
+            </g:FlowPanel>
+		</g:south>
         <g:center>
             <g:FlowPanel addStyleNames="{style.fullpagecontainer}">
                 <g:FlowPanel addStyleNames="{style.archiveFileListPanel}">
@@ -57,10 +62,12 @@
     			</g:FlowPanel>
             </g:FlowPanel>
         </g:center>
-		<g:south size="6">
+        <g:east size="32" addStyleNames="archiveStatusPanel">
             <g:FlowPanel>
-                <oap:ApplicationFooter/>
+                <g:HTML ui:field="statusLabel"  addStyleNames="{style.archiveStatusLabel}" ></g:HTML>
+                <g:Label ui:field="submissionTime"  addStyleNames="{style.archiveStatusSubmitTime}" ></g:Label>
+                <g:HTML ui:field="statusListPanel" addStyleNames="{style.archiveStatusList}"></g:HTML>
             </g:FlowPanel>
-		</g:south>
+        </g:east>
 	</g:DockLayoutPanel>
 </ui:UiBinder>
