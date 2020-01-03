@@ -95,6 +95,7 @@ public class MetadataManagerPage extends CompositeWithUsername {
     @UiField Frame metadataEditorFrame;
     IFrameElement meIFrame;
 
+    private String datasetId;
 	private DashboardDataset cruise;
 	private DashboardAskPopup askOverwritePopup;
 
@@ -120,23 +121,56 @@ public class MetadataManagerPage extends CompositeWithUsername {
         cancelButton.setText(CANCEL_TEXT);
         
         metadataEditorFrame.getElement().setId("__metadataEditorFrame");
+        metadataEditorFrame.addLoadHandler(new LoadHandler() {
+            @Override
+            public void onLoad(LoadEvent arg0) {
+                UploadDashboard.logToConsole("DB: me page loaded");
+                UploadDashboard.showAutoCursor();
+//                sendIFrameMessage("You're loaded!");
+            }
+        });
         
         setupMessageListener(this);
 	}
     
+    private static boolean isAck(String response, String command) {
+        return response.startsWith("Roger That:" + command);
+    }
+    private static boolean isNack(String response, String command) {
+        return response.startsWith("Neg That:" + command);
+    }
+	private native void setupMessageListener(MetadataManagerPage instance) /*-{
+	    function postMsgListener(event) {
+            console.log("DB: recv msg:" + ( event.data ? event.data : event ) + " from " + event.origin);
+            instance.@gov.noaa.pmel.dashboard.client.MetadataManagerPage::onPostMessage(Ljava/lang/String;Ljava/lang/String;) (
+                event.data, event.origin
+            );
+            console.log("DB: processed message successful");
+        }
+        $wnd.addEventListener('message', postMsgListener, false);
+//        if ( IE ) {
+//            $wnd.attachEvent('onmessage', postMsgListener);
+//        }
+	}-*/;
+    
     public static native void sendIFrameMessage(String message) /*-{
-        var domain = $wnd.location.protocol + "//" + $wnd.location.hostname + ":8383";
         var iframe = $wnd.document.getElementById('__metadataEditorFrame');
-        domain = iframe.src;
-        console.log("dest domain: " + domain);
-        var cw = iframe.contentWindow;
-        cw.postMessage(message, domain);
+        var domain = iframe.src;
+        if ( ! domain.startsWith("http")) {
+            console.log("DB: skipping " + message + " to domain: " + domain);
+        } else {
+            console.log("DB: send " + message + " to domain: " + domain);
+            var cw = iframe.contentWindow;
+            cw.postMessage(message, domain);
+        }
     }-*/;
     
     private void onPostMessage(String data, String origin) {
-       GWT.log("DB: msg " + data + " from " + origin); 
+       UploadDashboard.logToConsole("DB: msg " + data + " from " + origin); 
        if ( isAck(data, "closing")) {
-            getUpdatedMetadata();
+           getUpdatedMetadata();
+       } else if ( isNack(data, "closing")) {
+           showDataListPage();
        } else if ( isAck(data, "dirty")) {
            String dirtyReply = data.substring(data.indexOf("dirty")+6);
            boolean isDirty = Boolean.parseBoolean(dirtyReply);
@@ -145,9 +179,12 @@ public class MetadataManagerPage extends CompositeWithUsername {
            } else {
                showDataListPage();
            }
-           
+       } else {
+           UploadDashboard.logToConsole("DB: ignore msg " + data + " from " + origin); 
        }
     }
+    
+    private Date lastUpdateTime;
     
     private int callCount = 0;
     private int MAX_CALLS = 10;
@@ -165,7 +202,7 @@ public class MetadataManagerPage extends CompositeWithUsername {
 
             @Override
             public void onSuccess(MetadataPreviewInfo info) {
-                UploadDashboard.debugLog("response: "+ callCount);
+                UploadDashboard.debugLog("response: "+ callCount + ": " + info);
                 if ( info != null ) {
                     FileInfo finfo = info.getMetadataFileInfo();
                     Date fmod = finfo.getFileModTime();
@@ -201,24 +238,6 @@ public class MetadataManagerPage extends CompositeWithUsername {
         service.getMetadataPreviewInfo(getUsername(), datasetId, getUpdatedMetadataCallback);
     }
 
-    private static boolean isAck(String response, String command) {
-        return response.startsWith("Roger That:" + command);
-    }
-	private native void setupMessageListener(MetadataManagerPage instance) /*-{
-	    function postMsgListener(event) {
-            console.log("recv msg:" + ( event.data ? event.data : event ) + " from " + event.origin);
-            instance.@gov.noaa.pmel.dashboard.client.MetadataManagerPage::onPostMessage(Ljava/lang/String;Ljava/lang/String;) (
-                event.data, event.origin
-            );
-            console.log("successful");
-        }
-        $wnd.addEventListener('message', postMsgListener, false);
-//        if ( IE ) {
-//            $wnd.attachEvent('onmessage', postMsgListener);
-//        }
- 
-	}-*/;
-
 	/**
 	 * Display the metadata upload page in the RootLayoutPanel
 	 * for the given cruise.  Adds this page to the page history.
@@ -247,9 +266,6 @@ public class MetadataManagerPage extends CompositeWithUsername {
 		}
 	}
 
-    private String datasetId;
-    private Date lastUpdateTime;
-    
 	/**
 	 * Updates this page with the username and the cruise in the given set of cruise.
 	 * 
@@ -275,13 +291,6 @@ public class MetadataManagerPage extends CompositeWithUsername {
         sendCurrentMetadataToMetaEd(datasetId);
 	}
 
-	/**
-     * @param datasetId2
-     * @return
-     */
-    private static String getMetadataEditorDocumentUrl(String docId) {
-        return "http://localhost:8383/oap/OAPMetadataEditor.html?id="+docId.toUpperCase();
-    }
 
 //    private void getMetadataPreview(String datasetId) {
 //		service.getMetadataPreviewInfo(getUsername(), datasetId, new SessionHandlingCallbackBase<MetadataPreviewInfo>() {
@@ -398,12 +407,14 @@ public class MetadataManagerPage extends CompositeWithUsername {
                     confirmCancel = true;
                     doneButton.setEnabled(true);
                     lastUpdateTime = result.getMetadataFileInfo().getFileModTime();
+                    UploadDashboard.logToConsole("lastUpdateTime:"+lastUpdateTime);
                     if ( lastUpdateTime == null ) {
                         UploadDashboard.logToConsole("No md file mod time.  Using current time.");
                         lastUpdateTime = new Date();
                     }
                     // Validate response for valid url...
                     openMetadataEditorWindow(result.getMdDocId());
+                    DatasetListPage.meLink.setAttribute("style", "cursor:pointer;");
                 }
                 @Override
                 public void customFailure(Throwable caught) {
@@ -415,6 +426,8 @@ public class MetadataManagerPage extends CompositeWithUsername {
                     } else {
                         UploadDashboard.showFailureMessage(msg, caught);
                     }
+                    UploadDashboard.showAutoCursor();
+                    DatasetListPage.meLink.setAttribute("style", "cursor:pointer;");
                 }
             });
         } catch (Exception ex) {
@@ -426,15 +439,9 @@ public class MetadataManagerPage extends CompositeWithUsername {
      * @param meDocId
      */
     private void openMetadataEditorWindow(String meDocId) {
-        metadataEditorFrame.addLoadHandler(new LoadHandler() {
-            @Override
-            public void onLoad(LoadEvent arg0) {
-                GWT.log("loaded msg");
-                UploadDashboard.showAutoCursor();
-//                sendIFrameMessage("You're loaded!");
-            }
-        });
+        UploadDashboard.logToConsole("DB: me page:" + meDocId);
         metadataEditorFrame.setUrl(meDocId);
+        UploadDashboard.showAutoCursor();
     }
 
     /**
