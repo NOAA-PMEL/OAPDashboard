@@ -455,6 +455,8 @@ public class DatasetSubmitter {
         File archiveBundle = null;
         if ( ApplicationConfiguration.getProperty("oap.archive.use_bagit", true)) {
             String submitComment = "generate_doi: " + String.valueOf(generateDOI) + "\n";
+            submitComment += "submission_record_id:" + submitRecord.submissionKey() + "\n";
+            submitComment += "user_dataset_id:" + datasetId + "\n";
             if ( ! StringUtils.emptyOrNull(submitMsg)) {
                 submitComment += USER_COMMENT_HEADER + submitMsg;
             }
