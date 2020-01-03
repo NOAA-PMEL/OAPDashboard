@@ -36,10 +36,20 @@ html, body {
     display:inline-block;
     vertical-align: top;
     padding: 1em 2em;
-    text-weight: bold;
+    font-weight: bold;
 }
 .archiveFileList {
     display:inline-block;
+}
+.archiveStatusPanel {
+}
+.archiveStatusLabel {
+    margin-top: 2em;
+}
+.archiveStatusSubmitTime {
+	padding-left: 1em;
+}
+.archiveStatusList {
 }
 .columnSelectGrid {
 }
@@ -463,14 +473,14 @@ hr .hline {
 }
 .submit_msg_scroll {
     display: inline-block;
-    padding-right: 5em;
+    padding-right: 3em;
     flex: 1;
 }
 .submit_msg_text {
 /*    display: inline-block;
      width:98%; */
+     width: 100%;
      height: 8.5em;
-     width: 60%;
 }
 .titlepanel {
 /* 	display: block; */

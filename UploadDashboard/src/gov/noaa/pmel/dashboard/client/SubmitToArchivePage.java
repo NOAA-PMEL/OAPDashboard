@@ -22,6 +22,7 @@ import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.google.gwt.user.client.ui.Button;
 import com.google.gwt.user.client.ui.CheckBox;
 import com.google.gwt.user.client.ui.HTML;
+import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.TextArea;
 import com.google.gwt.user.client.ui.Widget;
 
@@ -53,6 +54,9 @@ public class SubmitToArchivePage extends CompositeWithUsername implements DataSu
     @UiField HTML fileListLabel;
     @UiField HTML fileListHtml;
     @UiField HTML submitCommentLabel;
+    @UiField HTML statusLabel;
+    @UiField Label submissionTime;
+    @UiField HTML statusListPanel;
     @UiField TextArea submitCommentTextArea;
 //	@UiField Tree columnTree;
 //	@UiField HTML introHtml;
@@ -72,6 +76,7 @@ public class SubmitToArchivePage extends CompositeWithUsername implements DataSu
 	@UiField ApplicationHeaderTemplate header;
 	
 	private String _datasetId;
+	private DashboardDataset _dataset;
 	private List<String> _submitIdsList;
 	private List<String> _submitColsList;
 
@@ -260,10 +265,37 @@ public class SubmitToArchivePage extends CompositeWithUsername implements DataSu
         singleton.setUsername(datasets.getUsername());
 		singleton.updateDatasetColumns(datasets);
         singleton.submitButton.setEnabled(true);
+        getStatus(singleton);
 		UploadDashboard.updateCurrentPage(singleton, UploadDashboard.DO_PING);
 		History.newItem(PagesEnum.SUBMIT_TO_ARCHIVE.name(), false);
 	}
 
+    private static void getStatus(SubmitToArchivePage page) {
+        UploadDashboard.logToConsole("getStatus for " + page._datasetId);
+        page.statusLabel.setHTML("<h3>Submission status for " + page._datasetId + "</h3>");
+        DashboardDataset dd = page._dataset;
+        String archiveDate = dd.getArchiveDate();
+        if ( archiveDate == null || archiveDate.trim().length() == 0 ) {
+            page.submissionTime.setText("Package not yet submitted.");
+            page.statusListPanel.setHTML("");
+        } else {
+            page.submissionTime.setText("Package submitted on " + archiveDate.substring(0, archiveDate.lastIndexOf(' ')));
+            service.getPackageArchiveStatus(page.getUsername(), page._datasetId, 
+    			new AsyncCallback<String>() {
+    				@Override
+    				public void onSuccess(String htmlList) {
+                        UploadDashboard.logToConsole("getStatus : " + htmlList);
+                        page.statusListPanel.setHTML(htmlList);
+    				}
+    				@Override
+    				public void onFailure(Throwable ex) {
+                        UploadDashboard.logToConsole(String.valueOf(ex));
+                        page.statusListPanel.setHTML("There was a problem retrieving package archive status.");
+    				}
+    			});
+        }
+    }
+    
 	protected void updateDatasetColumns(DashboardDatasetList datasets) {
 	    _submitIdsList.clear();
 //	    select_none.setValue(false);
@@ -282,18 +314,18 @@ public class SubmitToArchivePage extends CompositeWithUsername implements DataSu
 //			}
 		}
 		
-		DashboardDataset dataset = datasets.values().iterator().next();
-	    if ( dataset.getDatasetId().equals(_datasetId)) {
+		_dataset = datasets.values().iterator().next();
+	    if ( _dataset.getDatasetId().equals(_datasetId)) {
 	        return;
 	    }
-		_datasetId = dataset.getDatasetId();
+		_datasetId = _dataset.getDatasetId();
 		header.userInfoLabel.setText(WELCOME_INTRO + getUsername());
 		
-        submitCommentTextArea.setText(dataset.getArchiveSubmissionMessage());
-        generateDOIchkBx.setValue(dataset.getArchiveDOIrequested());
+        submitCommentTextArea.setText(_dataset.getArchiveSubmissionMessage());
+        generateDOIchkBx.setValue(_dataset.getArchiveDOIrequested());
 //		columnsPanel.clear();
         
-        setFilesToBeArchived(dataset);
+        setFilesToBeArchived(_dataset);
         
 //        setDataColumns(dataset);
 	}
@@ -451,9 +483,9 @@ public class SubmitToArchivePage extends CompositeWithUsername implements DataSu
 				@Override
 				public void onSuccess(Void result) {
 					// Success - go back to the cruise list page
-					UploadDashboard.showMessage("Dataset submitted.");
-					DatasetListPage.showPage();
 					UploadDashboard.showAutoCursor();
+					UploadDashboard.showMessage("Dataset submitted.");
+                    getStatus(singleton);
 				}
 				@Override
 				public void onFailure(Throwable ex) {

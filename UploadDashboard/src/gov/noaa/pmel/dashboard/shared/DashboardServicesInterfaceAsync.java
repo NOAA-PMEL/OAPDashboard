@@ -346,6 +346,9 @@ public interface DashboardServicesInterfaceAsync {
 	                             String archiveStatus, String localTimestamp, boolean repeatSend, 
 	                             String submitComment, boolean requestDOI,
 	                             AsyncCallback<Void> asyncCallback);
+    
+	void getPackageArchiveStatus(String username, String datasetId, 
+	                             AsyncCallback<String> asyncCallback);
 
 	/**
 	 * Suspend a dataset from Quality Control.  This allows a user to remove a dataset
