@@ -27,19 +27,47 @@ public class PasswordUtils {
         }
     }
     
+    public static String passwordRules() {
+        return "Passord must be at least 12 characters long, and it must contain at least one each of\n" +
+                "\t lower-case characters\n" +
+                "\t upper-case characters\n" +
+                "\t numbers\n" +
+                "\t symbols  '!', '$', '%', '#', '&', '_', '*', '^'";
+    }
+    
+    private static void test(String pw) {
+        try {
+            validatePasswordStrength(pw);
+        } catch (Exception ex) {
+            System.out.println(passwordRules());
+        }
+    }
+    public static void main(String[] args) {
+        test("abcDef123");
+    }
     private static interface PasswordChecker {
         public void validate(String password) throws CredentialException;
     }
     
     // From https://stackoverflow.com/questions/48345922/reference-password-validation
     // which says "Don't do it this way!
-    private static final String pw2 = "^(?=\\P{Ll}*\\p{Ll})(?=\\P{Lu}*\\p{Lu})(?=\\P{N}*\\p{N})(?=[\\p{L}\\p{N}]*[^\\p{L}\\p{N}])[\\s\\S]{"+PW_MIN_LENGTH+",}$";
+    // explained:
+//    ^ Assert position at the start of the line.
+//    (?=\P{Ll}*\p{Ll}) Ensure at least one lowercase letter (in any script) exists.
+//    (?=\P{Lu}*\p{Lu}) Ensure at least one uppercase letter (in any script) exists.
+//    (?=\P{N}*\p{N}) Ensure at least one number character (in any script) exists.
+//    (?=[\p{L}\p{N}]*[^\p{L}\p{N}]) Ensure at least one of any character (in any script) that isn't a letter or digit exists.
+    // NOTE that this is more lenient (allowing more symbols) than the "rules" suggest.
+//    [\s\S]{8,} Matches any character 8 or more times.
+    // in this case using the static constant for min pw length
+//    $ Assert position at the end of the line.
+    private static final String pwRules1 = "^(?=\\P{Ll}*\\p{Ll})(?=\\P{Lu}*\\p{Lu})(?=\\P{N}*\\p{N})(?=[\\p{L}\\p{N}]*[^\\p{L}\\p{N}])[\\s\\S]{"+PW_MIN_LENGTH+",}$";
     
     private static PasswordChecker getPasswordChecker() {
         return new PasswordChecker() {
             @Override
             public void validate(String password) throws CredentialException {
-                boolean good = password.matches(pw2);
+                boolean good = password.matches(pwRules1);
                 if ( !good ) {
                     throw new CredentialException("Password unacceptable.");
                 }
