@@ -27,6 +27,27 @@ public class MybUsersDao implements UsersDao {
 	}
     
     @Override
+    public void addAccessRole(String username) throws SQLException {
+		try (SqlSession session = MybatisConnectionFactory.getDashboardDbSessionFactory().openSession();) {
+			UserMapper umapper = (UserMapper) session.getMapper(UserMapper.class);
+			umapper.addAccessRole(username, "oapdashboarduser");
+			session.commit();
+		}
+    }
+    
+	@Override
+	public int addUser(InsertUser user) throws SQLException {
+		try (SqlSession session = MybatisConnectionFactory.getDashboardDbSessionFactory().openSession();) {
+			UserMapper umapper = (UserMapper) session.getMapper(UserMapper.class);
+			umapper.insertNewUser(user);
+            umapper.addAuthUser(user);
+			umapper.addAccessRole(user.username(), "oapdashboarduser");
+			session.commit();
+			return user.dbId().intValue();
+		}
+	}
+    
+    @Override
     public void setUserPassword(int userId, String newAuthString) throws SQLException {
         try (SqlSession session = MybatisConnectionFactory.getDashboardDbSessionFactory().openSession();) {
             UserMapper umapper = (UserMapper) session.getMapper(UserMapper.class);
@@ -44,15 +65,6 @@ public class MybUsersDao implements UsersDao {
         }
     }
         
-    @Override
-    public void addAccessRole(String username) throws SQLException {
-		try (SqlSession session = MybatisConnectionFactory.getDashboardDbSessionFactory().openSession();) {
-			UserMapper umapper = (UserMapper) session.getMapper(UserMapper.class);
-			umapper.addAccessRole(username, "oapdashboarduser");
-			session.commit();
-		}
-        
-    }
 	@Override
 	public User retrieveUser(String username) throws SQLException {
 		try (SqlSession session = MybatisConnectionFactory.getDashboardDbSessionFactory().openSession();) {

@@ -18,6 +18,9 @@ public interface UsersDao {
     
     public void addAccessRole(String username) throws SQLException;
 
+    // also adds access role in transaction
+    public int addUser(InsertUser newUser) throws SQLException;
+    
     public User retrieveUser(String username) throws SQLException;
 
     public User retrieveUserById(Integer userDbId) throws SQLException;
