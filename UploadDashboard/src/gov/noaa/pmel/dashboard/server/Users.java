@@ -1,6 +1,9 @@
 
 package gov.noaa.pmel.dashboard.server;
 
+import java.io.File;
+import java.io.FileWriter;
+import java.io.IOException;
 import java.security.GeneralSecurityException;
 import java.security.NoSuchAlgorithmException;
 import java.sql.SQLException;
@@ -31,9 +34,15 @@ import gov.noaa.pmel.tws.util.StringUtils;
 public class Users {
 
     public enum UserRole {
-        User,
-        Manager,
-        Admin
+        Groupie("MemberOf1"),
+        Manager("ManagerOf1"),
+        Admin("Admin");
+        
+        private String _key;
+        private UserRole(String key) {
+            _key = key;
+        }
+        public String roleKey() { return _key; }
     }
     
     private static Logger logger = LogManager.getLogger(Users.class);
@@ -61,19 +70,19 @@ public class Users {
     }
     private static int _addUser(User user, String cryptPasswd, UserRole role) throws DashboardException {
         UsersDao udao = DaoFactory.UsersDao();
+        boolean dConfig = false;
         try {
-//            addUserToDashboardConfig(user, role);
-//            dConfig = true;
             InsertUser inUser = user.asInsertUser().authString(cryptPasswd).build();
-            int dbId = udao.insertUser(inUser);
-            udao.addAccessRole(inUser.username());
+            int dbId = udao.addUser(inUser);
+            addUserToDashboardConfig(user, role);
+            dConfig = true;
             return dbId;
         } catch (Exception ex) {
-            System.err.println(ex);
-//            if ( dConfig ) {
-//                try { removeDashboardConfigUser(user); }
-//                catch ( Throwable t ) { System.err.println(t); }
-//            }
+            logger.warn(ex,ex);
+            if ( dConfig ) {
+                try { removeDashboardConfigUser(user); }
+                catch ( Throwable t ) { System.err.println(t); }
+            }
             throw new DashboardException(ex);
         }
     }
@@ -123,15 +132,18 @@ public class Users {
         }
     }
         
-//    private static void addUserToDashboardConfig(User user, UserRole role) throws IOException {
-//        DashboardConfigStore cfg = DashboardConfigStore.get(false);
-//        cfg.addUser(user.username(), role.name());
-//    }
-//    
-//    private static void removeDashboardConfigUser(User user) throws IOException {
-//        DashboardConfigStore cfg = DashboardConfigStore.get(false);
-//        cfg.removeUser(user.username());
-//    }
+    private static void addUserToDashboardConfig(User user, UserRole role) throws Exception {
+        File configFile = DashboardConfigStore.getConfigFile();
+        try ( FileWriter cfgWriter = new FileWriter(configFile, true); ) {
+            String userCfgLine = "RoleFor_"+user.username() + "=" + role.roleKey() + "\n";
+            cfgWriter.write(userCfgLine);
+        }
+    }
+    
+    private static void removeDashboardConfigUser(User user) throws IOException {
+        DashboardConfigStore cfg = DashboardConfigStore.get(false);
+        cfg.removeUser(user.username());
+    }
     
     public static User getUser(String userid) throws DashboardException {
         UsersDao udao = DaoFactory.UsersDao();
@@ -253,4 +265,5 @@ public class Users {
         }
         return sb.toString();
     }
+    
 }
