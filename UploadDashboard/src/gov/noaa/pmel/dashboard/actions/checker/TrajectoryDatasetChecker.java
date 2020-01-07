@@ -136,7 +136,8 @@ public class TrajectoryDatasetChecker extends BaseDatasetChecker implements Data
         
 		if ( ! hasRequiredColumns(stdUserData)) {
 			msgHandler.processCheckerMessages(dataset, stdUserData);
-			throw new IllegalArgumentException("Dataset is missing required columns. See messages for details.");
+            return stdUserData;
+//			throw new IllegalStateException("Dataset is missing required columns. See messages for details.");
 		}
 		
 		// Check for missing lon/lat/time 
