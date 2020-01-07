@@ -9,9 +9,6 @@ import java.util.Collection;
 import java.util.Date;
 import java.util.TreeSet;
 
-import com.googlecode.gwt.crypto.client.TripleDesCipher;
-
-import gov.noaa.pmel.dashboard.server.DashboardServerUtils;
 import gov.noaa.pmel.dashboard.shared.QCFlag.Severity;
 
 /**

@@ -62,7 +62,7 @@ public class SignedMsgVerifier implements Filter {
 	public void init(FilterConfig config) throws ServletException {
         System.out.println("OAPDashboardWS: verifier init");
         String envConfig = System.getProperty("oap.config.dir");
-        System.out.println("ArgoWS: Environment-specified config dir: " + envConfig);
+        System.out.println("OAPDashboard: Environment-specified config dir: " + envConfig);
         try {
             if ( StringUtils.emptyOrNull(envConfig)) {
                 System.out.println("OAPDashboardWS: using default config dir.");
