@@ -24,13 +24,13 @@ import javax.ws.rs.core.SecurityContext;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+import gov.noaa.pmel.dashboard.server.Archive;
 import gov.noaa.pmel.dashboard.server.db.dao.DaoFactory;
 import gov.noaa.pmel.dashboard.server.db.dao.SubmissionsDao;
 import gov.noaa.pmel.dashboard.server.model.SubmissionRecord;
 import gov.noaa.pmel.dashboard.server.util.Notifications;
 import gov.noaa.pmel.dashboard.server.model.StatusRecord;
 import gov.noaa.pmel.dashboard.server.model.StatusState;
-import gov.noaa.pmel.tws.util.StringUtils;
 
 /**
  * @author kamb
@@ -72,23 +72,7 @@ public class StatusServices extends ResourceBase {
                      ( p_version != null ? "." + p_version : "" ) + 
                      " from " + getRemoteAddress(httpRequest));
         try {
-            SubmissionsDao sdao = DaoFactory.SubmissionsDao();
-            SubmissionRecord srec;
-            if ( StringUtils.emptyOrNull(p_version)) {
-                if ( isRecordKey(p_sid)) {
-                    srec = sdao.getLatestByKey(p_sid);
-                } else {
-                    srec = sdao.getLatestForDataset(p_sid);
-                }
-            } else {
-                int version = Integer.parseInt(p_version);
-                if ( isRecordKey(p_sid)) {
-                    srec = sdao.getVersionByKey(p_sid, version);
-                } else {
-                    srec = sdao.getVersionForDataset(p_sid, version);
-                }
-                
-            }
+            SubmissionRecord srec = Archive.getArchiveStatusForVersion(p_sid, p_version);
             if ( srec != null ) {
                 response = Response.ok(srec.status()).build();
             } else {
@@ -111,7 +95,7 @@ public class StatusServices extends ResourceBase {
         try {
             SubmissionsDao sdao = DaoFactory.SubmissionsDao();
             SubmissionRecord srec;
-            if ( isRecordKey(p_sid)) {
+            if ( Archive.isRecordKey(p_sid)) {
                 srec = sdao.getLatestByKey(p_sid);
             } else {
                 srec = sdao.getLatestForDataset(p_sid);
@@ -141,7 +125,7 @@ public class StatusServices extends ResourceBase {
         try {
             SubmissionsDao sdao = DaoFactory.SubmissionsDao();
             List<SubmissionRecord> srecs;
-            if ( isRecordKey(p_sid)) {
+            if ( Archive.isRecordKey(p_sid)) {
                 srecs = sdao.getAllVersionsByKey(p_sid);
             } else {
                 srecs = sdao.getAllVersionsForDataset(p_sid);
@@ -159,14 +143,6 @@ public class StatusServices extends ResourceBase {
         return response;
     }
     
-    /**
-     * @param p_sid
-     * @return
-     */
-    private static boolean isRecordKey(String p_sid) {
-        return p_sid.startsWith("SDIS");
-    }
-
     @POST
     @Path("update/{sid}")
     @Consumes(MediaType.APPLICATION_FORM_URLENCODED)
@@ -199,7 +175,7 @@ public class StatusServices extends ResourceBase {
             Notifications.AdminEmail("Status update for " + p_sid, logMessage);
             SubmissionsDao sdao = DaoFactory.SubmissionsDao();
             SubmissionRecord srec;
-            if ( isRecordKey(p_sid)) {
+            if ( Archive.isRecordKey(p_sid)) {
                 srec = sdao.getLatestByKey(p_sid);
             } else {
                 srec = sdao.getLatestForDataset(p_sid);
