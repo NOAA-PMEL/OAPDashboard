@@ -6,6 +6,7 @@ package gov.noaa.pmel.dashboard.server;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileReader;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URLDecoder;
@@ -60,12 +61,12 @@ public class DashboardConfigStore {
     private static Logger logger = LogManager.getLogger(DashboardConfigStore.class.getName());
            
            
-	public static class PropertyNotFoundException extends Exception {
-		private static final long serialVersionUID = -7623805430454642262L;
-		public PropertyNotFoundException() { super(); }
-		public PropertyNotFoundException(String message, Throwable cause) { super(message, cause); }
-		public PropertyNotFoundException(String message) { super(message); }
-	}
+//	public static class UPLOAD_DASHBOARD_SERVER_NAME not foundUPLOAD_DASHBOARD_SERVER_NAME not foundPropertyNotFoundException extends Exception {
+//		private static final long serialVersionUID = -7623805430454642262L;
+//		public PropertyNotFoundException() { super(); }
+//		public PropertyNotFoundException(String message, Throwable cause) { super(message, cause); }
+//		public PropertyNotFoundException(String message) { super(message); }
+//	}
 		
     public static final String METADATA_EDITOR_URL = "metadata_editor.url";
     public static final String METADATA_EDITOR_POST_ENDPOINT = "metadata_editor.post.url";
@@ -136,11 +137,8 @@ public class DashboardConfigStore {
 
 	private static final Object SINGLETON_SYNC_OBJECT = new Object();
 	private static DashboardConfigStore singleton = null;
-    private static File appContentDir;
 
 	private TripleDesCipher cipher;
-	// Map of username to user info
-	private HashMap<String,DashboardUserInfo> userInfoMap;
 	private String uploadVersion;
 	private String qcVersion;
 	private UserFileHandler userFileHandler;
@@ -161,12 +159,44 @@ public class DashboardConfigStore {
 	private KnownDataTypes knownMetadataTypes;
 	private KnownDataTypes knownDataFileTypes;
 
-	private Properties configProps;
+    private static File _baseDir;
+    private static File _configDir;
+    private static File _configFile;
+    private static File _appContentDir;
+    private static String _serverAppName;
+	private static Properties _configProps;
+    // Map of username to user info
+	private static HashMap<String,DashboardUserInfo> _userInfoMap; // XXX This really can't be static.
 	private HashSet<File> filesToWatch;
 	private Thread watcherThread;
 	private WatchService watcher;
 	private boolean needToRestart;
 
+	private static File getBaseDir() throws RuntimeException {
+	    if ( _baseDir == null ) {
+    		String baseDir = tryProperty("OA_DOCUMENT_ROOT");
+    		if ( baseDir == null ) {
+    			baseDir = tryProperty("CATALINA_BASE");
+    		}
+    		if ( baseDir == null ) {
+    			baseDir = tryProperty("CATALINA_HOME");
+    		}
+    		if ( baseDir == null ) {
+    			System.out.println("*** ENV:\n"+System.getenv());
+    			System.out.println("*** PROPS:\n"+System.getProperties());
+    			throw new RuntimeException("Document config root not found.");
+    		}
+    		if ( ! baseDir.endsWith(File.separator)) {
+    			baseDir += File.separator;
+    		}
+            _baseDir = new File(baseDir);
+            if ( !_baseDir.exists()) {
+                throw new RuntimeException(_baseDir.getPath());
+            }
+	    }
+		return _baseDir;
+	}
+	
     public static File getWebappDir() {
         File webappDir;
         String serverAppName;
@@ -186,10 +216,20 @@ public class DashboardConfigStore {
         webappDir = new File(dirName);
         return webappDir;
     }
-    public static File getAppContentDir() throws PropertyNotFoundException {
-        if ( appContentDir == null ) {
-    		String baseDir = getBaseDir();
     
+    public static File getAppContentDir() throws RuntimeException {
+        if ( _appContentDir == null ) {
+            File baseDir = getBaseDir();
+    		String serverAppName = getServerAppName();
+            String appContentDirPath = baseDir.getPath() + File.separator +  "content" + File.separator + serverAppName + File.separator;
+            _appContentDir = new File(appContentDirPath);
+        }
+        return _appContentDir;
+    }
+    
+    public static String getServerAppName() {
+        
+        if ( _serverAppName == null ) {
     		// First check is UPLOAD_DASHBOARD_SERVER_NAME is defined for alternate configurations 
     		// when running the dashboard.program.* applications
     		String serverAppName = tryProperty("UPLOAD_DASHBOARD_SERVER_NAME");
@@ -207,44 +247,58 @@ public class DashboardConfigStore {
     			} catch ( Exception ex ) {
     				serverAppName = "";
     			}
-    			if ( serverAppName.isEmpty() )
-    				throw new PropertyNotFoundException("Unable to obtain the upload dashboard server name");
+    			if ( serverAppName == null || serverAppName.isEmpty() )
+                    serverAppName = "OAPUploadDashboard";
     		}
-    		String appContentDirPath = baseDir + "content" + File.separator + serverAppName + File.separator;
-            appContentDir = new File(appContentDirPath);
+            _serverAppName = serverAppName;
         }
-        return appContentDir;
+        return _serverAppName;
+    }
+    
+    /**
+     * @return
+     * @throws IOException 
+     */
+    private static File getConfigDir() throws IOException {
+        if ( _configDir == null ) {
+            File contentDir = getAppContentDir();
+    		File appConfigDir = new File(contentDir, "config");
+    		if ( !appConfigDir.exists() || !appConfigDir.isDirectory() || !appConfigDir.canRead()) {
+    			throw new IllegalStateException("Problem with app config dir: " + appConfigDir.getAbsoluteFile());
+    		}
+            _configDir = appConfigDir;
+        }
+        return _configDir;
+    }
+    
+//    		// Configure the log4j2 logger
+//    		System.setProperty("log4j.configurationFile", appConfigDir.getPath() + "/log4j2.properties");
+//            System.out.println("log4j.configurationFile: " + System.getProperty("log4j.configurationFile"));
+//            System.out.println("logger: " + logger);
+//            logger.warn("Warn level test");
+//            logger.info("Info level test");
+//            logger.debug("Debug level test");
+    
+    public static File getConfigFile() throws IOException {
+        if ( _configFile == null ) {
+    
+            File appConfigDir = getConfigDir();
+            String serverAppName = getServerAppName();
+    		// Read the properties from the standard configuration file
+    		_configFile = new File(appConfigDir, serverAppName + ".properties");
+        }
+        return _configFile;
     }
         
-	private static String getBaseDir() throws PropertyNotFoundException {
-		String baseDir = tryProperty("OA_DOCUMENT_ROOT");
-		if ( baseDir == null ) {
-			baseDir = tryProperty("CATALINA_BASE");
-		}
-		if ( baseDir == null ) {
-			baseDir = tryProperty("CATALINA_HOME");
-		}
-		if ( baseDir == null ) {
-			System.out.println("*** ENV:\n"+System.getenv());
-			System.out.println("*** PROPS:\n"+System.getProperties());
-			throw new PropertyNotFoundException("Document config root not found.");
-		}
-		if ( ! baseDir.endsWith(File.separator)) {
-			baseDir += File.separator;
-		}
-		return baseDir;
-	}
-	
-	private static String tryProperty(String propName) { // throws PropertyNotFoundException {
+	private static String tryProperty(String propName) { 
 		String propVal = System.getenv(propName);
 		if ( propVal == null ) {
 			propVal = System.getProperty(propName);
 		}
 		if ( propVal == null ) {
-//			throw new PropertyNotFoundException(propName + " environment variable is not defined");
-			System.err.println(propName + " not found");
+			logger.debug("trying property " + propName + " not found");
 		} else {
-			System.out.println(propName+":"+ propVal);
+			logger.debug("found property " + propName+":"+ propVal);
 		}
 		return propVal;
 	}
@@ -263,77 +317,21 @@ public class DashboardConfigStore {
 	 * 		if unable to read the standard configuration file
 	 */
 	private DashboardConfigStore(boolean startMonitors) throws Exception {
-		String baseDir = getBaseDir();
-
-		// First check is UPLOAD_DASHBOARD_SERVER_NAME is defined for alternate configurations 
-		// when running the dashboard.program.* applications
-		// and for when running individual programs in dev mode.
-		String serverAppName = System.getenv("UPLOAD_DASHBOARD_SERVER_NAME");
-		if ( serverAppName == null ) {
-			serverAppName = System.getProperty("UPLOAD_DASHBOARD_SERVER_NAME");
-		}
-        // The serverAppName is only used to specify the content/<serverAppName> path,
-		// as well as the application configuration .properties file:
-		// <base_dir>/content/<serverAppName>/config/<serverAppName>.properties
-		// This is generally static and unchanging, other than the <base_dir>, 
-		// so if we want to change that, it should be through the property above.
-//        boolean useDefaultAppName = true;
-		if ( serverAppName == null ) {
-//            if ( useDefaultAppName ) {
-//                serverAppName = "OAPUploadDashboard";
-//            } else {
-    			// Get the app name from the location of this class source in tomcat;
-    			// e.g., "/home/users/tomcat/webapps/SocatUploadDashboard/WEB-INF/classes/gov/noaa/pmel/dashboard/server/DashboardConfigStore.class"
-            // This will not work in dev mode, so the above property must be defined.
-    			try {
-    				File webAppSubDir = new File(getClass().getProtectionDomain().getCodeSource().getLocation().getPath());
-    				do {
-    					webAppSubDir = webAppSubDir.getParentFile();
-    					serverAppName = webAppSubDir.getName();
-    				} while ( ! serverAppName.equals("WEB-INF") );
-    				webAppSubDir = webAppSubDir.getParentFile();
-    				serverAppName = webAppSubDir.getName();
-    			} catch ( Exception ex ) {
-    				serverAppName = "";
-    			}
-    			if ( serverAppName.isEmpty() ) {
-    				throw new IOException("Unable to obtain the upload dashboard server name");
-                }
-//            }
-		}
-		String appContentDirPath = baseDir + "content" + File.separator + serverAppName + File.separator;
-        appContentDir = new File(appContentDirPath);
-		File appConfigDir = new File(appContentDir, "config");
-		if ( !appConfigDir.exists() || !appConfigDir.isDirectory() || !appConfigDir.canRead()) {
-			throw new IllegalStateException("Problem with app config dir: " + appConfigDir.getAbsoluteFile());
-		}
-
-		// Configure the log4j2 logger
-		System.setProperty("log4j.configurationFile", appConfigDir.getPath() + "/log4j.properties");
-        System.out.println("log4j.configurationFile: " + System.getProperty("log4j.configurationFile"));
-        System.out.println("logger: " + logger);
-        logger.warn("Warn level test");
-        logger.info("Info level test");
-        logger.debug("Debug level test");
-
-		// Record configuration files that should be monitored for changes 
-		filesToWatch = new HashSet<File>();
-
-		// Read the properties from the standard configuration file
-		File configFile = new File(appConfigDir, serverAppName + ".properties");
-		filesToWatch.add(configFile);
-    	configProps = new Properties();
-		try ( FileReader reader = new FileReader(configFile); ) {
-			configProps.load(reader);
+        _configFile = getConfigFile();
+        filesToWatch = new HashSet<>();
+		filesToWatch.add(_configFile);
+    	_configProps = new Properties();
+		try ( FileReader reader = new FileReader(_configFile); ) {
+			_configProps.load(reader);
 		} catch ( Exception ex ) {
-			throw new IOException("Problems reading " + configFile.getPath() +
+			throw new IOException("Problems reading " + _configFile.getPath() +
 					"\n" + ex.getMessage() + "\n" + CONFIG_FILE_INFO_MSG);
 		}
 		String propVal;
 
 		// Read the encryption key from the data store and initialize the cipher with it
 		try {
-			propVal = configProps.getProperty(ENCRYPTION_KEY_NAME_TAG);
+			propVal = _configProps.getProperty(ENCRYPTION_KEY_NAME_TAG);
 			if ( propVal == null )
 				throw new IllegalArgumentException("value not defined");
 			byte[] encryptionKey = DashboardUtils.decodeByteArray(propVal.trim());
@@ -344,13 +342,13 @@ public class DashboardConfigStore {
 			cipher.setKey(encryptionKey);
 		} catch ( Exception ex ) {
 			throw new IOException("Invalid " + ENCRYPTION_KEY_NAME_TAG + 
-					" value specified in " + configFile.getPath() + "\n" + 
+					" value specified in " + _configFile.getPath() + "\n" + 
 					ex.getMessage() + "\n" + CONFIG_FILE_INFO_MSG);
 		}
 
 		// Read the SOCAT versions
 		try {
-			propVal = configProps.getProperty(UPLOAD_VERSION_NAME_TAG);
+			propVal = _configProps.getProperty(UPLOAD_VERSION_NAME_TAG);
 			if ( propVal == null )
 				throw new IllegalArgumentException("value not defined");
 			propVal = propVal.trim();
@@ -359,11 +357,11 @@ public class DashboardConfigStore {
 			uploadVersion = propVal;
 		} catch ( Exception ex ) {
 			throw new IOException("Invalid " + UPLOAD_VERSION_NAME_TAG + 
-					" value specified in " + configFile.getPath() + "\n" + 
+					" value specified in " + _configFile.getPath() + "\n" + 
 					ex.getMessage() + "\n" + CONFIG_FILE_INFO_MSG);
 		}
 		try {
-			propVal = configProps.getProperty(QC_VERSION_NAME_TAG);
+			propVal = _configProps.getProperty(QC_VERSION_NAME_TAG);
 			if ( propVal == null )
 				throw new IllegalArgumentException("value not defined");
 			propVal = propVal.trim();
@@ -372,14 +370,14 @@ public class DashboardConfigStore {
 			qcVersion = propVal;
 		} catch ( Exception ex ) {
 			throw new IOException("Invalid " + QC_VERSION_NAME_TAG + 
-					" value specified in " + configFile.getPath() + "\n" + 
+					" value specified in " + _configFile.getPath() + "\n" + 
 					ex.getMessage() + "\n" + CONFIG_FILE_INFO_MSG);
 		}
 
 		// Read the SVN username
 		String svnUsername;
 		try {
-			propVal = configProps.getProperty(SVN_USER_NAME_TAG);
+			propVal = _configProps.getProperty(SVN_USER_NAME_TAG);
 			if ( propVal == null )
 				throw new IllegalArgumentException("value not defined");
 			propVal = propVal.trim();
@@ -388,7 +386,7 @@ public class DashboardConfigStore {
 			svnUsername = propVal;
 		} catch ( Exception ex ) {
 			throw new IOException("Invalid " + SVN_USER_NAME_TAG + 
-					" value specified in " + configFile.getPath() + "\n" + 
+					" value specified in " + _configFile.getPath() + "\n" + 
 					ex.getMessage() + "\n" + CONFIG_FILE_INFO_MSG);
 		}
 		
@@ -396,12 +394,15 @@ public class DashboardConfigStore {
 
 		// Read the SVN password; can be blank or not given
 		String svnPassword = "";
-		propVal = configProps.getProperty(SVN_PASSWORD_NAME_TAG);
+		propVal = _configProps.getProperty(SVN_PASSWORD_NAME_TAG);
 		if ( propVal != null )
 			svnPassword = propVal.trim();
 
+        File baseDir = getBaseDir();
+        File appConfigDir = getConfigDir();
+        String serverAppName = getServerAppName();
 		try {
-			propVal = getFilePathProperty(configProps, USER_TYPES_PROPS_FILE_TAG, appConfigDir);
+			propVal = getFilePathProperty(_configProps, USER_TYPES_PROPS_FILE_TAG, appConfigDir);
 			Properties typeProps = new Properties();
 			try ( FileReader propsReader = new FileReader(propVal); ) {
 				typeProps.load(propsReader);
@@ -411,7 +412,7 @@ public class DashboardConfigStore {
 			knownUserDataTypes.addTypesFromProperties(typeProps);
 		} catch ( Exception ex ) {
 			throw new IOException("Invalid " + USER_TYPES_PROPS_FILE_TAG + 
-					" value specified in " + configFile.getPath() + "\n" + 
+					" value specified in " + _configFile.getPath() + "\n" + 
 					ex.getMessage() + "\n" + CONFIG_FILE_INFO_MSG);
 		}
 		if ( logger.isDebugEnabled() ) {
@@ -422,7 +423,7 @@ public class DashboardConfigStore {
 		}
 
 		try {
-			propVal = getFilePathProperty(configProps, METADATA_TYPES_PROPS_FILE_TAG, appConfigDir);
+			propVal = getFilePathProperty(_configProps, METADATA_TYPES_PROPS_FILE_TAG, appConfigDir);
 			if ( propVal == null )
 				throw new IllegalArgumentException("value not defined");
 			propVal = propVal.trim();
@@ -435,7 +436,7 @@ public class DashboardConfigStore {
 			knownMetadataTypes.addTypesFromProperties(typeProps);
 		} catch ( Exception ex ) {
 			throw new IOException("Invalid " + METADATA_TYPES_PROPS_FILE_TAG + 
-					" value specified in " + configFile.getPath() + "\n" + 
+					" value specified in " + _configFile.getPath() + "\n" + 
 					ex.getMessage() + "\n" + CONFIG_FILE_INFO_MSG);
 		}
 		if ( logger.isInfoEnabled() ) {
@@ -446,7 +447,7 @@ public class DashboardConfigStore {
 		}
 
 		try {
-			propVal = getFilePathProperty(configProps, DATA_TYPES_PROPS_FILE_TAG, appConfigDir);
+			propVal = getFilePathProperty(_configProps, DATA_TYPES_PROPS_FILE_TAG, appConfigDir);
 			Properties typeProps = new Properties();
 			try ( FileReader propsReader = new FileReader(propVal); ) {
 				typeProps.load(propsReader);
@@ -456,7 +457,7 @@ public class DashboardConfigStore {
 			knownDataFileTypes.addTypesFromProperties(typeProps);
 		} catch ( Exception ex ) {
 			throw new IOException("Invalid " + DATA_TYPES_PROPS_FILE_TAG + 
-					" value specified in " + configFile.getPath() + "\n" + 
+					" value specified in " + _configFile.getPath() + "\n" + 
 					ex.getMessage() + "\n" + CONFIG_FILE_INFO_MSG);
 		}
 		if ( logger.isInfoEnabled() ) {
@@ -469,99 +470,99 @@ public class DashboardConfigStore {
 		// Read the default column names to types with units properties file
 		String colNamesToTypesFilename;
 		try {
-			colNamesToTypesFilename = getFilePathProperty(configProps, COLUMN_NAME_TYPE_FILE_TAG, appConfigDir);
+			colNamesToTypesFilename = getFilePathProperty(_configProps, COLUMN_NAME_TYPE_FILE_TAG, appConfigDir);
 		} catch ( Exception ex ) {
 			throw new IOException("Invalid " + COLUMN_NAME_TYPE_FILE_TAG + 
-					" value specified in " + configFile.getPath() + "\n" + 
+					" value specified in " + _configFile.getPath() + "\n" + 
 					ex.getMessage() + "\n" + CONFIG_FILE_INFO_MSG);
 		}
 
 		// Read the user files directory name
 		try {
-			propVal = getFilePathProperty(configProps, USER_FILES_DIR_NAME_TAG, appConfigDir);
+			propVal = getFilePathProperty(_configProps, USER_FILES_DIR_NAME_TAG, appConfigDir);
 			userFileHandler = new UserFileHandler(propVal, startMonitors ? svnUsername : null, 
 					svnPassword, colNamesToTypesFilename, knownUserDataTypes);
 		} catch ( Exception ex ) {
 			throw new IOException("Invalid " + USER_FILES_DIR_NAME_TAG + 
-					" value specified in " + configFile.getPath() + "\n" + 
+					" value specified in " + _configFile.getPath() + "\n" + 
 					ex.getMessage() + "\n" + CONFIG_FILE_INFO_MSG);
 		}
 
 		// Read the cruise files directory name
 		try {
-			propVal = getFilePathProperty(configProps, DATA_FILES_DIR_NAME_TAG, appConfigDir);
+			propVal = getFilePathProperty(_configProps, DATA_FILES_DIR_NAME_TAG, appConfigDir);
 			dataFileHandler = new DataFileHandler(propVal, svnUsername, 
 					svnPassword, knownUserDataTypes);
 			// Put SanityChecker message files in the same directory
 			checkerMsgHandler = new CheckerMessageHandler(propVal);
 		} catch ( Exception ex ) {
 			throw new IOException("Invalid " + DATA_FILES_DIR_NAME_TAG + 
-					" value specified in " + configFile.getPath() + "\n" + 
+					" value specified in " + _configFile.getPath() + "\n" + 
 					ex.getMessage() + "\n" + CONFIG_FILE_INFO_MSG);
 		}
 		
 		// Read the raw upload files directory name
 		try {
-			propVal = getFilePathProperty(configProps, RAW_UPLOAD_FILES_DIR_NAME_TAG, appConfigDir);
+			propVal = getFilePathProperty(_configProps, RAW_UPLOAD_FILES_DIR_NAME_TAG, appConfigDir);
 			rawUploadFileHandler = new RawUploadFileHandler(propVal, svnUsername, svnPassword);
 		} catch ( Exception ex ) {
 			throw new IOException("Invalid " + RAW_UPLOAD_FILES_DIR_NAME_TAG + 
-					" value specified in " + configFile.getPath() + "\n" + 
+					" value specified in " + _configFile.getPath() + "\n" + 
 					ex.getMessage() + "\n" + CONFIG_FILE_INFO_MSG);
 		}
 
 		// Read the metadata files directory name
 		try {
-			propVal = getFilePathProperty(configProps, METADATA_FILES_DIR_NAME_TAG, appConfigDir);
+			propVal = getFilePathProperty(_configProps, METADATA_FILES_DIR_NAME_TAG, appConfigDir);
 			metadataFileHandler = new MetadataFileHandler(propVal, svnUsername, svnPassword);
 		} catch ( Exception ex ) {
 			throw new IOException("Invalid " + METADATA_FILES_DIR_NAME_TAG + 
-					" value specified in " + configFile.getPath() + "\n" + 
+					" value specified in " + _configFile.getPath() + "\n" + 
 					ex.getMessage() + "\n" + CONFIG_FILE_INFO_MSG);
 		}
 
 		// Read the email addresses to send archival bundles
-		propVal = configProps.getProperty(ARCHIVE_BUNDLES_EMAIL_ADDRESS_TAG);
+		propVal = _configProps.getProperty(ARCHIVE_BUNDLES_EMAIL_ADDRESS_TAG);
 		if ( propVal == null )
 			throw new IOException("Invalid " + ARCHIVE_BUNDLES_EMAIL_ADDRESS_TAG + 
-					" value specified in " + configFile.getPath() + 
+					" value specified in " + _configFile.getPath() + 
 					"\nvalue not defined\n" + CONFIG_FILE_INFO_MSG);
 		String[] toEmailAddresses = propVal.trim().split(",");
 		// Read the email addresses to be cc'd on the archival email
-		propVal = configProps.getProperty(CC_BUNDLES_EMAIL_ADDRESS_TAG);
+		propVal = _configProps.getProperty(CC_BUNDLES_EMAIL_ADDRESS_TAG);
 		if ( propVal == null )
 			throw new IOException("Invalid " + CC_BUNDLES_EMAIL_ADDRESS_TAG + 
-					" value specified in " + configFile.getPath() + 
+					" value specified in " + _configFile.getPath() + 
 					"\nvalue not defined\n" + CONFIG_FILE_INFO_MSG);
 		String[] ccEmailAddresses = propVal.trim().split(",");
 		// Read the SMTP server information
-		propVal = configProps.getProperty(SMTP_HOST_ADDRESS_TAG);
+		propVal = _configProps.getProperty(SMTP_HOST_ADDRESS_TAG);
 		if ( propVal == null )
 			throw new IOException("Invalid " + SMTP_HOST_ADDRESS_TAG + 
-					" value specified in " + configFile.getPath() + 
+					" value specified in " + _configFile.getPath() + 
 					"\nvalue not defined\n" + CONFIG_FILE_INFO_MSG);
 		String smtpHostAddress = propVal.trim();
-		propVal = configProps.getProperty(SMTP_HOST_PORT_TAG);
+		propVal = _configProps.getProperty(SMTP_HOST_PORT_TAG);
 		if ( propVal == null )
 			throw new IOException("Invalid " + SMTP_HOST_PORT_TAG + 
-					" value specified in " + configFile.getPath() + 
+					" value specified in " + _configFile.getPath() + 
 					"\nvalue not defined\n" + CONFIG_FILE_INFO_MSG);
 		String smtpHostPort = propVal.trim();
-		propVal = configProps.getProperty(SMTP_USERNAME_TAG);
+		propVal = _configProps.getProperty(SMTP_USERNAME_TAG);
 		if ( propVal == null )
 			throw new IOException("Invalid " + SMTP_USERNAME_TAG + 
-					" value specified in " + configFile.getPath() + 
+					" value specified in " + _configFile.getPath() + 
 					"\nvalue not defined\n" + CONFIG_FILE_INFO_MSG);
 		String smtpUsername = propVal.trim();
-		propVal = configProps.getProperty(SMTP_PASSWORD_TAG);
+		propVal = _configProps.getProperty(SMTP_PASSWORD_TAG);
 		if ( propVal == null )
 			throw new IOException("Invalid " + SMTP_PASSWORD_TAG + 
-					" value specified in " + configFile.getPath() + 
+					" value specified in " + _configFile.getPath() + 
 					"\nvalue not defined\n" + CONFIG_FILE_INFO_MSG);
 		String smtpPassword = propVal.trim();
 		// Read the CDIAC bundles directory name and create the CDIAC archival bundler
 		try {
-			propVal = getFilePathProperty(configProps, ARCHIVE_BUNDLES_DIR_NAME_TAG, appConfigDir);
+			propVal = getFilePathProperty(_configProps, ARCHIVE_BUNDLES_DIR_NAME_TAG, appConfigDir);
 			archiveFilesBundler = new ArchiveFilesBundler(propVal, svnUsername, 
 					svnPassword, toEmailAddresses, ccEmailAddresses, 
 					smtpHostAddress, smtpHostPort, smtpUsername, smtpPassword, false);
@@ -580,13 +581,13 @@ public class DashboardConfigStore {
 			logger.info("    SMTP username: " + smtpUsername);
 		} catch ( Exception ex ) {
 			throw new IOException("Invalid " + ARCHIVE_BUNDLES_DIR_NAME_TAG + 
-					" value specified in " + configFile.getPath() + "\n" + 
+					" value specified in " + _configFile.getPath() + "\n" + 
 					ex.getMessage() + "\n" + CONFIG_FILE_INFO_MSG);
 		}
 
 		// Read the Ferret configuration filename
 		try {
-			propVal = getFilePathProperty(configProps, FERRET_CONFIG_FILE_NAME_TAG, appConfigDir);
+			propVal = getFilePathProperty(_configProps, FERRET_CONFIG_FILE_NAME_TAG, appConfigDir);
 			// Read the Ferret configuration given in this file
 			File ferretPropsFile = new File(propVal);
 			filesToWatch.add(ferretPropsFile);
@@ -599,27 +600,27 @@ public class DashboardConfigStore {
 		    logger.info("read Ferret configuration file " + propVal);
 		} catch ( Exception ex ) {
 			throw new IOException("Invalid " + FERRET_CONFIG_FILE_NAME_TAG + 
-					" value specified in " + configFile.getPath() + "\n" + 
+					" value specified in " + _configFile.getPath() + "\n" + 
 					ex.getMessage() + "\n" + CONFIG_FILE_INFO_MSG);
 		}
 
 		// Read the DSG files directory names and ERDDAP flag file names
 		String dsgFileDirName;
 		try {
-			dsgFileDirName = getFilePathProperty(configProps, DSG_NC_FILES_DIR_NAME_TAG, appConfigDir);
+			dsgFileDirName = getFilePathProperty(_configProps, DSG_NC_FILES_DIR_NAME_TAG, appConfigDir);
 		    logger.info("DSG directory = " + dsgFileDirName);
 		} catch ( Exception ex ) {
 			throw new IOException("Invalid " + DSG_NC_FILES_DIR_NAME_TAG + 
-					" value specified in " + configFile.getPath() + "\n" + 
+					" value specified in " + _configFile.getPath() + "\n" + 
 					ex.getMessage() + "\n" + CONFIG_FILE_INFO_MSG);
 		}
 		String erddapDsgFlagFileName;
 		try {
-			erddapDsgFlagFileName = getFilePathProperty(configProps, ERDDAP_DSG_FLAG_FILE_NAME_TAG, appConfigDir);
+			erddapDsgFlagFileName = getFilePathProperty(_configProps, ERDDAP_DSG_FLAG_FILE_NAME_TAG, appConfigDir);
 		    logger.info("ERDDAP DSG flag file = " + erddapDsgFlagFileName);
 		} catch ( Exception ex ) {
 			throw new IOException("Invalid " + ERDDAP_DSG_FLAG_FILE_NAME_TAG + 
-					" value specified in " + configFile.getPath() + "\n" + 
+					" value specified in " + _configFile.getPath() + "\n" + 
 					ex.getMessage() + "\n" + CONFIG_FILE_INFO_MSG);
 		}
 		try {
@@ -649,8 +650,8 @@ public class DashboardConfigStore {
 		datasetSubmitter = new DatasetSubmitter(this);
 
 		// Read and assign the authorized users 
-		userInfoMap = new HashMap<String,DashboardUserInfo>();
-		for ( Entry<Object,Object> entry : configProps.entrySet() ) {
+		_userInfoMap = new HashMap<String,DashboardUserInfo>();
+		for ( Entry<Object,Object> entry : _configProps.entrySet() ) {
 			if ( ! ((entry.getKey() instanceof String) && 
 					(entry.getValue() instanceof String)) )
 				continue;
@@ -665,7 +666,7 @@ public class DashboardConfigStore {
 			} catch ( IllegalArgumentException ex ) {
 				throw new IOException(ex.getMessage() + "\n" +
 						"for " + username + " specified in " + 
-						configFile.getPath() + "\n" + CONFIG_FILE_INFO_MSG);
+						_configFile.getPath() + "\n" + CONFIG_FILE_INFO_MSG);
 			}
 			String rolesString = (String) entry.getValue();
 			try {
@@ -673,14 +674,14 @@ public class DashboardConfigStore {
 			} catch ( IllegalArgumentException ex ) {
 				throw new IOException(ex.getMessage() + "\n" +
 						"for " + username + " specified in " + 
-						configFile.getPath() + "\n" + CONFIG_FILE_INFO_MSG);
+						_configFile.getPath() + "\n" + CONFIG_FILE_INFO_MSG);
 			}
-			userInfoMap.put(username, userInfo);
+			_userInfoMap.put(username, userInfo);
 		}
-		for ( DashboardUserInfo info : userInfoMap.values() ) {
+		for ( DashboardUserInfo info : _userInfoMap.values() ) {
 			logger.info("    user info: " + info.toString());
 		}
-		logger.info("read configuration file " + configFile.getPath());
+		logger.info("read configuration file " + _configFile.getPath());
 		watcher = null;
 		watcherThread = null;
 		needToRestart = false;
@@ -690,19 +691,33 @@ public class DashboardConfigStore {
 		}
 	}
 
+    public static void addUser(String username, String roleName) throws Exception {
+        DashboardUserInfo dbUser = new DashboardUserInfo(username);
+        dbUser.addUserRoles(roleName);
+        _userInfoMap.put(username, dbUser);
+        String configProp = USER_ROLE_NAME_TAG_PREFIX+username;
+//        configProps.put(configProp, roleName);
+        try ( FileWriter cfgWriter = new FileWriter(getConfigFile(), true); ) {
+            String userCfgLine = configProp + "=" + roleName + "\n";
+            cfgWriter.write(userCfgLine);
+        }
+    }
+    public static void removeUser(String username) throws IOException {
+        throw new UnsupportedOperationException("RemoveUser not yet implemented.");
+    }
     public String getProperty(String propertyName) {
         return getProperty(propertyName, null);
     }
     public String getProperty(String propertyName, String defaultValue) {
         String propertyValue = defaultValue;
-        if ( configProps.containsKey(propertyName)) {
-            propertyValue = (String)configProps.get(propertyName);
+        if ( _configProps.containsKey(propertyName)) {
+            propertyValue = (String)_configProps.get(propertyName);
         } else {
             logger.warn("No property found for name:"+propertyName+", returning default:"+defaultValue);
         }
         return propertyValue;
     }
-	private static String getPreviewDirName(String baseDir, String serverAppName) {
+	private static String getPreviewDirName(File baseDir, String serverAppName) {
 		
 		String dirname = tryProperty("PREVIEW_DIR");
 		if ( dirname == null ) {
@@ -711,7 +726,7 @@ public class DashboardConfigStore {
                 dirname = new File(contextDir, "preview").getCanonicalPath();
             } catch (Exception ex) {
                 logger.warn(ex.toString());
-    			dirname = baseDir + "webapps" + File.separator + serverAppName + File.separator + "preview" + File.separator;
+    			dirname = baseDir.getPath() + File.separator + "webapps" + File.separator + serverAppName + File.separator + "preview" + File.separator;
             }
 		}
 		return dirname;
@@ -1079,7 +1094,7 @@ public class DashboardConfigStore {
 		if ( (username == null) || username.isEmpty() )
 			return false;
 		String name = DashboardUtils.cleanUsername(username);
-		DashboardUserInfo userInfo = userInfoMap.get(name);
+		DashboardUserInfo userInfo = _userInfoMap.get(name);
 		if ( userInfo == null )
 			return false;
 		return true;
@@ -1103,10 +1118,10 @@ public class DashboardConfigStore {
 	 * 		privileges over othername
 	 */
 	public boolean userManagesOver(String username, String othername) {
-		DashboardUserInfo userInfo = userInfoMap.get(DashboardUtils.cleanUsername(username));
+		DashboardUserInfo userInfo = _userInfoMap.get(DashboardUtils.cleanUsername(username));
 		if ( userInfo == null )
 			return false;
-		return userInfo.managesOver(userInfoMap.get(DashboardUtils.cleanUsername(othername)));
+		return userInfo.managesOver(_userInfoMap.get(DashboardUtils.cleanUsername(othername)));
 	}
 
 	/**
@@ -1117,7 +1132,7 @@ public class DashboardConfigStore {
 	 * 		(regardless of whether there is anyone else in the group)
 	 */
 	public boolean isManager(String username) {
-		DashboardUserInfo userInfo = userInfoMap.get(DashboardUtils.cleanUsername(username));
+		DashboardUserInfo userInfo = _userInfoMap.get(DashboardUtils.cleanUsername(username));
 		if ( userInfo == null )
 			return false;
 		return userInfo.isManager();
@@ -1129,8 +1144,8 @@ public class DashboardConfigStore {
 	 * @return
 	 * 		true is this user is an admin
 	 */
-	public boolean isAdmin(String username) {
-		DashboardUserInfo userInfo = userInfoMap.get(DashboardUtils.cleanUsername(username));
+	public static boolean isAdmin(String username) {
+		DashboardUserInfo userInfo = _userInfoMap.get(DashboardUtils.cleanUsername(username));
 		if ( userInfo == null )
 			return false;
 		return userInfo.isAdmin();
