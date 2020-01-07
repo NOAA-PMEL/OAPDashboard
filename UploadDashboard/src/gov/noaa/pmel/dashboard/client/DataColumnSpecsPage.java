@@ -8,6 +8,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
 import java.util.TreeSet;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -19,7 +20,6 @@ import com.google.gwt.dom.client.Style;
 import com.google.gwt.dom.client.TableCellElement;
 import com.google.gwt.dom.client.TableRowElement;
 import com.google.gwt.event.dom.client.ClickEvent;
-import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.event.dom.client.DoubleClickEvent;
 import com.google.gwt.event.dom.client.DoubleClickHandler;
 import com.google.gwt.logging.client.ConsoleLogHandler;
@@ -35,7 +35,6 @@ import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.google.gwt.user.client.ui.Button;
 import com.google.gwt.user.client.ui.Label;
-import com.google.gwt.user.client.ui.ScrollPanel;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.gwt.view.client.AsyncDataProvider;
 import com.google.gwt.view.client.CellPreviewEvent;
@@ -63,6 +62,26 @@ import gov.noaa.pmel.dashboard.shared.TypesDatasetDataPair;
  */
 public class DataColumnSpecsPage extends CompositeWithUsername {
 
+    private static class TypePosition { 
+        final String type;
+        final int position;
+        TypePosition(String _type, int _position) {
+            if ( _type == null || _type.trim().length() == 0 ) throw new IllegalArgumentException("Empty datatype");
+            type = _type.trim();
+            position = _position;
+        }
+        @Override
+        public int hashCode() {
+            return type.hashCode() + position;
+        }
+        @Override
+        public boolean equals(Object other) {
+            if ( other == null ) return false;
+            if ( ! (other instanceof TypePosition )) return false;
+            TypePosition otp = (TypePosition)other;
+            return this.type.equals(otp.type) && this.position == otp.position;
+        }
+    }
 	private static final int DATA_COLUMN_WIDTH = 16;
 
     private static boolean HIGHLIGHT_USER_FLAGS = false;
@@ -171,11 +190,6 @@ public class DataColumnSpecsPage extends CompositeWithUsername {
 			GWT.create(DashboardServicesInterface.class);
 
     @UiField ApplicationHeaderTemplate header;
-//	@UiField InlineLabel titleLabel;
-//	@UiField InlineLabel userInfoLabel;
-//	@UiField Button logoutButton;
-//	@UiField HTML introHtml;
-	@UiField ScrollPanel dgScroll;
 	@UiField DataGrid<ArrayList<String>> dataGrid;
 	@UiField Label pagerLabel;
 	@UiField Label messagesLabel;
@@ -802,8 +816,7 @@ public class DataColumnSpecsPage extends CompositeWithUsername {
 			UploadDashboard.showMessage(DISABLED_SUBMIT_HOVER_HELP);
 			return;
 		}
-
-   /*
+        
 		// longitude given?
 		boolean hasLongitude = false;
 		// latitude given?
@@ -891,24 +904,6 @@ public class DataColumnSpecsPage extends CompositeWithUsername {
 			}
 			k++;
 		}
-		if ( unknownIndices.size() > 0 ) {
-			// Unknown column data types found; put up error message and return
-			ArrayList<String> colNames = cruise.getUserColNames();
-			String errMsg = Integer.toString(unknownIndices.size()) + 
-					UNKNOWN_COLUMN_TYPE_PROLOGUE;
-			int cnt = 0;
-			for ( int idx : unknownIndices ) {
-				cnt++;
-				if ( (cnt == 5) && (unknownIndices.size() > 5) ) {
-					errMsg += "<li> ... </li>";
-					break;
-				}
-				errMsg += "<li>" + SafeHtmlUtils.htmlEscape(colNames.get(idx)) + "</li>";
-			}
-			errMsg += UNKNOWN_COLUMN_TYPE_EPILOGUE;
-			UploadDashboard.showMessage(errMsg);
-			return;
-		}
 		if ( ! hasLongitude ) {
 			// no longitude - error
 			UploadDashboard.showMessage(NO_LONGITUDE_ERROR_MSG);
@@ -950,33 +945,66 @@ public class DataColumnSpecsPage extends CompositeWithUsername {
 			return;
 		}
 		// Make sure there is no more than one of each column types - except OTHER
-		HashSet<String> typeSet = new HashSet<String>();
-		TreeSet<String> duplicates = new TreeSet<String>();
+		HashMap<String, TypePosition> typeSet = new HashMap<>();
+		Set<TypePosition> duplicates = new HashSet<TypePosition>();
+        int pos = 0;
 		for ( DataColumnType colType : cruise.getDataColTypes() ) {
+            TypePosition ctp = new TypePosition(colType.getDisplayName(), ++pos);
 			if ( DashboardUtils.OTHER.typeNameEquals(colType) ) {
-				// Multiple OTHER column types are allowed
-				;
-			}
-			else if ( ! typeSet.add(colType.getDisplayName()) ) {
-				duplicates.add(colType.getDisplayName());
+				continue; // Multiple OTHER column types are allowed
+			} else if ( DashboardUtils.UNKNOWN.typeNameEquals(colType) ) {
+				continue; // Multiple UNKNOWN column types are allowed .. for now.
+			} else if ( typeSet.containsKey(colType.getDisplayName())) {
+				duplicates.add(ctp);
+			} else {
+			    typeSet.put(colType.getDisplayName(), ctp);
 			}
 		}
 		if ( duplicates.size() > 0 ) {
 			String errMsg = MULTIPLE_COLUMN_TYPES_ERROR_MSG;
 			int cnt = 0;
-			for ( String displayName : duplicates ) {
+			for ( TypePosition dup : duplicates ) {
 				cnt++;
-				if ( (cnt == 5) && (unknownIndices.size() > 5) ) {
+				if ( (cnt == 5) && (duplicates.size() > 5) ) {
 					errMsg += "<li> ... </li>";
 					break;
 				}
-				errMsg += "<li>" + displayName + "</li>";
+				errMsg += "<li>" + dup.type + " at columns " + typeSet.get(dup.type).position + " and " + dup.position + "</li>";
 			}
 			UploadDashboard.showMessage(errMsg);
 			return;
 		}
 
-		if ( ! hasSecond ) {
+		if ( unknownIndices.size() > 0 ) {
+			// Unknown column data types found; put up error message and return
+//			ArrayList<String> colNames = cruise.getUserColNames();
+//			String errMsg = Integer.toString(unknownIndices.size()) + 
+//					UNKNOWN_COLUMN_TYPE_PROLOGUE;
+//			int cnt = 0;
+//			for ( int idx : unknownIndices ) {
+//				cnt++;
+//				if ( (cnt == 5) && (unknownIndices.size() > 5) ) {
+//					errMsg += "<li> ... </li>";
+//					break;
+//				}
+//				errMsg += "<li>" + SafeHtmlUtils.htmlEscape(colNames.get(idx)) + "</li>";
+//			}
+//			errMsg += UNKNOWN_COLUMN_TYPE_EPILOGUE;
+//            UploadDashboard.showMessage(errMsg);
+//			return;
+			UploadDashboard.theresAproblem("There are data columns of unknown type. Continue anyways?", "Continue", "Cancel", new AsyncCallback<Boolean>() {
+                @Override
+                public void onFailure(Throwable arg0) {
+                    // Doesn't happen
+                }
+                @Override
+                public void onSuccess(Boolean ignore) {
+                    if ( ignore.booleanValue() ) {
+                        doSubmit();
+                    }
+                }
+			}); 
+		} else if ( ! hasSecond ) {
 			// Warning about missing seconds, asking whether to continue
 			if ( defaultSecondsPopup == null ) {
 				defaultSecondsPopup = new DashboardAskPopup(USE_DEFAULT_SECONDS_TEXT,
@@ -990,18 +1018,16 @@ public class DataColumnSpecsPage extends CompositeWithUsername {
 					@Override
 					public void onFailure(Throwable caught) {
 						// never called
-						;
 					}
 				});
 			}
 			defaultSecondsPopup.askQuestion(DEFAULT_SECONDS_WARNING_QUESTION);
 			return;
-		}
-   */
-
-		// longitude, latitude, sea water co2, and some form of a timestamp 
-		// is present so continue on  
-		doSubmit();
+	   } else {
+    		// longitude, latitude, sea water co2, and some form of a timestamp 
+    		// is present so continue on  
+    		doSubmit();
+	   }
 	}
 
 	private void doSubmit() {
