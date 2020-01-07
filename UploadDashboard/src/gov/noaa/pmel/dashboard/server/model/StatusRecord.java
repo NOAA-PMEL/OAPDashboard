@@ -6,6 +6,10 @@ package gov.noaa.pmel.dashboard.server.model;
 import java.util.Date;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+
+import gov.noaa.pmel.tws.util.StringUtils;
+import gov.noaa.pmel.tws.util.TimeUtils;
+
 import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
@@ -45,5 +49,16 @@ public class StatusRecord {
                     .status(StatusState.INITIAL)
                     .message("Archive submission initiated.")
                     .build();
+    }
+    
+    public String displayString() {
+        StringBuilder sb = new StringBuilder();
+        sb.append(TimeUtils.formatUTC(_statusTime, TimeUtils.non_std_ISO_8601_nofrac_Z))
+          .append(" : ")
+          .append(_status.displayMsg());
+        if ( ! StringUtils.emptyOrNull(_message)) {
+            sb.append(" : ").append(_message);
+        }
+        return sb.toString();
     }
 }
