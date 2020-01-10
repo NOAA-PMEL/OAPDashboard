@@ -53,6 +53,7 @@ import gov.noaa.pmel.dashboard.shared.DashboardServicesInterface;
 import gov.noaa.pmel.dashboard.shared.DashboardServicesInterfaceAsync;
 import gov.noaa.pmel.dashboard.shared.DashboardUtils;
 import gov.noaa.pmel.dashboard.shared.FeatureType;
+import gov.noaa.pmel.dashboard.shared.FileType;
 
 /**
  * Main upload dashboard page.  Shows uploaded cruise files
@@ -1280,19 +1281,19 @@ public class DatasetListPage extends CompositeWithUsername {
 
 	private void updateAvailableButtons() {
 		int selectCount = 0;
-        Set<FeatureType>selectedFeatures = new TreeSet<>();
+        Set<FileType>selectedFileTypes = new TreeSet<>();
 		for (DashboardDataset cruise : listProvider.getList()) {
 			if ( cruise.isSelected()) { 
 			    selectCount += 1; 
-                selectedFeatures.add(cruise.getFeatureType());
+                selectedFileTypes.add(cruise.getFileType());
 		    }
 		}
 		if ( selectCount == 0 ) {
 			disableButtons(selectSet, SELECT_TO_ENABLE_MSG);
 		} else if ( selectCount >= 1 ) {
 			enableButtons(selectSet);
-            if ( selectedFeatures.contains(FeatureType.OTHER)) {
-                disableInapropriateButtons(selectedFeatures);
+            if ( selectedFileTypes.contains(FileType.OTHER)) {
+                disableInapropriateButtons(selectedFileTypes);
             }
 		} 
 		if ( selectCount > 1) {
@@ -1303,7 +1304,7 @@ public class DatasetListPage extends CompositeWithUsername {
 	/**
      * @param selectedFeatures
      */
-    private void disableInapropriateButtons(Set<FeatureType> selectedFeatures) {
+    private void disableInapropriateButtons(Set<FileType> selectedFileTypes) {
         for (Button b : noOpaque) {
             b.setEnabled(false);
             String btitle = b.getTitle();
@@ -1395,9 +1396,11 @@ public class DatasetListPage extends CompositeWithUsername {
 				new Column<DashboardDataset,String> (new ClickableTextCell()) {
 			@Override
 			public String getValue(DashboardDataset cruise) { 
-                FeatureType type = cruise.getFeatureType();
-                if ( FeatureType.OTHER == type ) {
-                    return STATUS_CANNOT_CHECK_STRING;
+//                if ( FeatureType.OTHER == cruise.getFeatureType() ) {
+//                    return STATUS_CANNOT_CHECK_STRING + ":<br/>Obs Type";
+//                }
+                if ( FileType.OTHER == cruise.getFileType()) {
+                    return STATUS_CANNOT_CHECK_STRING + ":<br/>File Format";
                 }
 				String status = cruise.getDataCheckStatus();
 				if ( status.isEmpty() ) {
@@ -1420,10 +1423,9 @@ public class DatasetListPage extends CompositeWithUsername {
 													SafeHtmlBuilder sb) {
                 
 				String msg = getValue(cruise);
-                FeatureType type = cruise.getFeatureType();
-                if ( FeatureType.OTHER == type ) {
+                if ( FileType.OTHER == cruise.getFileType() ) {
 					sb.appendHtmlConstant("<div >"); // style=\"background-color:" + UploadDashboard.CHECKER_WARNING_COLOR + ";\">");
-					sb.appendEscaped(msg);
+					sb.appendHtmlConstant(msg);
 					sb.appendHtmlConstant("</div>");
                 } else
 				if ( msg.equals(DashboardUtils.CHECK_STATUS_ACCEPTABLE) ) {
@@ -1454,7 +1456,7 @@ public class DatasetListPage extends CompositeWithUsername {
 		dataCheckColumn.setFieldUpdater(new FieldUpdater<DashboardDataset,String>() {
 			@Override
 			public void update(int index, DashboardDataset cruise, String value) {
-                if ( FeatureType.OTHER.equals(cruise.getFeatureType())) {
+                if ( FileType.OTHER.equals(cruise.getFileType())) {
                     GWT.log("Cannot view/edit columns for OTHER-type datasets.");
 //                    UploadDashboard.showMessage("This observation type cannot be checked.");
                     return;

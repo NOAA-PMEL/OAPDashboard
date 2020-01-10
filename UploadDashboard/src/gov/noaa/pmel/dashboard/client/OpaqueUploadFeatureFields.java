@@ -33,11 +33,6 @@ public class OpaqueUploadFeatureFields extends Composite implements FeatureTypeF
     @Override
     public void setFormFields(DataUploadPage page) {
         page.setDatasetIdToken(unspecDatasetIdBox.getValue());
-//        if ( datasetIdFormField == null ) {
-//            datasetIdFormField = new Hidden("datasetID");
-//            form.add(datasetIdFormField);
-//        }
-//        datasetIdFormField.setValue(unspecDatasetIdBox.getValue());
     }
 
     @Override
