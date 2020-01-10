@@ -12,26 +12,28 @@ public class FileUploadProcessorFactory {
     public static FileUploadProcessorFactory getFactory() {
         return new FileUploadProcessorFactory();
     }
-    public FileUploadProcessor getProcessor(StandardUploadFields stdFields) {
+    public static FileUploadProcessor getProcessor(StandardUploadFields stdFields) {
         FileUploadProcessor processor = null;
-        switch (stdFields.featureType()) {
-            case UNSPECIFIED:
-                processor = new FileTypeGuesserUploadProcessor(stdFields);
-                break;
-            case TIMESERIES:
-                processor = new TimeseriesUploadProcessor(stdFields);
-                break;
-            case TRAJECTORY:
-                processor = new TrajectoryUploadProcessor(stdFields);
-                break;
-            case PROFILE:
-                processor = new ProfileUploadProcessor(stdFields);
-                break;
-            case PROFILE_TIMESERIES:
-                processor = new ProfileTimeseriesUploadProcessor(stdFields);
-                break;
-            case TRAJECTORY_PROFILE:
-                processor = new TrajectoryProfileUploadProcessor(stdFields);
+        switch (stdFields.fileType()) {
+            case DELIMITED:
+                switch (stdFields.featureType()) {
+                    case UNSPECIFIED:
+                        processor = new FeatureTypeGuesserUploadProcessor(stdFields);
+                        break;
+                    case TIMESERIES:
+                    case TRAJECTORY:
+                    case PROFILE:
+                    case TIMESERIES_PROFILE:
+                    case TRAJECTORY_PROFILE:
+                    case OTHER:
+                        processor =  new StandardUploadProcessor(stdFields);
+                        break;
+//                    case OTHER:
+//                        processor = new OpaqueFileUploadProcessor(stdFields);
+//                        break;
+                    default:
+                        throw new IllegalArgumentException("Unknown Feature Type: " + stdFields.featureType());
+                }
                 break;
             case OTHER:
                 processor = new OpaqueFileUploadProcessor(stdFields);
@@ -39,6 +41,7 @@ public class FileUploadProcessorFactory {
             default:
                 throw new IllegalArgumentException("Unknown Feature Type: " + stdFields.featureType());
         }
+                
         return processor;
     }
     

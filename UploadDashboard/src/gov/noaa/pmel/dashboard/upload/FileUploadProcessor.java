@@ -14,6 +14,8 @@ import org.apache.tomcat.util.http.fileupload.FileItem;
 import gov.noaa.pmel.dashboard.handlers.MetadataFileHandler;
 import gov.noaa.pmel.dashboard.handlers.RawUploadFileHandler;
 import gov.noaa.pmel.dashboard.server.DashboardConfigStore;
+import gov.noaa.pmel.dashboard.shared.FeatureType;
+import gov.noaa.pmel.dashboard.shared.FileType;
 import lombok.AccessLevel;
 import lombok.Data;
 import lombok.Setter;
@@ -28,21 +30,26 @@ public abstract class FileUploadProcessor {
 
     protected static final String DATASET_ID_COLUMN_FIELD_NAME = "datasetIdColumn";
     
-    protected StandardUploadFields uploadFields;
-    protected DashboardConfigStore configStore;
+    protected StandardUploadFields _uploadFields;
+    protected DashboardConfigStore _configStore;
     protected RawUploadFileHandler _rawFileHandler;
     
-    protected ArrayList<String> messages = new ArrayList<String>();
-    protected TreeSet<String> successes = new TreeSet<String>();
+    protected ArrayList<String> _messages = new ArrayList<String>();
+    protected TreeSet<String> _successes = new TreeSet<String>();
 
+    protected FeatureType _featureType;
+    protected FileType _fileType;
+    
     protected FileUploadProcessor(StandardUploadFields uploadFields) {
-        this.uploadFields = uploadFields;
+        this._uploadFields = uploadFields;
+        this._featureType = uploadFields.featureType();
+        this._fileType = uploadFields.fileType();
     }
     
     public void processUpload() throws IOException, UploadProcessingException {
-        configStore = DashboardConfigStore.get(true);
-		_rawFileHandler = configStore.getRawUploadFileHandler();
-        List<FileItem> files = uploadFields.dataFiles();
+        _configStore = DashboardConfigStore.get(true);
+		_rawFileHandler = _configStore.getRawUploadFileHandler();
+        List<FileItem> files = _uploadFields.dataFiles();
         doFeatureSpecificProcessing(files);
     }
     
@@ -56,7 +63,7 @@ public abstract class FileUploadProcessor {
     }
     
     protected void saveRawFile(FileItem item) throws Exception {
-        File targetDir = _rawFileHandler.createUploadTargetDir(uploadFields.username());
+        File targetDir = _rawFileHandler.createUploadTargetDir(_uploadFields.username());
         System.out.println("Saving raw " + item.getName());
         _rawFileHandler.writeItem(item, targetDir);
     }
@@ -67,10 +74,10 @@ public abstract class FileUploadProcessor {
     }
     
     public ArrayList<String> getMessages() {
-        return messages;
+        return _messages;
     }
     
     public TreeSet<String> getSuccesses() {
-        return successes;
+        return _successes;
     }
 }
