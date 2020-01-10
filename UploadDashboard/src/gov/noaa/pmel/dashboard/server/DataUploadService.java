@@ -27,15 +27,9 @@ import org.apache.tomcat.util.http.fileupload.FileUploadException;
 import org.apache.tomcat.util.http.fileupload.disk.DiskFileItemFactory;
 import org.apache.tomcat.util.http.fileupload.servlet.ServletFileUpload;
 
-import com.sun.nio.sctp.IllegalReceiveException;
-
-import gov.noaa.pmel.dashboard.handlers.DataFileHandler;
-import gov.noaa.pmel.dashboard.handlers.RawUploadFileHandler;
-import gov.noaa.pmel.dashboard.shared.DashboardDataset;
-import gov.noaa.pmel.dashboard.shared.DashboardDatasetData;
-import gov.noaa.pmel.dashboard.shared.DashboardMetadata;
 import gov.noaa.pmel.dashboard.shared.DashboardUtils;
 import gov.noaa.pmel.dashboard.shared.FeatureType;
+import gov.noaa.pmel.dashboard.shared.FileType;
 import gov.noaa.pmel.dashboard.upload.FileUploadProcessor;
 import gov.noaa.pmel.dashboard.upload.FileUploadProcessorFactory;
 import gov.noaa.pmel.dashboard.upload.StandardUploadFields;
@@ -113,8 +107,6 @@ public class DataUploadService extends HttpServlet {
                 return;
             }
             
-            
-            
             FileUploadProcessor uploadProcessor = getUploadFileProcessor(stdFields);
             uploadProcessor.processUpload();
             List<String>messages = uploadProcessor.getMessages();
@@ -148,8 +140,7 @@ public class DataUploadService extends HttpServlet {
 	}
     
     private static FileUploadProcessor getUploadFileProcessor(StandardUploadFields stdFields) {
-        FileUploadProcessorFactory processorFactory = FileUploadProcessorFactory.getFactory();
-        FileUploadProcessor uploadProcessor = processorFactory.getProcessor(stdFields);
+        FileUploadProcessor uploadProcessor = FileUploadProcessorFactory.getProcessor(stdFields);
         return uploadProcessor;
     }
 
@@ -163,9 +154,12 @@ public class DataUploadService extends HttpServlet {
         try {
             sup = StandardUploadFields.builder()
                     .parameterMap(paramMap)
+                    .datasetId(getUploadField("datasetId", paramMap))
+                    .datasetIdColumnName(getUploadField("datasetIdColumn", paramMap))
                     .dataAction(getRequiredField("dataaction", paramMap))
                     .fileDataEncoding(getUploadField("dataencoding", paramMap))
                     .featureType(getFeatureType(paramMap))
+                    .fileType(getFileType(paramMap))
                     .dataFiles(extractDataFiles(paramMap))
                     .build();
         } catch (NullPointerException nex) {
@@ -198,6 +192,13 @@ public class DataUploadService extends HttpServlet {
         String featureTypeName = getRequiredField("featureType", paramMap);
         featureType = featureTypeName != null ? FeatureType.valueOf(featureTypeName) : FeatureType.UNSPECIFIED;
         return featureType;
+    }
+    
+    private static FileType getFileType(Map<String, List<FileItem>> paramMap) throws NoSuchFieldException {
+        FileType fileType;
+        String fileTypeName = getRequiredField("fileType", paramMap);
+        fileType = fileTypeName != null ? FileType.valueOf(fileTypeName) : FileType.UNSPECIFIED;
+        return fileType;
     }
 
     private static void checkRequestMime(HttpServletRequest request) throws BadRequestException {
