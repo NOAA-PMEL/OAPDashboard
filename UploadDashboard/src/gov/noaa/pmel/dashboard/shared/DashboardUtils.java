@@ -159,7 +159,8 @@ public class DashboardUtils {
 					"dd-mon-yyyy", 
 					"mm-dd-yy", 
 					"dd-mm-yy",
-					"dd-mon-yy"
+					"dd-mon-yy",
+					"mon-dd-yyyy"
 					));
 
 	/** Formats for time-of-day */
