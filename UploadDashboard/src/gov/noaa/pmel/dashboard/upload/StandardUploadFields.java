@@ -10,6 +10,7 @@ import java.util.Map;
 import org.apache.tomcat.util.http.fileupload.FileItem;
 
 import gov.noaa.pmel.dashboard.shared.FeatureType;
+import gov.noaa.pmel.dashboard.shared.FileType;
 import gov.noaa.pmel.tws.util.TimeUtils;
 import lombok.AccessLevel;
 import lombok.Builder;
@@ -32,6 +33,10 @@ public class StandardUploadFields {
     protected List<FileItem> _dataFiles;
     @Setter(AccessLevel.PUBLIC)
     protected String _username;
+    protected String _datasetId;
+    protected String _datasetIdColumnName;
+    @Builder.Default
+    protected FileType _fileType = FileType.UNSPECIFIED;
     @Builder.Default
     protected FeatureType _featureType = FeatureType.UNSPECIFIED;
     @NonNull
