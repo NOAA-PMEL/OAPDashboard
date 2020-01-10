@@ -486,15 +486,20 @@ public class UserFileHandler extends VersionedFileHandler {
 			userDsIdColKey = DashboardServerUtils.getKeyForName(datasetIdColName);
 		}
 		// Go through the column names to assign these lists
+        boolean foundDatasetIdCol = false;
 		for ( String colName : userColNames ) {
 			String key = DashboardServerUtils.getKeyForName(colName);
 			DataColumnType thisColType = null;
 			if ( DashboardUtils.isEmptyNull(datasetIdColName)) {
 				thisColType = userColNamesToTypes.get(key);
+                if ( thisColType != null && thisColType.typeNameEquals(DashboardUtils.DATASET_NAME)) {
+                    foundDatasetIdCol = true;
+                }
 			} else {
 				if ( datasetIdColName.equalsIgnoreCase(colName) || 
 					 userDsIdColKey.equalsIgnoreCase(key)) {
 					thisColType = DashboardUtils.DATASET_NAME;
+                    foundDatasetIdCol = true;
 				} else {
 					thisColType = userColNamesToTypes.get(key);
 					// If a datasetId column was specified (which it is on this branch), 
@@ -509,6 +514,17 @@ public class UserFileHandler extends VersionedFileHandler {
 			}
 			colTypes.add(thisColType.duplicate());
 		}
+        if ( !foundDatasetIdCol ) { // check for others
+            int idx = -1;
+    		for ( String colName : userColNames ) {
+                idx += 1;
+    			String key = DashboardServerUtils.getKeyForName(colName);
+                DataColumnType defaultType = defaultColNamesToTypes.get(key);
+				if ( defaultType != null && DashboardUtils.DATASET_NAME.equals(defaultType)) {
+        			colTypes.set(idx, defaultType.duplicate());
+				}
+    		}
+        }
 		dataset.setDataColTypes(colTypes);
 	}
 
