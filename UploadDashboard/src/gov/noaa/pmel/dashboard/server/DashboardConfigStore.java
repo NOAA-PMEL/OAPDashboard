@@ -1010,15 +1010,16 @@ public class DashboardConfigStore {
 	public DatasetChecker getDashboardDatasetChecker(FeatureType featureType) {
 		DatasetChecker datasetChecker;
         switch (featureType) {
-            case OTHER:
-                datasetChecker = opaqueDatasetChecker;
-                break;
             case PROFILE:
                 datasetChecker = profileDatasetChecker;
                 break;
             case TRAJECTORY:
                 datasetChecker = trajectoryDatasetChecker;
                 break;
+            case TIMESERIES:
+            case TIMESERIES_PROFILE:
+            case TRAJECTORY_PROFILE:
+            case OTHER:
             default:
                 datasetChecker = minimalDatasetChecker;
 //                throw new IllegalStateException("No checker available for observation type: " + featureType.name());
