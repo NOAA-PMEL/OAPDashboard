@@ -39,6 +39,7 @@ import gov.noaa.pmel.dashboard.shared.DashboardMetadata;
 import gov.noaa.pmel.dashboard.shared.DashboardUtils;
 import gov.noaa.pmel.dashboard.shared.DataColumnType;
 import gov.noaa.pmel.dashboard.shared.FeatureType;
+import gov.noaa.pmel.dashboard.shared.FileType;
 import gov.noaa.pmel.dashboard.shared.QCFlag;
 
 /**
@@ -55,6 +56,7 @@ public class DataFileHandler extends VersionedFileHandler {
 	private static final String TAB = "\t";
 	private static final String DATA_OWNER_ID = "dataowner";
 	private static final String FEATURE_TYPE_ID = "featuretype";
+	private static final String FILE_TYPE_ID = "filetype";
 	private static final String VERSION_ID = "version";
 	private static final String UPLOAD_FILENAME_ID = "uploadfilename";
 	private static final String UPLOAD_TIMESTAMP_ID = "uploadtimestamp";
@@ -703,6 +705,8 @@ public class DataFileHandler extends VersionedFileHandler {
 		datasetProps.setProperty(DATA_OWNER_ID, dataset.getOwner());
         // observation feature type
 		datasetProps.setProperty(FEATURE_TYPE_ID, dataset.getFeatureTypeName());
+        // file format
+		datasetProps.setProperty(FILE_TYPE_ID, dataset.getFileTypeName());
 		// Version 
 		datasetProps.setProperty(VERSION_ID, dataset.getVersion());
 		// Upload filename
@@ -1250,6 +1254,15 @@ public class DataFileHandler extends VersionedFileHandler {
 			throw new IllegalArgumentException("No property value for " + 
 					FEATURE_TYPE_ID + " given in " + infoFile.getPath());	
 		dataset.setFeatureType(value);
+        
+        // file type
+        value = cruiseProps.getProperty(FILE_TYPE_ID);
+		if ( value == null ) {
+            value = FileType.UNSPECIFIED.name();
+//			throw new IllegalArgumentException("No property value for " + 
+//					FILE_TYPE_ID + " given in " + infoFile.getPath());	
+		}
+		dataset.setFileType(value);
         
 		// version 
 		value = cruiseProps.getProperty(VERSION_ID);
