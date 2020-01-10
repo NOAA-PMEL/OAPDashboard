@@ -43,6 +43,7 @@ public class TimestampConverter extends ValueConverter<String> {
 		SUPPORTED_FROM_UNITS.add("from \"dd-mm-yy\" to \"yyyy-mm-dd\"");
 		SUPPORTED_FROM_UNITS.add("from \"dd-mon-yyyy\" to \"yyyy-mm-dd\"");
 		SUPPORTED_FROM_UNITS.add("from \"dd-mon-yy\" to \"yyyy-mm-dd\"");
+		SUPPORTED_FROM_UNITS.add("from \"mon-dd-yyyy\" to \"yyyy-mm-dd\"");
 		// time only
 		SUPPORTED_FROM_UNITS.add("from \"hh:mm:ss\" to \"hh:mm:ss\"");
 		SUPPORTED_FROM_UNITS.add("from \"hh:mm\" to \"hh:mm:ss\"");
