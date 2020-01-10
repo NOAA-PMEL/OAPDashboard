@@ -821,8 +821,6 @@ public class DataColumnSpecsPage extends CompositeWithUsername {
 		boolean hasLongitude = false;
 		// latitude given?
 		boolean hasLatitude = false;
-		// sample depth given?
-		boolean hasPressureOrDepth = false;
 		// date/time given?
 		boolean hasYear = false;
 		boolean hasMonth = false;
@@ -898,10 +896,6 @@ public class DataColumnSpecsPage extends CompositeWithUsername {
 			else if ( DashboardUtils.LATITUDE.typeNameEquals(colType) ) {
 				hasLatitude = true;
 			}
-			else if ( DashboardUtils.SAMPLE_DEPTH.typeNameEquals(colType) ||
-			          DashboardUtils.CTD_PRESSURE.typeNameEquals(colType)) {
-				hasPressureOrDepth = true;
-			}
 			k++;
 		}
 		if ( ! hasLongitude ) {
@@ -912,11 +906,6 @@ public class DataColumnSpecsPage extends CompositeWithUsername {
 		if ( ! hasLatitude ) {
 			// no latitude - error
 			UploadDashboard.showMessage(NO_LATITUDE_ERROR_MSG);
-			return;
-		}
-		if ( ! hasPressureOrDepth ) {
-			// no sample depth - error
-			UploadDashboard.showMessage(NO_DEPTH_ERROR_MSG);
 			return;
 		}
 		if ( ! (hasYear || hasMonth || hasDay || hasHour || hasMinute) ) {
