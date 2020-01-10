@@ -141,13 +141,22 @@ html, body {
 }
 .featureTypeSelectBox {
 	display: inline;
-	margin-top: .65em;
+	margin-top: .5em;
+    margin-left: 1em;
+}
+.fileTypeSelectBox {
+    width: 152px;
+	margin-top: .5em;
+    margin-left: 4.5em;
 }
 .featureTypeHelpAnchor {
 	display: inline;
 	margin-top: .75em;
 	margin-bottom: 0.5em;
 	margin-left: 3em;
+}
+.fileTypeHelpAnchor {
+/* 	margin-left: 5.25em; */
 }
 .contentscroll {
 	width: 99.7%;
@@ -550,13 +559,14 @@ hr .hline {
 .headerversionlabel {
 	position: absolute;
     margin: 0.25em 1em 0.0em;
+    font-style: italic;
     color: white;
     right: 20em;
     bottom: 2px;
 }
 .headersoftwaretitle {
 	position: absolute;
-	font-size: large;
+	font-size: x-large;
     color: white;
     left: 38%;
     top: .25em;
@@ -654,6 +664,14 @@ hr .hline {
 	width: 90%;
 	font-size: 100%;
 	margin: 1em 2em;
+}
+hr {
+    display: block;
+    height: 1px;
+    border: 0;
+    border-top: 1px solid black;
+    margin: 1em 2em;
+    padding: 0;
 }
 .west_gutter_element {
     flex: 0 0 8em;

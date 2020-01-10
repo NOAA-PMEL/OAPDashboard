@@ -34,7 +34,7 @@ public class CommonFeatureFields extends Composite implements FeatureTypeFields 
 	private static final String SEMICOLON_FORMAT_TEXT = "file contains semicolon-separated values";
 	private static final String TAB_FORMAT_TEXT = "file contains tab-separated values";
 
-    public static final String DATASET_ID_COLUMN_FIELD_NAME = "datasetIdColName";
+//    public static final String DATASET_ID_COLUMN_FIELD_NAME = "datasetIdColName";
 
 	@UiField RadioButton commaRadio;
 	@UiField RadioButton semicolonRadio;
