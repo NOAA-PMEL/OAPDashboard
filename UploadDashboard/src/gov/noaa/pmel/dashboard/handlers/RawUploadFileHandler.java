@@ -66,7 +66,7 @@ public class RawUploadFileHandler /* extends VersionedFileHandler */ {
 		return targetFile;
 	}
 
-	public static void writeItem(FileItem item, File targetDir) throws Exception {
+	public static File writeItem(FileItem item, File targetDir) throws Exception {
 		if ( ! targetDir.exists()) {
 			if ( ! targetDir.mkdirs()) {
 				throw new IllegalStateException("Unable to create target directory " + targetDir.getAbsolutePath());
@@ -74,6 +74,7 @@ public class RawUploadFileHandler /* extends VersionedFileHandler */ {
 		}
 		File rawFile = getRawFileTarget(targetDir, item);
 		item.write(rawFile);
+        return rawFile;
 //		commitVersion(rawFile, "Uploaded raw file: " + item.getName());
 	}
 

@@ -5,7 +5,6 @@ package gov.noaa.pmel.dashboard.upload;
 
 import java.io.File;
 import java.util.List;
-import java.util.TreeSet;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -14,7 +13,6 @@ import org.apache.tomcat.util.http.fileupload.FileItem;
 import gov.noaa.pmel.dashboard.handlers.DataFileHandler;
 import gov.noaa.pmel.dashboard.shared.DashboardDataset;
 import gov.noaa.pmel.dashboard.shared.DashboardUtils;
-import gov.noaa.pmel.dashboard.shared.FeatureType;
 import gov.noaa.pmel.dashboard.shared.FileType;
 import gov.noaa.pmel.dashboard.util.FormUtils;
 import gov.noaa.pmel.tws.util.StringUtils;
@@ -84,9 +82,10 @@ public class OpaqueFileUploadProcessor extends FileUploadProcessor {
                     }
                 } 
                 try {
-                    datasetHandler.saveDatasetInfoToFile(pseudoDataset, "save opaque data info");
                     File datasetDir = datasetHandler.datasetDataFile(itemDatasetId).getParentFile();
-                    saveOpaqueFileData(pseudoDataset, datasetDir);
+                    File uploadedFile = saveOpaqueFileData(pseudoDataset, datasetDir);
+                    pseudoDataset.setUploadedFile(uploadedFile.getPath());
+                    datasetHandler.saveDatasetInfoToFile(pseudoDataset, "save opaque data info");
                     generateEmptyMetadataFile(itemDatasetId);
                     _successes.add(itemDatasetId);
                     // datasetHandler.saveDatasetDataToFile(pseudoDataset, "save opaque data data");
@@ -108,8 +107,8 @@ public class OpaqueFileUploadProcessor extends FileUploadProcessor {
         }
     }
     
-    private void saveOpaqueFileData(OpaqueDataset pseudoDataset, File datasetDir) throws Exception {
-        _rawFileHandler.writeItem(pseudoDataset.getFileItem(), datasetDir);
+    private File saveOpaqueFileData(OpaqueDataset pseudoDataset, File datasetDir) throws Exception {
+        return _rawFileHandler.writeItem(pseudoDataset.getFileItem(), datasetDir);
     }
 
     private OpaqueDataset createPseudoDataset(String itemId, FileItem item, StandardUploadFields _uploadFields) {

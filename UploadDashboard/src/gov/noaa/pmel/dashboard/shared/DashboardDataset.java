@@ -37,6 +37,7 @@ public class DashboardDataset implements Serializable, IsSerializable {
     protected boolean archiveDOIrequested;
 	protected String uploadFilename;
 	protected String uploadTimestamp;
+    protected String uploadedFile;
 	protected String doi;
 	protected int numDataRows;
 	protected int numErrorRows;
@@ -66,6 +67,7 @@ public class DashboardDataset implements Serializable, IsSerializable {
 		archiveDate = DashboardUtils.STRING_MISSING_VALUE;
 		uploadFilename = DashboardUtils.STRING_MISSING_VALUE;
 		uploadTimestamp = DashboardUtils.STRING_MISSING_VALUE;
+		uploadedFile = DashboardUtils.STRING_MISSING_VALUE;
 		doi = DashboardUtils.STRING_MISSING_VALUE;
 		numDataRows = 0;
 		numErrorRows = 0;
@@ -384,6 +386,27 @@ public class DashboardDataset implements Serializable, IsSerializable {
 			this.uploadFilename = DashboardUtils.STRING_MISSING_VALUE;
 		else
 			this.uploadFilename = uploadFilename.trim();
+	}
+
+	/**
+	 * @return 
+	 * 		the locally saved original uploaded data file; 
+	 * 		never null but may be {@link DashboardUtils#STRING_MISSING_VALUE}
+	 */
+	public String getUploadedFile() {
+		return uploadedFile;
+	}
+
+	/**
+	 * @param uploadFilename 
+	 * 		the uploaded data filename (after trimming) to set;
+	 * 		if null, sets to {@link DashboardUtils#STRING_MISSING_VALUE}
+	 */
+	public void setUploadedFile(String uploadedFile) {
+		if ( uploadedFile == null )
+			this.uploadedFile = DashboardUtils.STRING_MISSING_VALUE;
+		else
+			this.uploadedFile = uploadedFile.trim();
 	}
 
 	/**

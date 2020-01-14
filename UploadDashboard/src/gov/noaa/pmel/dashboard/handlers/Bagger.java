@@ -35,6 +35,8 @@ import org.apache.commons.compress.compressors.CompressorException;
 import org.apache.commons.compress.compressors.CompressorStreamFactory;
 import org.apache.commons.compress.compressors.gzip.GzipCompressorOutputStream;
 import org.apache.commons.compress.utils.IOUtils;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import gov.loc.repository.bagit.creator.BagCreator;
 import gov.loc.repository.bagit.domain.Bag;
@@ -55,6 +57,7 @@ import gov.loc.repository.bagit.writer.BagWriter;
 import gov.noaa.pmel.dashboard.dsg.StdUserDataArray;
 import gov.noaa.pmel.dashboard.server.DashboardConfigStore;
 import gov.noaa.pmel.dashboard.server.model.SubmissionRecord;
+import gov.noaa.pmel.dashboard.shared.DashboardDataset;
 import gov.noaa.pmel.dashboard.shared.DashboardDatasetData;
 import gov.noaa.pmel.dashboard.shared.FeatureType;
 import gov.noaa.pmel.tws.util.ApplicationConfiguration;
@@ -67,6 +70,8 @@ import gov.noaa.pmel.tws.util.StringUtils;
  */
 public class Bagger implements ArchiveBundler {
 
+    private static Logger logger = LogManager.getLogger(Bagger.class);
+    
     private SubmissionRecord _submitRecord;
     private String _datasetId;
     private FeatureType _featureType;
@@ -93,7 +98,7 @@ public class Bagger implements ArchiveBundler {
             Bagger.hashit(archiveFile);
             return archiveFile;
         } catch (Exception ex) {
-            ex.printStackTrace();
+            logger.warn(ex, ex);
             throw ex;
         } finally {
             if ( bagger != null ) {
@@ -133,6 +138,17 @@ public class Bagger implements ArchiveBundler {
     private Path stuffit() throws IOException {
         DataFileHandler dataFiler = _store.getDataFileHandler();
         File dataFile  = dataFiler.datasetDataFile(_datasetId);
+        DashboardDataset dataset = dataFiler.getDatasetFromInfoFile(_datasetId);
+        String rawUpload = dataset.getUploadedFile();
+        if ( ! StringUtils.emptyOrNull(rawUpload)) {
+            File rawFile = new File(rawUpload);
+            if ( rawFile.exists()) {
+                dataFile = rawFile;
+            } else {
+                logger.info("Raw upload file " + rawUpload + " does not exist for dataset " + _datasetId + ". "
+                            + "Archiving data file " + dataFile.getPath() + "." );
+            }
+        }
         return stuffit(dataFile);
     }
     
