@@ -454,7 +454,7 @@ public class DataUploadPage extends CompositeWithUsername {
 		singleton.encodingListBox.setSelectedIndex(2);
 		singleton.advancedPanel.setOpen(false);
         singleton.header.userInfoLabel.setText(WELCOME_INTRO + username);
-		UploadDashboard.updateCurrentPage(singleton);
+		UploadDashboard.updateCurrentPage(singleton, true);
 		History.newItem(PagesEnum.UPLOAD_DATA.name(), false);
 	}
 
