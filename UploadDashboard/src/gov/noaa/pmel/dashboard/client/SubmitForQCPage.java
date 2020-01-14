@@ -393,8 +393,15 @@ public class SubmitForQCPage extends CompositeWithUsername implements DataSubmis
 //		agreeSharePopup.showRelativeTo(agreeShareInfoAnchor);
 //	}
 
+    void closePopups() {
+        if ( laterArchivePopup != null ) laterArchivePopup.dismiss();
+        if ( nowInfoPopup != null ) nowInfoPopup.dismiss();
+        if ( ownerArchivePopup != null ) ownerArchivePopup.dismiss();
+        if ( resubmitAskPopup != null ) resubmitAskPopup.dismiss();
+    }
 	@UiHandler("cancelButton")
 	void cancelOnClick(ClickEvent event) {
+        closePopups();
 		// Return to the list of cruises which could have been modified by this page
 		DatasetListPage.showPage();
 	}
@@ -440,6 +447,7 @@ public class SubmitForQCPage extends CompositeWithUsername implements DataSubmis
 	 * Submits cruises and updated archival selection
 	 */
 	void continueSubmit() {
+        closePopups();
 		String localTimestamp = DateTimeFormat.getFormat("yyyy-MM-dd HH:mm Z").format(new Date());
 		String archiveStatus;
 //		if ( laterRadio.getValue() ) {

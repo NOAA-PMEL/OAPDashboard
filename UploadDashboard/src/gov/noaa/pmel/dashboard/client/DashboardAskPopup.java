@@ -130,4 +130,7 @@ public class DashboardAskPopup extends Composite {
 		parentPanel.hide();
 	}
 
+    void dismiss() {
+        parentPanel.hide();
+    }
 }

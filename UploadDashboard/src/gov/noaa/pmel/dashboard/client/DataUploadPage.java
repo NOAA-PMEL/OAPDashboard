@@ -506,6 +506,12 @@ public class DataUploadPage extends CompositeWithUsername {
 		}
 	}
 
+    void closePopups() {
+        if ( moreHelpPopup != null ) moreHelpPopup.dismiss();
+        if ( featureTypeHelpPopup != null ) featureTypeHelpPopup.dismiss();
+        if ( fileTypeHelpPopup != null ) fileTypeHelpPopup.dismiss();
+    }
+    
 	@UiHandler("moreHelpAnchor")
 	void moreHelpOnClick(ClickEvent event) {
 		// Create the popup only when needed and if it does not exist
@@ -623,6 +629,7 @@ public class DataUploadPage extends CompositeWithUsername {
 	@UiHandler("cancelButton")
 	void cancelButtonOnClick(ClickEvent event) {
 		// Return to the cruise list page after updating the cruise list
+        closePopups();
 		DatasetListPage.showPage();
 		// Make sure the normal cursor is shown
 		UploadDashboard.showAutoCursor();
