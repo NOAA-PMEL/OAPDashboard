@@ -316,11 +316,14 @@ public class UploadDashboard implements EntryPoint, ValueChangeHandler<String> {
 	public static void _updateCurrentPage(CompositeWithUsername newPage) {
             if ( singleton == null )
                 singleton = new UploadDashboard();
-            if ( singleton.currentPage != null )
+            closePopups();
+            if ( singleton.currentPage != null ) {
                 RootLayoutPanel.get().remove(singleton.currentPage);
+            }
             singleton.currentPage = newPage;
-            if ( singleton.currentPage != null )
+            if ( singleton.currentPage != null ) {
                 RootLayoutPanel.get().add(singleton.currentPage);
+            }
 	}
 	public static void updateCurrentPage(CompositeWithUsername newPage, boolean doPing) {
         if ( doPing ) {
