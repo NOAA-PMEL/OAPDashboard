@@ -2,13 +2,14 @@
 # definitions and overrides when running on machine matisse
 #
 
-# oap.env=localhost
-oap.env=prod
+oap.env=localhost
+# oap.env=prod
 
 # for debuging / changing config files
 # remove for production or change to PERIODIC
 config.reload.policy=ALWAYS
 
+oap.archive.scp.id_file_flag=-i
 oap.archive.sftp.id_file_flag=-i
 oap.archive.sftp.id_file=/Users/kamb/.ssh/oap-key-rsa
 
@@ -18,11 +19,17 @@ oap.archive.sftp.id_file=/Users/kamb/.ssh/oap-key-rsa
 metadata_editor.url=/oa/MetadataEditor/OAPMetadataEditor.html
 metadata_editor.post.url=/oa/MetadataEditor/document/postit
 
-oap.archive.notification.list=linus.kamb@noaa.gov
-#,john.relph@noaa.gov
+# oap.archive.notification.list=linus.kamb@noaa.gov
+# ,john.relph@noaa.gov
+oap.archive.notification.cc_list=linus.kamb@gmail.com
+oap.archive.notification.bcc_list=linus.kamb@noaa.gov
 
 oap.db.environment=development
 
 # oap.user.password.validate=false
 
 oap.email.password=bkhadoryyjbrpgfe
+
+tws.pkauth.debug=true
+tws.pkauth.certificates_dir=/local/tomcat/content/OAPUploadDashboard/config
+

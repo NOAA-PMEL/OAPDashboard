@@ -4,6 +4,7 @@
 package gov.noaa.pmel.dashboard.upload;
 
 import java.io.BufferedReader;
+import java.io.File;
 import java.io.InputStreamReader;
 import java.util.ArrayList;
 import java.util.List;
@@ -18,7 +19,6 @@ import gov.noaa.pmel.dashboard.shared.DashboardDataset;
 import gov.noaa.pmel.dashboard.shared.DashboardDatasetData;
 import gov.noaa.pmel.dashboard.shared.DashboardMetadata;
 import gov.noaa.pmel.dashboard.shared.DashboardUtils;
-import gov.noaa.pmel.dashboard.shared.FeatureType;
 import gov.noaa.pmel.dashboard.util.FormUtils;
 
 /**
@@ -56,12 +56,11 @@ public class StandardUploadProcessor extends FileUploadProcessor {
                 item.delete();
                 continue;
             }
-
+            File rawFile = null;
             try {
-                saveRawFile(item);
+                rawFile = saveRawFile(item);
             } catch (Exception ex) {
-                // TODO: log error, notify admin?
-                ex.printStackTrace();
+                throw new UploadProcessingException("Unable to save uploaded file.", ex);
             }
             
             // done with the uploaded data file
@@ -72,6 +71,7 @@ public class StandardUploadProcessor extends FileUploadProcessor {
             for ( DashboardDatasetData datasetData : datasetsMap.values() ) {
                 datasetData.setFileType(_fileType.name());
                 datasetData.setFeatureType(_featureType.name());
+                datasetData.setUploadedFile(rawFile.getPath());
                 // Check if the dataset already exists
                 datasetId = datasetData.getDatasetId();
                 boolean datasetExists = datasetHandler.dataFileExists(datasetId);

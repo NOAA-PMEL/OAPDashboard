@@ -60,6 +60,7 @@ public class DataFileHandler extends VersionedFileHandler {
 	private static final String VERSION_ID = "version";
 	private static final String UPLOAD_FILENAME_ID = "uploadfilename";
 	private static final String UPLOAD_TIMESTAMP_ID = "uploadtimestamp";
+	private static final String UPLOADED_FILE_ID = "uploadedfile";
 	private static final String DOI_ID = "doi";
 	private static final String DATA_CHECK_STATUS_ID = "datacheckstatus";
 	private static final String MD_TIMESTAMP_ID = "mdtimestamp";
@@ -713,6 +714,8 @@ public class DataFileHandler extends VersionedFileHandler {
 		datasetProps.setProperty(UPLOAD_FILENAME_ID, dataset.getUploadFilename());
 		// Upload timestamp
 		datasetProps.setProperty(UPLOAD_TIMESTAMP_ID, dataset.getUploadTimestamp());
+		// Uploaded original file
+		datasetProps.setProperty(UPLOADED_FILE_ID, dataset.getUploadedFile());
 		// Data DOI
 		datasetProps.setProperty(DOI_ID, dataset.getDoi());
 		// Data-check status string
@@ -1285,6 +1288,12 @@ public class DataFileHandler extends VersionedFileHandler {
 					UPLOAD_TIMESTAMP_ID + " given in " + infoFile.getPath());			
 		dataset.setUploadTimestamp(value);
 
+		// Name of uploaded orginal file
+		value = cruiseProps.getProperty(UPLOADED_FILE_ID);
+		if ( value == null )
+			logger.info("No property value for " + UPLOADED_FILE_ID + " given in " + infoFile.getPath());			
+		dataset.setUploadedFile(value);
+        
 		// Data file DOI
 		value = cruiseProps.getProperty(DOI_ID);
 		if ( value == null )

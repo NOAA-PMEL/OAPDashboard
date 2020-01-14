@@ -62,10 +62,11 @@ public abstract class FileUploadProcessor {
     protected void doOnExitGeneralProcessing(FileItem file) {
     }
     
-    protected void saveRawFile(FileItem item) throws Exception {
+    protected File saveRawFile(FileItem item) throws Exception {
         File targetDir = _rawFileHandler.createUploadTargetDir(_uploadFields.username());
         System.out.println("Saving raw " + item.getName());
-        _rawFileHandler.writeItem(item, targetDir);
+        File itemFile = _rawFileHandler.writeItem(item, targetDir);
+        return itemFile;
     }
     
     protected void generateEmptyMetadataFile(String datasetId) throws IOException {
