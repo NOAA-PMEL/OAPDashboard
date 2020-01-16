@@ -82,9 +82,7 @@ public class UploadDashboard implements EntryPoint, ValueChangeHandler<String> {
 		/** History tag for SubmitForQCPage */
 		SUBMIT_FOR_QC,
 		/** History tag for SubmitToArchivePage */
-		SUBMIT_TO_ARCHIVE,
-		/** History tag for DashboardLogoutPage */
-		LOGOUT
+		SUBMIT_TO_ARCHIVE
 	}
 
 	// Column widths in em's
@@ -179,6 +177,9 @@ public class UploadDashboard implements EntryPoint, ValueChangeHandler<String> {
 		}
 		pagePopups.get(page).add(popup);
 	}
+    public static DashboardServicesInterfaceAsync getService() {
+        return service;
+    }
     public static void closePopups() {
         closePreviews();
         if ( singleton.infoMsgPopup != null && singleton.infoMsgPopup.isVisible()) {
@@ -421,10 +422,6 @@ public class UploadDashboard implements EntryPoint, ValueChangeHandler<String> {
 		else if ( token.equals(PagesEnum.SUBMIT_FOR_QC.name()) ) {
 			// Submit for QC page from history
 			SubmitForQCPage.redisplayPage(currentPage.getUsername());
-		}
-		else if ( token.equals(PagesEnum.LOGOUT.name()) ) {
-			// Logout page from history
-			DashboardLogoutPage.redisplayPage();
 		}
 		else {
 			// Unknown page from the history; instead show the  cruise list page 

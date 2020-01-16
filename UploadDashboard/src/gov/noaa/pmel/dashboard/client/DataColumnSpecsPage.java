@@ -14,6 +14,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import com.google.gwt.core.client.GWT;
+import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.dom.client.BrowserEvents;
 import com.google.gwt.dom.client.NativeEvent;
 import com.google.gwt.dom.client.Style;
@@ -249,6 +250,14 @@ public class DataColumnSpecsPage extends CompositeWithUsername {
 		wasLoggingOut = false;
 
 		header.setPageTitle(TITLE_TEXT);
+        GWT.log("header: " + header);
+        header.setLogoutHandler(new Scheduler.ScheduledCommand() {
+            @Override
+            public void execute() {
+                logoutOnClick();
+            }
+        });
+
 		messagesButton.setText(MESSAGES_TEXT);
 		pagerLabel.setText(PAGER_LABEL_TEXT);
 		submitButton.setText(SUBMIT_TEXT);
@@ -696,8 +705,8 @@ public class DataColumnSpecsPage extends CompositeWithUsername {
 		}
 	}
 
-//	keep this here, since we have to do change detection
-	void logoutOnClick(ClickEvent event) {
+    //	keep this here, since we have to do change detection
+	void logoutOnClick() {
 		// Check if any changes have been made
 		boolean hasChanged = false;
 		for ( DatasetDataColumn dataCol : cruiseDataCols ) {
@@ -715,7 +724,7 @@ public class DataColumnSpecsPage extends CompositeWithUsername {
 		}
 		else {
 			// No changes; just log out
-			DashboardLogoutPage.showPage();
+            header.doLogout();
 		}
 	}
 
@@ -781,10 +790,10 @@ public class DataColumnSpecsPage extends CompositeWithUsername {
 				STAY_ON_THIS_PAGE_TEXT, new AsyncCallback<Boolean>() {
 			@Override
 			public void onSuccess(Boolean result) {
-				if ( result ) {
+				if ( result.booleanValue() ) {
 					if ( wasLoggingOut ) {
 						wasLoggingOut = false;
-						DashboardLogoutPage.showPage();
+						header.doLogout();
 					}
 					else {
 						// Return to the latest cruise listing page, which may  

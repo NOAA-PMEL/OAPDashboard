@@ -146,7 +146,10 @@
 			<web-resource-name>DashboardServices</web-resource-name>
 			<url-pattern>/DashboardUpdateService/*</url-pattern>
 			<url-pattern>/images/*</url-pattern>
+            <url-pattern>/accountrequested.html</url-pattern>
+            <url-pattern>/dashboardlogout.html</url-pattern>
             <url-pattern>/passwordhelp.html</url-pattern>
+            <url-pattern>/passwordreset.html</url-pattern>
             <url-pattern>/requestlogin.html</url-pattern>
             <url-pattern>/tx/*</url-pattern>
             <url-pattern>/tws/*</url-pattern>
@@ -166,6 +169,14 @@
 		</auth-constraint>
 	</security-constraint>
   
+<security-constraint>
+	<display-name>excluded</display-name>
+	<web-resource-collection>
+		<web-resource-name>No Access</web-resource-name>
+        <url-pattern>/dashboardlogin.html</url-pattern>
+	</web-resource-collection>
+	<auth-constraint />
+</security-constraint>
 <!--
 <security-constraint>
 	<display-name>excluded</display-name>
@@ -191,7 +202,6 @@
 		<transport-guarantee>NONE</transport-guarantee>
 	</user-data-constraint>
 </security-constraint>
-  -X->
   -->
 	<login-config>
 		<auth-method>FORM</auth-method>

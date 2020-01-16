@@ -24,7 +24,9 @@ import gov.noaa.pmel.dashboard.server.Users;
 @SuppressWarnings("serial")
 public class PublicServices extends HttpServlet {
 
-    static Logger logger = LogManager.getLogger(PublicServices.class);
+    private static final String SERVICES_PATH = "tx";
+    
+    private static Logger logger = LogManager.getLogger(PublicServices.class);
     
     /**
      * 
@@ -34,9 +36,9 @@ public class PublicServices extends HttpServlet {
 
 	@Override
 	protected void doGet(HttpServletRequest request, HttpServletResponse response) throws IOException {
-//        response.sendError(SC_FORBIDDEN);
-        System.out.println("PublicServices root");
-        response.getOutputStream().write("Good to go".getBytes());
+        logger.warn("PublicServices root");
+        response.sendError(SC_FORBIDDEN);
+//        response.getOutputStream().write("Good to go".getBytes());
 	}
 
 	@Override
@@ -46,20 +48,24 @@ public class PublicServices extends HttpServlet {
         try {
             String path = httpRequest.getPathInfo();
             String requestedOp = path.substring(path.lastIndexOf('/')+1);
+            String context = httpRequest.getRequestURI();
+            context = context.substring(0, context.indexOf(SERVICES_PATH));
             switch (requestedOp) {
                 case "reset_password":
                     Users.resetPassword(httpRequest.getParameter("user_or_email"));
-                    respondSuccess(httpResponse, "A new password will be emailed to the email address on file.");
+                    String newPasswordPage = context + "passwordreset.html";
+                    httpResponse.sendRedirect(newPasswordPage);
                     break;
                 case "request_account":
                     Users.requestAccount(httpRequest.getParameterMap());
-                    respondSuccess(httpResponse, "Your request has been entered, and you will hear from the System Administrators shortly.");
+                    String accountRequestPage = context + "accountrequested.html";
+                    httpResponse.sendRedirect(accountRequestPage);
                     break;
                 default:
                     respondFailure(httpResponse, SC_BAD_REQUEST);
             }
         } catch (Exception ex) {
-            respondFailure(httpResponse, ex);
+            respondFailure(httpResponse, "There was an error handling your request: " + ex.getMessage());
         }
 	}
 
@@ -68,6 +74,7 @@ public class PublicServices extends HttpServlet {
      * @throws IOException 
      */
     private static void respondSuccess(HttpServletResponse response, String msg) throws IOException {
+        response.setStatus(200);
         response.getOutputStream().write(msg.getBytes());
     }
         
@@ -76,8 +83,8 @@ public class PublicServices extends HttpServlet {
      * @param ex
      * @throws IOException 
      */
-    private static void respondFailure(HttpServletResponse response, Exception ex) throws IOException {
-        response.getOutputStream().write(("We were unable to reset your password: " + ex.getMessage()).getBytes());
+    private static void respondFailure(HttpServletResponse response, String msg) throws IOException {
+        response.getOutputStream().write(msg.getBytes());
     }
 
     private static void respondFailure(HttpServletResponse response, int code) throws IOException {

@@ -141,7 +141,7 @@ public class SubmitForQCPage extends CompositeWithUsername implements DataSubmis
 
 	@UiField InlineLabel titleLabel;
 	@UiField InlineLabel userInfoLabel;
-	@UiField Button logoutButton;
+//	@UiField Button logoutButton;
 	@UiField HTML introHtml;
 //	@UiField HTML archivePlanHtml;
 //	@UiField RadioButton laterRadio;
@@ -182,7 +182,7 @@ public class SubmitForQCPage extends CompositeWithUsername implements DataSubmis
 		hasSentDataset = false;
 
 		titleLabel.setText(TITLE_TEXT);
-		logoutButton.setText(LOGOUT_TEXT);
+//		logoutButton.setText(LOGOUT_TEXT);
 
 //		archivePlanHtml.setHTML(ARCHIVE_PLAN_INTRO);
 //
@@ -336,10 +336,10 @@ public class SubmitForQCPage extends CompositeWithUsername implements DataSubmis
 //		agreeShareCheckBox.setFocus(true);
 	}
 
-	@UiHandler("logoutButton")
-	void logoutOnClick(ClickEvent event) {
-		DashboardLogoutPage.showPage();
-	}
+//	@UiHandler("logoutButton")
+//	void logoutOnClick(ClickEvent event) {
+//		DashboardLogoutPage.showPage();
+//	}
 
 //	@UiHandler({"laterRadio","ownerRadio"})
 //	void radioOnClick(ClickEvent event) {
