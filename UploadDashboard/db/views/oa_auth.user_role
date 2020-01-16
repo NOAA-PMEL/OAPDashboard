@@ -1,0 +1,4 @@
+DROP VIEW IF EXISTS user_role;
+CREATE DEFINER=`root`@`localhost` SQL SECURITY INVOKER VIEW `user_role` AS select `u`.`username` AS
+`username`,`ur`.`userrole` AS `role` from (`oapdashboard`.`users` `u` join `oapdashboard`.`tomcatroles` `ur`) where (`u`.`db_id` = `ur`.`db_id`)
+
