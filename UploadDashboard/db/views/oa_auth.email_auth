@@ -1,0 +1,4 @@
+DROP VIEW IF EXISTS email_auth;
+CREATE DEFINER=`root`@`localhost` SQL SECURITY INVOKER VIEW `uid_auth` AS select `u`.`email` AS
+`username`,`ua`.`password` AS `password` from (`oapdashboard`.`users` `u` join `oapdashboard`.`tomcatusers` `ua`) where (`u`.`db_id` = `ua`.`db_id`)
+
