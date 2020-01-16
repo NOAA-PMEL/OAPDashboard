@@ -4,31 +4,74 @@
 <head>
 <meta http-equiv="content-type" content="text/html; charset=UTF-8" />
 <title>OAP Dashboard Login</title>
-<style type="">
-* {
-    font-family: Arial Unicode MS, Arial, sans-serif;
-    margin: 2px 0px;
-}
-.boxy {
+<style type="text/css">
+    * {
+        font-family: Arial Unicode MS, Arial, sans-serif;
+        margin: 2px 0px;
+    }
+    boxy {
     -webkit-box-sizing: border-box;
     -moz-box-sizing: border-box;
     box-sizing: border-box;
-}
-.banner {
-    position: fixed;
-/*     height: 100px; */
-    width: 100%;
-    background: #bffffe;
-    top: 0px;
-    left: 0px;
-}
-.noaaLogo {
-    position: fixed;
-    padding: 10px;
-    height: 50px;
-    top: 0px;
-    left: 0px;
-}
+    }
+    html, body {
+        width: 100%;
+        height: 100%;
+        background-color: #BBDDFF;
+        font-size: 100%;
+        margin: 0;
+        padding: 0;
+    }
+    .pageheader {
+        display: table;
+/*         width: 100%; */
+        height: 4em;
+        padding-top: 0em;
+        padding-bottom: 0em;
+/*         padding-right: .5em; */
+        margin-right: 2px;
+        overflow: visible;
+        /* background-color: #55a3e8; */
+    }
+    .headerLogo {
+        margin: .5em 2.4em 0.3em;
+    }
+    .headerInfo {
+        display: table-cell;
+        width: 100%;
+        /* padding-bottom: .5em; */
+        margin-left: .5em;
+        background-color: #55a3e8;
+        vertical-align: bottom;
+    }
+    .headerpagelabel {
+        display: inline;
+        font-size: large;
+        font-weight: bold;
+        margin: 0.25em 1em 0.3em;
+        color: white;
+        float: left;
+    }
+    .headersoftwaretitle {
+        position: absolute;
+        font-size: x-large;
+        color: white;
+        left: 38%;
+        top: .25em;
+    }
+    .titlereset {
+        clear: both;
+    }
+    .login_table {
+        border: groove lightgray;
+        background: #e4ffff;
+        padding: 1.5em 1.75em 1.25em;
+        position: fixed;
+        left: 50%;
+        top: 50%;
+        transform: translate(-50%, -70%)
+    }
+
 .login_form {
     border: groove lightgray;
     background: #e4ffff;
@@ -83,9 +126,7 @@
 .hidden {
     display: none;
 }
-      
 
- style="text-align:center; padding-bottom: 1em;"
 </style>
 </head>
 
@@ -163,13 +204,19 @@ var row_id_num = 0;
       input.tabIndex=9+2*tx;
   }
   function cancelRequest() {
-	  window.location.assign("oap");
+      window.history.back();
   }
 </script>
+<div class="pageheader" style="position: absolute; left: 0px; top: 0px; right: 0px; bottom: 0px;">
+    <img class="headerLogo" src="images/noaa_logo_50x50.png"></img>
+    <div class="headerInfo">
+      <span class="headerpagelabel"></span>
+      <div class="headersoftwaretitle">OAP Scientific Data Integration System</div>
+      <div class="titlereset"/>
+    </div>
+</div>
+
 <form id="request_login_form" method="post" action="tx/request_account">
-  <div class="banner">
-    <img src="images/noaa_logo_50x50.gif" class="noaaLogo"/>
-  </div>
   <div class="login_form" >
     <div class="header_section"><b>Please enter the following information<br/>to request an OAP Dashboard user account:</b></div>
     <div class="name_block">
@@ -199,6 +246,7 @@ var row_id_num = 0;
           <input tabindex="6" style="width: 3em;" type="text" name="extn" />
       </div>
     </div>
+ <!--
     <div class="resid_block">
         <div class="row">
             <div class="first_plus">Researcher ID:</div>
@@ -207,6 +255,7 @@ var row_id_num = 0;
         </div>
         <div id="resid_rows" ></div>
     </div>
+ --> 
     <div class="row">
       <div class="first_plus">Organization:</div>
       <input tabindex="12" class="remainder_width" type="text" name="org" />

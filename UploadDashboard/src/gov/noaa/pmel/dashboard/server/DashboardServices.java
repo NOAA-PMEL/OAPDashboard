@@ -124,7 +124,7 @@ public class DashboardServices extends RemoteServiceServlet implements Dashboard
 			session.invalidate();
 		} catch ( Exception ex ) {
 			// Log but otherwise ignore this error
-			logger.error("session.invalidate failed: " + ex.getMessage());
+			logger.error("session.invalidate failed: " + ex);
 		}
 		logger.info("logged out " + username);
 	}
