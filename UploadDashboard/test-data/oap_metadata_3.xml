@@ -1,0 +1,454 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<metadata>
+  <person>
+    <name>Simone R. Alin</name>
+    <organization>NOAA Pacific Marine Environmental Laboratory</organization>
+    <deliverypoint1 />
+    <deliverypoint2 />
+    <phone>206-526-6819</phone>
+    <email>simone.r.alin@noaa.gov</email>
+    <role>investigator</role>
+  </person>
+  <person>
+    <name>Jan Newton</name>
+    <organization>University of Washington Applied Physics Laboratory</organization>
+    <deliverypoint1 />
+    <deliverypoint2 />
+    <phone>206-543-9152</phone>
+    <email>janewton@uw.edu</email>
+    <role>investigator</role>
+  </person>
+  <person>
+    <name>Richard A. Feely</name>
+    <organization>NOAA Pacific Marine Environmental Laboratory</organization>
+    <deliverypoint1 />
+    <deliverypoint2 />
+    <phone>206-526-6214</phone>
+    <email>Richard.A.Feely@noaa.gov</email>
+    <role>investigator</role>
+  </person>
+  <person>
+    <name>Mark Warner</name>
+    <organization>University of Washington School of Oceanography</organization>
+    <deliverypoint1 />
+    <deliverypoint2 />
+    <phone>206-543-0765</phone>
+    <email>warner@uw.edu</email>
+    <role>investigator</role>
+  </person>
+  <datasubmitter>
+    <name>Julian Herndon</name>
+    <organization>NOAA Pacific Marine Environmental Laboratory</organization>
+    <deliverypoint1 />
+    <deliverypoint2 />
+    <phone>206-526-6256</phone>
+    <email>Julian.Herndon@noaa.gov</email>
+  </datasubmitter>
+  <abstract>This UW PRISM Puget Sound cruise took place from 02/04/2008 to 02/08/2008 aboard the R/V Thomas G. Thompson.  42 time-series stations were occupied in the Salish Sea in Washington State marine waters.  The cruise was designed to obtain a synoptic snapshot of key carbon, physical, and other biogeochemical parameters as they relate to ocean acidification (OA) in Washington's estuarine and coastal environments.  At all sampling stations, CTD casts were conducted to measure temperature, conductivity, pressure, and oxygen concentrations using CTD and oxygen sensors. Discrete water samples were collected throughout the water column at all stations in Niskin bottles.  Laboratory analyses were run to measure dissolved inorganic carbon (DIC), oxygen, and nutrient concentrations and total alkalinity.  More information--including a map of stations occupied during this cruise (and other Salish cruises), full-resolution CTD downcast data for all stations sampled, chlorophyll and phaeopigment concentrations, and other sensor data--can be found at nvs.nanoos.org/CruiseSalish by exploring the Map, Data, and Plots tabs. This effort was conducted in support of the estuarine and coastal monitoring and research objectives of the UW PRISM program and conforms to monitoring guidelines of the Global Ocean Acidification Observing Network (goa-on.org) and the U.S. National Oceanic and Atmospheric Administration's Ocean Acidification Program.  The official R/V Thomas G. Thompson code for this cruise is TN216.  
+
+Data Use Policy: Data from UW/PRISM/NANOOS/WOAC/NOAA/PMEL cruises in Washington waters (hereafter “Salish cruises”) are made freely available to the public and the scientific community in the belief that their wide dissemination will lead to greater understanding and new scientific and policy insights. The availability of these data does not constitute publication of the data or permission to use the data, or information contained in them, for publication or commercial use.  The investigators sharing these data rely on the ethics and integrity of the user to ensure that the institutions and investigators involved in producing Salish cruises data sets receive fair credit for their work.  If the data are obtained for potential use in a publication or presentation, the investigators should be informed at the outset of the nature of this work. If these data are essential to the work, or if an important result or conclusion depends on these data, co-authorship may be appropriate.  This should be discussed at an early stage in the work.  Manuscripts using these data should be sent to all investigators listed in the metadata for review before they are submitted for publication so that we can ensure that the quality and limitations of the data are accurately represented.</abstract>
+  <purpose>The major objectives of the cruise were:
+1) To characterize ocean acidification (OA) conditions in the Salish Sea and adjoining coastal waters;
+2) To conduct inter-calibration measurements near other OA observing assets, including moorings, in the study area, allowing inter-calibration of these autonomous assets with high-quality, ship-based measurements;
+3) To provide calibration data needed to develop and validate predictive models for aragonite saturation state, pH, and other important OA indicators in the Salish Sea and adjoining coastal waters, based on widely measured parameters such as salinity, temperature, and oxygen concentration;
+4) To examine relationships between processes leading to OA and hypoxia in estuarine and coastal ecosystems;
+5) To conduct biological measurements in conjunction with physical and chemical OA measurements; and
+6) To provide scientific information on OA conditions and trends for resource management and decision support.</purpose>
+  <expocode>3.25020080402E11</expocode>
+  <cruiseID>TN216</cruiseID>
+  <section>Puget Sound</section>
+  <citation>Simone R. Alin, Jan Newton, Richard A. Feely, Mark Warner, Corinne Bassin</citation>
+  <suppleInfo>http://nvs.nanoos.org/CruiseSalish</suppleInfo>
+  <startdate>Mon Mar 03 00:00:00 GMT-800 2008</startdate>
+  <enddate>Fri Mar 07 00:00:00 GMT-800 2008</enddate>
+  <westbd>-123.2305</westbd>
+  <eastbd>-122.305666666667</eastbd>
+  <northbd>48.4018333333333</northbd>
+  <southbd>47.1651666666667</southbd>
+  <spatialReference>WGS 84</spatialReference>
+  <geographicName>Salish Sea, Puget Sound, Strait of Juan de Fuca, U.S. West Coast, California Current System, Washington</geographicName>
+  <fundingAgency>
+    <agency>UW PRISM, NOAA</agency>
+    <title>Not applicable</title>
+    <ID>Not applicable</ID>
+  </fundingAgency>
+  <platform>
+    <name>R/V Thomas G. Thompson</name>
+    <ID>3250.0</ID>
+    <type>Global Class, T-AGOR-23</type>
+    <owner>U.S. Navy Of?ce of Naval Research</owner>
+    <country>U.S.A.</country>
+  </platform>
+  <variable>
+    <fullname>Dissolved inorganic carbon</fullname>
+    <abbrev>DIC_umol_kg</abbrev>
+    <observationType>Discrete measurements from samples collected on CTD casts</observationType>
+    <insitu />
+    <manipulationMethod>Not applicable</manipulationMethod>
+    <unit>micromoles per kilogram of seawater (umol/kg-SW)</unit>
+    <samplingInstrument>Niskin bottle</samplingInstrument>
+    <analyzingInstrument>Two systems consisting of a coulometer (UIC Inc.) coupled with a Dissolved Inorganic Carbon Extractor (DICE) inlet system. DICE was developed by Esa Peltola and Denis Pierrot of NOAA/AOML and Dana Greeley of  NOAA/PMEL to modernize a carbon extractor called SOMMA (Johnson et al. 1985, 1987, 1993, and 1999; Johnson 1992)</analyzingInstrument>
+    <detailedInfo>PLEASE NOTE: DIC may be referred to as TCO2, TCARBN, or C(sub)T in other data sets.  All of these abbreviations refer to the total dissolved inorganic carbon concentration (i.e., the combined concentration of dissolved CO2, bicarbonate ion, and carbonate ion).
+
+Samples for DIC measurements were drawn according to procedures outlined in the 2007 PICES Special Publication, Guide to Best Practices for Ocean CO2 Measurements, from Niskin bottles into ~0.5 L borosilicate glass flasks using silicone tubing. The flasks were rinsed once and filled from the bottom with care not to entrain any bubbles, overflowing by at least one-half volume. The sample tube was pinched off and withdrawn, creating a small headspace, and 0.2 mL of saturated HgCl2 solution was added as a preservative. The sample bottles were then sealed with glass stoppers lightly covered with Apiezon-L grease. DIC samples were collected from variety of depths with approximately 10% of these samples taken as duplicates.  Sample bottles were inverted several times to ensure mixing of the HgCl2 throughout the sample.
+
+The accuracy of the DICE measurement is determined with the use of standards (Certified Reference Materials (CRMs), consisting of filtered and UV-irradiated seawater) supplied by Dr. Andrew Dickson of Scripps Institution of Oceanography (SIO). The CRM accuracy is determined manometrically on land in San Diego. DIC data reported to the Ocean Carbon and Acidification Data Portal have been corrected to the appropriate certified batch value.  Sample seawater from XXXX Niskin bottles was analyzed for DIC for this cruise.</detailedInfo>
+    <replicate>Duplicate samples were collected from approximately 10% of the Niskins sampled, as a check of our precision.  These replicate samples were interspersed throughout the station analysis for quality assurance and integrity of the coulometer cell solutions. The average absolute difference from the mean of these replicates is 0.75 µmol/kg.  No systematic differences between the replicates were observed.</replicate>
+    <standard>
+      <frequency>1) Gas loops were run at the beginning and end of each cell; 2) CRM’s supplied by Dr. A. Dickson of SIO, were measured near the beginning; and 3) Duplicate samples were typically run throughout the life of the cell solution.</frequency>
+      <crm>
+        <manufacturer>Dr. Andrew Dickson (Scripps Institution of Oceanography)</manufacturer>
+        <batch>Various</batch>
+      </crm>
+    </standard>
+    <poison>
+      <poisonName>Mercuric Chloride Solution</poisonName>
+      <volume>0.12 ml</volume>
+      <correction>The DIC values were corrected for dilution by 0.12 ml of saturated HgCl2 used for sample preservation. The total water volume of the sample bottles was 302.55 ml. The correction factor used for dilution was 1.0004.</correction>
+    </poison>
+    <uncertainty>±0.1%</uncertainty>
+    <flag>DIC_QC, WOCE quality control flags are used: 2 = good value, 3 = questionable value, 4 = bad value, 5 = value not reported, 6 = mean of replicate measurements, 9 = sample not drawn.</flag>
+    <methodReference>Dickson, A.G., C.L. Sabine, and J.R. Christian (eds.). 2007. Guide to best practices for ocean CO2 measurements. PICES Special Publication 3, 191 pp.Johnson, K.M., A.E. King, and J. McN. Sieburth. 1985. Coulometric DIC analyses for marine studies: An introduction. Mar. Chem., 16, 61–82.Johnson, K.M., P.J. Williams, L. Brandstrom, and J. McN. Sieburth. 1987. Coulometric total carbon analysis for marine studies: Automation and calibration. Mar. Chem., 21, 117–133.Johnson, K.M. 1992. Operator’s manual: Single operator multiparameter metabolic analyzer (SOMMA) for total carbon dioxide (CT) with coulometric detection. Brookhaven National Laboratory, Brookhaven, N.Y., 70 pp.Johnson, K.M., K.D. Wills, D.B. Butler, W.K. Johnson, and C.S. Wong. 1993. Coulometric total carbon dioxide analysis for marine studies: Maximizing the performance of an automated continuous gas extraction system and coulometric detector. Mar. Chem., 44, 167–189.Johnson, K.M., Kortzinger, A.; Mintrop, L.; Duinker, J.C.; and Wallace, D.W.R. 1999. Coulometric total carbon dioxide analysis for marine studies: Measurement and internal consistency of underway surface TCO2 concentrations. Marine Chemistry 67(1):123-144.</methodReference>
+    <researcherName>Dana Greeley</researcherName>
+    <researcherInstitution>Pacific Marine Environmental Laboratory, National Oceanic and Atmospheric Administration</researcherInstitution>
+  </variable>
+  <variable>
+    <fullname>Total alkalinity</fullname>
+    <abbrev>DIC_umol_kg</abbrev>
+    <observationType>Discrete measurements from samples collected on CTD casts</observationType>
+    <insitu />
+    <manipulationMethod>Not applicable</manipulationMethod>
+    <unit>micromoles per kilogram of seawater (umol/kg-SW)</unit>
+    <samplingInstrument>Niskin bottle</samplingInstrument>
+    <analyzingInstrument>Two systems consisting of a coulometer (UIC Inc.) coupled with a Dissolved Inorganic Carbon Extractor (DICE) inlet system. DICE was developed by Esa Peltola and Denis Pierrot of NOAA/AOML and Dana Greeley of  NOAA/PMEL to modernize a carbon extractor called SOMMA (Johnson et al. 1985, 1987, 1993, and 1999; Johnson 1992)</analyzingInstrument>
+    <detailedInfo>PLEASE NOTE: DIC may be referred to as TCO2, TCARBN, or C(sub)T in other data sets.  All of these abbreviations refer to the total dissolved inorganic carbon concentration (i.e., the combined concentration of dissolved CO2, bicarbonate ion, and carbonate ion).
+
+Samples for DIC measurements were drawn according to procedures outlined in the 2007 PICES Special Publication, Guide to Best Practices for Ocean CO2 Measurements, from Niskin bottles into ~0.5 L borosilicate glass flasks using silicone tubing. The flasks were rinsed once and filled from the bottom with care not to entrain any bubbles, overflowing by at least one-half volume. The sample tube was pinched off and withdrawn, creating a small headspace, and 0.2 mL of saturated HgCl2 solution was added as a preservative. The sample bottles were then sealed with glass stoppers lightly covered with Apiezon-L grease. DIC samples were collected from variety of depths with approximately 10% of these samples taken as duplicates.  Sample bottles were inverted several times to ensure mixing of the HgCl2 throughout the sample.
+
+The accuracy of the DICE measurement is determined with the use of standards (Certified Reference Materials (CRMs), consisting of filtered and UV-irradiated seawater) supplied by Dr. Andrew Dickson of Scripps Institution of Oceanography (SIO). The CRM accuracy is determined manometrically on land in San Diego. DIC data reported to the Ocean Carbon and Acidification Data Portal have been corrected to the appropriate certified batch value.  Sample seawater from XXXX Niskin bottles was analyzed for DIC for this cruise.</detailedInfo>
+    <replicate>Duplicate samples were collected from approximately 10% of the Niskins sampled, as a check of our precision.  These replicate samples were interspersed throughout the station analysis for quality assurance and integrity of the coulometer cell solutions. The average absolute difference from the mean of these replicates is 0.75 µmol/kg.  No systematic differences between the replicates were observed.</replicate>
+    <standard>
+      <frequency>1) Gas loops were run at the beginning and end of each cell; 2) CRM’s supplied by Dr. A. Dickson of SIO, were measured near the beginning; and 3) Duplicate samples were typically run throughout the life of the cell solution.</frequency>
+      <crm>
+        <manufacturer>Dr. Andrew Dickson (Scripps Institution of Oceanography)</manufacturer>
+        <batch>Various</batch>
+      </crm>
+    </standard>
+    <poison>
+      <poisonName>Mercuric Chloride Solution</poisonName>
+      <volume>0.12 ml</volume>
+      <correction>The DIC values were corrected for dilution by 0.12 ml of saturated HgCl2 used for sample preservation. The total water volume of the sample bottles was 302.55 ml. The correction factor used for dilution was 1.0004.</correction>
+    </poison>
+    <uncertainty>±0.1%</uncertainty>
+    <flag>DIC_QC, WOCE quality control flags are used: 2 = good value, 3 = questionable value, 4 = bad value, 5 = value not reported, 6 = mean of replicate measurements, 9 = sample not drawn.</flag>
+    <methodReference>Dickson, A.G., C.L. Sabine, and J.R. Christian (eds.). 2007. Guide to best practices for ocean CO2 measurements. PICES Special Publication 3, 191 pp.Johnson, K.M., A.E. King, and J. McN. Sieburth. 1985. Coulometric DIC analyses for marine studies: An introduction. Mar. Chem., 16, 61–82.Johnson, K.M., P.J. Williams, L. Brandstrom, and J. McN. Sieburth. 1987. Coulometric total carbon analysis for marine studies: Automation and calibration. Mar. Chem., 21, 117–133.Johnson, K.M. 1992. Operator’s manual: Single operator multiparameter metabolic analyzer (SOMMA) for total carbon dioxide (CT) with coulometric detection. Brookhaven National Laboratory, Brookhaven, N.Y., 70 pp.Johnson, K.M., K.D. Wills, D.B. Butler, W.K. Johnson, and C.S. Wong. 1993. Coulometric total carbon dioxide analysis for marine studies: Maximizing the performance of an automated continuous gas extraction system and coulometric detector. Mar. Chem., 44, 167–189.Johnson, K.M., Kortzinger, A.; Mintrop, L.; Duinker, J.C.; and Wallace, D.W.R. 1999. Coulometric total carbon dioxide analysis for marine studies: Measurement and internal consistency of underway surface TCO2 concentrations. Marine Chemistry 67(1):123-144.</methodReference>
+    <researcherName>Dana Greeley</researcherName>
+    <researcherInstitution>Pacific Marine Environmental Laboratory, National Oceanic and Atmospheric Administration</researcherInstitution>
+  </variable>
+  <variable>
+    <fullname>phosphate (PO4)</fullname>
+    <abbrev>PHOSPHATE_umol_kg</abbrev>
+    <observationType>Discrete measurements from samples collected in Niskin bottles on CTD casts</observationType>
+    <insitu>In-situ observation</insitu>
+    <unit>micromoles per kilogram of seawater (umol/kg-SW)</unit>
+    <measured>Measured</measured>
+    <samplingInstrument>Niskin bottle</samplingInstrument>
+    <analyzingInstrument>Seal Analytical AA3</analyzingInstrument>
+    <detailedInfo>From the Niskin bottle, seawater was drawn into 60 mL HDPE sample bottles to rinse the bottle and cap twice.  Plungers were removed from 60 mL syringes with Nalgene filters attached (surfactant-free cellulose, 25 mm, 0.45 micron pore size) and rinsed twice with seawater from the Niskin.  The syringe was filled with sample water from the Niskin.  The plunger was inserted, the syringe inverted, and the filter removed to remove the air bubble.  With the filter re-attached, about 5 mL of of sample water was filtered into sample bottle to rinse and then discarded.  45-50 mL of sample was filtered into sample bottle, such that it was less than 2/3 full.  The cap was secured and the bottle frozen upright in a -10 degree Celsius freezer until analyzed.  Analyses and calibration followed the protocols of the WOCE Hydrographic Program using a Seal Analytical AA3 (UNESCO 1994).</detailedInfo>
+    <replicate>No replicate samples were collected or analyzed.</replicate>
+    <standard>
+      <crm />
+    </standard>
+    <poison />
+    <uncertainty>Accreditation codes and detection limits: EPA 365.5_1.4_1997, NELAC Code WM920270, MDLs 0.014uM, 0.0004mg/L (from https://www.ocean.washington.edu/story/Marine+Chemistry+Laboratory).</uncertainty>
+    <flag>Data have not been quality controlled after laboratory analysis.  Laboratory quality assurance procedures were followed, as detailed in UNESCO (1994).</flag>
+    <methodReference>UNESCO (1994). Protocols for the joint global ocean flux study (JGOFS) core measurements. Vol. 29.</methodReference>
+    <researcherName>Kathy Krogsland</researcherName>
+    <researcherInstitution>University of Washington School of Oceanography</researcherInstitution>
+  </variable>
+  <variable>
+    <fullname>CTD pressure</fullname>
+    <abbrev>PRESS_DB</abbrev>
+    <observationType>Water column profile</observationType>
+    <insitu>In-situ observation</insitu>
+    <unit>dbars (=decibars)</unit>
+    <measured>Measured</measured>
+    <calcMethod>Not applicable</calcMethod>
+    <samplingInstrument>Sea-Bird Scientific SBE 9plus CTD</samplingInstrument>
+    <detailedInfo>This file contains the up cast data collected using the CTD package and any additional sensors attached to a rosette cage deployed on a research vessel. The up cast data correspond to when the bottles on the rosette cage were fired and water samples were collected. All up casts during the cruise are contained in this file and are sorted by station.  CTD data were processed using Sea-Bird's proprietary data processing software.</detailedInfo>
+    <standard>
+      <crm />
+    </standard>
+    <poison />
+    <uncertainty>Pressure: initial accuracy =  +/- 0.015% of full scale range; typical stability = 0.02% of full scale per year; master clock error contribution = Pressure 0.3 dbar (for 6800 meter depth-rated sensor)</uncertainty>
+    <flag>No data flags were applied to CTD data</flag>
+    <methodReference>Sea-Bird Scientific web site: http://www.seabird.com/sbe911plus-ctd</methodReference>
+    <researcherName>Jan Newton</researcherName>
+    <researcherInstitution>University of Washington Applied Physics Laboratory</researcherInstitution>
+  </variable>
+  <variable>
+    <fullname>Longitude, where a negative value denotes degrees W.</fullname>
+    <abbrev>Longitude</abbrev>
+    <standard>
+      <crm />
+    </standard>
+    <poison />
+  </variable>
+  <variable>
+    <fullname>nitrite (NO2)</fullname>
+    <abbrev>NITRITE_umol_kg</abbrev>
+    <observationType>Discrete measurements from samples collected in Niskin bottles on CTD casts</observationType>
+    <insitu>In-situ observation</insitu>
+    <unit>micromoles per kilogram of seawater (umol/kg-SW)</unit>
+    <measured>Measured</measured>
+    <calcMethod>We converted nutrient concentrations provided in µmol/L at analytical temperatures (22 degrees Celsius) to µmol/kg units by dividing nutrient concentrations in µmol/L by the density of the sample seawater at the CTD salinity value and analytical temperature.</calcMethod>
+    <samplingInstrument>Niskin bottle</samplingInstrument>
+    <analyzingInstrument>Seal Analytical AA3</analyzingInstrument>
+    <detailedInfo>From the Niskin bottle, seawater was drawn into 60 mL HDPE sample bottles to rinse the bottle and cap twice.  Plungers were removed from 60 mL syringes with Nalgene filters attached (surfactant-free cellulose, 25 mm, 0.45 micron pore size) and rinsed twice with seawater from the Niskin.  The syringe was filled with sample water from the Niskin.  The plunger was inserted, the syringe inverted, and the filter removed to remove the air bubble.  With the filter re-attached, about 5 mL of of sample water was filtered into sample bottle to rinse and then discarded.  45-50 mL of sample was filtered into sample bottle, such that it was less than 2/3 full.  The cap was secured and the bottle frozen upright in a -10 degree Celsius freezer until analyzed.  Analyses and calibration followed the protocols of the WOCE Hydrographic Program using a Seal Analytical AA3 (UNESCO 1994).</detailedInfo>
+    <replicate>No replicate samples were collected or analyzed.</replicate>
+    <standard>
+      <crm />
+    </standard>
+    <poison />
+    <uncertainty>Accreditation codes and detection limits: EPA 353.4_2_1997, NELAC Code 10068209, MDLs 0.011uM, 0.0002mg/L (from https://www.ocean.washington.edu/story/Marine+Chemistry+Laboratory).</uncertainty>
+    <flag>Data have not been quality controlled after laboratory analysis.  Laboratory quality assurance procedures were followed, as detailed in UNESCO (1994).</flag>
+    <methodReference>UNESCO (1994). Protocols for the joint global ocean flux study (JGOFS) core measurements. Vol. 29.</methodReference>
+    <researcherName>Kathy Krogsland</researcherName>
+    <researcherInstitution>University of Washington School of Oceanography</researcherInstitution>
+  </variable>
+  <variable>
+    <fullname>oxygen concentration in discrete bottle samples</fullname>
+    <abbrev>BOT_OXY_avg_mg_L</abbrev>
+    <observationType>Water column profile</observationType>
+    <insitu>In-situ observation</insitu>
+    <unit>milligrams per liter (mg/L)</unit>
+    <measured>Measured</measured>
+    <samplingInstrument>Niskin bottle</samplingInstrument>
+    <analyzingInstrument>Custom system built to analyze dissolved oxygen concentration by Winkler titration with colorimetric endpoint detection</analyzingInstrument>
+    <detailedInfo>The analysis method is based upon the Carpenter (1965) whole flask titration of iodine, which is produced by an equivalent amount of dissolved oxygen. An automated titrator (Brinkman Dosimat) uses an amperometric end-point detection as described by Culberson and Huang (1987) and modified for IBM-PC computers by Knapp et al. (1990). The nominal 125-ml iodine flasks are used for sampling are pre-calibrated so their volumes are precisely known.  Samples were titrated within a few hours of being collected. 633 discrete oxygen samples were run to validate sensor O2 observations on the CTD package.</detailedInfo>
+    <replicate>We collected and analyzed duplicate samples from approximately 10% of the Niskins sampled.</replicate>
+    <standard>
+      <crm />
+    </standard>
+    <poison />
+    <flag>BOT_OXY_flag, WOCE quality control flags are used: 2 = good value, 3 = questionable value, 4 = bad value, 5 = value not reported, 6 = mean of replicate measurements, 9 = sample not drawn.</flag>
+    <researcherName>Jan Newton</researcherName>
+    <researcherInstitution>University of Washington Applied Physics Laboratory</researcherInstitution>
+  </variable>
+  <variable>
+    <fullname>Date, expressed in Coordinated Universal Time (UTC).</fullname>
+    <abbrev>Date</abbrev>
+    <standard>
+      <crm />
+    </standard>
+    <poison />
+  </variable>
+  <variable>
+    <fullname>Niskin bottle number on the sampling rosette during the cruise</fullname>
+    <abbrev>Niskin</abbrev>
+    <standard>
+      <crm />
+    </standard>
+    <poison />
+  </variable>
+  <variable>
+    <fullname>CTD temperature, ITS-90 scale</fullname>
+    <abbrev>CTD_TMP_deg_C</abbrev>
+    <observationType>Water column profile</observationType>
+    <insitu>In-situ observation</insitu>
+    <unit>degrees celsius, ITS-90 scale</unit>
+    <measured>Measured</measured>
+    <samplingInstrument>Sea-Bird Scientific SBE 9plus CTD</samplingInstrument>
+    <detailedInfo>This file contains the up cast data collected using the CTD package and any additional sensors attached to a rosette cage deployed on a research vessel. The up cast data correspond to when the bottles on the rosette cage were fired and water samples were collected. All up casts during the cruise are contained in this file and are sorted by station.  CTD data were processed using Sea-Bird's proprietary data processing software.</detailedInfo>
+    <standard>
+      <crm />
+    </standard>
+    <poison />
+    <uncertainty>Temperature: initial accuracy = +/- 0.001 degrees Celsius; typical stability = 0.0002 degrees Celsius per month; master clock error contribution = 0.00016 degrees Celsius</uncertainty>
+    <flag>No data flags were applied to CTD data</flag>
+    <methodReference>Sea-Bird Scientific web site: http://www.seabird.com/sbe911plus-ctd</methodReference>
+    <researcherName>Jan Newton</researcherName>
+    <researcherInstitution>University of Washington Applied Physics Laboratory</researcherInstitution>
+  </variable>
+  <variable>
+    <fullname>Time, expressed in Coordinated Universal Time (UTC).</fullname>
+    <abbrev>Time</abbrev>
+    <standard>
+      <crm />
+    </standard>
+    <poison />
+  </variable>
+  <variable>
+    <fullname>Latitude, where a positive value denotes degrees N.</fullname>
+    <abbrev>Latitude</abbrev>
+    <standard>
+      <crm />
+    </standard>
+    <poison />
+  </variable>
+  <variable>
+    <fullname>CTD salinity</fullname>
+    <abbrev>CTD_SAL_PSU_PSS-78</abbrev>
+    <observationType>Water column profile</observationType>
+    <insitu>In-situ observation</insitu>
+    <unit>1978 Practical Salinity Scale</unit>
+    <measured>Calculated from conductivity measurements.</measured>
+    <samplingInstrument>Sea-Bird Scientific SBE 4 Conductivity Sensor</samplingInstrument>
+    <detailedInfo>This file contains the up cast data collected using the CTD package and any additional sensors attached to a rosette cage deployed on a research vessel. The up cast data correspond to when the bottles on the rosette cage were fired and water samples were collected. All up casts during the cruise are contained in this file and are sorted by station.  CTD data were processed using Sea-Bird's proprietary data processing software.</detailedInfo>
+    <standard>
+      <crm />
+    </standard>
+    <poison />
+    <uncertainty>Conductivity: initial accuracy = +/- 0.0003 S/m; typical stability = 0.0003 S/m per month; master clock error contribution = 0.00005 S/m</uncertainty>
+    <flag>No data flags were applied to CTD data</flag>
+    <methodReference>Sea-Bird Scientific web site: http://www.seabird.com/sbe911plus-ctd</methodReference>
+    <researcherName>Jan Newton</researcherName>
+    <researcherInstitution>University of Washington Applied Physics Laboratory</researcherInstitution>
+  </variable>
+  <variable>
+    <fullname>ammonia (NH3)</fullname>
+    <abbrev>AMMONIA_umol_kg</abbrev>
+    <observationType>Discrete measurements from samples collected in Niskin bottles on CTD casts</observationType>
+    <insitu>In-situ observation</insitu>
+    <unit>micromoles per kilogram of seawater (umol/kg-SW)</unit>
+    <measured>Measured</measured>
+    <samplingInstrument>Niskin bottle</samplingInstrument>
+    <analyzingInstrument>Seal Analytical AA3</analyzingInstrument>
+    <detailedInfo>From the Niskin bottle, seawater was drawn into 60 mL HDPE sample bottles to rinse the bottle and cap twice.  Plungers were removed from 60 mL syringes with Nalgene filters attached (surfactant-free cellulose, 25 mm, 0.45 micron pore size) and rinsed twice with seawater from the Niskin.  The syringe was filled with sample water from the Niskin.  The plunger was inserted, the syringe inverted, and the filter removed to remove the air bubble.  With the filter re-attached, about 5 mL of of sample water was filtered into sample bottle to rinse and then discarded.  45-50 mL of sample was filtered into sample bottle, such that it was less than 2/3 full.  The cap was secured and the bottle frozen upright in a -10 degree Celsius freezer until analyzed.  Analyses and calibration followed the protocols of the WOCE Hydrographic Program using a Seal Analytical AA3 (UNESCO 1994).</detailedInfo>
+    <replicate>No replicate samples were collected or analyzed.</replicate>
+    <standard>
+      <crm />
+    </standard>
+    <poison />
+    <uncertainty>Accreditation codes and detection limits: EPA 349, NELAC Code WM920220, MDLs 0.047uM, 0.0007mg/L (from https://www.ocean.washington.edu/story/Marine+Chemistry+Laboratory).</uncertainty>
+    <flag>Data have not been quality controlled after laboratory analysis.  Laboratory quality assurance procedures were followed, as detailed in UNESCO (1994).</flag>
+    <methodReference>UNESCO (1994). Protocols for the joint global ocean flux study (JGOFS) core measurements. Vol. 29.</methodReference>
+    <researcherName>Kathy Krogsland</researcherName>
+    <researcherInstitution>University of Washington School of Oceanography</researcherInstitution>
+  </variable>
+  <variable>
+    <fullname>nitrate (NO3)</fullname>
+    <abbrev>NITRATE_umol_kg</abbrev>
+    <observationType>Discrete measurements from samples collected in Niskin bottles on CTD casts</observationType>
+    <insitu>In-situ observation</insitu>
+    <unit>micromoles per kilogram of seawater (umol/kg-SW)</unit>
+    <measured>Measured</measured>
+    <samplingInstrument>Niskin bottle</samplingInstrument>
+    <analyzingInstrument>Analyses and calibration follow the protocols of the WOCE Hydrographic Program using a Seal Analytical AA3.</analyzingInstrument>
+    <detailedInfo>From the Niskin bottle, seawater was drawn into 60 mL HDPE sample bottles to rinse the bottle and cap twice.  Plungers were removed from 60 mL syringes with Nalgene filters attached (surfactant-free cellulose, 25 mm, 0.45 micron pore size) and rinsed twice with seawater from the Niskin.  The syringe was filled with sample water from the Niskin.  The plunger was inserted, the syringe inverted, and the filter removed to remove the air bubble.  With the filter re-attached, about 5 mL of of sample water was filtered into sample bottle to rinse and then discarded.  45-50 mL of sample was filtered into sample bottle, such that it was less than 2/3 full.  The cap was secured and the bottle frozen upright in a -10 degree Celsius freezer until analyzed.  Analyses and calibration followed the protocols of the WOCE Hydrographic Program using a Seal Analytical AA3 (UNESCO 1994).</detailedInfo>
+    <replicate>No replicate samples were collected or analyzed.</replicate>
+    <standard>
+      <crm />
+    </standard>
+    <poison />
+    <uncertainty>Accreditation codes and detection limits: EPA 353.4_2_1997, NELAC Code 10068209, MDLs 0.288uM, 0.0040mg/L (from https://www.ocean.washington.edu/story/Marine+Chemistry+Laboratory).</uncertainty>
+    <flag>Data have not been quality controlled after laboratory analysis.  Laboratory quality assurance procedures were followed, as detailed in UNESCO (1994).</flag>
+    <methodReference>UNESCO (1994). Protocols for the joint global ocean flux study (JGOFS) core measurements. Vol. 29.</methodReference>
+    <researcherName>Kathy Krogsland</researcherName>
+    <researcherInstitution>University of Washington School of Oceanography</researcherInstitution>
+  </variable>
+  <variable>
+    <fullname>Orthosilicic acid (Si(OH)4)</fullname>
+    <abbrev>SILICATE_umol_kg</abbrev>
+    <observationType>Discrete measurements from samples collected in Niskin bottles on CTD casts</observationType>
+    <insitu>In-situ observation</insitu>
+    <unit>micromoles per kilogram of seawater (umol/kg-SW)</unit>
+    <measured>Measured</measured>
+    <samplingInstrument>Niskin bottle</samplingInstrument>
+    <analyzingInstrument>Seal Analytical AA3</analyzingInstrument>
+    <detailedInfo>From the Niskin bottle, seawater was drawn into 60 mL HDPE sample bottles to rinse the bottle and cap twice.  Plungers were removed from 60 mL syringes with Nalgene filters attached (surfactant-free cellulose, 25 mm, 0.45 micron pore size) and rinsed twice with seawater from the Niskin.  The syringe was filled with sample water from the Niskin.  The plunger was inserted, the syringe inverted, and the filter removed to remove the air bubble.  With the filter re-attached, about 5 mL of of sample water was filtered into sample bottle to rinse and then discarded.  45-50 mL of sample was filtered into sample bottle, such that it was less than 2/3 full.  The cap was secured and the bottle frozen upright in a -10 degree Celsius freezer until analyzed.  Analyses and calibration followed the protocols of the WOCE Hydrographic Program using a Seal Analytical AA3 (UNESCO 1994).</detailedInfo>
+    <replicate>No replicate samples were collected or analyzed.</replicate>
+    <standard>
+      <crm />
+    </standard>
+    <poison />
+    <uncertainty>Accreditation codes and detection limits: EPA 366, NELAC Code WM920240, MDLs 0.23uM, 0.0063mg/L (from https://www.ocean.washington.edu/story/Marine+Chemistry+Laboratory).</uncertainty>
+    <flag>Data have not been quality controlled after laboratory analysis.  Laboratory quality assurance procedures were followed, as detailed in UNESCO (1994).</flag>
+    <methodReference>UNESCO (1994). Protocols for the joint global ocean flux study (JGOFS) core measurements. Vol. 29.</methodReference>
+    <researcherName>Kathy Krogsland</researcherName>
+    <researcherInstitution>University of Washington School of Oceanography</researcherInstitution>
+  </variable>
+  <variable>
+    <fullname>Dissolved oxygen concentration measured by CTD sensors and corrected for an offset from bottle oxygen values</fullname>
+    <abbrev>CTD_OXY_corr_umol_kg</abbrev>
+    <observationType>Water column profile</observationType>
+    <insitu>In-situ observation</insitu>
+    <unit>micromoles per kilogram of seawater (umol/kg-SW)</unit>
+    <measured>Calculated from bottle and SBE 43 sensor dissolved oxygen measurements.</measured>
+    <calcMethod>First, all CTD and bottle dissolved oxygen (O2) data were converted from original units (typically milligrams O2 per liter seawater [mg/L] but occasionally milliliters O2 per liter seawater [mL/L]) to micromoles O2 per kilogram of seawater (hereafter umol/kg).
+
+In cases where CTD oxygen data were provided in mL/L, we converted them to mg/L for consistency in the submitted data set using this conversion:
+(O2 in mg/L) = (O2 in mL/L) / 1.42903
+
+To convert from units of mg/L to umol/kg, we used the potential density (= [1000 + sigma theta], which is “the density calculated with in situ salinity, potential temperature, and pressure = 0, minus 1000 kg/m^3” as in http://www.oc.nps.edu/nom/day1/parta.html).  The potential density is hereafter abbreviated as rhoTheta.
+
+Corrections were done as follows (Garcia and Gordon, 1992):
+(O2 in umol/kg) = ((O2 in mg/L) x 44.6596 x 1000)/(rhoTheta x 1.42903)
+
+We note that Garcia and Gordon use rhoTheta in units of kg/L, hence the conversion factor of 1000 in our equations above.
+
+Next, the converted CTD and bottle O2 data (i.e., Var9 and Var10, after conversion to umol/kg units, we refer to as CTD_O2 and BOT_O2) were plotted together, with CTD_O2 on the x-axis and BOT_O2 on the y-axis.  We eliminated strong outliers after close inspection of each outlying data point in the context of the depth profiles at each station.  With the remaining data points, we generated a linear regression equation and used this relationship to correct the CTD_O2 data for the offset and slope differences from BOT_O2 values.  In other words, while we had bottle O2 data for only a subset of all Niskin bottle samples, we generated the bottle-O2-equivalent value for ALL samples by applying the regression relationship to the uncorrected but unit-converted CTD_O2 data. Thus, CTD_OXY_corr_umol_kg is the corrected CTD oxygen value, in units of umol/kg.
+
+The equations used for specific cruises are included below:
+Feb 2008 cruise: CTD_OXY_corr_umol_kg (= BOT_O2) = 1.0218 x CTD_O2 + 1.8714
+Aug 2008 cruise: CTD_OXY_corr_umol_kg (= BOT_O2) = 0.9176 x CTD_O2 + 5.6326
+Sept 2009 cruise: CTD_OXY_corr_umol_kg (= BOT_O2) = 0.9968 x CTD_O2 + 12.058
+Oct 2010 cruise: CTD_OXY_corr_umol_kg (= BOT_O2) = 1.0408 x CTD_O2 - 0.1491
+Oct 2011 cruise: CTD_OXY_corr_umol_kg (= BOT_O2) = 1.1068 x CTD_O2 - 1.0869</calcMethod>
+    <samplingInstrument>SBE 43 sensor details described under Var9 above.</samplingInstrument>
+    <analyzingInstrument>Winkler bottle oxygen details described under Var10 above.</analyzingInstrument>
+    <detailedInfo>Described in sections above.</detailedInfo>
+    <standard>
+      <crm />
+    </standard>
+    <poison />
+    <flag>Apply CTD_OXY_flag information described in section Var9 above.</flag>
+    <methodReference>Garcia, H.E. and L.I. Gordon (1992): Oxygen solubility in sea water: better fitting equations. Limnol. Oceanogr., 37(6), 1307-1312.</methodReference>
+    <researcherName>Simone Alin</researcherName>
+    <researcherInstitution>NOAA Pacific Marine Environmental Laboratory</researcherInstitution>
+  </variable>
+  <variable>
+    <fullname>Station number, corresponds to the numerical value after the P in PRISM Station numbers found at http://nvs.nanoos.org/CruiseSalish</fullname>
+    <abbrev>Station</abbrev>
+    <standard>
+      <crm />
+    </standard>
+    <poison />
+  </variable>
+  <variable>
+    <fullname>uncorrected oxygen concentration from CTD-O2 sensor</fullname>
+    <abbrev>CTD_OXY_mg_L</abbrev>
+    <observationType>Water column profile</observationType>
+    <insitu>In-situ observation</insitu>
+    <unit>milligrams per liter (mg/L)</unit>
+    <measured>Measured</measured>
+    <calcMethod>Not applicable</calcMethod>
+    <samplingInstrument>Sea-Bird Scientific SBE43 Dissolved Oxygen Sensor</samplingInstrument>
+    <detailedInfo>This file contains the up cast data collected using the CTD package and any additional sensors attached to a rosette cage deployed on a research vessel. The up cast data correspond to when the bottles on the rosette cage were fired and water samples were collected. All up casts during the cruise are contained in this file and are sorted by station.  CTD data were processed using Sea-Bird's proprietary data processing software.</detailedInfo>
+    <standard>
+      <crm />
+    </standard>
+    <poison />
+    <uncertainty>Initial accuracy = +/- 2% of saturation; typical stability = 0.5% per 1000 hours of deployed time (clean membrane)</uncertainty>
+    <flag>CTD_OXY_flag, WOCE quality control flags are used: 2 = good value, 3 = questionable value, 4 = bad value, 5 = value not reported, 6 = mean of replicate measurements, 9 = sample not drawn.</flag>
+    <methodReference>Sea-Bird Scientific web site: http://www.seabird.com/sbe43-dissolved-oxygen-sensor</methodReference>
+    <researcherName>Jan Newton</researcherName>
+    <researcherInstitution>University of Washington Applied Physics Laboratory</researcherInstitution>
+  </variable>
+  <variable>
+    <fullname>this column contains DENSITY ANOMALY data, also known as SIGMA THETA values, and is related to POTENTIAL DENSITY by this equation: potential density = sigma theta + 1000.</fullname>
+    <abbrev>CTD_DEN_kg_m3</abbrev>
+    <observationType>Water column profile</observationType>
+    <insitu>In-situ observation</insitu>
+    <unit>kilograms per meter cubed (kg/m3)</unit>
+    <measured>Calculated</measured>
+    <calcMethod>Calculated within Sea-Bird Scientific's SeaSAVE or SBE Data Processing software using TEOS-10 equations for cruises after 2013 and EOS-80 equations prior to 2013 (per web site: http://www.seabird.com/software/sbe-data-processing).</calcMethod>
+    <standard>
+      <crm />
+    </standard>
+    <poison />
+    <methodReference>REFS I MAY INCLUDE DEPENDING ON JAN'S ANSWERS: http://www.oc.nps.edu/nom/day1/parta.html AND http://www.seabird.com/software/sbe-data-processing</methodReference>
+    <researcherName>Jan Newton</researcherName>
+    <researcherInstitution>University of Washington Applied Physics Laboratory</researcherInstitution>
+  </variable>
+</metadata>

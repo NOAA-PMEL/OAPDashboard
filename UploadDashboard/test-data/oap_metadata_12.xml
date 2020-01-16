@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<metadata>
+  <datasubmitter>
+    <name>John Chrome</name>
+    <organization>Unknown</organization>
+    <deliverypoint1 />
+    <deliverypoint2 />
+    <phone>1234567890</phone>
+    <email>some@email.com</email>
+  </datasubmitter>
+  <startdate>Tue Aug 08 00:00:00 GMT-700 2017</startdate>
+  <enddate>Wed Aug 23 00:00:00 GMT-700 2017</enddate>
+  <westbd>-168</westbd>
+  <eastbd>-148</eastbd>
+  <northbd>48</northbd>
+  <southbd>42</southbd>
+  <geographicName>Pacific</geographicName>
+</metadata>
