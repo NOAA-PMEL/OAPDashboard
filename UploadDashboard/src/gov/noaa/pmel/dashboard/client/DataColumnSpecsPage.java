@@ -250,7 +250,6 @@ public class DataColumnSpecsPage extends CompositeWithUsername {
 		wasLoggingOut = false;
 
 		header.setPageTitle(TITLE_TEXT);
-        GWT.log("header: " + header);
         header.setLogoutHandler(new Scheduler.ScheduledCommand() {
             @Override
             public void execute() {
