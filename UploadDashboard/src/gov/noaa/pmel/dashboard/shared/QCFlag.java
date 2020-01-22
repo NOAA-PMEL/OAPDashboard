@@ -22,10 +22,10 @@ public class QCFlag implements Comparable<QCFlag>, Serializable, IsSerializable 
 	 */
 	public enum Severity implements Serializable, IsSerializable {
 		UNASSIGNED,
-		ACCEPTABLE,
-		WARNING,
+		CRITICAL,
 		ERROR,
-		CRITICAL
+		WARNING,
+		ACCEPTABLE
 	}
 	
 	public enum FlagSource implements Serializable, IsSerializable {
