@@ -315,8 +315,9 @@ public class DataMessagesPage extends CompositeWithUsername {
 		// Add the sort handler to the table, setting the default sorting
 		// first by severity, then column number, and finally row number
 		messagesGrid.addColumnSortHandler(columnSortHandler);
-		messagesGrid.getColumnSortList().push(rowNumColumn);
-		messagesGrid.getColumnSortList().push(colNumColumn);
+        // DataGrid, it seems, only sorts by one column.
+//		messagesGrid.getColumnSortList().push(rowNumColumn);
+//		messagesGrid.getColumnSortList().push(colNumColumn);
 		messagesGrid.getColumnSortList().push(severityColumn);
 
 		// Set the contents if there are no rows
