@@ -26,9 +26,10 @@ public class DashboardDatasetList extends HashMap<String,DashboardDataset> imple
 	/**
 	 * Creates without a user or any cruises
 	 */
-	public DashboardDatasetList() {
+    @SuppressWarnings("unused") // required for GWT
+	private DashboardDatasetList() {
 		super();
-		username = DashboardUtils.STRING_MISSING_VALUE;
+        username = DashboardUtils.STRING_MISSING_VALUE;
 		manager = false;
 	}
 
@@ -36,17 +37,15 @@ public class DashboardDatasetList extends HashMap<String,DashboardDataset> imple
 	 * Creates empty dataset list for specified user.
 	 */
 	public DashboardDatasetList(String username) {
-		super();
+        this();
 		this.username = username;
-		manager = false;
 	}
 
     /**
      * Creates empty dataset list for specified user.
      */
     public DashboardDatasetList(String username, boolean manager) {
-        super();
-        this.username = username;
+        this(username);
         this.manager = manager ;
     }
 
@@ -57,18 +56,6 @@ public class DashboardDatasetList extends HashMap<String,DashboardDataset> imple
 	 */
 	public String getUsername() {
 		return username;
-	}
-
-	/**
-	 * @param username 
-	 * 		the username to set; 
-	 * 		if null, sets to {@link DashboardUtils#STRING_MISSING_VALUE}
-	 */
-	public void setUsername(String username) {
-		if ( username == null )
-			this.username = DashboardUtils.STRING_MISSING_VALUE;
-		else
-			this.username = username;
 	}
 
 	/**
