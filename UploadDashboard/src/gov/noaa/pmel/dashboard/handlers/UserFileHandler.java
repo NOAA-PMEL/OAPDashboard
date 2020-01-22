@@ -169,8 +169,7 @@ public class UserFileHandler extends VersionedFileHandler {
 		}
 		DataFileHandler dataHandler = configStore.getDataFileHandler();
 		// Create the dataset list (map) for these cruises
-		DashboardDatasetList datasetList = new DashboardDatasetList();
-		datasetList.setUsername(cleanUsername);
+		DashboardDatasetList datasetList = new DashboardDatasetList(cleanUsername);
 		for ( String datasetId : dataIdsSet ) {
 			// Create the DashboardDataset from the info file
 			DashboardDataset dataset = dataHandler.getDatasetFromInfoFile(datasetId);

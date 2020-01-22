@@ -306,8 +306,7 @@ public class DashboardServices extends RemoteServiceServlet implements Dashboard
 
 		// Create the set of updated dataset information to return
 		DataFileHandler dataHandler = configStore.getDataFileHandler();
-		DashboardDatasetList datasetList = new DashboardDatasetList();
-		datasetList.setUsername(username);
+		DashboardDatasetList datasetList = new DashboardDatasetList(username);
 		datasetList.setManager(configStore.isManager(username));
 		for ( String datasetId : idsSet ) {
 			datasetList.put(datasetId, dataHandler.getDatasetFromInfoFile(datasetId));
@@ -365,8 +364,7 @@ public class DashboardServices extends RemoteServiceServlet implements Dashboard
 									deleteFilename + " from dataset " + datasetId);
 
 		// Create the set of updated dataset information to return
-		DashboardDatasetList datasetList = new DashboardDatasetList();
-		datasetList.setUsername(username);
+		DashboardDatasetList datasetList = new DashboardDatasetList(username);
 		datasetList.setManager(configStore.isManager(username));
 		for ( String id : allIds ) {
 			datasetList.put(id, dataHandler.getDatasetFromInfoFile(id));
