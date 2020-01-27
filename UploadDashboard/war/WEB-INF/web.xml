@@ -168,7 +168,8 @@
 			<role-name>oapdashboarduser</role-name>
 		</auth-constraint>
 	</security-constraint>
-  
+<!--  NOTE: This next section has to be commented out when running in SuperDevMode
+      because Jetty redirects to login page (whereas Tomcat forwards to it.)    -->
 <security-constraint>
 	<display-name>excluded</display-name>
 	<web-resource-collection>
