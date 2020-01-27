@@ -1,5 +1,6 @@
 /test-classes/
 /.gwt/
+*.swp
 /gwt-unitCache/
 /login-src/
 /scratch/
@@ -11,3 +12,7 @@
 /src-delomboked/
 /delomed/
 /logs/
+/add_user-tomcat.sql
+/ssh/
+/tattly/
+/oa#Dashboard.war
