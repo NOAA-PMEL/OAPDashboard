@@ -29,6 +29,7 @@ public class DashboardDataset implements Serializable, IsSerializable {
 	protected String datasetId;
 	protected String dataCheckStatus;
 	protected String mdTimestamp;
+	protected String mdStatus;
 	protected TreeSet<String> addlDocs;
 	protected String submitStatus;
 	protected String archiveStatus;
@@ -251,6 +252,17 @@ public class DashboardDataset implements Serializable, IsSerializable {
 			this.mdTimestamp = DashboardUtils.STRING_MISSING_VALUE;
 		else
 			this.mdTimestamp = omeTimestamp;
+	}
+
+	public String getMdStatus() {
+		return mdStatus != null ? mdStatus : DashboardUtils.STRING_MISSING_VALUE;
+	}
+
+	public void setMdStatus(String status) {
+		if ( status == null )
+			this.mdStatus = DashboardUtils.STRING_MISSING_VALUE;
+		else
+			this.mdStatus = status;
 	}
 
 	/**
