@@ -25,12 +25,12 @@ public class DashboardDatasetListTest {
 	@Test
 	public void testGetSetUsername() {
 		String myUsername = "SocatUser";
-		DashboardDatasetList cruiseList = new DashboardDatasetList();
-		assertEquals(DashboardUtils.STRING_MISSING_VALUE, cruiseList.getUsername());
-		cruiseList.setUsername(myUsername);
+		DashboardDatasetList cruiseList = new DashboardDatasetList(myUsername);
+//		assertEquals(DashboardUtils.STRING_MISSING_VALUE, cruiseList.getUsername());
+//		cruiseList.setUsername(myUsername);
 		assertEquals(myUsername, cruiseList.getUsername());
 		assertEquals(0, cruiseList.size());
-		cruiseList.setUsername(null);
+//		cruiseList.setUsername(null);
 		assertEquals(DashboardUtils.STRING_MISSING_VALUE, cruiseList.getUsername());
 	}
 
@@ -40,11 +40,12 @@ public class DashboardDatasetListTest {
 	 */
 	@Test
 	public void testIsSetManager() {
-		DashboardDatasetList cruiseList = new DashboardDatasetList();
+		String myUsername = "SocatUser";
+		DashboardDatasetList cruiseList = new DashboardDatasetList(myUsername);
 		assertFalse( cruiseList.isManager());
 		cruiseList.setManager(true);
 		assertTrue( cruiseList.isManager());
-		assertEquals(DashboardUtils.STRING_MISSING_VALUE, cruiseList.getUsername());
+//		assertEquals(DashboardUtils.STRING_MISSING_VALUE, cruiseList.getUsername());
 		assertEquals(0, cruiseList.size());
 	}
 
@@ -66,17 +67,17 @@ public class DashboardDatasetListTest {
 		otherCruise.setOwner(myUsername);
 		otherCruise.setDatasetId("XXXX20030918");
 
-		DashboardDatasetList firstList = new DashboardDatasetList();
+		DashboardDatasetList firstList = new DashboardDatasetList(myUsername);
 		assertFalse( firstList.equals(null) );
 		assertFalse( firstList.equals(cruise) );
-		DashboardDatasetList secondList = new DashboardDatasetList();
+		DashboardDatasetList secondList = new DashboardDatasetList(myUsername);
 		assertTrue( firstList.hashCode() == secondList.hashCode() );
 		assertTrue( firstList.equals(secondList) );
 
-		firstList.setUsername(myUsername);
+//		firstList.setUsername(myUsername);
 		assertFalse( firstList.hashCode() == secondList.hashCode() );
 		assertFalse( firstList.equals(secondList) );
-		secondList.setUsername(myUsername);
+//		secondList.setUsername(myUsername);
 		assertTrue( firstList.hashCode() == secondList.hashCode() );
 		assertTrue( firstList.equals(secondList) );
 
