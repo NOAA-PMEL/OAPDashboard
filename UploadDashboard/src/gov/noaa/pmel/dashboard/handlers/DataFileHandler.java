@@ -8,7 +8,6 @@ import java.io.File;
 import java.io.FileFilter;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
-import java.io.FilenameFilter;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.ArrayList;
@@ -64,6 +63,7 @@ public class DataFileHandler extends VersionedFileHandler {
 	private static final String DOI_ID = "doi";
 	private static final String DATA_CHECK_STATUS_ID = "datacheckstatus";
 	private static final String MD_TIMESTAMP_ID = "mdtimestamp";
+	private static final String MD_STATUS_ID = "mdstatus";
 	private static final String ADDL_DOC_TITLES_ID = "addldoctitles";
 	private static final String SUBMIT_STATUS_ID = "submitstatus";
 	private static final String ARCHIVE_STATUS_ID = "archivestatus";
@@ -722,6 +722,7 @@ public class DataFileHandler extends VersionedFileHandler {
 		datasetProps.setProperty(DATA_CHECK_STATUS_ID, dataset.getDataCheckStatus());
 		// OME metadata timestamp
 		datasetProps.setProperty(MD_TIMESTAMP_ID, dataset.getMdTimestamp());
+		datasetProps.setProperty(MD_STATUS_ID, dataset.getMdStatus());
 		// Metadata documents
 		datasetProps.setProperty(ADDL_DOC_TITLES_ID, 
 				DashboardUtils.encodeStringArrayList(dataset.getAddlDocs()));
@@ -1314,6 +1315,13 @@ public class DataFileHandler extends VersionedFileHandler {
 			throw new IllegalArgumentException("No property value for " + 
 					MD_TIMESTAMP_ID + " given in " + infoFile.getPath());			
 		dataset.setMdTimestamp(value);
+
+		value = cruiseProps.getProperty(MD_STATUS_ID);
+		if ( value == null ) {
+            logger.info("No property value for " + MD_STATUS_ID + " given in " + infoFile.getPath());
+		    value = DashboardUtils.STRING_MISSING_VALUE;
+		}
+		dataset.setMdStatus(value);
 
 		// Metadata documents
 		value = cruiseProps.getProperty(ADDL_DOC_TITLES_ID);
