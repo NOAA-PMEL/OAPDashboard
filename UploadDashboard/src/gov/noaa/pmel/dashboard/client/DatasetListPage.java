@@ -82,12 +82,12 @@ public class DatasetListPage extends CompositeWithUsername {
 			"upload data to create a new dataset " +
 			"or replace an existing dataset";
 
-	private static final String VIEW_DATA_TEXT = "Identify Columns";
+	private static final String VIEW_DATA_TEXT = "View Data File";
 	private static final String VIEW_DATA_HOVER_HELP =
 			"review and modify data column type assignments for the " +
 			"selected dataset;\nidentify issues in the data";
 
-	static final String METADATA_TEXT = "Manage Metadata";
+	static final String METADATA_TEXT = "Edit Metadata";
 	private static final String METADATA_HOVER_HELP =
 			"manage metadata for the selected datasets";
 
@@ -99,7 +99,7 @@ public class DatasetListPage extends CompositeWithUsername {
 //	private static final String QC_SUBMIT_HOVER_HELP =
 //			"submit the selected datasets for quality control assessment";
 
-	private static final String ARCHIVE_SUBMIT_TEXT = "Submit to Archive";
+	private static final String ARCHIVE_SUBMIT_TEXT = "Submit Dataset";
 	private static final String ARCHIVE_SUBMIT_HOVER_HELP =
 			"submit selected dataset to permanent data archive";
 
@@ -257,12 +257,12 @@ public class DatasetListPage extends CompositeWithUsername {
 	private static final String DATASET_ID_COLUMN_NAME = "Dataset ID";
 	private static final String FEATURE_TYPE_COLUMN_NAME = "Observation Type";
 	private static final String TIMESTAMP_COLUMN_NAME = "Upload Date";
-	private static final String DATA_CHECK_COLUMN_NAME = "Data Status";
+	private static final String DATA_CHECK_COLUMN_NAME = "Data Viewer";
 	private static final String METADATA_COLUMN_NAME = "Metadata";
-	private static final String ADDL_DOCS_COLUMN_NAME = "Supplemental<br />Documents";
+	private static final String ADDL_DOCS_COLUMN_NAME = "Supplemental Documents";// "<div style=\"text-align:center;\">Supplemental<br/>Documents</div>";
 	private static final String VERSION_COLUMN_NAME = "Version";
 	private static final String SUBMITTED_COLUMN_NAME = "QC Status";
-	private static final String ARCHIVED_COLUMN_NAME = "Archival";
+	private static final String ARCHIVED_COLUMN_NAME = "Submission Status"; // "<div style=\"text-align:center;\">Submission<br/>Status</div>";
 	private static final String FILENAME_COLUMN_NAME = "Filename";
 	private static final String OWNER_COLUMN_NAME = "Owner";
 
@@ -274,7 +274,7 @@ public class DatasetListPage extends CompositeWithUsername {
 	private static final String NO_DATA_CHECK_STATUS_STRING = "Not checked";
 	private static final String NO_METADATA_STATUS_STRING = "(no metadata)";
 	private static final String NO_QC_STATUS_STRING = "Private";
-	private static final String NO_ARCHIVE_STATUS_STRING = "Not specified";
+	private static final String NO_ARCHIVE_STATUS_STRING = "Not submitted";
 	private static final String NO_UPLOAD_FILENAME_STRING = "(unknown)";
 	private static final String NO_ADDL_DOCS_STATUS_STRING = "(no documents)";
 	private static final String NO_OWNER_STRING = "(unknown)";
@@ -359,6 +359,7 @@ public class DatasetListPage extends CompositeWithUsername {
 
 		previewButton.setText(REVIEW_TEXT);
 		previewButton.setTitle(REVIEW_HOVER_HELP);
+        previewButton.setVisible(false);
 
 //		qcSubmitButton.setText(QC_SUBMIT_TEXT);
 //		qcSubmitButton.setTitle(QC_SUBMIT_HOVER_HELP);
@@ -1086,8 +1087,8 @@ public class DatasetListPage extends CompositeWithUsername {
 		datasetsGrid.addColumn(selectedColumn, selectHeader);
 		datasetsGrid.addColumn(expocodeColumn, 
 				SafeHtmlUtils.fromSafeConstant(DATASET_ID_COLUMN_NAME));
-		datasetsGrid.addColumn(featureTypeColumn, 
-				SafeHtmlUtils.fromSafeConstant(FEATURE_TYPE_COLUMN_NAME));
+//		datasetsGrid.addColumn(featureTypeColumn, 
+//				SafeHtmlUtils.fromSafeConstant(FEATURE_TYPE_COLUMN_NAME));
 		datasetsGrid.addColumn(timestampColumn, 
 				SafeHtmlUtils.fromSafeConstant(TIMESTAMP_COLUMN_NAME));
 		datasetsGrid.addColumn(dataCheckColumn, 
@@ -1104,8 +1105,8 @@ public class DatasetListPage extends CompositeWithUsername {
 				SafeHtmlUtils.fromSafeConstant(ARCHIVED_COLUMN_NAME));
 		datasetsGrid.addColumn(filenameColumn, 
 				SafeHtmlUtils.fromSafeConstant(FILENAME_COLUMN_NAME));
-		datasetsGrid.addColumn(ownerColumn, 
-				SafeHtmlUtils.fromSafeConstant(OWNER_COLUMN_NAME));
+//		datasetsGrid.addColumn(ownerColumn, 
+//				SafeHtmlUtils.fromSafeConstant(OWNER_COLUMN_NAME));
 
 		// Set the minimum widths of the columns
 		double minTableWidth = 0.0;
@@ -1118,9 +1119,9 @@ public class DatasetListPage extends CompositeWithUsername {
 		datasetsGrid.setColumnWidth(expocodeColumn, 
 				UploadDashboard.NORMAL_COLUMN_WIDTH, Style.Unit.EM);
 		minTableWidth += UploadDashboard.NORMAL_COLUMN_WIDTH;
-		datasetsGrid.setColumnWidth(featureTypeColumn, 
-				UploadDashboard.NORMAL_COLUMN_WIDTH, Style.Unit.EM);
-		minTableWidth += UploadDashboard.NORMAL_COLUMN_WIDTH;
+//		datasetsGrid.setColumnWidth(featureTypeColumn, 
+//				UploadDashboard.NORMAL_COLUMN_WIDTH, Style.Unit.EM);
+//		minTableWidth += UploadDashboard.NORMAL_COLUMN_WIDTH;
 		datasetsGrid.setColumnWidth(timestampColumn, 
 				UploadDashboard.NORMAL_COLUMN_WIDTH, Style.Unit.EM);
 		minTableWidth += UploadDashboard.NORMAL_COLUMN_WIDTH;
@@ -1135,7 +1136,7 @@ public class DatasetListPage extends CompositeWithUsername {
 		minTableWidth += UploadDashboard.FILENAME_COLUMN_WIDTH;
 //		datasetsGrid.setColumnWidth(versionColumn,
 //				UploadDashboard.NARROW_COLUMN_WIDTH, Style.Unit.EM);
-		minTableWidth += UploadDashboard.NARROW_COLUMN_WIDTH;
+//		minTableWidth += UploadDashboard.NARROW_COLUMN_WIDTH;
 //		datasetsGrid.setColumnWidth(qcStatusColumn, 
 //				UploadDashboard.NORMAL_COLUMN_WIDTH, Style.Unit.EM);
 //		minTableWidth += UploadDashboard.NORMAL_COLUMN_WIDTH;
@@ -1145,9 +1146,9 @@ public class DatasetListPage extends CompositeWithUsername {
 		datasetsGrid.setColumnWidth(filenameColumn, 
 				UploadDashboard.FILENAME_COLUMN_WIDTH, Style.Unit.EM);
 		minTableWidth += UploadDashboard.FILENAME_COLUMN_WIDTH;
-		datasetsGrid.setColumnWidth(ownerColumn, 
-				UploadDashboard.NORMAL_COLUMN_WIDTH, Style.Unit.EM);
-		minTableWidth += UploadDashboard.NORMAL_COLUMN_WIDTH;
+//		datasetsGrid.setColumnWidth(ownerColumn, 
+//				UploadDashboard.NORMAL_COLUMN_WIDTH, Style.Unit.EM);
+//		minTableWidth += UploadDashboard.NORMAL_COLUMN_WIDTH;
 
 		// Set the minimum width of the full table
 		datasetsGrid.setMinimumTableWidth(minTableWidth, Style.Unit.EM);
@@ -1247,12 +1248,12 @@ public class DatasetListPage extends CompositeWithUsername {
 	private Header<String> buildSelectionHeader() {
 		SelectionCell selectHeaderCell = new SelectionCell(Arrays.asList(
 				SELECTION_OPTION_LABEL, 
-				ALL_SELECTION_OPTION, 
 //				EDITABLE_SELECTION_OPTION, 
 //				SUBMITTED_SELECTION_OPTION, 
 //				PUBLISHED_SELECTION_OPTION, 
+				CLEAR_SELECTION_OPTION,
 				ARCHIVED_SELECTION_OPTION, 
-				CLEAR_SELECTION_OPTION));
+				ALL_SELECTION_OPTION));
 		selectHeader = new Header<String>(selectHeaderCell) {
 			@Override
 			public String getValue() {
@@ -1409,6 +1410,8 @@ public class DatasetListPage extends CompositeWithUsername {
 				new Column<DashboardDataset,String> (new ClickableTextCell()) {
 			@Override
 			public String getValue(DashboardDataset cruise) { 
+                if ( true )
+                    return "View Data";
 //                if ( FeatureType.OTHER == cruise.getFeatureType() ) {
 //                    return STATUS_CANNOT_CHECK_STRING + ":<br/>Obs Type";
 //                }
@@ -1436,6 +1439,11 @@ public class DatasetListPage extends CompositeWithUsername {
 													SafeHtmlBuilder sb) {
                 
 				String msg = getValue(cruise);
+                if ( "View Data".equals(msg)) {
+					sb.appendHtmlConstant("<div style=\"cursor:pointer;\"><u><em>");
+					sb.appendEscaped(msg);
+					sb.appendHtmlConstant("</em></u></div>");
+                } else 
                 if ( FileType.OTHER == cruise.getFileType() ) {
 					sb.appendHtmlConstant("<div >"); // style=\"background-color:" + UploadDashboard.CHECKER_WARNING_COLOR + ";\">");
 					sb.appendHtmlConstant(msg);
@@ -1470,8 +1478,8 @@ public class DatasetListPage extends CompositeWithUsername {
 			@Override
 			public void update(int index, DashboardDataset cruise, String value) {
                 if ( FileType.OTHER.equals(cruise.getFileType())) {
-                    GWT.log("Cannot view/edit columns for OTHER-type datasets.");
-//                    UploadDashboard.showMessage("This observation type cannot be checked.");
+                    UploadDashboard.logToConsole("Cannot view/edit columns for OTHER-type datasets.");
+                    UploadDashboard.showMessage("This file type cannot be checked.");
                     return;
                 }
 				// Save the currently selected cruises
@@ -1549,10 +1557,10 @@ public class DatasetListPage extends CompositeWithUsername {
 					if ( firstEntry )
 						firstEntry = false;
 					else
-						sb.appendHtmlConstant("<br />");
+						sb.appendHtmlConstant("<br/>");
 					String[] pieces = DashboardMetadata.splitAddlDocsTitle(title);
 					sb.appendEscaped(pieces[0]);
-					sb.appendHtmlConstant("<br /><small>&nbsp;&nbsp;(");
+					sb.appendHtmlConstant("<small> : ("); // &nbsp;&nbsp;(");
 					sb.appendEscaped(pieces[1]);
 					sb.appendHtmlConstant(")</small>");
 				}
@@ -1773,20 +1781,20 @@ public class DatasetListPage extends CompositeWithUsername {
         
 		for ( DashboardDataset dataset : checkSet.values() ) {
             boolean thisOneIsOk = true;
-            String[] errorMessages;
+            String[] errorMessages = new String[0];
             errorMsgBldr.append("<li>").append(dataset.getDatasetId())
                         .append("<ul>");
-            errorMessages = checkMetadata(dataset);
+//            errorMessages = checkMetadata(dataset);
             if ( errorMessages.length > 0 ) {
                 addErrorMessages(errorMsgBldr, errorMessages);
                 thisOneIsOk = false;
             }
-            errorMessages = dataCheck(dataset);
+//            errorMessages = dataCheck(dataset);
             if ( errorMessages.length > 0 ) {
                 addErrorMessages(errorMsgBldr, errorMessages);
                 thisOneIsOk = false;
             }
-            errorMessages = columnCheck(dataset);
+//            errorMessages = columnCheck(dataset);
             if ( errorMessages.length > 0 ) {
                 addErrorMessages(errorMsgBldr, errorMessages);
                 thisOneIsOk = false;
