@@ -10,7 +10,6 @@ import java.util.Map;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.Element;
-import com.google.gwt.dom.client.SelectElement;
 import com.google.gwt.event.dom.client.ChangeEvent;
 import com.google.gwt.event.dom.client.ChangeHandler;
 import com.google.gwt.event.dom.client.ClickEvent;
@@ -20,6 +19,7 @@ import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.uibinder.client.UiHandler;
 import com.google.gwt.user.client.History;
+import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.ui.Anchor;
 import com.google.gwt.user.client.ui.Button;
 import com.google.gwt.user.client.ui.CaptionPanel;
@@ -30,7 +30,6 @@ import com.google.gwt.user.client.ui.FormPanel.SubmitCompleteEvent;
 import com.google.gwt.user.client.ui.FormPanel.SubmitEvent;
 import com.google.gwt.user.client.ui.HTML;
 import com.google.gwt.user.client.ui.Hidden;
-import com.google.gwt.user.client.ui.InlineLabel;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.ListBox;
 import com.google.gwt.user.client.ui.Panel;
@@ -54,8 +53,18 @@ public class DataUploadPage extends CompositeWithUsername {
 
 	// private static final String UPLOAD_FILE_DESCRIPTION_HTML = 
 	private static final String UPLOAD_FILE_INTRO_HTML = 
-            "<h3>Upload data files for data sanity checks, QC, and archiving.</h3>" 
-            + "Any file can be uploaded for archival.  However, only ASCII-delimited (CSV, etc.) files can be sanity-checked and QC'd."
+            "<h3>Upload data files for review, metadata entry, and submission.</h3>" 
+            + "<ul>"
+            + "<li>Only ASCII-delimited (CSV, etc.) files are currently accepted.</li>"
+            + "<li>The data file must include a column specifiying the dataset ID, which may be auto-detected OR"
+            +    "<ul>"
+            +        "<li>If not detected, the column name for the dataset ID may be specified in \"Advanced Options\" below</li>"
+            +        "<li>Alternatively, if there is no dataset ID column, the dataset ID may be specified directly in \"Advanced Options\"</li>"
+            +        "<li>Auto-detected dataset ID column names include cruise or dataset, id or name, expocode, or similar.</li>"
+            +    "</ul>"
+            + "</li>"
+            + "</ul>";
+/*	
             + "<br style=\"padding-bottom: .5em;\"/>To be checked, a delimited file much include:"
 			+ "<ul style=\"list-style-type:none\">"
 			+ "  <li>a header line of data column names,</li>"
@@ -67,6 +76,7 @@ public class DataUploadPage extends CompositeWithUsername {
             + "<br/>Alternatively, you may specify the dataset ID column name. "
             + "<br/>In addition, there is a set of required columns that must be present. "
             + "Minimally, these include columns indicating observation time and location, as well as others as dictated by the observation type.";
+*/
 	private static final String _UPLOAD_FILE_INTRO_HTML = 
 			"<p>A data file for upload has the general format: " +
 			"<ul style=\"list-style-type:none\">" +
@@ -157,7 +167,7 @@ public class DataUploadPage extends CompositeWithUsername {
 	private static final String[] KNOWN_ENCODINGS = {
 		"ISO-8859-1", "ISO-8859-15", "UTF-8", "UTF-16", "Windows-1252"
 	};
-	private static final String PREVIEW_TEXT = "Preview Data File";
+	private static final String PREVIEW_TEXT = "Preview";
 	private static final String NO_PREVIEW_HTML_MSG = "<p>(No file previewed)</p>";
 
 	private static final String CREATE_TEXT = "only create new dataset(s)";
@@ -191,6 +201,10 @@ public class DataUploadPage extends CompositeWithUsername {
 			"<p><pre>\n";
 	private static final String EXPLAINED_FAIL_MSG_END = 
 			"</pre></p>";
+    private static final String UPLOAD_FAILED_SUGGESTIONS = 
+            "This may be due to failure to properly parse the file.<br/>"
+            + "Only ASCII delimited files are accepted.<br/>"
+            + "You can use the Preview function to check the file.";
 	private static final String NO_DATASET_NAME_FAIL_MSG = 
 			"<br />Dataset/Cruise name column not found.</h3>" +
 			"<p>The data file needs to contain a data column specifying " +
@@ -215,13 +229,13 @@ public class DataUploadPage extends CompositeWithUsername {
 	private static DashboardDatasetUploadPageUiBinder uiBinder = 
 			GWT.create(DashboardDatasetUploadPageUiBinder.class);
    
-    @UiField ListBox featureTypeSelector;
+//    @UiField ListBox featureTypeSelector;
     @UiField Hidden featureTypeToken;
-    @UiField Anchor featureTypeHelpAnchor;
+//    @UiField Anchor featureTypeHelpAnchor;
     @UiField Panel featureTypeSpecificContentPanel;
-    @UiField ListBox fileTypeSelector;
+//    @UiField ListBox fileTypeSelector;
     @UiField Hidden fileTypeToken;
-    @UiField Anchor fileTypeHelpAnchor;
+//    @UiField Anchor fileTypeHelpAnchor;
     
     @UiField ApplicationHeaderTemplate header;
 	@UiField HTML introHtml;
@@ -240,7 +254,7 @@ public class DataUploadPage extends CompositeWithUsername {
 	@UiField Label encodingLabel;
 	@UiField ListBox encodingListBox;
 	@UiField Button previewButton;
-	@UiField HTML previewHtml;
+//	@UiField HTML previewHtml;
 	@UiField RadioButton createRadio;
 //	@UiField RadioButton appendRadio;
 	@UiField RadioButton overwriteRadio;
@@ -272,61 +286,65 @@ public class DataUploadPage extends CompositeWithUsername {
 
 		setUsername(null);
 
-        featureTypeSelector.addItem("-- Observation Type --");
-        featureTypeSelector.addItem("Timeseries", FeatureType.TIMESERIES.name());
-        featureTypeSelector.addItem("Trajectory", FeatureType.TRAJECTORY.name());
-        featureTypeSelector.addItem("Profile", FeatureType.PROFILE.name());
-        featureTypeSelector.addItem("Timeseries Profile", FeatureType.TIMESERIES_PROFILE.name());
-        featureTypeSelector.addItem("Trajectory Profile", FeatureType.TRAJECTORY_PROFILE.name());
-        featureTypeSelector.addItem("Other", FeatureType.OTHER.name());
-        featureTypeSelector.getElement().<SelectElement>cast().getOptions().getItem(0).setDisabled(true); // Please select...
-//        featureTypeSelector.getElement().<SelectElement>cast().getOptions().getItem(3).setDisabled(true); // make sure to disable the correct element, if you do
-        featureTypeSelector.addChangeHandler(new ChangeHandler() {
-          @Override
-          public void onChange(ChangeEvent event) {
-              if ( featureTypeSelector.getSelectedIndex() > 0 ) {
-                  featureTypeSelector.removeStyleName("missingInfoItem");
-              }
-              selectedFeatureType = FeatureType.valueOf(featureTypeSelector.getSelectedValue());
-              GWT.log("Selecting obs type " + selectedFeatureType.name());
-          }
-        });
-        featureTypeHelpAnchor.setText(FEATURE_TYPE_HELP_ANCHOR_TEXT);
-        featureTypeHelpPopup = null;
+//        featureTypeSelector.addItem("-- Observation Type --");
+//        featureTypeSelector.addItem("Timeseries", FeatureType.TIMESERIES.name());
+//        featureTypeSelector.addItem("Trajectory", FeatureType.TRAJECTORY.name());
+//        featureTypeSelector.addItem("Profile", FeatureType.PROFILE.name());
+//        featureTypeSelector.addItem("Timeseries Profile", FeatureType.TIMESERIES_PROFILE.name());
+//        featureTypeSelector.addItem("Trajectory Profile", FeatureType.TRAJECTORY_PROFILE.name());
+//        featureTypeSelector.addItem("Other", FeatureType.OTHER.name());
+//        featureTypeSelector.getElement().<SelectElement>cast().getOptions().getItem(0).setDisabled(true); // Please select...
+////        featureTypeSelector.getElement().<SelectElement>cast().getOptions().getItem(3).setDisabled(true); // make sure to disable the correct element, if you do
+//        featureTypeSelector.addChangeHandler(new ChangeHandler() {
+//          @Override
+//          public void onChange(ChangeEvent event) {
+//              if ( featureTypeSelector.getSelectedIndex() > 0 ) {
+//                  featureTypeSelector.removeStyleName("missingInfoItem");
+//              }
+//              selectedFeatureType = FeatureType.valueOf(featureTypeSelector.getSelectedValue());
+//              GWT.log("Selecting obs type " + selectedFeatureType.name());
+//          }
+//        });
+//        featureTypeHelpAnchor.setText(FEATURE_TYPE_HELP_ANCHOR_TEXT);
+//        featureTypeHelpPopup = null;
+//        
+//        fileTypeSelector.addItem("-- File Format --");
+//        fileTypeSelector.getElement().<SelectElement>cast().getOptions().getItem(0).setDisabled(true); // Please select...
+//        fileTypeSelector.addItem("ASCII Delimited", FileType.DELIMITED.name());
+////        fileTypeSelector.addItem("NetCDF", FileType.NETCDF.name());
+////        fileTypeSelector.addItem("DSG", FileType.NC_DSG.name());
+//        fileTypeSelector.addItem("Other", FileType.OTHER.name());
+//        fileTypeSelector.addChangeHandler(new ChangeHandler() {
+//          @Override
+//          public void onChange(ChangeEvent event) {
+//              if ( _featureTypeFields != null ) {
+//                  featureTypeSpecificContentPanel.remove(_featureTypeFields);
+//              }
+//              if ( fileTypeSelector.getSelectedIndex() > 0 ) {
+//                  fileTypeSelector.removeStyleName("missingInfoItem");
+////                  featureTypeDisplay.setText("Submitting " + featureTypeSelector.getSelectedItemText() + " files.");
+//              } else {
+////                  featureTypeDisplay.setText("");
+//              }
+//
+//              selectedFileType = FileType.valueOf(fileTypeSelector.getSelectedValue());
+//              GWT.log("Selecting file type " + selectedFileType.name());
+//              _featureTypeFields = getFileTypePanel(selectedFileType);
+//              if ( _featureTypeFields != null ) {
+//                  featureTypeSpecificContentPanel.add(_featureTypeFields);
+//              }
+//          }
+//        });
+//        fileTypeHelpAnchor.setText(FILE_TYPE_HELP_ANCHOR_TEXT);
+//        fileTypeHelpPopup = null;
         
-        fileTypeSelector.addItem("-- File Format --");
-        fileTypeSelector.getElement().<SelectElement>cast().getOptions().getItem(0).setDisabled(true); // Please select...
-        fileTypeSelector.addItem("ASCII Delimited", FileType.DELIMITED.name());
-//        fileTypeSelector.addItem("NetCDF", FileType.NETCDF.name());
-//        fileTypeSelector.addItem("DSG", FileType.NC_DSG.name());
-        fileTypeSelector.addItem("Other", FileType.OTHER.name());
-        fileTypeSelector.addChangeHandler(new ChangeHandler() {
-          @Override
-          public void onChange(ChangeEvent event) {
-              if ( _featureTypeFields != null ) {
-                  featureTypeSpecificContentPanel.remove(_featureTypeFields);
-              }
-              if ( fileTypeSelector.getSelectedIndex() > 0 ) {
-                  fileTypeSelector.removeStyleName("missingInfoItem");
-//                  featureTypeDisplay.setText("Submitting " + featureTypeSelector.getSelectedItemText() + " files.");
-              } else {
-//                  featureTypeDisplay.setText("");
-              }
-
-              selectedFileType = FileType.valueOf(fileTypeSelector.getSelectedValue());
-              GWT.log("Selecting file type " + selectedFileType.name());
-              _featureTypeFields = getFileTypePanel(selectedFileType);
-              if ( _featureTypeFields != null ) {
-                  featureTypeSpecificContentPanel.add(_featureTypeFields);
-              }
-          }
-        });
-        fileTypeHelpAnchor.setText(FILE_TYPE_HELP_ANCHOR_TEXT);
-        fileTypeHelpPopup = null;
+        _featureTypeFields = new CommonFeatureFields();
+        featureTypeSpecificContentPanel.add(_featureTypeFields);
         
         header.setPageTitle(TITLE_TEXT);
 		introHtml.setHTML(UPLOAD_FILE_INTRO_HTML);
 		moreHelpAnchor.setText(MORE_HELP_TEXT);
+        moreHelpAnchor.setVisible(false);
 		moreHelpPopup = null;
 
 		uploadForm.setEncoding(FormPanel.ENCODING_MULTIPART);
@@ -339,6 +357,7 @@ public class DataUploadPage extends CompositeWithUsername {
                 String files = fileUpload.getFilename(); // getInputFileNames(uploadElement);
                 boolean fileSelected = files != null && files.length() > 0;
                 submitButton.setEnabled(fileSelected);
+                previewButton.setEnabled(fileSelected);
                 cancelButton.setText("Cancel");
             }
         });
@@ -371,6 +390,7 @@ public class DataUploadPage extends CompositeWithUsername {
 
 		submitButton.setText(SUBMIT_TEXT);
         submitButton.setEnabled(false); // files and feature type must be selected.
+        previewButton.setEnabled(false); // files and feature type must be selected.
 		cancelButton.setText(CANCEL_TEXT);
 
 		advancedHtml.setHTML(ADVANCED_HTML_MSG);
@@ -442,15 +462,15 @@ public class DataUploadPage extends CompositeWithUsername {
 //		singleton.userInfoLabel.setText(WELCOME_INTRO + singleton.getUsername());
 		singleton.clearTokens();
         singleton.clearForm();
-        singleton.featureTypeSelector.removeStyleName("missingInfoItem");
-        singleton.featureTypeSelector.setSelectedIndex(0);
-        singleton.fileTypeSelector.removeStyleName("missingInfoItem");
-        singleton.fileTypeSelector.setSelectedIndex(0);
-        if ( singleton._featureTypeFields != null ) {
-            singleton.featureTypeSpecificContentPanel.remove(singleton._featureTypeFields);
-            singleton._featureTypeFields = null;
-        }
-		singleton.previewHtml.setHTML(NO_PREVIEW_HTML_MSG);
+//        singleton.featureTypeSelector.removeStyleName("missingInfoItem");
+//        singleton.featureTypeSelector.setSelectedIndex(0);
+//        singleton.fileTypeSelector.removeStyleName("missingInfoItem");
+//        singleton.fileTypeSelector.setSelectedIndex(0);
+//        if ( singleton._featureTypeFields != null ) {
+//            singleton.featureTypeSpecificContentPanel.remove(singleton._featureTypeFields);
+//            singleton._featureTypeFields = null;
+//        }
+//		singleton.previewHtml.setHTML(NO_PREVIEW_HTML_MSG);
 		singleton.encodingListBox.setSelectedIndex(2);
 		singleton.advancedPanel.setOpen(false);
         singleton.header.userInfoLabel.setText(WELCOME_INTRO + username);
@@ -484,16 +504,15 @@ public class DataUploadPage extends CompositeWithUsername {
 		timestampToken.setValue(localTimestamp);
 		actionToken.setValue(requestAction);
 		encodingToken.setValue(encoding);
-        featureTypeToken.setValue(selectedFeatureType.name());
-        fileTypeToken.setValue(selectedFileType.name());
+        featureTypeToken.setValue(FeatureType.PROFILE.name()); // selectedFeatureType.name());
+        fileTypeToken.setValue(FileType.DELIMITED.name()); // selectedFileType.name());
         
 		if ( _featureTypeFields != null ) {
 		    _featureTypeFields.setFormFields(this);
-//		    _featureTypeFields.setFormFields((Panel)uploadForm.getWidget());
 		}
 	}
 
-	/**
+    /**
 	 * Clears the values of the Hidden tokens on the page.
 	 */
 	private void clearTokens() {
@@ -521,31 +540,31 @@ public class DataUploadPage extends CompositeWithUsername {
 		}
 		moreHelpPopup.showCentered();
 	}
-    @UiHandler("featureTypeHelpAnchor")
-    void featureTypeHelpOnClick(ClickEvent event) {
-        // Create the popup only when needed and if it does not exist
-        if ( featureTypeHelpPopup == null ) {
-            featureTypeHelpPopup = new DashboardInfoPopup();
-            featureTypeHelpPopup.setInfoMessage(FEATURE_TYPE_HELP_HTML);
-        }
-        featureTypeHelpPopup.showCentered();
-    }
-    @UiHandler("fileTypeHelpAnchor")
-    void fileTypeHelpOnClick(ClickEvent event) {
-        // Create the popup only when needed and if it does not exist
-        if ( fileTypeHelpPopup == null ) {
-            fileTypeHelpPopup = new DashboardInfoPopup();
-            fileTypeHelpPopup.setInfoMessage(FILE_TYPE_HELP_HTML);
-        }
-        fileTypeHelpPopup.showCentered();
-    }
-
-    @UiHandler("featureTypeSelector")
-    void dataTypeSelectorOnClick(ClickEvent event) {
-//        Window.alert(String.valueOf(event));
-//        ListBox selector = (ListBox)event.getSource();
-//        Window.alert(String.valueOf(selector));
-    }
+//    @UiHandler("featureTypeHelpAnchor")
+//    void featureTypeHelpOnClick(ClickEvent event) {
+//        // Create the popup only when needed and if it does not exist
+//        if ( featureTypeHelpPopup == null ) {
+//            featureTypeHelpPopup = new DashboardInfoPopup();
+//            featureTypeHelpPopup.setInfoMessage(FEATURE_TYPE_HELP_HTML);
+//        }
+//        featureTypeHelpPopup.showCentered();
+//    }
+//    @UiHandler("fileTypeHelpAnchor")
+//    void fileTypeHelpOnClick(ClickEvent event) {
+//        // Create the popup only when needed and if it does not exist
+//        if ( fileTypeHelpPopup == null ) {
+//            fileTypeHelpPopup = new DashboardInfoPopup();
+//            fileTypeHelpPopup.setInfoMessage(FILE_TYPE_HELP_HTML);
+//        }
+//        fileTypeHelpPopup.showCentered();
+//    }
+//
+//    @UiHandler("featureTypeSelector")
+//    void dataTypeSelectorOnClick(ClickEvent event) {
+////        Window.alert(String.valueOf(event));
+////        ListBox selector = (ListBox)event.getSource();
+////        Window.alert(String.valueOf(selector));
+//    }
 
 	/**
 	 * @param input
@@ -599,24 +618,24 @@ public class DataUploadPage extends CompositeWithUsername {
 			UploadDashboard.showMessage(NO_FILE_ERROR_MSG);
 			return;
 		}
-        String errorMessage = null;
-        if ( featureTypeSelector.getSelectedIndex() <= 0 ) {
-            featureTypeSelector.addStyleName("missingInfoItem");
-            errorMessage = SELECT_FEATURE_TYPE_MSG;
-        }
-        if ( fileTypeSelector.getSelectedIndex() <= 0 ) {
-            fileTypeSelector.addStyleName("missingInfoItem");
-            if ( errorMessage != null ) { 
-                errorMessage += "<br/>";
-                errorMessage += SELECT_FILE_TYPE_MSG;
-            } else {
-                errorMessage += SELECT_FILE_TYPE_MSG;
-            }
-        }
-        if ( errorMessage != null ) {
-			UploadDashboard.showMessage(errorMessage);
-            return;
-        }
+//        String errorMessage = null;
+//        if ( featureTypeSelector.getSelectedIndex() <= 0 ) {
+//            featureTypeSelector.addStyleName("missingInfoItem");
+//            errorMessage = SELECT_FEATURE_TYPE_MSG;
+//        }
+//        if ( fileTypeSelector.getSelectedIndex() <= 0 ) {
+//            fileTypeSelector.addStyleName("missingInfoItem");
+//            if ( errorMessage != null ) { 
+//                errorMessage += "<br/>";
+//                errorMessage += SELECT_FILE_TYPE_MSG;
+//            } else {
+//                errorMessage += SELECT_FILE_TYPE_MSG;
+//            }
+//        }
+//        if ( errorMessage != null ) {
+//			UploadDashboard.showMessage(errorMessage);
+//            return;
+//        }
 		if ( overwriteRadio.getValue().booleanValue() )
 			assignTolkiens(DashboardUtils.OVERWRITE_DATASETS_REQUEST_TAG);
 //		else if ( appendRadio.getValue() )
@@ -643,9 +662,10 @@ public class DataUploadPage extends CompositeWithUsername {
     private void clearForm() {
         uploadForm.reset();
         clearInputFileNames(uploadElement);
-        featureTypeSelector.setSelectedIndex(0);
-        fileTypeSelector.setSelectedIndex(0);
+//        featureTypeSelector.setSelectedIndex(0);
+//        fileTypeSelector.setSelectedIndex(0);
         submitButton.setEnabled(false); 
+        previewButton.setEnabled(false); 
         cancelButton.setText("Done");
     }
         
@@ -692,8 +712,13 @@ public class DataUploadPage extends CompositeWithUsername {
 				}
 			}
 			previewMsg += "</pre>";
-			advancedPanel.setOpen(true);
-			previewHtml.setHTML(previewMsg);
+//			advancedPanel.setOpen(true);
+//			previewHtml.setHTML(previewMsg);
+            int wHeight = Window.getClientHeight();
+            int cHeight = (int)(.6 * wHeight);
+            int wWidth = Window.getClientWidth();
+            int cWidth = (int)(.7 * wWidth);
+            UploadDashboard.showDataPreviewPopup(previewMsg, cHeight, cWidth);
 			return false;
 		}
 
@@ -714,7 +739,9 @@ public class DataUploadPage extends CompositeWithUsername {
 						break;
 					failMsg += SafeHtmlUtils.htmlEscape(splitMsgs[k]) + "\n";
 				}
-				errMsgs.add(failMsg + EXPLAINED_FAIL_MSG_END);
+				errMsgs.add(failMsg);
+				errMsgs.add(EXPLAINED_FAIL_MSG_END);
+				errMsgs.add(UPLOAD_FAILED_SUGGESTIONS);
 			}
 			else if ( responseMsgItem.startsWith(DashboardUtils.DATASET_EXISTS_HEADER_TAG) ) {
 				// Dataset file exists and not permitted to modify
@@ -766,12 +793,13 @@ public class DataUploadPage extends CompositeWithUsername {
 //			for ( String expo : cruiseIDs )
 //				DatasetListPage.addSelectedDataset(expo);
 			DatasetListPage.resortTable();
-            if ( ! ( // featureTypeSelector.getSelectedValue().equals(FeatureType.OTHER.name()) || 
-                     fileTypeSelector.getSelectedValue().equals(FileType.OTHER.name()))) {
-    			DataColumnSpecsPage.showPage(getUsername(), cruiseIDs);
-            } else {
-                UploadDashboard.showMessage("Upload Successful!");
-            }
+            DatasetListPage.showPage();
+//            if ( ! ( // featureTypeSelector.getSelectedValue().equals(FeatureType.OTHER.name()) || 
+//                     fileTypeSelector.getSelectedValue().equals(FileType.OTHER.name()))) {
+//    			DataColumnSpecsPage.showPage(getUsername(), cruiseIDs);
+//            } else {
+//                UploadDashboard.showMessage("Upload Successful!");
+//            }
 		}
 		return wasCompleteSuccess;
 	}

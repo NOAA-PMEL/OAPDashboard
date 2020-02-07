@@ -86,6 +86,30 @@ body {
 /* 	width: 35em;
     height: 15em; */
 }
+pre {
+	margin: 0;
+}
+.previewPopupClose {
+	color: button;
+	background-color: white;
+    padding: 2px 8px 3px;
+    position:absolute;
+    top: 5px;
+    left: 5px;
+    font: 400 11px system-ui;
+    border-radius: 5px;
+}
+.previewPopupPanel {
+/* 	background-color: #BBDDFF; */
+    padding: 1.5em .25em .25em 1em;
+}
+.previewPopupHtml {
+    padding: 0.25em;
+    overflow: scroll;
+    height: 99%;
+    width: 100%;
+}
+
 .uploadfile {
     display: block;
     width: 90%;
