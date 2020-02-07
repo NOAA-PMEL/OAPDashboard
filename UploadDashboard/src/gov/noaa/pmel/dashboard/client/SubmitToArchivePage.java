@@ -56,6 +56,7 @@ public class SubmitToArchivePage extends CompositeWithUsername implements DataSu
     @UiField HTML submitCommentLabel;
     @UiField HTML statusLabel;
     @UiField Label submissionTime;
+    @UiField HTML downloadSubmissionPanel;
     @UiField HTML statusListPanel;
     @UiField TextArea submitCommentTextArea;
 //	@UiField Tree columnTree;
@@ -106,11 +107,10 @@ public class SubmitToArchivePage extends CompositeWithUsername implements DataSu
 	public SubmitToArchivePage() {
 		initWidget(uiBinder.createAndBindUi(this));
 		setupHandlers();
-		buildGrid();
         
-		header.setPageTitle("Submit Datasets for Archving");
+		header.setPageTitle("Submit Datasets");
         
-        fileListLabel.setText("The following files will be archived at NCEI:");
+        fileListLabel.setText("The following files will be submitted:");
         submitCommentLabel.setHTML(submitCommentHtml);
         
 		cancelButton.setText("Cancel");
@@ -126,9 +126,6 @@ public class SubmitToArchivePage extends CompositeWithUsername implements DataSu
 		_submitColsList = new ArrayList<>();
 	}
 	
-	private void buildGrid() {
-	}
-
 	public final class RadioButtonClickHandler implements ClickHandler {
 
 		private SELECT select;
@@ -278,6 +275,7 @@ public class SubmitToArchivePage extends CompositeWithUsername implements DataSu
         if ( archiveDate == null || archiveDate.trim().length() == 0 ) {
             page.submissionTime.setText("Package not yet submitted.");
             page.statusListPanel.setHTML("");
+            page.downloadSubmissionPanel.setHTML("");
         } else {
             page.submissionTime.setText("Package submitted on " + archiveDate.substring(0, archiveDate.lastIndexOf(' ')));
             service.getPackageArchiveStatus(page.getUsername(), page._datasetId, 
@@ -323,6 +321,7 @@ public class SubmitToArchivePage extends CompositeWithUsername implements DataSu
 		
         submitCommentTextArea.setText(_dataset.getArchiveSubmissionMessage());
         generateDOIchkBx.setValue(_dataset.getArchiveDOIrequested());
+        generateDOIchkBx.setVisible(false);
 //		columnsPanel.clear();
         
         setFilesToBeArchived(_dataset);
@@ -491,8 +490,9 @@ public class SubmitToArchivePage extends CompositeWithUsername implements DataSu
 				public void onFailure(Throwable ex) {
 					// Failure, so show fail message
 					// But still go back to the cruise list page since some may have succeeded
+                    // XXX No!  Deal with this.
 					UploadDashboard.showFailureMessage(SUBMIT_FAILURE_MSG_START + " for Archiving: ", ex);
-					DatasetListPage.showPage();
+//					DatasetListPage.showPage();
 					UploadDashboard.showAutoCursor();
 				}
 			});

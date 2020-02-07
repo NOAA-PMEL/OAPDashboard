@@ -66,6 +66,7 @@
             <g:FlowPanel>
                 <g:HTML ui:field="statusLabel"  addStyleNames="{style.archiveStatusLabel}" ></g:HTML>
                 <g:Label ui:field="submissionTime"  addStyleNames="{style.archiveStatusSubmitTime}" ></g:Label>
+                <g:HTML ui:field="downloadSubmissionPanel" />
                 <g:HTML ui:field="statusListPanel" addStyleNames="{style.archiveStatusList}"></g:HTML>
             </g:FlowPanel>
         </g:east>
