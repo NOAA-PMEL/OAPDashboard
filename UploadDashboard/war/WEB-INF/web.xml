@@ -97,6 +97,15 @@
 	</servlet-mapping>
 
 	<servlet>
+		<servlet-name>DataServlet</servlet-name>
+		<servlet-class>gov.noaa.pmel.dashboard.server.DataServices</servlet-class>
+	</servlet>
+	<servlet-mapping>
+		<servlet-name>DataServlet</servlet-name>
+		<url-pattern>/data/*</url-pattern>
+	</servlet-mapping>
+
+	<servlet>
 		<servlet-name>NotificationServlet</servlet-name>
 		<servlet-class>gov.noaa.pmel.dashboard.server.NotificationService</servlet-class>
 	</servlet>
@@ -169,7 +178,7 @@
 		</auth-constraint>
 	</security-constraint>
 <!--  NOTE: This next section has to be commented out when running in SuperDevMode
-      because Jetty redirects to login page (whereas Tomcat forwards to it.)    -->
+      because Jetty redirects to login page (whereas Tomcat forwards to it.)
 <security-constraint>
 	<display-name>excluded</display-name>
 	<web-resource-collection>
@@ -178,6 +187,7 @@
 	</web-resource-collection>
 	<auth-constraint />
 </security-constraint>
+-->
 <!--
 <security-constraint>
 	<display-name>excluded</display-name>
@@ -219,7 +229,7 @@
 	</security-role>
 	<!-- Default page to serve -->
 	<welcome-file-list>
-		<welcome-file>OAPUploadDashboard.html</welcome-file>
+		<welcome-file>Dashboard.html</welcome-file>
 	</welcome-file-list>
 
 </web-app>
