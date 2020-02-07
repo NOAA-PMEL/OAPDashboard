@@ -29,6 +29,7 @@ public class DashboardUtils {
 	public static final String COMMA_FORMAT_TAG = "COMMA-SEPARATED VALUES";
 	public static final String SEMICOLON_FORMAT_TAG = "SEMICOLON-SEPARATED VALUES";
 	public static final String TAB_FORMAT_TAG = "TAB-SEPARATED VALUES";
+	public static final String UNSPECIFIED_DELIMITER_FORMAT_TAG = "UNSPECIFIED DELIMITER";
 
 	// Cruise upload result strings
 	public static final String FILE_PREVIEW_HEADER_TAG = "FILE PREVIEW HEADER TAG";

@@ -11,9 +11,11 @@ import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.event.logical.shared.ValueChangeHandler;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
+import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.ui.Composite;
+import com.google.gwt.user.client.ui.FlexTable;
 import com.google.gwt.user.client.ui.FlowPanel;
-import com.google.gwt.user.client.ui.Hidden;
+import com.google.gwt.user.client.ui.HTML;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.Panel;
 import com.google.gwt.user.client.ui.RadioButton;
@@ -39,9 +41,15 @@ public class CommonFeatureFields extends Composite implements FeatureTypeFields 
 	@UiField RadioButton commaRadio;
 	@UiField RadioButton semicolonRadio;
 	@UiField RadioButton tabRadio;
+	@UiField Panel delimiterPanel;
     
+    @UiField FlexTable flexTable;
     @UiField Label datasetColNameLabel;
     @UiField TextBox datasetColName;
+    @UiField HTML datasetColNameDesc;
+    @UiField Label unspecDatasetIdLabel;
+    @UiField TextBox unspecDatasetIdBox;
+    @UiField HTML unspecDatasetIdDesc;
 
 //	Hidden formatToken;
 //	Hidden datasetIdColName;
@@ -75,7 +83,7 @@ public class CommonFeatureFields extends Composite implements FeatureTypeFields 
 		semicolonRadio.setText(SEMICOLON_FORMAT_TEXT);
 		tabRadio.setName(DashboardUtils.TAB_FORMAT_TAG);
 		tabRadio.setText(TAB_FORMAT_TEXT);
-        commaRadio.setValue(true, false);
+        commaRadio.setValue(false, false);
         semicolonRadio.setValue(false, false);
         tabRadio.setValue(false, false);
         
@@ -83,39 +91,45 @@ public class CommonFeatureFields extends Composite implements FeatureTypeFields 
         semicolonRadio.addValueChangeHandler(radioChange);
         tabRadio.addValueChangeHandler(radioChange);
         
+//        delimiterPanel.setVisible(false);
+        
         String DATASET_ID_TT_TEXT = "Name of column specifying dataset ID. Only necessary if non-standard.";
         datasetColNameLabel.setText("Dataset ID Column Name:");
         datasetColName.getElement().setPropertyString("placeholder", "dataset ID column name");
         datasetColNameLabel.setTitle(DATASET_ID_TT_TEXT);
         datasetColName.setTitle(DATASET_ID_TT_TEXT);
+        
+        int windowWidth = Window.getClientWidth();
+        int ftWidth = (int)(.75 * windowWidth);
+        flexTable.setWidth(ftWidth+"px");
+        flexTable.setWidget(0, 0, datasetColNameLabel);
+        flexTable.setWidget(0, 1, datasetColName);
+        flexTable.setWidget(0, 2, datasetColNameDesc);
+        flexTable.setWidget(1, 0, unspecDatasetIdLabel);
+        flexTable.setWidget(1, 1, unspecDatasetIdBox);
+        flexTable.setWidget(1, 2, unspecDatasetIdDesc);
+        
+        unspecDatasetIdBox.getElement().setPropertyString("placeholder", "specify the dataset ID");
+//        unspecDatasetIdBox.setVisible(false);
     }
 
     @Override
     public void setFormFields(DataUploadPage page) {
-        page.setFileDataFormatToken(getSelectedFormat().getName());
+        page.setFileDataFormatToken(getSelectedFormat());
         page.setDatasetIdColumnNameToken(datasetColName.getValue());
-//        if ( formatToken == null ) {
-//            logger.info("Adding dataformat field for " + this.getClass());
-//            formatToken = new Hidden("dataformat");
-//            form.add(formatToken);
-//        }
-//        if ( datasetIdColName == null ) {
-//            logger.info("Adding datasetIdColName field for " + this.getClass());
-//            datasetIdColName = new Hidden("datasetIdColName");
-//            form.add(datasetIdColName);
-//        }
-//        formatToken.setValue(getSelectedFormat().getName());
-//		datasetIdColName.setValue(datasetColName.getValue());
+        page.setDatasetIdToken(unspecDatasetIdBox.getValue());
     }
 
-    private RadioButton getSelectedFormat() {
-        if ( commaRadio.getValue()) return commaRadio;
-        if ( semicolonRadio.getValue()) return semicolonRadio;
-        else return tabRadio;
+    private String getSelectedFormat() {
+        if ( commaRadio.getValue()) return commaRadio.getName();
+        if ( semicolonRadio.getValue()) return semicolonRadio.getName();
+        if ( tabRadio.getValue()) return tabRadio.getName();
+        else return DashboardUtils.UNSPECIFIED_DELIMITER_FORMAT_TAG;
     }
 
     @Override
     public void clearFormFields(DataUploadPage page) {
+        GWT.log("CommonFields clearFormFields() called");
 //        if ( formatToken != null ) {
 //            formatToken.setValue("");
 //            datasetIdColName.setValue("");
