@@ -1,0 +1,12 @@
+<!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
+<ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
+	xmlns:g="urn:import:com.google.gwt.user.client.ui">
+
+	<ui:style src="FixedWidth.css" />
+
+	<g:FlowPanel addStyleNames="{style.previewPopupPanel}">
+        <g:Button addStyleNames="{style.previewPopupClose}" ui:field="closeButton">Close</g:Button>
+        <g:HTML addStyleNames="{style.previewPopupHtml}" ui:field="html"></g:HTML>
+	</g:FlowPanel>
+
+</ui:UiBinder>
