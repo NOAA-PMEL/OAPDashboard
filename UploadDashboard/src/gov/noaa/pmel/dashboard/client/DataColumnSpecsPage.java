@@ -258,10 +258,13 @@ public class DataColumnSpecsPage extends CompositeWithUsername {
         });
 
 		messagesButton.setText(MESSAGES_TEXT);
+        messagesButton.setVisible(false);
 		pagerLabel.setText(PAGER_LABEL_TEXT);
 		submitButton.setText(SUBMIT_TEXT);
+        submitButton.setVisible(false);
 		doneButton.setText(DONE_TEXT);
 		saveButton.setText(SAVE_BUTTON_TEXT);
+        saveButton.setVisible(false);
 
 		knownUserTypes = new ArrayList<DataColumnType>();
 		cruise = new DashboardDataset();
@@ -559,7 +562,7 @@ public class DataColumnSpecsPage extends CompositeWithUsername {
 		if ( status.equals(DashboardUtils.CHECK_STATUS_NOT_CHECKED) ||
 			 status.equals(DashboardUtils.CHECK_STATUS_UNACCEPTABLE) ) {
 			cruiseNeverChecked = true;
-			messagesLabel.setText(NOT_CHECKED_MSG);
+//			messagesLabel.setText(NOT_CHECKED_MSG);
 		}
 		else {
 			cruiseNeverChecked = false;
@@ -576,7 +579,7 @@ public class DataColumnSpecsPage extends CompositeWithUsername {
 			else
 				msgText += Integer.toString(numWarns);
 			msgText += " warnings";
-			messagesLabel.setText(msgText);
+//			messagesLabel.setText(msgText);
 		}
 
 		if ( Boolean.TRUE.equals(cruiseSpecs.isEditable()) ) {
@@ -731,6 +734,11 @@ public class DataColumnSpecsPage extends CompositeWithUsername {
 	void doneOnClick(ClickEvent event) {
 		// Check if any changes have been made
 		boolean hasChanged = false;
+        if ( !hasChanged ) { 
+			DatasetListPage.showPage();
+			UploadDashboard.showAutoCursor();
+			return;
+        }
 		for ( DatasetDataColumn dataCol : cruiseDataCols ) {
 			if ( dataCol.hasChanged() ) {
 				hasChanged = true;

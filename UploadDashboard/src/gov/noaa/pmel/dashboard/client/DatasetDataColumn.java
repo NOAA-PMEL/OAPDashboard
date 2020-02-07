@@ -250,7 +250,7 @@ public class DatasetDataColumn {
 		CompositeCell<DatasetDataColumn> compCell = 
 			new CompositeCell<DatasetDataColumn>(
 				new ArrayList<HasCell<DatasetDataColumn,?>>(
-					Arrays.asList(userNameCell, stdNameCell, missValCell)));
+					Arrays.asList(userNameCell))); // , stdNameCell, missValCell)));
 
 		// Create and return the Header
 		Header<DatasetDataColumn> headerCell = new Header<DatasetDataColumn>(compCell) {
