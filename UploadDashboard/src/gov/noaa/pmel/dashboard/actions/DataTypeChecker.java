@@ -161,7 +161,7 @@ public class DataTypeChecker {
         try ( BufferedReader profileReader = new BufferedReader(new FileReader(filePath));  ) {
             String filename = "upload.file";
             TreeMap<String, DashboardDatasetData> dmap = dfh.createDatasetsFromInput(profileReader, fileFormat, "jkamb", 
-                                                                                     filename, new Date().toString(), null);
+                                                                                     filename, new Date().toString(), null, null);
             for (String datasetId : dmap.keySet()) {
                 DashboardDatasetData ddd = dmap.get(datasetId);
                 System.out.println(ddd.getDataColTypes());

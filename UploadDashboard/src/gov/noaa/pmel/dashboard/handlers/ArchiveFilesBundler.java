@@ -37,6 +37,9 @@ import gov.noaa.pmel.dashboard.shared.DashboardUtils;
 /**
  * Bundles files for sending out to be archived.
  * 
+ * @deprecated 
+ * @see gov.noaa.pmel.dashboard.actions.EmailSubmitter
+ * 
  * @author Karl Smith
  */
 public class ArchiveFilesBundler extends VersionedFileHandler {

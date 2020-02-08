@@ -43,6 +43,7 @@ import com.google.gwt.user.server.rpc.RemoteServiceServlet;
 
 import gov.noaa.pmel.dashboard.actions.DatasetChecker;
 import gov.noaa.pmel.dashboard.actions.DatasetModifier;
+import gov.noaa.pmel.dashboard.actions.IfDatasetSubmitter;
 import gov.noaa.pmel.dashboard.datatype.DashDataType;
 import gov.noaa.pmel.dashboard.datatype.KnownDataTypes;
 import gov.noaa.pmel.dashboard.dsg.StdUserDataArray;
@@ -111,22 +112,23 @@ public class DashboardServices extends RemoteServiceServlet implements Dashboard
 		try {
 			username = DashboardUtils.cleanUsername(request.getUserPrincipal().getName().trim());
 		} catch (Exception ex) {
+            logger.warn(ex);
 			// Probably null pointer exception - leave username null
 		}
-		logger.info("logging out user " + username);
+		logger.debug("logging out user " + username);
 		try {
 			request.logout();
 		} catch ( Exception ex ) {
-			logger.error("request.logout failed: " + ex);
+			logger.warn("request.logout failed: " + ex);
 		}
 		HttpSession session = request.getSession(false);
 		try {
 			session.invalidate();
 		} catch ( Exception ex ) {
 			// Log but otherwise ignore this error
-			logger.error("session.invalidate failed: " + ex);
+			logger.warn("session.invalidate failed: " + ex);
 		}
-		logger.info("logged out " + username);
+		logger.info("logout " + username);
 	}
 
     @Override
@@ -917,9 +919,14 @@ public class DashboardServices extends RemoteServiceServlet implements Dashboard
     			" submitted by " + username);
     	
     	// Submit the datasets to Archive
-    	configStore.getDashboardDatasetSubmitter().archiveDatasets(datasetIds, columnsList, submitMsg,
-    															   requestDOI, archiveStatus, timestamp, 
-    															   repeatSend, username);
+    	try {
+            IfDatasetSubmitter.getDatasetSubmitter().archiveDatasets(datasetIds, columnsList, submitMsg,
+            														   requestDOI, archiveStatus, timestamp, 
+            														   repeatSend, username);
+        } catch (IOException ex) {
+            ex.printStackTrace();
+            throw new IllegalArgumentException("Failed to submit data package", ex);
+        }
     }
 	
     @Override
@@ -929,7 +936,7 @@ public class DashboardServices extends RemoteServiceServlet implements Dashboard
     		throw new IllegalArgumentException("Invalid user request");
         try {
             SubmissionRecord srec = Archive.getArchiveStatusForPackage(datasetId);
-            String statusHtml = buildStatusHtml(srec);
+            String statusHtml = buildGlodapStatusHtml(srec);
             return statusHtml;
         } catch (Exception ex) {
             ex.printStackTrace();
@@ -937,24 +944,56 @@ public class DashboardServices extends RemoteServiceServlet implements Dashboard
         }
     }
     
+    private static String buildGlodapStatusHtml(SubmissionRecord srec) {
+        StringBuilder sb = new StringBuilder();
+        sb.append("<ul>");
+        if ( srec == null || srec.getStatusHistory() == null || srec.getStatusHistory().size() == 0 )  {
+            sb.append("<li>No status history for dataset.</li>");
+        } else {
+            File dataPackage = new File(srec.archiveBag());
+            if ( dataPackage.exists()) {
+                String packageLink = getDataPackageUrl(srec);
+                sb.append("<li>Submitted package is available for <a href=\"")
+                  .append(packageLink)
+                  .append("\"")
+                  .append(" download ")
+                  .append(">")
+                  .append("download.")
+                  .append("</a>")
+                  .append("</li>");
+            } else {
+                sb.append("<li>The submitted data package is no longer available for download.");
+            }
+        }
+        sb.append("</ul>");
+        return sb.toString();
+    }
 	/**
+     * @param srec
+     * @return
+     */
+    private static String getDataPackageUrl(SubmissionRecord srec) {
+        return "data/"+srec.datasetId();
+    }
+
+    /**
      * @param srec
      * @return
      */
     private static String buildStatusHtml(SubmissionRecord srec) {
         StringBuilder sb = new StringBuilder();
+        sb.append("<ul>");
         if ( srec == null || srec.getStatusHistory() == null || srec.getStatusHistory().size() == 0 )  {
-            sb.append("<ul><li>No status history for dataset.</li></ul>");
+            sb.append("<li>No status history for dataset.</li>");
         } else {
             List<StatusRecord> history = srec.getStatusHistory();
-            sb.append("<ul>");
             for (StatusRecord rec : history) {
                 sb.append("<li>")
                   .append(htmlView(rec))
                   .append("</li>");
             }
-            sb.append("</ul>");
         }
+        sb.append("</ul>");
         return sb.toString();
     }
 

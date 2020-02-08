@@ -11,6 +11,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import gov.noaa.pmel.dashboard.server.model.SubmissionRecord;
+import gov.noaa.pmel.dashboard.server.util.OapMailSender;
 import gov.noaa.pmel.tws.util.ApplicationConfiguration;
 import gov.noaa.pmel.tws.util.process.CommandRunner;
 
@@ -37,6 +38,19 @@ public class FileXferService {
         public static XFER_PROTOCOL from(String name) {
             return XFER_PROTOCOL.valueOf(name.toUpperCase());
         }
+    }
+        
+    public static void sendArchiveBundle(SubmissionRecord submitRec, File archiveBundle, 
+                                         String userRealName, String userEmail) throws Exception {
+        String to = ApplicationConfiguration.getProperty("oap.glodap.notification.list");
+        String cc = ApplicationConfiguration.getProperty("oap.glodap.notification.cc_list");
+        String bcc = ApplicationConfiguration.getProperty("oap.glodap.notification.bcc_list");
+        String subject = submitRec.datasetId() + " : New GLODAP package for " + userRealName;
+        String message = "Please find attached a submission package for dataset " + submitRec.datasetId() +
+                         "\nSubmitted by the GLODAP Data Submission System on behalf of " + userRealName + ".";
+        String[] attachments = new String[] { archiveBundle.getCanonicalPath() };
+        OapMailSender sender = new OapMailSender();
+        sender.sendMessageWithAttachments(to, cc, bcc, subject, message, attachments);
     }
         
     /**
@@ -80,7 +94,7 @@ public class FileXferService {
                 throw new IllegalStateException("Unknown protocol:" + forProtocol);
         }
     }
-
+    
     public String submitArchiveBundle(String stdId, String version, File archiveBundle)  throws Exception {
         String targetDir = stdId + "/" + version + "/";
         String targetFile = stdId + "_bagit.zip";

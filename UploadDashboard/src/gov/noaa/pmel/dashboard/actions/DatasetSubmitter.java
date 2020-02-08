@@ -222,18 +222,6 @@ public class DatasetSubmitter {
 		}
 	}
 
-//	private void bagDatasets(List<String> datasetIds, List<String> columnsList, String archiveStatus, 
-//	                         String timestamp, boolean repeatSend, String submitter) {
-//        for ( String datasetId : datasetIds ) {
-//            try {
-//                File bag = Bagger.Bag(datasetId);
-//                logger.info("Bagged " + datasetId + " as " + bag);
-//            } catch (Exception ex) {
-//                ex.printStackTrace();
-//            }
-//        }
-//    }
-    
 	public void archiveDatasets(List<String> datasetIds, List<String> columnsList, String submitMsg, 
 	                            boolean generateDOI, String archiveStatus, String timestamp, 
 	                            boolean repeatSend, String submitter) {
@@ -311,7 +299,7 @@ public class DatasetSubmitter {
      * @return
 	 * @throws SQLException 
      */
-    private static SubmissionRecord getSubmissionRecord(String datasetId, String submitMsg, 
+    protected static SubmissionRecord getSubmissionRecord(String datasetId, String submitMsg, 
                                                         String timestamp, String submitter) 
             throws SQLException {
         SubmissionRecord sRecord = getLatestSubmissionRecord(datasetId);
@@ -348,7 +336,7 @@ public class DatasetSubmitter {
      * @param submission
 	 * @throws SQLException 
      */
-    private static void insertNewSubmissionRecord(SubmissionRecord submission) throws SQLException {
+    protected static void insertNewSubmissionRecord(SubmissionRecord submission) throws SQLException {
         DaoFactory.SubmissionsDao().initialSubmission(submission);
     }
 
@@ -358,7 +346,7 @@ public class DatasetSubmitter {
      * @param archiveStatusMsg
 	 * @throws SQLException 
      */
-    private static void updateStatus(long submissionId, StatusState statusState, String archiveStatusMsg) throws SQLException {
+    protected static void updateStatus(long submissionId, StatusState statusState, String archiveStatusMsg) throws SQLException {
         StatusRecord status = StatusRecord.builder().submissionId(submissionId)
                                     .status(statusState)
                                     .message(archiveStatusMsg)
@@ -385,9 +373,9 @@ public class DatasetSubmitter {
      * @param userEmail
 	 * @throws Exception 
      */
-    private static void sendSubmitEmail(SubmissionRecord sRecord, File archiveBundle, String userRealName, String userEmail) throws Exception {
+    protected void sendSubmitEmail(SubmissionRecord sRecord, File archiveBundle, String userRealName, String userEmail) throws Exception {
         String datasetId = sRecord.datasetId();
-        String notificationList = ApplicationConfiguration.getLatestProperty("oap.archive.notification.list", null);
+        String notificationList = ApplicationConfiguration.getLatestProperty("oap.glodap.notification.list", null);
         logger.debug("notification to list:" + notificationList);
         if ( notificationList != null )  {
             sendArchiveMessage(sRecord, archiveBundle, userRealName, userEmail);
@@ -395,22 +383,22 @@ public class DatasetSubmitter {
         }
      }
 
-    private static void sendArchiveMessage(SubmissionRecord sRecord, File archiveBundle, String userRealName, String userEmail) throws Exception {
+    protected void sendArchiveMessage(SubmissionRecord sRecord, File archiveBundle, String userRealName, String userEmail) throws Exception {
         String datasetId = sRecord.datasetId();
         String submitKey = sRecord.submissionKey();
         String subject = "TESTING: Archive bundle posted for dataset ID: " + datasetId;
         String message = "A dataset archive bundle for " + userRealName + " was posted to the SFTP site for pickup.\n"
                        + "The archive bundle is available for pickup at sftp.pmel.noaa.gov/data/oap/" + submitKey + "/" + sRecord.version();
-            String toList = ApplicationConfiguration.getLatestProperty("oap.archive.notification.list");
-            String ccList = ApplicationConfiguration.getLatestProperty("oap.archive.notification.cc_list");
-            String bccList = ApplicationConfiguration.getLatestProperty("oap.archive.notification.bcc_list");
+            String toList = ApplicationConfiguration.getLatestProperty("oap.glodap.notification.list");
+            String ccList = ApplicationConfiguration.getLatestProperty("oap.glodap.notification.cc_list");
+            String bccList = ApplicationConfiguration.getLatestProperty("oap.glodap.notification.bcc_list");
             new OapMailSender().sendMessage(toList, ccList, bccList, subject, message);
     }
-    private static void sendUserMessage(String datasetId, File archiveBundle, String userRealName, String userEmail) throws Exception {
-        String subject = "Archive bundle submitted for dataset ID: " + datasetId;
-        String message = userRealName + ",\n\n" + "An archive bundle for dataset " + datasetId + " has been submitted for archival at NCEI.\n\n" 
+    protected void sendUserMessage(String datasetId, File archiveBundle, String userRealName, String userEmail) throws Exception {
+        String subject = "A dataset bundle submitted for dataset ID: " + datasetId;
+        String message = userRealName + ",\n\n" + "A dataset bundle for dataset " + datasetId + " has been submitted to GLODAP.\n\n" 
 //                         + "The archive bundle is available for pickup at ncei_sftp@sftp.pmel.noaa.gov/data/oap/" + archiveBundle.getName();
-                            + "Regards, \n\nThe OAP Dashboard System.";
+                            + "Regards, \n\nThe GLODAP Submission System.";
             String toList = userEmail;
             new OapMailSender().sendMessage(toList, subject, message);
     }
@@ -423,10 +411,10 @@ public class DatasetSubmitter {
      * @return
 	 * @throws IOException 
      */
-    private void doSubmitAchiveBundleFile(SubmissionRecord submission, String stdId, File archiveBundle, 
+    protected static void doSubmitAchiveBundleFile(SubmissionRecord submission, String stdId, File archiveBundle, 
                                           String userRealName, String userEmail) throws Exception {
 //        try {
-            String achiveMethod = ApplicationConfiguration.getProperty("oap.archive.mode", "sftp");
+            String achiveMethod = ApplicationConfiguration.getProperty("oap.glodap.archive.mode", "email");
             XFER_PROTOCOL protocol = XFER_PROTOCOL.from(achiveMethod);
             switch (protocol) {
                 case SFTP:
@@ -436,8 +424,12 @@ public class DatasetSubmitter {
                     submission.pkgLocation(stagedPackage);
                     break;
                 case EMAIL:
-                    filesBundler.sendArchiveBundle(submission, archiveBundle, userRealName, userEmail);
+//                    filesBundler.sendArchiveBundle(submission, archiveBundle, userRealName, userEmail);
+                    FileXferService.sendArchiveBundle(submission, archiveBundle, userRealName, userEmail);
+//                    submission.pkgLocation(stagedPackage);
                     break;
+                default:
+                    throw new IllegalStateException("Unknown archiving protocol: " + protocol);
             }
 //        } catch (Exception ex) {
 //            ex.printStackTrace();
@@ -451,9 +443,9 @@ public class DatasetSubmitter {
      * @return
 	 * @throws Exception
      */
-    private File getArchiveBundle(SubmissionRecord submitRecord, String datasetId, List<String> columnsList, String submitMsg, boolean generateDOI) throws Exception {
+    protected File getArchiveBundle(SubmissionRecord submitRecord, String datasetId, List<String> columnsList, String submitMsg, boolean generateDOI) throws Exception {
         File archiveBundle = null;
-        if ( ApplicationConfiguration.getProperty("oap.archive.use_bagit", true)) {
+        if ( ApplicationConfiguration.getProperty("oap.glodap.archive.use_bagit", true)) {
             String submitComment = "generate_doi: " + String.valueOf(generateDOI) + "\n";
             submitComment += "submission_record_id:" + submitRecord.submissionKey() + "\n";
             submitComment += "user_dataset_id:" + datasetId + "\n";

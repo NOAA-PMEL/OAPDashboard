@@ -14,6 +14,21 @@
     </listener>
     
     <filter>
+        <filter-name>LoginDetectionFilter</filter-name>
+        <filter-class>gov.noaa.pmel.dashboard.server.LoginDetectionFilter</filter-class>
+    </filter>
+    <filter-mapping>
+        <filter-name>LoginDetectionFilter</filter-name>
+        <url-pattern>/*</url-pattern>
+        <!--
+        <url-pattern>/OAPUploadDashboard/DashboardServices</url-pattern>
+        <url-pattern>/OAPUploadDashboard/DataUploadService</url-pattern>
+        <url-pattern>/OAPUploadDashboard/SessionServices</url-pattern>
+          -->
+    </filter-mapping>
+    
+    <filter>
+    
         <filter-name>LoginPageMisdirectFilter</filter-name>
         <filter-class>gov.noaa.pmel.dashboard.server.LoginRedirectFilter</filter-class>
     </filter>
