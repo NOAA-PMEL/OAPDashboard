@@ -79,6 +79,11 @@ public class OapMailSender {
     }
     
     public void sendMessage(String to, String cc, String bcc, String subject, String message) throws Exception {
+        sendMessageWithAttachments(to, cc, bcc, subject, message, (String[])null);
+    }
+    
+    public void sendMessageWithAttachments(String to, String cc, String bcc, String subject, String message, 
+                                           String... attachments) throws Exception {
 		logger.info("Attempting to send msg " + subject + " to: " + to);
         Properties mailProps = setup();
         session = Session.getInstance(mailProps, null);
@@ -87,7 +92,7 @@ public class OapMailSender {
         try ( Transport transport = session.getTransport()) {
             String passwd = dapw;
             transport.connect(acct, passwd);
-            _sendMessage(transport, to, cc, bcc, subject, message, (String[])null);
+            _sendMessage(transport, to, cc, bcc, subject, message, attachments);
         }
     }
         
@@ -191,10 +196,10 @@ public class OapMailSender {
             String userRealName = "Linus Kamb";
             String subject = "TESTING: Archive bundle posted for dataset ID: " + datasetId;
             String message = "A dataset archive bundle for " + userRealName + " was posted to the SFTP site for pickup.\n"
-                           + "The archive bundle is available for pickup at ncei_sftp@sftp.pmel.noaa.gov/data/oap/" + "06AQ20150817_bagit.zip";
+                            + "The archive bundle is available for pickup at https://www.pmel.noaa.gov/sdig/oap/data/" + "06AQ20150817_bagit.zip";
                 String toList = ApplicationConfiguration.getProperty("oap.archive.notification.list", null);
-                String ccList = ApplicationConfiguration.getProperty("oap.archive.notification.cc_list", null);
-                String bccList = ApplicationConfiguration.getProperty("oap.archive.notification.bcc_list", null);
+                String ccList = null; // ApplicationConfiguration.getProperty("oap.archive.notification.cc_list", null);
+                String bccList = null; // ApplicationConfiguration.getProperty("oap.archive.notification.bcc_list", null);
                 new OapMailSender().sendMessage(toList, ccList, bccList, subject, message);
 
         } catch (Exception ex) {
