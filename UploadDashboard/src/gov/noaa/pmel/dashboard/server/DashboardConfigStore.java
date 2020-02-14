@@ -703,7 +703,7 @@ public class DashboardConfigStore {
         }
     }
     public static void removeUser(String username) throws IOException {
-        throw new UnsupportedOperationException("RemoveUser not yet implemented.");
+        throw new UnsupportedOperationException("RemoveUser not yet implemented."); //  XXX TODO:
     }
     public String getProperty(String propertyName) {
         return getProperty(propertyName, null);
@@ -1119,6 +1119,7 @@ public class DashboardConfigStore {
 	 * 		privileges over othername
 	 */
 	public boolean userManagesOver(String username, String othername) {
+        if ( username.equals(othername)) { return true; }
 		DashboardUserInfo userInfo = _userInfoMap.get(DashboardUtils.cleanUsername(username));
 		if ( userInfo == null )
 			return false;
