@@ -65,3 +65,11 @@ oap.feedback.recipients=linus.kamb@noaa.gov
 oap.db.environment=my-dashboard
 
 tws.pkauth.certificates_dir=/usr/local/src/oads/apache-tomcat-8.5.34/content/OAPUploadDashboard/config
+
+# GLODAP-specific properties
+oap.glodap.archive.mode=email
+oap.glodap.archive.use_bagit=true
+oap.glodap.notification.list=linus.kamb@noaa.gov
+oap.glodap.notification.cc_list
+oap.glodap.notification.bcc_list=linus.kamb@gmail.com
+
