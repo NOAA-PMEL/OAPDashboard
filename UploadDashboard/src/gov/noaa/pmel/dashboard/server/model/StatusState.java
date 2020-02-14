@@ -11,6 +11,7 @@ package gov.noaa.pmel.dashboard.server.model;
 public enum StatusState {
     INITIAL("Initiated"),
     STAGED("Staged for delivery"),
+    SUBMITTED("Submitted"),
     RECEIVED("Received by archive"),
     PENDING_INFO("Pending additional information"),
     VALIDATED("Submission validated"),
