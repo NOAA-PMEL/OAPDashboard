@@ -115,8 +115,8 @@ public class Users {
             User user = validateUser(username, currentPlainTextPasswd);
             setUserPassword(user, newPlainTextPasswd);
         } catch (Exception ex) {
-            System.err.println(ex);
-            throw new DashboardException(ex);
+            logger.info(ex,ex);
+            throw new DashboardException(ex.getMessage(), ex);
         }
     }
     
@@ -126,9 +126,12 @@ public class Users {
             String newCryptPasswd = PasswordCrypt.generateTomcatPasswd(newPlainTextPasswd);
             UsersDao udao = DaoFactory.UsersDao();
             udao.setUserPassword(user.dbId().intValue(), newCryptPasswd);
+        } catch (CredentialException cex) {
+            System.err.println(cex);
+            throw new DashboardException(cex.getMessage() + "<br/>" + PasswordUtils.passwordRules(true), cex); // XXX TODO: shouldn't do this message here.
         } catch (Exception ex) {
             System.err.println(ex);
-            throw new DashboardException(ex);
+            throw new DashboardException(ex.getMessage(), ex);
         }
     }
         
