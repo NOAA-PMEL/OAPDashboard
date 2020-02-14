@@ -27,19 +27,25 @@ public class PasswordUtils {
         }
     }
     
-    public static String passwordRules() {
-        return "Passord must be at least 12 characters long, and it must contain at least one each of\n" +
-                "\t lower-case characters\n" +
-                "\t upper-case characters\n" +
-                "\t numbers\n" +
-                "\t symbols  '!', '$', '%', '#', '&', '_', '*', '^'";
+    public static String passwordRules(boolean asHtml) {
+        String lf = asHtml ? "<br/>" : "\n";
+        String listStart = asHtml ? "<ul>" : "";
+        String listEnd = asHtml ? "</ul>" : "";
+        String listItem = asHtml ? "<li>" : "\t";
+        return "Passord must be at least 12 characters long, and it must contain at least one each of" + lf +
+                listStart +
+                listItem + "lower-case characters" + lf +
+                listItem + "upper-case characters" + lf +
+                listItem + "numbers" + lf +
+                listItem + "symbols  '!', '$', '%', '#', '&', '_', '*', '^'" +
+                listEnd;
     }
     
     private static void test(String pw) {
         try {
             validatePasswordStrength(pw);
         } catch (Exception ex) {
-            System.out.println(passwordRules());
+            System.out.println(passwordRules(false));
         }
     }
     public static void main(String[] args) {
