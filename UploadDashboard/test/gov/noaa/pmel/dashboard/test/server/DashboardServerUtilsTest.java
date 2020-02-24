@@ -9,9 +9,9 @@ import static org.junit.Assert.fail;
 import org.junit.Test;
 
 import gov.noaa.pmel.dashboard.datatype.LonLatConverter;
-import gov.noaa.pmel.dashboard.server.DashboardOmeMetadata;
 import gov.noaa.pmel.dashboard.server.DashboardServerUtils;
 import gov.noaa.pmel.dashboard.shared.DashboardUtils;
+import gov.noaa.pmel.dashboard.server.util.LanguageUtils;
 
 /**
  * Unit tests for methods in {@link gov.noaa.pmel.dashboard.server.DashboardServerUtils}
@@ -31,8 +31,8 @@ public class DashboardServerUtilsTest {
 		assertEquals("other", DashboardServerUtils.getKeyForName("(other)"));
 		assertEquals("tempc", DashboardServerUtils.getKeyForName("Temp [" + LonLatConverter.DEGREE_SYMBOL + "C]"));
 		assertEquals("tempc", DashboardServerUtils.getKeyForName("Temp [ºC]"));
-		assertEquals( "k" + DashboardOmeMetadata.oUmlaut + "rtzinger", 
-				DashboardServerUtils.getKeyForName("K" + DashboardOmeMetadata.OUmlaut + "rt*Zinger") );
+		assertEquals( "k" + LanguageUtils.oUmlaut + "rtzinger", 
+				DashboardServerUtils.getKeyForName("K" + LanguageUtils.OUmlaut + "rt*Zinger") );
 	}
 
 	/**
@@ -42,8 +42,8 @@ public class DashboardServerUtilsTest {
 	public void testGetDatasetIDFromName() {
 		assertEquals( "ATLANTIS120115300", 
 				DashboardServerUtils.getDatasetIDFromName("Atlantis 12-01-15 3:00") );
-		assertEquals( "N" + DashboardOmeMetadata.UUmlaut + "MBER20", 
-				DashboardServerUtils.getDatasetIDFromName("\"N" + DashboardOmeMetadata.uUmlaut + 
+		assertEquals( "N" + LanguageUtils.UUmlaut + "MBER20", 
+				DashboardServerUtils.getDatasetIDFromName("\"N" + LanguageUtils.uUmlaut + 
 						"mber 2' 0" + LonLatConverter.DEGREE_SYMBOL + "\t\"") );
 	}
 
@@ -54,8 +54,8 @@ public class DashboardServerUtilsTest {
 	public void testCheckDatasetID() {
 		assertEquals( "ATLANTIS120115300", 
 				DashboardServerUtils.checkDatasetID("Atlantis120115300") );
-		assertEquals( "N" + DashboardOmeMetadata.EGrave + "VER20", 
-				DashboardServerUtils.checkDatasetID("N" + DashboardOmeMetadata.eGrave + "ver20") );
+		assertEquals( "N" + LanguageUtils.EGrave + "VER20", 
+				DashboardServerUtils.checkDatasetID("N" + LanguageUtils.eGrave + "ver20") );
 		boolean caught = false;
 		try {
 			DashboardServerUtils.checkDatasetID("Atlantis 12");

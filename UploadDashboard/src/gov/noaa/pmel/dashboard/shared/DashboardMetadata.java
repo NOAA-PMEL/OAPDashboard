@@ -4,20 +4,12 @@
 package gov.noaa.pmel.dashboard.shared;
 
 import java.io.Serializable;
-import java.text.ParseException;
-import java.text.SimpleDateFormat;
 import java.util.Comparator;
-import java.util.HashSet;
-import java.util.TimeZone;
 
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
 
 import com.google.gwt.user.client.rpc.IsSerializable;
-
-import gov.noaa.pmel.dashboard.dsg.DsgMetadata;
-import gov.noaa.pmel.dashboard.server.DashboardConfigStore;
-import uk.ac.uea.socat.omemetadata.OmeMetadata;
 
 /**
  * Currently represents an uploaded metadata file of unknown contents.
