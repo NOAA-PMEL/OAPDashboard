@@ -25,7 +25,6 @@ import gov.noaa.pmel.dashboard.server.DashboardServerUtils;
 import gov.noaa.pmel.dashboard.shared.DashboardDatasetData;
 import gov.noaa.pmel.dashboard.shared.DashboardUtils;
 
-import uk.ac.uea.socat.omemetadata.OmeMetadata;
 
 /**
  * NetCDF DSG file handler for the upload dashboard.
