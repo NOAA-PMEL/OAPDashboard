@@ -483,8 +483,8 @@ public class SubmitToArchivePage extends CompositeWithUsername implements DataSu
 				public void onSuccess(Void result) {
 					// Success - go back to the cruise list page
 					UploadDashboard.showAutoCursor();
-					UploadDashboard.showMessage("Dataset submitted.");
                     getStatus(singleton);
+					UploadDashboard.showMessage("Dataset submitted.");
 				}
 				@Override
 				public void onFailure(Throwable ex) {
