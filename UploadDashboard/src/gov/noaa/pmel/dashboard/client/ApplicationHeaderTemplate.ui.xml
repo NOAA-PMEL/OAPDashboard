@@ -12,7 +12,7 @@
                     <g:InlineLabel  ui:field="titleLabel" addStyleNames="{style.headerpagelabel}" >DataSet List</g:InlineLabel> <!-- -->
                     <g:FlowPanel>
                     <g:Label  addStyleNames="{style.headersoftwaretitle}" >GLODAP Data Submission System</g:Label>
-                    <g:Label  addStyleNames="{style.headerversionlabel}" >version 0.1</g:Label>
+                    <g:Label ui:field="softwareVersion" addStyleNames="{style.headerversionlabel}" >version 0.1</g:Label>
                     <g:FlowPanel ui:field="headerRightPanel" addStyleNames="{style.titleRightGroup}">
                         <g:Label ui:field="userInfoLabel" addStyleNames="{style.headeruserlabel}">Not Logged In</g:Label>
                         <g:Label addStyleNames="{style.titlereset}" />
