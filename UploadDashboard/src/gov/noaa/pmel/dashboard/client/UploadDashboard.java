@@ -467,7 +467,7 @@ public class UploadDashboard implements EntryPoint, ValueChangeHandler<String> {
             "<td style=\"text-align:center; padding-bottom: .5em;\" colspan=\"2\"><b>Your session has expired.</b></td>" +
           "</tr>" +
           "<tr>" +
-            "<td style=\"text-align:center; padding-bottom: .25em;\" colspan=\"2\"><b>Please enter your OAP Dashboard Login Credentials</b></td>" +
+            "<td style=\"text-align:center; padding-bottom: .25em;\" colspan=\"2\"><b>Please enter your Dashboard Login Credentials</b></td>" +
           "</tr>" +
           "<tr>" +
             "<td style=\"text-align:center; padding-bottom: 1em;\" colspan=\"2\"><b>and try again.</b></td>" +
