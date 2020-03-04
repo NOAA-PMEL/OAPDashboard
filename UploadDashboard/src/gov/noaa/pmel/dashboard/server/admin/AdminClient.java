@@ -8,6 +8,8 @@ import java.lang.reflect.Method;
 import java.util.List;
 import java.util.Map;
 
+import javax.security.auth.login.CredentialException;
+
 import org.apache.logging.log4j.Logger;
 import org.apache.logging.log4j.LogManager;
 
@@ -88,6 +90,9 @@ public class AdminClient extends CLClient {
             String pw = _clOptions.get(opt_password);
             if ( pw != null ) {
                 PasswordUtils.validatePasswordStrength(pw);
+            } else {
+                pw = PasswordUtils.generateSecurePassword();
+                logger.info("New user " +userid + " temp password:"+pw);
             }
             User newUser = User.builder()
                             .username(userid)
@@ -96,12 +101,13 @@ public class AdminClient extends CLClient {
                             .lastName(_clOptions.get(opt_lastName))
                             .email(_clOptions.get(opt_email))
                             .build();
-            String newPasswd = PasswordUtils.generateSecurePassword();
-            Users.addUser(newUser, newPasswd, UserRole.Groupie);
-            System.out.println("User added with temporary password: "+ newPasswd);
+            Users.addUser(newUser, pw, UserRole.Groupie);
+            logger.info("User " + userid + " added.");
+        } catch (CredentialException cex) {
+            System.err.println("Password unacceptable.");
+            System.err.println(PasswordUtils.passwordRules());
         } catch (Exception ex) {
             ex.printStackTrace();
-            // TODO: handle exception
         }
     }
     
