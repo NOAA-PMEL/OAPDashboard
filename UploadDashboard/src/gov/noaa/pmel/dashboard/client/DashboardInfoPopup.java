@@ -33,6 +33,8 @@ public class DashboardInfoPopup extends Composite {
 	@UiField HTML infoHtml;
 	@UiField Button dismissButton;
 
+    private OAPAsyncCallback<?> continuation;
+    
 	private PopupPanel parentPanel;
 
 	/**
@@ -51,6 +53,16 @@ public class DashboardInfoPopup extends Composite {
 		parentPanel.setWidget(this);
 	}
 
+	DashboardInfoPopup(String htmlMsg, OAPAsyncCallback<?> continuation) {
+        this(htmlMsg, DISMISS_TEXT, continuation);
+	}
+    
+	DashboardInfoPopup(String htmlMsg, String dismissBtnText, OAPAsyncCallback<?> continuation) {
+        this();
+        this.setInfoMessage(htmlMsg);
+        this.dismissButton.setText(dismissBtnText);
+        this.continuation = continuation;
+	}
 	/**
 	 * @param htmlMessage
 	 * 		the unchecked HTML message to display.
@@ -81,6 +93,9 @@ public class DashboardInfoPopup extends Composite {
 	@UiHandler("dismissButton")
 	void onClick(ClickEvent e) {
 		parentPanel.hide();
+        if ( continuation != null ) {
+            continuation.onSuccess(null);
+        }
 	}
 
     public void dismiss() {
