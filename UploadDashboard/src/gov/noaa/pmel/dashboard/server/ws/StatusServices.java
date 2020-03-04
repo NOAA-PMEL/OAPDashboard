@@ -3,6 +3,7 @@
  */
 package gov.noaa.pmel.dashboard.server.ws;
 
+import java.io.File;
 import java.util.List;
 
 import javax.servlet.ServletContext;
@@ -19,6 +20,7 @@ import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
+import javax.ws.rs.core.Response.Status;
 import javax.ws.rs.core.SecurityContext;
 
 import org.apache.logging.log4j.LogManager;
@@ -27,10 +29,10 @@ import org.apache.logging.log4j.Logger;
 import gov.noaa.pmel.dashboard.server.Archive;
 import gov.noaa.pmel.dashboard.server.db.dao.DaoFactory;
 import gov.noaa.pmel.dashboard.server.db.dao.SubmissionsDao;
-import gov.noaa.pmel.dashboard.server.model.SubmissionRecord;
+import gov.noaa.pmel.dashboard.server.submission.status.StatusState;
+import gov.noaa.pmel.dashboard.server.submission.status.SubmissionRecord;
 import gov.noaa.pmel.dashboard.server.util.Notifications;
-import gov.noaa.pmel.dashboard.server.model.StatusRecord;
-import gov.noaa.pmel.dashboard.server.model.StatusState;
+import gov.noaa.pmel.tws.util.StringUtils;
 
 /**
  * @author kamb
@@ -53,9 +55,26 @@ public class StatusServices extends ResourceBase {
         System.out.println("status root");
         return Response.ok("status").build();
     }
-    
+
     @GET
-    // @Path("{t_id:ds|sr}/{sid}")
+    @Path("list")
+    @Produces(MediaType.APPLICATION_JSON)
+    public Response listAll() {
+        Response response = null;
+        logger.debug(fullDump(httpRequest));
+        logger.info("Status list all " +
+                     " from " + getRemoteAddress(httpRequest));
+        try {
+            List<SubmissionRecord> list = Archive.getAllRecords();
+            response = Response.ok().entity(list).build();
+        } catch (Exception ex) {
+            logger.warn(ex.getMessage(), ex);
+            response = Response.serverError().entity("An error occurred on the server. Please try again later.").build();
+        }
+        return response;
+    }
+
+    @GET
     @Path("{sid}")
     @Produces(MediaType.APPLICATION_JSON)
     public Response currentStatusForPkg(@PathParam("sid") String p_sid) {
@@ -68,16 +87,16 @@ public class StatusServices extends ResourceBase {
                                      @PathParam("version") String p_version) {
         Response response = null;
         logger.debug(fullDump(httpRequest));
-        logger.debug("Status check for " + p_sid + 
+        logger.info("Status check for " + p_sid + 
                      ( p_version != null ? "." + p_version : "" ) + 
                      " from " + getRemoteAddress(httpRequest));
         try {
-            SubmissionRecord srec = Archive.getArchiveStatusForVersion(p_sid, p_version);
+            SubmissionRecord srec = Archive.getSubmissionRecordForVersion(p_sid, p_version);
             if ( srec != null ) {
-                response = Response.ok(srec.status()).build();
+                response = Response.ok().entity(srec.status()).build();
             } else {
                 response = Response.status(HttpServletResponse.SC_NOT_FOUND)
-                            .entity("No submission record found for id " + p_sid).build();
+                            .entity("No submission record found for id " + p_sid + " of version " + p_version).build();
             }
         } catch (Exception ex) {
             logger.warn(ex.getMessage(), ex);
@@ -88,23 +107,34 @@ public class StatusServices extends ResourceBase {
     
     @GET
     // @Path("{t_id:ds|sr}/{sid}")
-    @Path("{sid}/history")
+    @Path("{sid}/{show:history|all}")
     @Produces(MediaType.APPLICATION_JSON)
-    public Response fullStatusForPkg(@PathParam("sid") String p_sid) {
+    public Response fullStatusForPkg(@PathParam("sid") String p_sid,
+                                     @PathParam("show") String p_show) {
         Response response = null;
+        logger.debug(fullDump(httpRequest));
+        logger.info("Status check for " + p_sid + 
+                     " showing " + p_show + 
+                     " from " + getRemoteAddress(httpRequest));
         try {
-            SubmissionsDao sdao = DaoFactory.SubmissionsDao();
-            SubmissionRecord srec;
-            if ( Archive.isRecordKey(p_sid)) {
-                srec = sdao.getLatestByKey(p_sid);
-            } else {
-                srec = sdao.getLatestForDataset(p_sid);
-            }
-            if ( srec != null ) {
-                response = Response.ok(srec.getStatusHistory()).build();
-            } else {
-                response = Response.status(HttpServletResponse.SC_NOT_FOUND)
-                            .entity("No submission record found for id " + p_sid).build();
+            String show = StringUtils.emptyOrNull(p_show) ? "history" : p_show;
+            switch ( show ) {
+                case "history":
+                    SubmissionRecord srec = Archive.getCurrentSubmissionRecordForPackage(p_sid);
+                    response = srec != null ? 
+                                Response.ok(srec.getStatusHistory()).build() :
+                                Response.status(Status.NOT_FOUND).entity("No archive record found for " + p_sid).build();
+                    break;
+                case "all":
+                    List<SubmissionRecord> list = Archive.getAllVersionsForPackage(p_sid);
+                    response = list != null && list.size() > 0 ? 
+                                Response.ok(list).build() :
+                                Response.status(Status.NOT_FOUND).entity("No archive record found for " + p_sid).build();
+                    break;
+                default:
+                    String msg = "Invalid request: show status \""+show +"\"";
+                    logger.warn(msg);
+                    response = Response.status(Status.BAD_REQUEST).entity(msg).build();
             }
         } catch (Exception ex) {
             logger.warn(ex.getMessage(), ex);
@@ -113,35 +143,30 @@ public class StatusServices extends ResourceBase {
         return response;
     }
     
-    @GET
-    // @Path("{t_id:ds|sr}/{sid}")
-    @Path("{sid}/all")
-    @Produces(MediaType.APPLICATION_JSON)
-    public Response allSubmissionsForPkg(@PathParam("sid") String p_sid) {
-        Response response = null;
-        if ( true ) {
-            return Response.ok("Not Implemented Yet").build();
-        }
-        try {
-            SubmissionsDao sdao = DaoFactory.SubmissionsDao();
-            List<SubmissionRecord> srecs;
-            if ( Archive.isRecordKey(p_sid)) {
-                srecs = sdao.getAllVersionsByKey(p_sid);
-            } else {
-                srecs = sdao.getAllVersionsForDataset(p_sid);
-            }
-            if ( srecs != null ) {
-                response = Response.ok(srecs).build();
-            } else {
-                response = Response.status(HttpServletResponse.SC_NOT_FOUND)
-                            .entity("No submission record found for id " + p_sid).build();
-            }
-        } catch (Exception ex) {
-            logger.warn(ex.getMessage(), ex);
-            response = Response.serverError().entity("An error occurred on the server. Please try again later.").build();
-        }
-        return response;
-    }
+//    @GET
+//    @Path("list/{what:keys|datasets}")
+//    @Produces(MediaType.APPLICATION_JSON)
+//    public Response allSubmissionsForPkg(@PathParam("what") String p_what) {
+//        Response response = null;
+//        if ( true ) {
+//            return Response.ok("Not Implemented Yet").build();
+//        }
+//        try {
+//            SubmissionsDao sdao = DaoFactory.SubmissionsDao();
+//            List<SubmissionRecord> srecs;
+//            srecs = sdao.getAll();
+//            if ( srecs != null ) {
+//                response = Response.ok(srecs).build();
+//            } else {
+//                response = Response.status(HttpServletResponse.SC_NOT_FOUND)
+//                            .entity("No submission record found for id " + p_sid).build();
+//            }
+//        } catch (Exception ex) {
+//            logger.warn(ex.getMessage(), ex);
+//            response = Response.serverError().entity("An error occurred on the server. Please try again later.").build();
+//        }
+//        return response;
+//    }
     
     @POST
     @Path("update/{sid}")
@@ -165,8 +190,13 @@ public class StatusServices extends ResourceBase {
                                         @FormParam("status") String fp_status_state,
                                         @FormParam("message") String fp_message) {
         Response response = null;
+        SubmissionRecord srec = null;
         try {
-            logger.debug(httpRequest);
+            logger.debug(fullDump(httpRequest));
+            logger.info("Update " + p_sid + "." + p_version +
+                        " as fp status " + fp_status_state + ":" + fp_message +
+                        " or qp status " + qp_status_state + ":" + qp_message +
+                         " from " + getRemoteAddress(httpRequest));
             String statusStr = fp_status_state != null ? fp_status_state : qp_status_state;
             StatusState sstate = getState(statusStr.toUpperCase());
             String message = fp_message != null ? fp_message : qp_message;
@@ -174,7 +204,6 @@ public class StatusServices extends ResourceBase {
             logger.info(logMessage);
             Notifications.AdminEmail("Status update for " + p_sid, logMessage);
             SubmissionsDao sdao = DaoFactory.SubmissionsDao();
-            SubmissionRecord srec;
             if ( Archive.isRecordKey(p_sid)) {
                 srec = sdao.getLatestByKey(p_sid);
             } else {
@@ -184,16 +213,12 @@ public class StatusServices extends ResourceBase {
                 response = Response.status(HttpServletResponse.SC_NOT_FOUND)
                             .entity("No submission record found for id " + p_sid).build();
             } else {
-                StatusRecord status = StatusRecord.builder().submissionId(srec.dbId())
-                                            .status(sstate)
-                                            .message(message)
-                                            .build();
-                sdao.updateSubmissionStatus(status);
-                response = Response.ok().build();
+                Archive.updateStatus(srec, sstate, message);
+                response = Response.ok("Status updated for " + p_sid).build();
             }
             
         } catch (Exception ex) {
-            logger.warn(ex.getMessage(), ex);
+            logger.warn(ex, ex);
             Notifications.AdminEmail("Status update failed!", ex.getMessage());
             response = Response.serverError().entity("An error occurred on the server. Please try again later.").build();
         }

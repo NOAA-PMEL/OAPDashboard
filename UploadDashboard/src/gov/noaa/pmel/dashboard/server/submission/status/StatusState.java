@@ -1,7 +1,7 @@
 /**
  * 
  */
-package gov.noaa.pmel.dashboard.server.model;
+package gov.noaa.pmel.dashboard.server.submission.status;
 
 /**
  * @author kamb
@@ -11,13 +11,15 @@ package gov.noaa.pmel.dashboard.server.model;
 public enum StatusState {
     INITIAL("Initiated"),
     STAGED("Staged for delivery"),
+    SUBMITTED("Submitted to archive"),
     RECEIVED("Received by archive"),
     PENDING_INFO("Pending additional information"),
     VALIDATED("Submission validated"),
     ACCEPTED("Accepted by archive"),
     REJECTED("Rejected by archive"),
     SUPERCEDED("Version has been superceded"),
-    RECALLED("Submission has been recalled"),
+//    RECALLED("Submission has been recalled"),
+    ERROR("An error occurred processing the submission"),
     OTHER("Other: see message"),
     PROCESSING_ERROR("Error processing submission");
         
@@ -43,4 +45,22 @@ public enum StatusState {
     private String _display;
         
     public String displayMsg() { return _display; }
+    
+    public static StatusState lookup(String part) throws IllegalArgumentException {
+        String lookup = part.toUpperCase();
+        StatusState state = null;
+        for ( StatusState checkState : values()) {
+            if ( checkState.name().startsWith(lookup)) {
+                if ( state != null ) {
+                    throw new IllegalArgumentException("Cannot distinguish state partial name: " + part +
+                                                       ". Found " + state + " and " + checkState);
+                }
+                state = checkState;
+            }
+        }
+        if ( state == null ) {
+            throw new IllegalArgumentException("No Status State found for " + part);
+        }
+        return state;
+    }
 }

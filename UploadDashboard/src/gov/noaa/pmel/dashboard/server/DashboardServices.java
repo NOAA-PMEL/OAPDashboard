@@ -53,9 +53,9 @@ import gov.noaa.pmel.dashboard.handlers.PreviewPlotsHandler;
 import gov.noaa.pmel.dashboard.handlers.UserFileHandler;
 import gov.noaa.pmel.dashboard.oads.DashboardOADSMetadata;
 import gov.noaa.pmel.dashboard.oads.OADSMetadata;
-import gov.noaa.pmel.dashboard.server.model.StatusRecord;
-import gov.noaa.pmel.dashboard.server.model.SubmissionRecord;
 import gov.noaa.pmel.dashboard.server.model.User;
+import gov.noaa.pmel.dashboard.server.submission.status.StatusRecord;
+import gov.noaa.pmel.dashboard.server.submission.status.SubmissionRecord;
 import gov.noaa.pmel.dashboard.shared.DashboardDataset;
 import gov.noaa.pmel.dashboard.shared.DashboardDatasetData;
 import gov.noaa.pmel.dashboard.shared.DashboardDatasetList;
@@ -928,7 +928,7 @@ public class DashboardServices extends RemoteServiceServlet implements Dashboard
     	if ( ! validateRequest(pageUsername) ) 
     		throw new IllegalArgumentException("Invalid user request");
         try {
-            SubmissionRecord srec = Archive.getArchiveStatusForPackage(datasetId);
+            SubmissionRecord srec = Archive.getCurrentSubmissionRecordForPackage(datasetId);
             String statusHtml = buildStatusHtml(srec);
             return statusHtml;
         } catch (Exception ex) {

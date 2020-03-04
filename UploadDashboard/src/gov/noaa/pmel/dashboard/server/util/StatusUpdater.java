@@ -5,9 +5,9 @@ package gov.noaa.pmel.dashboard.server.util;
 
 import gov.noaa.pmel.dashboard.server.db.dao.DaoFactory;
 import gov.noaa.pmel.dashboard.server.db.dao.SubmissionsDao;
-import gov.noaa.pmel.dashboard.server.model.SubmissionRecord;
-import gov.noaa.pmel.dashboard.server.model.StatusRecord;
-import gov.noaa.pmel.dashboard.server.model.StatusState;
+import gov.noaa.pmel.dashboard.server.submission.status.StatusRecord;
+import gov.noaa.pmel.dashboard.server.submission.status.StatusState;
+import gov.noaa.pmel.dashboard.server.submission.status.SubmissionRecord;
 
 /**
  * @author kamb
