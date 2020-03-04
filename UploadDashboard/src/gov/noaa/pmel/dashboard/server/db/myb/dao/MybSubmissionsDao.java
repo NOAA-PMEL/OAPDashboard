@@ -13,9 +13,9 @@ import org.apache.ibatis.session.SqlSession;
 import gov.noaa.pmel.dashboard.server.db.dao.SubmissionsDao;
 import gov.noaa.pmel.dashboard.server.db.myb.MybatisConnectionFactory;
 import gov.noaa.pmel.dashboard.server.db.myb.mappers.SubmissionMapper;
+import gov.noaa.pmel.dashboard.server.submission.status.StatusRecord;
+import gov.noaa.pmel.dashboard.server.submission.status.SubmissionRecord;
 import gov.noaa.pmel.dashboard.server.db.myb.mappers.StatusRecordMapper;
-import gov.noaa.pmel.dashboard.server.model.SubmissionRecord;
-import gov.noaa.pmel.dashboard.server.model.StatusRecord;
 
 /**
  * @author kamb
@@ -66,15 +66,15 @@ public class MybSubmissionsDao implements SubmissionsDao {
         }
     }
 
-//    @Override
-//    public void updateSubmission(SubmissionRecord submission) throws SQLException
-//    {
-//        try (SqlSession session = MybatisConnectionFactory.getDashboardDbSessionFactory().openSession();) {
-//            SubmissionMapper smapper = (SubmissionMapper) session.getMapper(SubmissionMapper.class);
-//            smapper.updateSubmission(submission);
-//            session.commit();
-//        }
-//    }
+    @Override
+    public void updateSubmission(SubmissionRecord submission) throws SQLException
+    {
+        try (SqlSession session = MybatisConnectionFactory.getDashboardDbSessionFactory().openSession();) {
+            SubmissionMapper smapper = (SubmissionMapper) session.getMapper(SubmissionMapper.class);
+            smapper.updateSubmission(submission);
+            session.commit();
+        }
+    }
     
     @Override
     public void updateSubmissionStatus(StatusRecord status) throws SQLException
@@ -154,14 +154,29 @@ public class MybSubmissionsDao implements SubmissionsDao {
      */
     @Override
     public List<SubmissionRecord> getAllVersionsByKey(String key) throws SQLException {
-        // TODO Auto-generated method stub
-        return null;
+        try (SqlSession session = MybatisConnectionFactory.getDashboardDbSessionFactory().openSession();) {
+            SubmissionMapper smapper = (SubmissionMapper) session.getMapper(SubmissionMapper.class);
+            List<SubmissionRecord> srList = smapper.getAllVersionsForKey(key);
+            return srList;
+        }
     }
 
     @Override
     public List<SubmissionRecord> getAllVersionsForDataset(String datasetId) throws SQLException {
-        // TODO Auto-generated method stub
-        return null;
+        try (SqlSession session = MybatisConnectionFactory.getDashboardDbSessionFactory().openSession();) {
+            SubmissionMapper smapper = (SubmissionMapper) session.getMapper(SubmissionMapper.class);
+            List<SubmissionRecord> srList = smapper.getAllVersionsForDatasetId(datasetId);
+            return srList;
+        }
+    }
+
+    @Override
+    public List<SubmissionRecord> getAllRecords() throws SQLException {
+        try (SqlSession session = MybatisConnectionFactory.getDashboardDbSessionFactory().openSession();) {
+            SubmissionMapper smapper = (SubmissionMapper) session.getMapper(SubmissionMapper.class);
+            List<SubmissionRecord> srList = smapper.getAllRecords();
+            return srList;
+        }
     }
 
     public static void main(String[] args) {
@@ -180,7 +195,7 @@ public class MybSubmissionsDao implements SubmissionsDao {
                     .archiveBag("bags/PRISM/PRISM92/")
                     .build();
            MybSubmissionsDao msd = new MybSubmissionsDao();
-           SubmissionRecord sr = msd.getById(32);
+           List<SubmissionRecord> sr = msd.getAllVersionsForDataset("PRISM082008");
            System.out.println(sr);
 //           sr = msd.getFullById(32);
 //           System.out.println(sr);

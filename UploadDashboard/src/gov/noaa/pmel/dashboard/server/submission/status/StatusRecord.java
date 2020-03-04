@@ -1,7 +1,7 @@
 /**
  * 
  */
-package gov.noaa.pmel.dashboard.server.model;
+package gov.noaa.pmel.dashboard.server.submission.status;
 
 import java.util.Date;
 

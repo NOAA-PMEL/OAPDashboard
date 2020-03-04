@@ -10,7 +10,7 @@ import java.util.List;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import gov.noaa.pmel.dashboard.server.model.SubmissionRecord;
+import gov.noaa.pmel.dashboard.server.submission.status.SubmissionRecord;
 import gov.noaa.pmel.tws.util.ApplicationConfiguration;
 import gov.noaa.pmel.tws.util.process.CommandRunner;
 

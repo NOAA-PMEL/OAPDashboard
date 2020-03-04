@@ -30,10 +30,11 @@ import gov.noaa.pmel.dashboard.server.DashboardConfigStore;
 import gov.noaa.pmel.dashboard.server.DashboardServerUtils;
 import gov.noaa.pmel.dashboard.server.Users;
 import gov.noaa.pmel.dashboard.server.db.dao.DaoFactory;
-import gov.noaa.pmel.dashboard.server.model.SubmissionRecord;
-import gov.noaa.pmel.dashboard.server.model.StatusRecord;
-import gov.noaa.pmel.dashboard.server.model.StatusState;
+import gov.noaa.pmel.dashboard.server.db.dao.SubmissionsDao;
 import gov.noaa.pmel.dashboard.server.model.User;
+import gov.noaa.pmel.dashboard.server.submission.status.StatusRecord;
+import gov.noaa.pmel.dashboard.server.submission.status.StatusState;
+import gov.noaa.pmel.dashboard.server.submission.status.SubmissionRecord;
 import gov.noaa.pmel.dashboard.server.util.OapMailSender;
 import gov.noaa.pmel.dashboard.server.util.UIDGen;
 import gov.noaa.pmel.dashboard.shared.DashboardDataset;
@@ -271,7 +272,8 @@ public class DatasetSubmitter {
                                                " at " + DashboardServerUtils.formatTime(new Date()) +
                                                " to " + stagedPkg;
                     logger.info(archiveStatusMsg);
-                    updateStatus(sRecord.dbId().longValue(), StatusState.STAGED, "Submission package staged for pickup at:" + stagedPkg);
+                    sRecord.pkgLocation(stagedPkg);
+                    updateStatus(sRecord, StatusState.STAGED, "Submission package staged for pickup at:" + stagedPkg);
                     sendSubmitEmail(sRecord, archiveBundle, userRealName, userEmail);
 					thisStatus = "Submitted " + DashboardServerUtils.formatTime(new Date());
 				} catch (Exception ex) {
@@ -363,7 +365,18 @@ public class DatasetSubmitter {
                                     .status(statusState)
                                     .message(archiveStatusMsg)
                                     .build();
-        DaoFactory.SubmissionsDao().updateSubmissionStatus(status);
+        SubmissionsDao sdao = DaoFactory.SubmissionsDao();
+        sdao.updateSubmissionStatus(status);
+    }
+    
+    private static void updateStatus(SubmissionRecord submission, StatusState statusState, String archiveStatusMsg) throws SQLException {
+        StatusRecord status = StatusRecord.builder().submissionId(submission.dbId().longValue())
+                                    .status(statusState)
+                                    .message(archiveStatusMsg)
+                                    .build();
+        SubmissionsDao sdao = DaoFactory.SubmissionsDao();
+        sdao.updateSubmission(submission);
+        sdao.updateSubmissionStatus(status);
     }
     
     private static SubmissionRecord createInitialSubmitRecord(String submitRefKey, String datasetId, String submitMsg, 

@@ -5,7 +5,7 @@ package gov.noaa.pmel.dashboard.handlers;
 
 import java.io.File;
 
-import gov.noaa.pmel.dashboard.server.model.SubmissionRecord;
+import gov.noaa.pmel.dashboard.server.submission.status.SubmissionRecord;
 
 /**
  * @author kamb

@@ -1,7 +1,7 @@
 /**
  * 
  */
-package gov.noaa.pmel.dashboard.server.model;
+package gov.noaa.pmel.dashboard.server.submission.status;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -11,6 +11,7 @@ import java.util.Stack;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
@@ -31,6 +32,7 @@ import lombok.Singular;
 @Builder(toBuilder=true)
 @NoArgsConstructor
 @AllArgsConstructor
+@JsonPropertyOrder({"submit_time", "dataset_id", "record_id", "version", "submit_message", "package_location", "status_history" })
 public class SubmissionRecord {
 
     private transient Long _dbId;
@@ -45,7 +47,7 @@ public class SubmissionRecord {
     @Default
     @JsonProperty("version")
     private Integer _version = 1;
-    @JsonProperty("submission_record")
+    @JsonProperty("record_id")
     private String _submissionKey;
     
     @JsonProperty("submit_message")
@@ -56,7 +58,7 @@ public class SubmissionRecord {
     private String _archiveBag;
     
     @Setter(AccessLevel.PUBLIC)
-    @JsonIgnore
+    @JsonProperty("package_location")
     private String _pkgLocation;
     
     @Singular("addStatus")
@@ -75,6 +77,7 @@ public class SubmissionRecord {
     /**
      * @return _statusHistory list, guaranteed not to be null;
      */
+    @JsonIgnore
     public synchronized List<StatusRecord> getStatusHistory() {
         if ( _statusHistory == null ) {
             _statusHistory = new ArrayList<>();
