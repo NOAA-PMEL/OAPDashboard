@@ -104,6 +104,12 @@ public class UploadDashboard implements EntryPoint, ValueChangeHandler<String> {
 
 	// Singleton instance of this object
 	private static UploadDashboard singleton = null;
+    private static UploadDashboard getSingleton() {
+        if ( singleton == null ) {
+            singleton = new UploadDashboard();
+        }
+        return singleton;
+    }
 
 	// History change handler registration
 	private HandlerRegistration historyHandlerReg = null;
@@ -113,6 +119,9 @@ public class UploadDashboard implements EntryPoint, ValueChangeHandler<String> {
 
 	// PopupPanel for displaying messages 
 	private DashboardInfoPopup infoMsgPopup;
+    
+    // popup used when a continuation (follow-on action) is required.
+	private DashboardInfoPopup continueToPopup;
     
 	private DashboardBlankPagePopup blankMsgPopup;
 
@@ -157,12 +166,25 @@ public class UploadDashboard implements EntryPoint, ValueChangeHandler<String> {
 	 * 		unchecked HTML message to show.
 	 */
 	public static void showMessage(String htmlMsg) {
-		if ( singleton == null )
-			singleton = new UploadDashboard();
+        getSingleton();
 		if ( singleton.infoMsgPopup == null )
 			singleton.infoMsgPopup = new DashboardInfoPopup();
 		singleton.infoMsgPopup.setInfoMessage(htmlMsg);
 		singleton.infoMsgPopup.showCentered();
+	}
+
+	/**
+	 * Shows a message in a popup panel centered on the page and executes the continuation on dismissal.
+	 * 
+	 * @param htmlMsg
+	 * 		unchecked HTML message to show.
+	 */
+	public static void showMessageWithContinuation(String htmlMsg, OAPAsyncCallback<?> continuation) {
+        if ( getSingleton().continueToPopup != null && getSingleton().continueToPopup.isVisible() ) {
+            getSingleton().continueToPopup.setVisible(false);
+        }
+        getSingleton().continueToPopup = new DashboardInfoPopup(htmlMsg, continuation);
+		getSingleton().continueToPopup.showCentered();
 	}
 
     public static void theresAproblem(String msg, String yesText, String noText, AsyncCallback<Boolean> callback) {
@@ -187,6 +209,10 @@ public class UploadDashboard implements EntryPoint, ValueChangeHandler<String> {
         }
         if ( singleton.blankMsgPopup != null && singleton.blankMsgPopup.isVisible()) {
             singleton.blankMsgPopup.dismiss();
+        }
+        if ( singleton.continueToPopup != null ) {
+            singleton.continueToPopup.dismiss();
+            singleton.continueToPopup = null;
         }
     }
 
@@ -269,8 +295,7 @@ public class UploadDashboard implements EntryPoint, ValueChangeHandler<String> {
 	 * 		(usually underneath, left-aligned)
 	 */
 	public static void showMessageAt(String htmlMsg, UIObject obj) {
-		if ( singleton == null )
-			singleton = new UploadDashboard();
+        getSingleton();
 		if ( singleton.infoMsgPopup == null )
 			singleton.infoMsgPopup = new DashboardInfoPopup();
 		singleton.infoMsgPopup.setInfoMessage(htmlMsg);
@@ -315,16 +340,15 @@ public class UploadDashboard implements EntryPoint, ValueChangeHandler<String> {
         sesh.ping(sessionId, callback);
     }
 	public static void _updateCurrentPage(CompositeWithUsername newPage) {
-            if ( singleton == null )
-                singleton = new UploadDashboard();
-            closePopups();
-            if ( singleton.currentPage != null ) {
-                RootLayoutPanel.get().remove(singleton.currentPage);
-            }
-            singleton.currentPage = newPage;
-            if ( singleton.currentPage != null ) {
-                RootLayoutPanel.get().add(singleton.currentPage);
-            }
+        getSingleton();
+        closePopups();
+        if ( singleton.currentPage != null ) {
+            RootLayoutPanel.get().remove(singleton.currentPage);
+        }
+        singleton.currentPage = newPage;
+        if ( singleton.currentPage != null ) {
+            RootLayoutPanel.get().add(singleton.currentPage);
+        }
 	}
 	public static void updateCurrentPage(CompositeWithUsername newPage, boolean doPing) {
         if ( doPing ) {
@@ -354,16 +378,7 @@ public class UploadDashboard implements EntryPoint, ValueChangeHandler<String> {
 	 * 		true if the given page is the current page in the dashboard
 	 */
 	public static boolean isCurrentPage(CompositeWithUsername page) {
-		if ( singleton == null )
-			singleton = new UploadDashboard();
-		return (page == singleton.currentPage);
-	}
-
-	/**
-	 * Displays the wait cursor over the entire page
-	 */
-	public static void showWaitCursor() {
-		RootLayoutPanel.get().getElement().getStyle().setCursor(Style.Cursor.WAIT);
+		return getSingleton().currentPage == page;
 	}
 
 	/**
@@ -373,11 +388,25 @@ public class UploadDashboard implements EntryPoint, ValueChangeHandler<String> {
 		RootLayoutPanel.get().getElement().getStyle().setCursor(Style.Cursor.AUTO);
 	}
 
+	/**
+	 * Displays the wait cursor over the entire page
+	 */
+	public static void showWaitCursor() {
+		RootLayoutPanel.get().getElement().getStyle().setCursor(Style.Cursor.WAIT);
+	}
+    
+	public static void showWaitCursor(UIObject element) {
+        setCursor(element, Style.Cursor.WAIT);
+	}
+	public static void showAutoCursor(UIObject element) {
+        setCursor(element, Style.Cursor.AUTO);
+	}
+	public static void setCursor(UIObject element, Style.Cursor cursor) {
+	    element.getElement().getStyle().setCursor(cursor);
+	}
+
 	@Override
 	public void onModuleLoad() {
-//        RootLayoutPanel.get().add(new HeaderTest());
-//	}
-//	public void _onModuleLoad() {
 		if ( historyHandlerReg != null )
 			historyHandlerReg.removeHandler();
 		// setup history management
@@ -551,8 +580,7 @@ public class UploadDashboard implements EntryPoint, ValueChangeHandler<String> {
     }
     
     public static void showPopupMessage(String htmlMsg, String closeButtonText) {
-		if ( singleton == null )
-			singleton = new UploadDashboard();
+        getSingleton();
 		if ( singleton.blankMsgPopup == null )
 			singleton.blankMsgPopup = new DashboardBlankPagePopup();
 		singleton.blankMsgPopup.setMessage(htmlMsg);
@@ -579,8 +607,7 @@ public class UploadDashboard implements EntryPoint, ValueChangeHandler<String> {
      * 
      */
     public static void showFeedbackPopup() {
-		if ( singleton == null )
-			singleton = new UploadDashboard();
+        getSingleton();
 		if ( singleton.feedbackPopup == null ) {
 			singleton.feedbackPopup = new DashboardFeedbackPopup(new AsyncCallback<Boolean>() {
                 @Override
@@ -628,8 +655,7 @@ public class UploadDashboard implements EntryPoint, ValueChangeHandler<String> {
     }
     private static void _showChangePasswordPopup() {
         GWT.log("show change password");
-		if ( singleton == null )
-			singleton = new UploadDashboard();
+        getSingleton();
 		if ( singleton.changePasswordPopup == null ) {
 			singleton.changePasswordPopup = new ChangePasswordPopup(new AsyncCallback<Boolean>() {
                 @Override
