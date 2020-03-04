@@ -106,7 +106,6 @@ public class SubmitToArchivePage extends CompositeWithUsername implements DataSu
 	public SubmitToArchivePage() {
 		initWidget(uiBinder.createAndBindUi(this));
 		setupHandlers();
-		buildGrid();
         
 		header.setPageTitle("Submit Datasets for Archving");
         
@@ -126,9 +125,6 @@ public class SubmitToArchivePage extends CompositeWithUsername implements DataSu
 		_submitColsList = new ArrayList<>();
 	}
 	
-	private void buildGrid() {
-	}
-
 	public final class RadioButtonClickHandler implements ClickHandler {
 
 		private SELECT select;
@@ -265,11 +261,34 @@ public class SubmitToArchivePage extends CompositeWithUsername implements DataSu
         singleton.setUsername(datasets.getUsername());
 		singleton.updateDatasetColumns(datasets);
         singleton.submitButton.setEnabled(true);
+        singleton.cancelButton.setText("Cancel");
         getStatus(singleton);
 		UploadDashboard.updateCurrentPage(singleton, UploadDashboard.DO_PING);
 		History.newItem(PagesEnum.SUBMIT_TO_ARCHIVE.name(), false);
 	}
 
+    private static void getSubmitStatus(SubmitToArchivePage page) {
+        page.submissionTime.setText("Package submitted.");
+        service.getPackageArchiveStatus(page.getUsername(), page._datasetId, 
+			new AsyncCallback<String>() {
+				@Override
+				public void onSuccess(String htmlList) {
+                    UploadDashboard.logToConsole("getStatus : " + htmlList);
+                    page.statusListPanel.setHTML(htmlList);
+				}
+				@Override
+				public void onFailure(Throwable ex) {
+                    UploadDashboard.logToConsole(String.valueOf(ex));
+                    page.statusListPanel.setHTML("There was a problem retrieving package archive status.");
+				}
+			});
+		UploadDashboard.showMessageWithContinuation("Dataset submitted.", new OAPAsyncCallback<Void>() {
+            @Override
+            public void onSuccess(Void arg0) {
+                DatasetListPage.showPage();
+            }
+        });
+    }
     private static void getStatus(SubmitToArchivePage page) {
         UploadDashboard.logToConsole("getStatus for " + page._datasetId);
         page.statusLabel.setHTML("<h3>Submission status for " + page._datasetId + "</h3>");
@@ -476,6 +495,8 @@ public class SubmitToArchivePage extends CompositeWithUsername implements DataSu
         boolean requestDOI = generateDOIchkBx.getValue().booleanValue();
 		// Submit the dataset
 		UploadDashboard.showWaitCursor();
+        UploadDashboard.showWaitCursor(submitButton);
+        UploadDashboard.showWaitCursor(cancelButton);
 		service.submitDatasetsToArchive(getUsername(), _submitIdsList, _submitColsList, 
 		                                archiveStatus, localTimestamp, repeatSend, 
                                         submitCommentTextArea.getText(), requestDOI,
@@ -484,16 +505,22 @@ public class SubmitToArchivePage extends CompositeWithUsername implements DataSu
 				public void onSuccess(Void result) {
 					// Success - go back to the cruise list page
 					UploadDashboard.showAutoCursor();
-					UploadDashboard.showMessage("Dataset submitted.");
-                    getStatus(singleton);
+                    UploadDashboard.showAutoCursor(singleton.submitButton);
+                    UploadDashboard.showAutoCursor(singleton.cancelButton);
+                    cancelButton.setText("Done");
+                    getSubmitStatus(singleton);
 				}
 				@Override
 				public void onFailure(Throwable ex) {
 					// Failure, so show fail message
 					// But still go back to the cruise list page since some may have succeeded
+                    // XXX No!  Deal with this.
 					UploadDashboard.showFailureMessage(SUBMIT_FAILURE_MSG_START + " for Archiving: ", ex);
-					DatasetListPage.showPage();
+//					DatasetListPage.showPage();
+                    SubmitToArchivePage.singleton.submissionTime.setText("Package submitted.");
 					UploadDashboard.showAutoCursor();
+                    UploadDashboard.showAutoCursor(submitButton);
+                    UploadDashboard.showAutoCursor(cancelButton);
 				}
 			});
 	}
