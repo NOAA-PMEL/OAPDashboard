@@ -124,6 +124,7 @@ public class UploadDashboard implements EntryPoint, ValueChangeHandler<String> {
 	private DashboardInfoPopup continueToPopup;
     
 	private DashboardBlankPagePopup blankMsgPopup;
+	private FileDataPreviewPopup dataPreviewPopup;
 
     private DashboardFeedbackPopup feedbackPopup;
     private ChangePasswordPopup changePasswordPopup;
@@ -588,6 +589,17 @@ public class UploadDashboard implements EntryPoint, ValueChangeHandler<String> {
             singleton.blankMsgPopup.setCloseButtonText(closeButtonText);
         }
 		singleton.blankMsgPopup.showCentered();
+    }
+    
+    public static void showDataPreviewPopup(String previewHtml, int height, int width) {
+		if ( singleton == null )
+			singleton = new UploadDashboard();
+//		if ( singleton.dataPreviewPopup == null )
+			singleton.dataPreviewPopup = new FileDataPreviewPopup();
+            singleton.dataPreviewPopup.setHeight(height + "px");
+            singleton.dataPreviewPopup.setWidth(width + "px");
+		singleton.dataPreviewPopup.setMessage(previewHtml);
+		singleton.dataPreviewPopup.showCentered();
     }
     
     public static void showLoginPopup() {
