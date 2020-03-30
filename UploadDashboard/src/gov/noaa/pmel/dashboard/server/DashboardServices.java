@@ -43,6 +43,7 @@ import com.google.gwt.user.server.rpc.RemoteServiceServlet;
 
 import gov.noaa.pmel.dashboard.actions.DatasetChecker;
 import gov.noaa.pmel.dashboard.actions.DatasetModifier;
+import gov.noaa.pmel.dashboard.actions.MetadataPoster;
 import gov.noaa.pmel.dashboard.datatype.DashDataType;
 import gov.noaa.pmel.dashboard.datatype.KnownDataTypes;
 import gov.noaa.pmel.dashboard.dsg.StdUserDataArray;
@@ -65,7 +66,6 @@ import gov.noaa.pmel.dashboard.shared.DashboardServiceResponse.DashboardServiceR
 import gov.noaa.pmel.dashboard.shared.DashboardServicesInterface;
 import gov.noaa.pmel.dashboard.shared.DashboardUtils;
 import gov.noaa.pmel.dashboard.shared.DataColumnType;
-import gov.noaa.pmel.dashboard.shared.FileInfo;
 import gov.noaa.pmel.dashboard.shared.MetadataPreviewInfo;
 import gov.noaa.pmel.dashboard.shared.NotFoundException;
 import gov.noaa.pmel.dashboard.shared.PreviewPlotImage;
@@ -73,7 +73,6 @@ import gov.noaa.pmel.dashboard.shared.PreviewPlotResponse;
 import gov.noaa.pmel.dashboard.shared.SessionException;
 import gov.noaa.pmel.dashboard.shared.ADCMessageList;
 import gov.noaa.pmel.dashboard.shared.TypesDatasetDataPair;
-import gov.noaa.pmel.dashboard.util.xml.XmlUtils;
 import gov.noaa.pmel.tws.util.ApplicationConfiguration;
 import gov.noaa.pmel.tws.util.StringUtils;
 import gov.noaa.pmel.tws.util.TimeUtils;
@@ -665,29 +664,11 @@ public class DashboardServices extends RemoteServiceServlet implements Dashboard
 		if ( ! validateRequest(pageUsername) ) 
 			throw new IllegalArgumentException("Invalid user request");
 		try {
-			MetadataPreviewInfo preview = new MetadataPreviewInfo();
-			String xml = null;
-			File mdFile = OADSMetadata.getMetadataFile(datasetId);
-			if ( !mdFile.exists()) {
-				mdFile = OADSMetadata.getExtractedMetadataFile(datasetId);
-			}
-			if ( !mdFile.exists()) {
-				throw new FileNotFoundException("No metadata file found for " + datasetId);
-			}
-			Date fileModTime = new Date(mdFile.lastModified());
-			Path fPath = mdFile.toPath();
-			BasicFileAttributes attr = Files.getFileAttributeView(fPath, BasicFileAttributeView.class).readAttributes();
-			Date fileCreateTime = new Date(attr.creationTime().toMillis());
-			FileInfo mdFileInfo = new FileInfo(mdFile.getName(), fileModTime, fileCreateTime, mdFile.length());
-			preview.setMetadataFileInfo(mdFileInfo);
-			xml = OADSMetadata.getMetadataXml(datasetId, mdFile);
-			String html = XmlUtils.asHtml(xml);
-			preview.setMetadataPreview(html);
+			MetadataPreviewInfo preview = OADSMetadata.getMetadataPreviewInfo(pageUsername, datasetId);
 			return preview;
-		} catch (FileNotFoundException ex) {
-			throw new NotFoundException(ex.getMessage(), ex);
-		} catch (IOException ex) {
-			throw new IllegalArgumentException(ex);
+		} catch (Exception ex) {
+            logger.warn(ex, ex);
+			throw ex;
 		}
 	}
 
@@ -699,57 +680,11 @@ public class DashboardServices extends RemoteServiceServlet implements Dashboard
         String metadataEditorPostEndpoint = null;
         try {
     		HttpServletRequest request = getThreadLocalRequest();
-			File mdFile = OADSMetadata.getMetadataFile(datasetId);
-			if ( !mdFile.exists()) {
-				mdFile = OADSMetadata.getExtractedMetadataFile(datasetId);
-			} 
-			if ( !mdFile.exists()) { // dataset has either not been checked or critically failed check.
-//                try {
-//                    StdUserDataArray stdArray = 
-//                    DashboardOADSMetadata mdata = OADSMetadata.extractOADSMetadata(stdArray);
-//                    configStore.getMetadataFileHandler().saveAsOadsXmlDoc(mdata, 
-//                                                                          DashboardUtils.autoExtractedMdFilename(datasetId), 
-//                                                                          "Initial Auto-extraction");
-//                }
-                
-                mdFile = OADSMetadata.createEmptyOADSMetadataFile(datasetId);
-			}
-            // XXX HttpClient and stuff coming (currently) from netcdfAll jar 
-            @SuppressWarnings("resource")
-            HttpClient client = HttpClients.createDefault();
-            metadataEditorPostEndpoint = getMetadataPostPoint(request, datasetId);
-            logger.debug("metadataPost: " + metadataEditorPostEndpoint);
-            HttpPost post = new HttpPost(metadataEditorPostEndpoint);
-            FileBody body = new FileBody(mdFile, ContentType.APPLICATION_XML);
-            MultipartEntityBuilder builder = MultipartEntityBuilder.create();
-            builder.addPart("xmlFile", body);
-            String notifyUrl = getNotificationUrl(getThreadLocalRequest().getRequestURL().toString(), datasetId);
-            System.out.println("noticationUrl: " + notifyUrl);
-            StringBody notificationUrl = new StringBody(notifyUrl, ContentType.MULTIPART_FORM_DATA);
-            builder.addPart("notificationUrl", notificationUrl);
-            HttpEntity postit = builder.build();
-            post.setEntity(postit);
-            HttpResponse response = client.execute(post);
-            logger.debug("response: " + response);
-            HttpEntity responseEntity = response.getEntity();
-            String responseContent = readFully(responseEntity.getContent());
-            StatusLine statLine = response.getStatusLine();
-            int responseStatus = statLine.getStatusCode();
-            if ( responseStatus != HttpServletResponse.SC_OK ) {
-                logger.warn("ME response: " + statLine.getStatusCode() + ":" + statLine.getReasonPhrase());
-                String msg = responseContent;
-                logger.warn("ME response content: " + msg);
-                throw new IllegalArgumentException(msg);
-            }
-            docId = responseContent;
-            MetadataPreviewInfo mdInfo = getMetadataPreviewInfo(pageUsername, datasetId); 
-//            ServletContext context = request.getSession().getServletContext();
-            String mdDocId = getMetadataEditorPage(request, docId);
-            mdInfo.setMdDocId(mdDocId);
+            MetadataPreviewInfo mdInfo = MetadataPoster.postMetadata(request, pageUsername, datasetId); 
             return mdInfo;
-        } catch (HttpHostConnectException hcex) {
-            logger.warn("Unable to connect to MetadataEditor at " + metadataEditorPostEndpoint + ": " + hcex);
-            throw new NotFoundException("Unable to connect to MetadataEditor. <br/>Please contact your administrator.");
+        } catch (NotFoundException nfe) {
+            logger.warn("Unable to connect to MetadataEditor at " + metadataEditorPostEndpoint + ": " + nfe);
+            throw nfe;
         } catch (Exception ex) {
             ex.printStackTrace();
             throw new RuntimeException(ex);
