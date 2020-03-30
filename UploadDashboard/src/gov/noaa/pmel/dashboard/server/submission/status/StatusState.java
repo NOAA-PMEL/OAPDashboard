@@ -13,9 +13,11 @@ public enum StatusState {
     STAGED("Staged for delivery"),
     SUBMITTED("Submitted to archive"),
     RECEIVED("Received by archive"),
+    INCOMPLETE("Required information is incomplete"),
     PENDING_INFO("Pending additional information"),
     VALIDATED("Submission validated"),
     ACCEPTED("Accepted by archive"),
+    FAILED("Archive cannot process the submitted package"),
     REJECTED("Rejected by archive"),
     SUPERCEDED("Version has been superceded"),
 //    RECALLED("Submission has been recalled"),
@@ -23,22 +25,6 @@ public enum StatusState {
     OTHER("Other: see message"),
     PROCESSING_ERROR("Error processing submission");
         
-    public static StatusState from(String str) {
-        StatusState ss = null;
-        String ucStr = str.toUpperCase();
-        if ( ucStr.startsWith("PENDING")) {
-            ss = PENDING_INFO;
-        } else if ( ucStr.contains("ERROR")) {
-            ss = PROCESSING_ERROR;
-        } else {
-            try {
-                ss = StatusState.valueOf(ucStr);
-            } catch (Exception ex) {
-                ss = OTHER; ss._display = str;
-            }
-        }
-        return ss;
-    }
     private StatusState(String displayMsg) {
         _display = displayMsg;
     }
@@ -46,7 +32,7 @@ public enum StatusState {
         
     public String displayMsg() { return _display; }
     
-    public static StatusState lookup(String part) throws IllegalArgumentException {
+    public static StatusState from(String part) throws IllegalArgumentException {
         String lookup = part.toUpperCase();
         StatusState state = null;
         for ( StatusState checkState : values()) {
