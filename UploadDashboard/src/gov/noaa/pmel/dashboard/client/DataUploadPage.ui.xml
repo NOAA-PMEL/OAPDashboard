@@ -41,9 +41,16 @@
                         <g:Hidden name="datasetIdColumn" ui:field="datasetIdColumnToken"/>
     				</g:FlowPanel>
     			</g:FormPanel>
+    			<g:FlowPanel addStyleNames="{style.horizontalbuttonpanel}">
+    				<g:Button addStyleNames="{style.horizontalbutton}" ui:field="submitButton" />
+    				<g:Button addStyleNames="{style.horizontalbutton}" ui:field="previewButton" />
+    				<g:Button addStyleNames="{style.horizontalbutton}" ui:field="cancelButton" />
+    			</g:FlowPanel>
     			<g:CaptionPanel addStyleNames="{style.settingscaptionpanel}" ui:field="settingsCaption">
     				<g:FlowPanel>
+    <!--						
                         <g:FlowPanel ui:field="featureTypeSpecificContentPanel"></g:FlowPanel>
+    -->
     					<g:FlowPanel addStyleNames="{style.settingsradiopanel}">
     						<g:RadioButton addStyleNames="{style.settingsradiobutton}"
     								name="actionRadioGroup" ui:field="createRadio" />
@@ -57,25 +64,24 @@
     					<g:DisclosurePanel addStyleNames="{style.advancedoptionspanel}" ui:field="advancedPanel">
     						<g:header>Advanced Options</g:header>
     						<g:FlowPanel>
+                                <g:FlowPanel ui:field="featureTypeSpecificContentPanel"></g:FlowPanel>
     							<g:HTML addStyleNames="{style.introhtml}" ui:field="advancedHtml"/>
     							<g:FlowPanel addStyleNames="{style.labeledlistpanel}">
     								<g:Label addStyleNames="{style.labeledlistlabel}" ui:field="encodingLabel" />
     								<g:ListBox addStyleNames="{style.labeledlistbox}" ui:field="encodingListBox" />
     							</g:FlowPanel>
+    <!--						
     							<g:Button addStyleNames="{style.previewbutton}" ui:field="previewButton" />
     							<g:CaptionPanel addStyleNames="{style.previewcaptionpanel}">
     								<g:ScrollPanel addStyleNames="{style.previewscrollpanel}">
     									<g:HTML addStyleNames="{style.previewhtml}" ui:field="previewHtml" />
     								</g:ScrollPanel>
     							</g:CaptionPanel>
+    -->
     						</g:FlowPanel>
     					</g:DisclosurePanel>
     				</g:FlowPanel>
     			</g:CaptionPanel>
-    			<g:FlowPanel addStyleNames="{style.horizontalbuttonpanel}">
-    				<g:Button addStyleNames="{style.horizontalbutton}" ui:field="submitButton" />
-    				<g:Button addStyleNames="{style.horizontalbutton}" ui:field="cancelButton" />
-    			</g:FlowPanel>
     		</g:FlowPanel>
         	</g:ScrollPanel>
         </g:center>

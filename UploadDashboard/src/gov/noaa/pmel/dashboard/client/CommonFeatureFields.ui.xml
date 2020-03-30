@@ -4,7 +4,8 @@
     <ui:style src="Widgets.css" />
 
         <g:FlowPanel>
-            <g:FlowPanel addStyleNames="{style.settingsradiopanel}">
+        <!-- Delimiter is normally auto-detected --> 
+            <g:FlowPanel ui:field="delimiterPanel" addStyleNames="{style.settingsradiopanel}">
                 <g:RadioButton addStyleNames="{style.settingsradiobutton}" 
                         name="commonFormatRadioGroup" ui:field="commaRadio" />
                 <g:RadioButton addStyleNames="{style.settingsradiobutton}" 
@@ -13,10 +14,26 @@
                         name="commonFormatRadioGroup" ui:field="tabRadio" />
             </g:FlowPanel>
             <g:FlowPanel addStyleNames="{style.padded_panel} {style.bottom_groove}">
+    			<g:Label ui:field="datasetColNameLabel" addStyleNames="{style.labeledlistlabel}" />
+    			<g:TextBox ui:field="datasetColName"/>
+    			<g:HTML ui:field="datasetColNameDesc" addStyleNames="{style.labeledlistlabel} {style.font_italic}" ><font style="font-weight:bold;">Optional.</font> Used to specify the column containing the dataset ID, if not automatically detected.</g:HTML>
+                <g:Label ui:field="unspecDatasetIdLabel" addStyleNames="{style.unspec_dataset_id_label}">Dataset ID:</g:Label>
+                <g:TextBox ui:field="unspecDatasetIdBox"></g:TextBox>
+    			<g:HTML ui:field="unspecDatasetIdDesc" addStyleNames="{style.labeledlistlabel} {style.font_italic}" ><font style="font-weight:bold;">Optional.</font> Used to specify the dataset unique ID, if a dataset ID column is not included in the data file.</g:HTML>
+              <g:FlexTable ui:field="flexTable">
+              </g:FlexTable>
+            </g:FlowPanel>
+            <!--
+            <g:FlowPanel addStyleNames="{style.padded_panel}">
     			<g:Label addStyleNames="{style.labeledlistlabel}" ui:field="datasetColNameLabel"/>
     			<g:TextBox ui:field="datasetColName"/>
-    			<g:Label addStyleNames="{style.labeledlistlabel} {style.font_italic}" >Optional.</g:Label>
+    			<g:Label addStyleNames="{style.labeledlistlabel} {style.font_italic}" >Optional. Used to specify the column containing the dataset ID, if not automatically detected.</g:Label>
             </g:FlowPanel>
+            <g:FlowPanel addStyleNames="{style.unspec_dataset_id_panel} {style.bottom_groove}">
+                <g:InlineLabel addStyleNames="{style.unspec_dataset_id_label}">Dataset ID:</g:InlineLabel>
+                <g:TextBox ui:field="unspecDatasetIdBox"></g:TextBox>
+    			<g:Label addStyleNames="{style.labeledlistlabel} {style.font_italic}" >Optional. Used to specify the dataset unique ID, if a dataset ID column is not included in the data file.</g:Label>
+            </g:FlowPanel>
+            -->
         </g:FlowPanel>
-
 </ui:UiBinder>
