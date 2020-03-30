@@ -65,7 +65,8 @@ public class PublicServices extends HttpServlet {
                     respondFailure(httpResponse, SC_BAD_REQUEST);
             }
         } catch (Exception ex) {
-            respondFailure(httpResponse, "There was an error handling your request: " + ex.getMessage());
+            logger.warn(ex,  ex);
+            respondFailure(httpResponse, "There was an error handling your request. Please contact the system administrator.");
         }
 	}
 
