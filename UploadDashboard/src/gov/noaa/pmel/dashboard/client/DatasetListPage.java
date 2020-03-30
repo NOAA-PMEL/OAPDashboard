@@ -77,7 +77,7 @@ public class DatasetListPage extends CompositeWithUsername {
     
 	private static final String TITLE_TEXT = "My Datasets";
 
-	private static final String UPLOAD_TEXT = "Upload Datasets";
+	private static final String UPLOAD_TEXT = "New Submission";
 	private static final String UPLOAD_HOVER_HELP = 
 			"upload data to create a new dataset " +
 			"or replace an existing dataset";
@@ -1387,19 +1387,38 @@ public class DatasetListPage extends CompositeWithUsername {
 	/**
 	 * @return the timestamp column for the table
 	 */
-	private TextColumn<DashboardDataset> buildTimestampColumn() {
+	private static TextColumn<DashboardDataset> buildTimestampColumn() {
 		TextColumn<DashboardDataset> timestampColumn = 
 				new TextColumn<DashboardDataset> () {
 			@Override
 			public String getValue(DashboardDataset cruise) {
-				String timestamp = cruise.getUploadTimestamp();
-				if ( timestamp.isEmpty() )
-					timestamp = NO_TIMESTAMP_STRING;
+				String timestamp = getZoneTrimmedTime(cruise.getUploadTimestamp());
 				return timestamp;
 			}
 		};
 		return timestampColumn;
 	}
+    
+    private static String getZoneTrimmedTime(String timestamp) {
+		if ( timestamp == null || timestamp.isEmpty() ) {
+			timestamp = NO_TIMESTAMP_STRING;
+		} else if ( timestamp.endsWith("Z")) {
+            timestamp = timestamp.substring(0, timestamp.indexOf('Z')-1).trim();
+        } else if ( timestamp.matches(".*[+-].*")) {
+            timestamp = removeOffset(timestamp);
+        }
+        return timestamp;
+    }
+
+    private static String removeOffset(String timestamp) {
+//        GWT.log("time:"+timestamp);
+        int idx = timestamp.contains("+") ? timestamp.indexOf('+') : timestamp.lastIndexOf('-');
+//        GWT.log("idx:"+idx);
+        if ( idx > 0 ) { 
+            timestamp = timestamp.substring(0, idx-1).trim();
+        }
+        return timestamp;
+    }
 
 	/**
 	 * @return the data-check status column for the table
@@ -1496,8 +1515,11 @@ public class DatasetListPage extends CompositeWithUsername {
 			@Override
 			public String getValue(DashboardDataset cruise) {
 				String mdTimestamp = cruise.getMdTimestamp();
-				if ( mdTimestamp.isEmpty() )
+				if ( mdTimestamp.isEmpty() ) {
 					mdTimestamp = NO_METADATA_STATUS_STRING;
+				} else {
+				    mdTimestamp = getZoneTrimmedTime(mdTimestamp);
+				}
 				return mdTimestamp;
 			}
 			@Override
