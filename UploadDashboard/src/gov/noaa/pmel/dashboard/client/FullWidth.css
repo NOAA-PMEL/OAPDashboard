@@ -74,6 +74,7 @@ html, body {
 }
 .cruisepanelmainbutton {
 	display: block;
+    border-color: red;
 	width: 7.25em;
 	margin-top: 0.5em;
 	margin-bottom: 0.75em;
