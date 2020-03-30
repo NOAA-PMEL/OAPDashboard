@@ -4,10 +4,15 @@
 package gov.noaa.pmel.dashboard.oads;
 
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.StringWriter;
 import java.io.Writer;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.attribute.BasicFileAttributeView;
+import java.nio.file.attribute.BasicFileAttributes;
 import java.util.Date;
 import java.util.HashSet;
 import java.util.Set;
@@ -28,7 +33,11 @@ import gov.noaa.pmel.dashboard.server.DashboardServerUtils;
 import gov.noaa.pmel.dashboard.shared.DashboardDatasetData;
 import gov.noaa.pmel.dashboard.shared.DashboardMetadata;
 import gov.noaa.pmel.dashboard.shared.DashboardUtils;
+import gov.noaa.pmel.dashboard.shared.FileInfo;
+import gov.noaa.pmel.dashboard.shared.MetadataPreviewInfo;
+import gov.noaa.pmel.dashboard.shared.NotFoundException;
 import gov.noaa.pmel.dashboard.util.xml.XReader;
+import gov.noaa.pmel.dashboard.util.xml.XmlUtils;
 
 /**
  * @author kamb
@@ -122,7 +131,7 @@ public class OADSMetadata {
 			String uunits = stdArray.getUserColumnUnits(i);
 			DashDataType<?> colType = stdArray.getDataTypes().get(i);
 			String stdName = colType.getStandardName();
-			String fullName = DashboardUtils.isEmptyNull(stdName) ? colType.getDisplayName() : stdName;
+			String fullName = DashboardUtils.isEmptyNull(stdName) ? username : stdName;
 			if ( ! exclude(username, colType) &&
 				 ! addVars.contains(username)) {
 				oads.addVariable(new Variable().abbreviation(username).unit(uunits).fullName(fullName));
@@ -239,6 +248,35 @@ public class OADSMetadata {
 	private static void writeToFile(DashboardOADSMetadata oads, File outfile) throws Exception {
 		FileWriter fout = new FileWriter(outfile);
 		OADSMetadata.writeOadsMetadataXml(oads, fout, true);
+	}
+
+	public static MetadataPreviewInfo getMetadataPreviewInfo(String pageUsername, String datasetId)
+		throws NotFoundException, IllegalArgumentException {
+		try {
+			MetadataPreviewInfo preview = new MetadataPreviewInfo();
+			String xml = null;
+			File mdFile = OADSMetadata.getMetadataFile(datasetId);
+			if ( !mdFile.exists()) {
+				mdFile = OADSMetadata.getExtractedMetadataFile(datasetId);
+			}
+			if ( !mdFile.exists()) {
+				throw new FileNotFoundException("No metadata file found for " + datasetId);
+			}
+			Date fileModTime = new Date(mdFile.lastModified());
+			Path fPath = mdFile.toPath();
+			BasicFileAttributes attr = Files.getFileAttributeView(fPath, BasicFileAttributeView.class).readAttributes();
+			Date fileCreateTime = new Date(attr.creationTime().toMillis());
+			FileInfo mdFileInfo = new FileInfo(mdFile.getName(), fileModTime, fileCreateTime, mdFile.length());
+			preview.setMetadataFileInfo(mdFileInfo);
+			xml = OADSMetadata.getMetadataXml(datasetId, mdFile);
+			String html = XmlUtils.asHtml(xml);
+			preview.setMetadataPreview(html);
+			return preview;
+		} catch (FileNotFoundException ex) {
+			throw new NotFoundException(ex.getMessage(), ex);
+		} catch (IOException ex) {
+			throw new IllegalArgumentException(ex);
+		}
 	}
 
 	public static File getExtractedMetadataFile(String datasetId) throws IOException {
