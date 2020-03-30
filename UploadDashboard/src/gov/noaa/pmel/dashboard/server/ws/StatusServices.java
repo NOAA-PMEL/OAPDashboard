@@ -200,9 +200,9 @@ public class StatusServices extends ResourceBase {
             String statusStr = fp_status_state != null ? fp_status_state : qp_status_state;
             StatusState sstate = getState(statusStr.toUpperCase());
             String message = fp_message != null ? fp_message : qp_message;
-            String logMessage = "Status update for " + p_sid + " from " + getRemoteAddress(httpRequest) + " to " + sstate + ":" + message;
+            String notificationTitle = "Status update for " + p_sid;
+            String logMessage = notificationTitle + " from " + getRemoteAddress(httpRequest) + " to " + sstate + ":" + message;
             logger.info(logMessage);
-            Notifications.AdminEmail("Status update for " + p_sid, logMessage);
             SubmissionsDao sdao = DaoFactory.SubmissionsDao();
             if ( Archive.isRecordKey(p_sid)) {
                 srec = sdao.getLatestByKey(p_sid);
@@ -212,14 +212,16 @@ public class StatusServices extends ResourceBase {
             if ( srec == null ) {
                 response = Response.status(HttpServletResponse.SC_NOT_FOUND)
                             .entity("No submission record found for id " + p_sid).build();
+                notificationTitle = "FAILED: " + notificationTitle;
+                logMessage = "No record found.\n" + logMessage;
             } else {
                 Archive.updateStatus(srec, sstate, message);
                 response = Response.ok("Status updated for " + p_sid).build();
             }
-            
+            Notifications.AdminEmail(notificationTitle, logMessage);
         } catch (Exception ex) {
             logger.warn(ex, ex);
-            Notifications.AdminEmail("Status update failed!", ex.getMessage());
+            Notifications.AdminEmail("Status update FAILED!", ex.toString());
             response = Response.serverError().entity("An error occurred on the server. Please try again later.").build();
         }
         return response;
