@@ -3,8 +3,10 @@
  */
 package gov.noaa.pmel.dashboard.upload;
 
+import java.io.BufferedInputStream;
 import java.io.BufferedReader;
 import java.io.File;
+import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.util.ArrayList;
 import java.util.List;
@@ -38,6 +40,7 @@ public class StandardUploadProcessor extends FileUploadProcessor {
         String timestamp = _uploadFields.timestamp();
         String encoding = _uploadFields.fileDataEncoding();
         String dataFormat = FormUtils.getFormField("dataformat", _uploadFields.parameterMap());
+        String specifiedDatasetId = FormUtils.getFormField(DATASET_ID_FIELD_NAME, _uploadFields.parameterMap());
         String datasetIdColName = FormUtils.getFormField(DATASET_ID_COLUMN_FIELD_NAME, _uploadFields.parameterMap());
         DataFileHandler datasetHandler = _configStore.getDataFileHandler();
         
@@ -46,12 +49,24 @@ public class StandardUploadProcessor extends FileUploadProcessor {
             TreeMap<String,DashboardDatasetData> datasetsMap = null;
             String filename = item.getName();
             
-            try ( BufferedReader cruiseReader = new BufferedReader( new InputStreamReader(item.getInputStream(), encoding)); ) {
-                datasetsMap = datasetHandler.createDatasetsFromInput(cruiseReader, dataFormat, username, filename, timestamp, datasetIdColName);
+            try ( InputStream itemStream = item.getInputStream();
+                    BufferedInputStream bufStream = new BufferedInputStream(itemStream);
+                    BufferedReader cruiseReader = 
+                        new BufferedReader( new InputStreamReader(bufStream)); ) {
+//                checkFileFormat(bufStream);
+                datasetsMap = datasetHandler.createDatasetsFromInput(cruiseReader, dataFormat, 
+                                                                     username, filename, timestamp, 
+                                                                     specifiedDatasetId, datasetIdColName);
+            } catch (IllegalStateException ex) {
+                _messages.add(DashboardUtils.INVALID_FILE_HEADER_TAG + " " + filename);
+                _messages.add(ex.getMessage());
+                _messages.add(DashboardUtils.END_OF_ERROR_MESSAGE_TAG);
+                item.delete();
+                continue;
             } catch (Exception ex) {
                 // Mark as a failed file, and go on to the next
                 _messages.add(DashboardUtils.INVALID_FILE_HEADER_TAG + " " + filename);
-                _messages.add(ex.getMessage());
+                _messages.add("There was an error processing the data file.");
                 _messages.add(DashboardUtils.END_OF_ERROR_MESSAGE_TAG);
                 item.delete();
                 continue;

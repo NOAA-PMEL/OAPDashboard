@@ -42,7 +42,7 @@ public class StandardUploadFields {
     @NonNull
     private String _dataAction;
     @Builder.Default
-    protected String _timestamp = TimeUtils.formatUTC(new Date(), TimeUtils.non_std_ISO_8601_nofrac_SPACE_Z);
+    protected String _timestamp = "";
     @NonNull
     @Builder.Default
     protected String _fileDataEncoding = "UTC-8";

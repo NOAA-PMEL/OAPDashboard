@@ -28,6 +28,7 @@ import lombok.Setter;
 @Setter(AccessLevel.NONE)
 public abstract class FileUploadProcessor {
 
+    protected static final String DATASET_ID_FIELD_NAME = "datasetId";
     protected static final String DATASET_ID_COLUMN_FIELD_NAME = "datasetIdColumn";
     
     protected StandardUploadFields _uploadFields;
