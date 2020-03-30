@@ -39,7 +39,7 @@ public class FileUploadProcessorFactory {
                 processor = new OpaqueFileUploadProcessor(stdFields);
                 break;
             default:
-                throw new IllegalArgumentException("Unknown Feature Type: " + stdFields.featureType());
+                throw new IllegalArgumentException("Unknown File Type: " + stdFields.fileType());
         }
                 
         return processor;

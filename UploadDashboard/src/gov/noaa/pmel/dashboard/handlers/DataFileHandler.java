@@ -11,6 +11,7 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Properties;
@@ -26,6 +27,10 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.tmatesoft.svn.core.SVNException;
 
+import com.univocity.parsers.csv.CsvFormat;
+import com.univocity.parsers.csv.CsvParser;
+import com.univocity.parsers.csv.CsvParserSettings;
+
 import gov.noaa.pmel.dashboard.datatype.DashDataType;
 import gov.noaa.pmel.dashboard.datatype.KnownDataTypes;
 import gov.noaa.pmel.dashboard.dsg.StdUserDataArray;
@@ -40,6 +45,7 @@ import gov.noaa.pmel.dashboard.shared.DataColumnType;
 import gov.noaa.pmel.dashboard.shared.FeatureType;
 import gov.noaa.pmel.dashboard.shared.FileType;
 import gov.noaa.pmel.dashboard.shared.QCFlag;
+import gov.noaa.pmel.tws.util.StringUtils;
 
 /**
  * Handles storage and retrieval of cruise data in files.
@@ -371,34 +377,54 @@ public class DataFileHandler extends VersionedFileHandler {
 	 * 		if there are too few data columns, or
 	 * 		if no data samples (rows) were found.
 	 */
-	public TreeMap<String,DashboardDatasetData> createDatasetsFromInput(
-			BufferedReader dataReader, String dataFormat, String owner, 
-			String filename, String timestamp, 
-			String datasetIdColName) throws IOException {
-		char spacer;
+	public TreeMap<String,DashboardDatasetData> createDatasetsFromInput(BufferedReader dataReader, 
+	                                                                    String dataFormat, 
+	                                                                    String owner, 
+	                                                                    String filename, 
+	                                                                    String timestamp, 
+                                                                        String specifiedDatasetId,
+	                                                                    String datasetIdColName) 
+	    throws IOException 
+	{
+        // At this point, The spacer is used only to rebuild lines for error messages.
+		Character spacer = null;
 		if ( DashboardUtils.TAB_FORMAT_TAG.equals(dataFormat) ) {
 			spacer = '\t';
-		}
-		else if ( DashboardUtils.COMMA_FORMAT_TAG.equals(dataFormat) ) {
+		} else if ( DashboardUtils.COMMA_FORMAT_TAG.equals(dataFormat) ) {
 			spacer = ',';
-		}
-		else if ( DashboardUtils.SEMICOLON_FORMAT_TAG.equals(dataFormat) ) {
+		} else if ( DashboardUtils.SEMICOLON_FORMAT_TAG.equals(dataFormat) ) {
 			spacer = ';';
+		} else if ( DashboardUtils.UNSPECIFIED_DELIMITER_FORMAT_TAG.equals(dataFormat)) {
+		    spacer = null;
 		}
 		else
 			throw new IOException("Unexpected invalid data format '" + dataFormat + "'");
 
 		TreeMap<String,DashboardDatasetData> datasetsMap = new TreeMap<String,DashboardDatasetData>();
 		int numDataColumns = 0;
+        boolean foundHeader = false;
 
-		CSVFormat format = CSVFormat.EXCEL.withIgnoreSurroundingSpaces()
-										  .withIgnoreEmptyLines()
-//                                          .withTrailingDelimiter()
-//                                          .withCommentMarker('#')
-										  .withDelimiter(spacer);
+//		CSVFormat format = CSVFormat.EXCEL.withIgnoreSurroundingSpaces()
+//										  .withIgnoreEmptyLines()
+////                                          .withTrailingDelimiter()
+////                                          .withCommentMarker('#')
+//										  .withDelimiter(spacer);
 		
-		try ( CSVParser dataParser = new CSVParser(dataReader, format); ) {
-
+		CsvParserSettings settings = new CsvParserSettings();
+        if ( spacer == null ) {
+    		settings.detectFormatAutomatically();
+            settings.setDelimiterDetectionEnabled(true, '\t', ';', ',', ' ');
+        } else {
+            settings.getFormat().setDelimiter(spacer);
+        }
+        
+        settings.setCommentCollectionEnabled(true);
+        settings.setNullValue("");
+        settings.setEmptyValue("");
+        settings.setSkipEmptyLines(true); // default
+        
+        try  {
+            CsvParser dataParser = new CsvParser(settings);
 			ArrayList<String> columnNames = null;
 			boolean checkForUnits = false;
 			ArrayList<DataColumnType> columnTypes = null;
@@ -406,14 +432,26 @@ public class DataFileHandler extends VersionedFileHandler {
 			String version = null;
             boolean hasTrailer = false;
 
-			for ( CSVRecord record : dataParser ) {
-
-                if ( isComment(record)) {
-                    continue;
+            dataParser.beginParsing(dataReader);
+            if ( spacer == null ) {
+                CsvFormat fileFormat = dataParser.getDetectedFormat();
+                System.out.println("Detected file format: " + fileFormat);
+                char delimiter = fileFormat.getDelimiter();
+                if ( spacer == null || delimiter != spacer.charValue() ) {
+                    if ( spacer != null ) {
+                        logger.warn("Parser detected different delimiter '" + delimiter + "' from specified value '" + spacer + "' for uploaded data file " + filename + "." );
+                    }
+                    spacer = delimiter;
                 }
+            }
+            
+			for ( String[] record : dataParser.iterate(dataReader)) {
+
+                int nColumns = record.length;
+                
 				// Still looking for headers?
 				if ( columnNames == null ) {
-					if ( record.size() >= MIN_NUM_DATA_COLUMNS ) {
+					if ( nColumns >= MIN_NUM_DATA_COLUMNS ) {
 						// These could be the column names headers
 						// column names must not be blank or pure numeric
 						boolean isHeader = true;
@@ -421,7 +459,7 @@ public class DataFileHandler extends VersionedFileHandler {
 						for ( String val : record ) {
                             fieldNum += 1;
 							if ( val.isEmpty() ) {
-                                if ( fieldNum == record.size()) { // last / extra column ignored
+                                if ( fieldNum == nColumns) { // last / extra column ignored
                                     hasTrailer = true;
                                 } else {
     								isHeader = false;
@@ -438,8 +476,9 @@ public class DataFileHandler extends VersionedFileHandler {
 							}
 						}
 						if ( isHeader ) {
+                            foundHeader = true;
 							// These indeed are the column headers
-							numDataColumns = hasTrailer ? record.size() -1 : record.size();
+							numDataColumns = hasTrailer ? nColumns -1 : nColumns;
 							columnNames = new ArrayList<String>(numDataColumns);
 							for ( String val : record ) {
 								columnNames.add(val);
@@ -496,24 +535,26 @@ public class DataFileHandler extends VersionedFileHandler {
     					}
     					configStore.getUserFileHandler().assignDataColumnTypes(fakeDataset, datasetIdColName);
     					columnTypes = fakeDataset.getDataColTypes();
-    					int k = 0;
-    					for ( DataColumnType dtype : columnTypes ) {
-    						if ( ( ! DashboardUtils.isEmptyNull(datasetIdColName) && columnNames.get(k).equalsIgnoreCase(datasetIdColName)) ||
-    								DashboardServerUtils.DATASET_NAME.typeNameEquals(dtype) ) {
-    							datasetNameColIdx = k;
-    							break;
-    						} 
-    						
-    						k++;
-    					}
-    					if ( datasetNameColIdx < 0 ) {
-    						String msg = "Dataset name column not found";
-    						if ( ! DashboardUtils.isEmptyNull(datasetIdColName)) {
-    							msg += ": " + datasetIdColName;
-    						}
-    						throw new IOException(msg);
-    					}
-    
+                        if ( StringUtils.emptyOrNull(specifiedDatasetId)) {
+        					int k = 0;
+        					for ( DataColumnType dtype : columnTypes ) {
+        						if ( ( ! DashboardUtils.isEmptyNull(datasetIdColName) && columnNames.get(k).equalsIgnoreCase(datasetIdColName)) ||
+        								DashboardServerUtils.DATASET_NAME.typeNameEquals(dtype) ) {
+        							datasetNameColIdx = k;
+        							break;
+        						} 
+        						
+        						k++;
+        					}
+        					if ( datasetNameColIdx < 0 ) {
+        						String msg = "Dataset ID column not found";
+        						if ( ! DashboardUtils.isEmptyNull(datasetIdColName)) {
+        							msg += ": " + datasetIdColName;
+        						}
+        						throw new IllegalStateException(msg);
+        					}
+                        }
+        
     					// Get the version to record in the datasets
     					version = configStore.getUploadVersion();
     
@@ -526,10 +567,10 @@ public class DataFileHandler extends VersionedFileHandler {
     				// Check that the number of columns is consistent
                     // We don't check the (possible) units row, as it may have empty columns at the end
     				// which may get trimmed off.
-    				if ( record.size() != numDataColumns ) {
-        					throw new IOException("Inconsistent number of data columns (" + 
-        							record.size() + " instead of " + numDataColumns + 
-        							") for measurement " + dataParser.getRecordNumber() + ":\n    " +
+    				if ( nColumns != numDataColumns ) {
+        					throw new IllegalStateException("Inconsistent number of data columns (" + 
+        							nColumns + " instead of " + numDataColumns + 
+        							") for measurement " + dataParser.getContext().currentLine() + ":\n    " +
         							rebuildDataline(record, spacer));
         			}
                     
@@ -543,14 +584,22 @@ public class DataFileHandler extends VersionedFileHandler {
     				if ( allBlank ) 
     					continue;
     
-    				// Actual data line with values
-    				String datasetName = datavals.get(datasetNameColIdx);
-    				String datasetId = DashboardServerUtils.getDatasetIDFromName(datasetName);
-    				if ( (datasetId.length() < DashboardServerUtils.MIN_DATASET_ID_LENGTH) ||
-    					 (datasetId.length() > DashboardServerUtils.MAX_DATASET_ID_LENGTH) ) 
-    					throw new IOException("Invalid dataset ID \"" + datasetId + "\" from dataset name \"" + 
-    										   datasetName + "\" at record number: " + dataParser.getRecordNumber());
-    
+                    String datasetId;
+                    if ( StringUtils.emptyOrNull(specifiedDatasetId)) {
+        				// Actual data line with values
+        				String datasetName = datavals.get(datasetNameColIdx);
+        				datasetId = DashboardServerUtils.getDatasetIDFromName(datasetName);
+        				if ( (datasetId.length() < DashboardServerUtils.MIN_DATASET_ID_LENGTH) ||
+        					 (datasetId.length() > DashboardServerUtils.MAX_DATASET_ID_LENGTH) ) 
+        					throw new IllegalStateException("Invalid dataset ID \"" + datasetId + "\" from dataset name \"" 
+    										   + datasetName + "\" at record number " + (dataParser.getContext().currentLine()-1) // currentLine is the next to be read...
+    										   +". Expecting dataset ID in column " + (datasetNameColIdx+1) // zero-based indexing confuses the reader
+    										   + " \"" + columnNames.get(datasetNameColIdx) + "\" DatasetID must be between " + DashboardServerUtils.MIN_DATASET_ID_LENGTH
+    										   + " and " + DashboardServerUtils.MAX_DATASET_ID_LENGTH + " characters in length.");
+                    } else {
+                        datasetId = DashboardServerUtils.getDatasetIDFromName(specifiedDatasetId);
+                    }
+        
     				DashboardDatasetData dataset = datasetsMap.get(datasetId);
     				if ( dataset == null ) {
     					dataset = new DashboardDatasetData();
@@ -569,11 +618,18 @@ public class DataFileHandler extends VersionedFileHandler {
     				datasetsMap.put(datasetId, dataset);
     			}
 		    }
+		} catch (Exception ex) {
+            logger.warn(ex,ex);
+            throw ex;
+		} 
+		if ( numDataColumns < MIN_NUM_DATA_COLUMNS ) {
+            if ( !foundHeader ) {
+                throw new IllegalStateException("A data header row was not found." );
+            } else 
+    			throw new IllegalStateException("No data columns found, possibly due to incorrect format");
 		}
-		if ( numDataColumns < MIN_NUM_DATA_COLUMNS )
-			throw new IOException("No data columns found, possibly due to incorrect format");
 		if ( datasetsMap.isEmpty() )
-			throw new IOException("No data rows found");
+			throw new IllegalStateException("No data rows found");
 		return datasetsMap;
 	}
 
@@ -589,8 +645,8 @@ public class DataFileHandler extends VersionedFileHandler {
 	/**
      * @return
      */
-    private boolean isEndTag(CSVRecord record) {
-        return ( record.get(0).toUpperCase().contains("END"));
+    private static boolean isEndTag(String[] record) {
+        return ( record[0].toUpperCase().contains("END"));
     }
 
     /**
@@ -1125,8 +1181,8 @@ public class DataFileHandler extends VersionedFileHandler {
 		// Check if the user has permission to delete the dataset
 		try {
 			String owner = dataset.getOwner();
-			if ( ! DashboardConfigStore.get(false).userManagesOver(username, owner) )
-				throw new IllegalArgumentException("dataset owner is " + owner);
+			if ( ! ( owner.equals(username) || DashboardConfigStore.get(false).userManagesOver(username, owner)))
+				throw new IllegalArgumentException("Cannot delete dataset. Dataset owner is " + owner);
 		} catch ( IOException ex ) {
 			throw new IllegalArgumentException("unexpected failure to get the dashboad configuration");
 		}
@@ -1546,7 +1602,10 @@ public class DataFileHandler extends VersionedFileHandler {
 	 * @return
 	 * 		recreated string for this record
 	 */
-	private String rebuildDataline(CSVRecord record, char spacer) {
+	 private static String rebuildDataline(String[] record, char spacer) {
+         return rebuildDataline(Arrays.asList(record), spacer);
+	 }
+	 private static String rebuildDataline(Iterable<String> record, char spacer) {
 		StringBuilder builder = new StringBuilder();
 		boolean first = true;
 		for ( String val : record ) {
