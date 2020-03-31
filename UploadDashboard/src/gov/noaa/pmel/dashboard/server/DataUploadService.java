@@ -158,6 +158,7 @@ public class DataUploadService extends HttpServlet {
                     .datasetIdColumnName(getUploadField("datasetIdColumn", paramMap))
                     .dataAction(getRequiredField("dataaction", paramMap))
                     .fileDataEncoding(getUploadField("dataencoding", paramMap))
+                    .timestamp(getUploadField("timestamp", paramMap))
                     .featureType(getFeatureType(paramMap))
                     .fileType(getFileType(paramMap))
                     .dataFiles(extractDataFiles(paramMap))

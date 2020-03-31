@@ -4,15 +4,18 @@
 package gov.noaa.pmel.dashboard.upload;
 
 import java.io.BufferedInputStream;
-import java.io.BufferedReader;
 import java.io.File;
+import java.io.IOException;
 import java.io.InputStream;
-import java.io.InputStreamReader;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.TreeMap;
 import java.util.TreeSet;
 
+import org.apache.tika.config.TikaConfig;
+import org.apache.tika.io.TikaInputStream;
+import org.apache.tika.metadata.Metadata;
+import org.apache.tika.mime.MediaType;
 import org.apache.tomcat.util.http.fileupload.FileItem;
 
 import gov.noaa.pmel.dashboard.handlers.DataFileHandler;
@@ -33,6 +36,12 @@ public class StandardUploadProcessor extends FileUploadProcessor {
         super(_uploadFields);
     }
 
+    private static MediaType checkFileType(TikaInputStream tis, Metadata metadata) throws IOException {
+        MediaType mt = null;
+        TikaConfig tika = TikaConfig.getDefaultConfig();
+        mt = tika.getDetector().detect(tis, metadata);
+        return mt;
+    }
     @Override
     public void doFeatureSpecificProcessing(List<FileItem> datafiles) throws UploadProcessingException {
         String action = _uploadFields.dataAction();
@@ -48,15 +57,29 @@ public class StandardUploadProcessor extends FileUploadProcessor {
             // Get the datasets from this file
             TreeMap<String,DashboardDatasetData> datasetsMap = null;
             String filename = item.getName();
-            
+            String itemType = item.getContentType();
             try ( InputStream itemStream = item.getInputStream();
                     BufferedInputStream bufStream = new BufferedInputStream(itemStream);
-                    BufferedReader cruiseReader = 
-                        new BufferedReader( new InputStreamReader(bufStream)); ) {
-//                checkFileFormat(bufStream);
-                datasetsMap = datasetHandler.createDatasetsFromInput(cruiseReader, dataFormat, 
-                                                                     username, filename, timestamp, 
-                                                                     specifiedDatasetId, datasetIdColName);
+//                    BufferedReader cruiseReader = 
+//                        new BufferedReader( new InputStreamReader(bufStream)); 
+                ) {
+                Metadata md = new Metadata();
+                md.set(Metadata.RESOURCE_NAME_KEY, item.getName());
+//                md.set(Metadata.CONTENT_TYPE, item.getContentType());
+                MediaType tikaType = checkFileType(TikaInputStream.get(bufStream), md);
+                System.out.println("item type: " + itemType + ", tika type: " + tikaType);
+                String baseType = tikaType.getType();
+                String subType = tikaType.getSubtype();
+                if ( baseType.equals("text")) {
+                    datasetsMap = DataFileHandler.createDatasetsFromInput(bufStream, dataFormat, 
+                                                                         username, filename, timestamp, 
+                                                                         specifiedDatasetId, datasetIdColName);
+                } else if ( baseType.equals("application") && 
+                            ( subType.contains("excel") || subType.contains("spreadsheet"))) {
+                    datasetsMap = DataFileHandler.createDatasetsFromInput(ExcelFileReader.extractExcelRows(bufStream), dataFormat, 
+                                                                         username, filename, timestamp, 
+                                                                         specifiedDatasetId, datasetIdColName);
+                }
             } catch (IllegalStateException ex) {
                 _messages.add(DashboardUtils.INVALID_FILE_HEADER_TAG + " " + filename);
                 _messages.add(ex.getMessage());
