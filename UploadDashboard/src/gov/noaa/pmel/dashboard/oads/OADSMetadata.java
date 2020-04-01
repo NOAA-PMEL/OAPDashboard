@@ -9,12 +9,14 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.io.StringWriter;
 import java.io.Writer;
+import java.math.BigDecimal;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.attribute.BasicFileAttributeView;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.util.Date;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 import javax.xml.bind.JAXBContext;
@@ -24,6 +26,13 @@ import javax.xml.bind.Unmarshaller;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+import gov.noaa.ncei.oads.xml.v_a0_2_2.BaseVariableType;
+import gov.noaa.ncei.oads.xml.v_a0_2_2.OadsMetadataDocumentType;
+import gov.noaa.ncei.oads.xml.v_a0_2_2.PersonContactInfoType;
+import gov.noaa.ncei.oads.xml.v_a0_2_2.PersonNameType;
+import gov.noaa.ncei.oads.xml.v_a0_2_2.PersonType;
+import gov.noaa.ncei.oads.xml.v_a0_2_2.SpatialExtentsType;
+import gov.noaa.ncei.oads.xml.v_a0_2_2.TemporalExtentsType;
 import gov.noaa.pmel.dashboard.datatype.DashDataType;
 import gov.noaa.pmel.dashboard.dsg.StdUserDataArray;
 import gov.noaa.pmel.dashboard.handlers.DataFileHandler;
@@ -38,6 +47,8 @@ import gov.noaa.pmel.dashboard.shared.MetadataPreviewInfo;
 import gov.noaa.pmel.dashboard.shared.NotFoundException;
 import gov.noaa.pmel.dashboard.util.xml.XReader;
 import gov.noaa.pmel.dashboard.util.xml.XmlUtils;
+import gov.noaa.pmel.oads.util.StringUtils;
+import gov.noaa.pmel.oads.xml.a0_2_2.OadsXmlReader;
 
 /**
  * @author kamb
@@ -203,48 +214,6 @@ public class OADSMetadata {
 	/**
 	 * @param args
 	 */
-	public static void _main(String[] args) {
-		try {
-			String filename = "/Users/kamb/tomcat/7/content/OAPUploadDashboard/MetadataDocs/CHAB/CHABA062014/CHABA062014_OADS.xml";
-			File mdFile = new File(filename);
-			DashboardOADSMetadata dbOAmd = OADSMetadata.readOadsXml(mdFile);
-			System.out.println(dbOAmd);
-		} catch (Exception e) {
-			e.printStackTrace();
-		}
-	}
-	public static void __main(String[] args) {
-		try {
-//			String dataFilesDirName = "/Users/kamb/tomcat/7/content/OAPUploadDashboard/CruiseFiles";
-			String configDir = "/Users/kamb/tomcat/7";
-			System.setProperty("OA_DOCUMENT_ROOT", configDir);
-			System.setProperty("UPLOAD_DASHBOARD_SERVER_NAME", "OAPUploadDashboard");
-			String datasetId = "CHABA062014";
-			DashboardConfigStore config = DashboardConfigStore.get(false);
-			DataFileHandler dfh = config.getDataFileHandler();
-			DashboardDatasetData ddd = dfh.getDatasetDataFromFiles(datasetId, 0, -1);
-			StdUserDataArray std = new StdUserDataArray(ddd, config.getKnownUserDataTypes());
-			DashboardOADSMetadata oads = OADSMetadata.extractOADSMetadata(std);
-			String xml = createOadsMetadataXml(oads);
-			System.out.println(xml);
-			File outfile = new File(datasetId+"_OADS.xml");
-			OADSMetadata.writeToFile(oads, outfile);
-		} catch (Exception e) {
-			e.printStackTrace();
-			// TODO: handle exception
-		}
-	}
-	public static void main(String[] args) {
-		try {
-			File file = new File("/Users/kamb/tomcat/7/content/OAPUploadDashboard/MetadataDocs/33RO/33RO20100308/33RO20100308_OADS.xml");
-			DashboardOADSMetadata omd = OADSMetadata.readOadsXml(file);
-			System.out.println(omd);
-		} catch (Exception e) {
-			e.printStackTrace();
-			// TODO: handle exception
-		}
-	}
-
 	private static void writeToFile(DashboardOADSMetadata oads, File outfile) throws Exception {
 		FileWriter fout = new FileWriter(outfile);
 		OADSMetadata.writeOadsMetadataXml(oads, fout, true);
@@ -337,5 +306,218 @@ public class OADSMetadata {
         File mdFile = DashboardConfigStore.get().getMetadataFileHandler().createEmptyOADSMetadataFile(datasetId);
         return mdFile;
     }
+
+    /**
+     * @param metaFile
+     * @return
+     */
+    public static String validateMetadata(File metaFile) {
+        String validationMsg;
+        try {
+            OadsMetadataDocumentType mdDoc = OadsXmlReader.read(metaFile);
+            checkSubmitter(mdDoc);
+            checkInvestigators(mdDoc);
+            checkCitationInfo(mdDoc);
+            checkSpatialExtents(mdDoc);
+            checkTemporalExtents(mdDoc);
+            checkVariables(mdDoc);
+            validationMsg = "Validated.";
+//        } catch (JAXBException ex) {
+//            validationMsg = "There was an error processing the metadata file.";
+//            ex.printStackTrace();
+//        } catch (SAXException ex) {
+//            // TODO Auto-generated catch block
+//            ex.printStackTrace();
+//        } catch (IOException ex) {
+//            // TODO Auto-generated catch block
+//            ex.printStackTrace();
+        } catch (IllegalArgumentException iax) {
+            validationMsg = "Metadata has invalid data";
+            logger.info(metaFile + " : " + validationMsg + ": " + iax);
+        } catch (IllegalStateException isx) {
+            validationMsg = "Metadata is incomplete";
+            logger.info(metaFile + " : " + validationMsg + ": " + isx);
+        } catch (Exception ex) {
+            validationMsg = "Processing Error";
+            ex.printStackTrace();
+        }
+        return validationMsg;
+    }
+
+    /**
+     * @param mdDoc
+     */
+    private static void checkSubmitter(OadsMetadataDocumentType mdDoc) {
+        PersonType submitter = mdDoc.getDataSubmitter();
+        if ( submitter == null ) { throw new IllegalStateException("No data submitter specified."); }
+        PersonNameType name = submitter.getName();
+        if ( name == null ) { throw new IllegalStateException("Data submitter name is empty."); }
+        if ( StringUtils.emptyOrNull(name.getFirst()) || StringUtils.emptyOrNull(name.getLast())) {
+            throw new IllegalStateException("Data submitter name is incomplete.");
+        }
+        if ( StringUtils.emptyOrNull(submitter.getOrganization())) {
+            throw new IllegalStateException("No organization specified for data submitter.");
+        }
+        PersonContactInfoType contactInfo = submitter.getContactInfo();
+        if ( contactInfo == null ) { throw new IllegalStateException("Data submitter contact information is empty."); }
+        if ( StringUtils.emptyOrNull(contactInfo.getEmail()) && StringUtils.emptyOrNull(contactInfo.getPhone())) {
+            throw new IllegalStateException("No contact information for data submitter.");
+        }
+    }
+
+    /**
+     * @param mdDoc
+     */
+    private static void checkInvestigators(OadsMetadataDocumentType mdDoc) {
+        List<PersonType> investigators = mdDoc.getInvestigators();
+        if ( investigators == null || investigators.size() == 0 ) { throw new IllegalStateException("Principle investigators list is empty."); }
+        PersonType pi = investigators.get(0);
+        if ( pi == null ) { throw new IllegalStateException("No principle investigators specified."); }
+        PersonNameType name = pi.getName();
+        if ( name == null ) { throw new IllegalStateException("Principle investigator name is empty."); }
+        if ( StringUtils.emptyOrNull(name.getFirst()) || StringUtils.emptyOrNull(name.getLast())) {
+            throw new IllegalStateException("Principle investigator name is incomplete.");
+        }
+        if ( StringUtils.emptyOrNull(pi.getOrganization())) {
+            throw new IllegalStateException("No organization specified for principle investigator.");
+        }
+    }
+
+    /**
+     * @param mdDoc
+     */
+    private static void checkCitationInfo(OadsMetadataDocumentType mdDoc) {
+        if ( StringUtils.emptyOrNull(mdDoc.getTitle())) {
+            throw new IllegalStateException("No title given.");
+        }
+        if ( StringUtils.emptyOrNull(mdDoc.getAbstract())) {
+            throw new IllegalStateException("No abstract given.");
+        }
+    }
+
+    /**
+     * @param mdDoc
+     */
+    private static void checkTemporalExtents(OadsMetadataDocumentType mdDoc) {
+        TemporalExtentsType tExtents = mdDoc.getTemporalExtents();
+        if ( tExtents == null ) { throw new IllegalStateException("Temporal Extents are empty."); }
+        Date start = tExtents.getStartDate();
+        Date end = tExtents.getEndDate();
+        if ( start == null || end == null ) {
+            throw new IllegalStateException("Temporal extents are incomplete.");
+        }
+        StringBuilder errormsgs = new StringBuilder();
+        if ( start.after(end)) {
+            errormsgs.append("Start date after end date. ");
+        }
+        Date now = new Date();
+        if ( start.after(now) || end.after(now)) {
+            errormsgs.append("Illegal future date.");
+        }
+        if ( errormsgs.length() > 0 ) {
+            throw new IllegalArgumentException(errormsgs.toString());
+        }
+    }
+
+    private static void checkSpatialExtents(OadsMetadataDocumentType mdDoc) {
+        SpatialExtentsType sExtents = mdDoc.getSpatialExtents();
+        if ( sExtents == null ) { throw new IllegalStateException("Spatial Extents are empty."); }
+        BigDecimal northing = sExtents.getNorthernBounds();
+        BigDecimal southing = sExtents.getSouthernBounds();
+        BigDecimal easting = sExtents.getEasternBounds();
+        BigDecimal westing = sExtents.getWesternBounds();
+        if ( northing == null || southing == null || easting == null || westing == null ) {
+            throw new IllegalStateException("Spatial extents are incomplete.");
+        }
+        StringBuilder errormsgs = new StringBuilder();
+        double northerly = northing.doubleValue();
+        double southerly = southing.doubleValue();
+        if ( northerly < southerly ) {
+            errormsgs.append("Northern bounds less than southern bounds.");
+        }
+        if ( northerly > 90 || southerly < -90 ) {
+            errormsgs.append("Illegal latitude value.");
+        }
+        double westerly = westing.doubleValue();
+        double easterly = easting.doubleValue();
+//        while ( easterly > 180 ) {
+//            easterly -= 360;
+//        }
+//        while ( westerly > 180 ) {
+//            westerly -= 360;
+//        }
+        if ( westerly > 0 && easterly < 0 ) { // crosses dateline
+            if ( westerly > 180 || easterly < -180 ) {
+                errormsgs.append("Illegal longitude value.");
+            }
+        }
+        if ( westerly < -180 || easterly > 180 ) {
+            errormsgs.append("Illegal longitude value.");
+        }
+        if ( errormsgs.length() > 0 ) {
+            throw new IllegalArgumentException(errormsgs.toString());
+        }
+    }
+    
+    /**
+     * @param mdDoc
+     */
+    private static void checkVariables(OadsMetadataDocumentType mdDoc) {
+        List<BaseVariableType> variables = mdDoc.getVariables();
+        StringBuilder errormsgs = new StringBuilder();
+        for ( BaseVariableType var : variables ) {
+            if ( StringUtils.emptyOrNull(var.getName()) || 
+                 StringUtils.emptyOrNull(var.getDatasetVarName()) ||
+                 StringUtils.emptyOrNull(var.getFullName())) {
+                errormsgs.append("Incomplete information for " + String.valueOf(var) + ". ");
+            }
+        }
+        if ( errormsgs.length() > 0 ) {
+            throw new IllegalStateException(errormsgs.toString());
+        }
+    }
+    
+	public static void _main(String[] args) {
+		try {
+			String filename = "/Users/kamb/tomcat/7/content/OAPUploadDashboard/MetadataDocs/CHAB/CHABA062014/CHABA062014_OADS.xml";
+			File mdFile = new File(filename);
+			DashboardOADSMetadata dbOAmd = OADSMetadata.readOadsXml(mdFile);
+			System.out.println(dbOAmd);
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+	}
+	public static void __main(String[] args) {
+		try {
+//			String dataFilesDirName = "/Users/kamb/tomcat/7/content/OAPUploadDashboard/CruiseFiles";
+			String configDir = "/Users/kamb/tomcat/7";
+			System.setProperty("OA_DOCUMENT_ROOT", configDir);
+			System.setProperty("UPLOAD_DASHBOARD_SERVER_NAME", "OAPUploadDashboard");
+			String datasetId = "CHABA062014";
+			DashboardConfigStore config = DashboardConfigStore.get(false);
+			DataFileHandler dfh = config.getDataFileHandler();
+			DashboardDatasetData ddd = dfh.getDatasetDataFromFiles(datasetId, 0, -1);
+			StdUserDataArray std = new StdUserDataArray(ddd, config.getKnownUserDataTypes());
+			DashboardOADSMetadata oads = OADSMetadata.extractOADSMetadata(std);
+			String xml = createOadsMetadataXml(oads);
+			System.out.println(xml);
+			File outfile = new File(datasetId+"_OADS.xml");
+			OADSMetadata.writeToFile(oads, outfile);
+		} catch (Exception e) {
+			e.printStackTrace();
+			// TODO: handle exception
+		}
+	}
+	public static void main(String[] args) {
+		try {
+			File file = new File("/local/tomcat/oap_content/OAPUploadDashboard/MetadataDocs//PRIS/PRISM022008/PRISM022008_OADS.xml");
+//			DashboardOADSMetadata omd = OADSMetadata.readOadsXml(file);
+//			System.out.println(omd);
+            validateMetadata(file);
+		} catch (Exception e) {
+			e.printStackTrace();
+			// TODO: handle exception
+		}
+	}
 
 }
