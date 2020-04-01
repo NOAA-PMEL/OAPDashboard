@@ -4,37 +4,32 @@
 package gov.noaa.pmel.dashboard.server;
 
 import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
-import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.OutputStream;
 import java.io.PrintWriter;
-import java.nio.channels.ByteChannel;
-import java.nio.channels.FileChannel;
-import java.text.SimpleDateFormat;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.StandardCopyOption;
 import java.util.Date;
-import java.util.List;
-import java.util.Map;
-import java.util.TreeSet;
 
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-import javax.servlet.http.Part;
 
 import org.apache.http.HttpResponse;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.impl.client.HttpClients;
+import org.apache.log4j.Logger;
 
 import gov.noaa.pmel.dashboard.handlers.DataFileHandler;
 import gov.noaa.pmel.dashboard.handlers.MetadataFileHandler;
 import gov.noaa.pmel.dashboard.oads.OADSMetadata;
 import gov.noaa.pmel.dashboard.shared.DashboardDataset;
-import gov.noaa.pmel.dashboard.shared.DashboardUtils;
+import gov.noaa.pmel.oads.util.TimeUtils;
+import gov.noaa.pmel.tws.util.ApplicationConfiguration;
+import gov.noaa.pmel.tws.util.Logging;
 
 /**
  * Service to receive the uploaded metadata file from the client
@@ -44,12 +39,12 @@ import gov.noaa.pmel.dashboard.shared.DashboardUtils;
 public class NotificationService extends HttpServlet {
 
 	private static final long serialVersionUID = -1458504704372812166L;
+    
+	private static final Logger logger = Logging.getLogger(NotificationService.class);
 
 	public NotificationService() {
 	}
 
-	private static int ID_POS = 1;
-	
 	@Override
 	protected void doGet(HttpServletRequest request, HttpServletResponse response) throws IOException {
         String path = request.getPathInfo();
@@ -59,16 +54,16 @@ public class NotificationService extends HttpServlet {
 	
 	@Override
 	protected void doPost(HttpServletRequest request, HttpServletResponse response) throws IOException, ServletException {
-        System.out.println("Post to: " + request.getRequestURL().toString());
+        logger.info("Post to: " + request.getRequestURL().toString());
         String path = request.getPathInfo(); 
         String location = request.getHeader("Location");
         String docId = location.substring(location.lastIndexOf('/')+1);
         String datasetId = path.substring(1);
-        System.out.println(new Date() + "Notified of update to " + datasetId + " at location: " + location +", path: " + path);
+        logger.info(new Date() + "Notified of update to " + datasetId + " at location: " + location +", path: " + path);
 //        setupRetrieveMetadataFile(location, datasetId);
         response.getOutputStream().write(("gotcha baby #"+docId+"@"+location).getBytes());
         response.flushBuffer();
-        System.out.println("flushed");
+        logger.debug("flushed");
         response.setStatus(HttpServletResponse.SC_ACCEPTED);
         retrieveMetadataFile(location, datasetId);
 	}
@@ -98,8 +93,9 @@ public class NotificationService extends HttpServlet {
 	 * @throws IOException 
 	 * @throws  
      */
+    @SuppressWarnings("resource")
     private static void retrieveMetadataFile(String location, String datasetId) throws IOException {
-        System.out.println(new Date() + " Retrieving " + datasetId + " from " + location);
+        logger.info(new Date() + " Retrieving " + datasetId + " from " + location);
         MetadataFileHandler metaHandler = DashboardConfigStore.get().getMetadataFileHandler();
         File metaFile = metaHandler.getMetadataFile(datasetId);
         HttpClient client = HttpClients.createDefault();
@@ -108,24 +104,23 @@ public class NotificationService extends HttpServlet {
         if ( response.getStatusLine().getStatusCode() != HttpServletResponse.SC_OK ) {
             throw new IOException(response.getStatusLine().toString());
         }
-        try ( InputStream is = response.getEntity().getContent();
-              FileOutputStream fos = new FileOutputStream(metaFile); ) {
-            byte[] buf = new byte[4096];
-            int read;
-            while (( read = is.read(buf)) > 0 ) {
-                fos.write(buf, 0, read);
-            }
+        try ( InputStream is = response.getEntity().getContent(); ) {
+            Path metaFilePath = metaFile.toPath();
+            Files.copy(is, metaFilePath, StandardCopyOption.REPLACE_EXISTING);
         }
-		String localTimestamp = new SimpleDateFormat("yyyy-MM-dd HH:mm Z").format(new Date());
+        String validationMessage = ApplicationConfiguration.getProperty("oap.metadata.validate", true) ? 
+                                    OADSMetadata.validateMetadata(metaFile) :
+                                    "Not checked.";
+		String timestamp = TimeUtils.formatUTC(new Date(), "yyyy-MM-dd HH:mm Z");
         DataFileHandler df = DashboardConfigStore.get().getDataFileHandler();
         DashboardDataset dataset = df.getDatasetFromInfoFile(datasetId);
-        dataset.setMdTimestamp(localTimestamp);
+        dataset.setMdTimestamp(timestamp);
+        dataset.setMdStatus(validationMessage);
         String msg = new Date() + " Updating metadata timestamp on user upload metadata file.";
-        System.out.println(msg);
+        logger.info(msg);
         df.saveDatasetInfoToFile(dataset, msg);
     }
     
-
     /**
 	 * Returns an error message in the given Response object.  
 	 * The response number is still 200 (SC_OK) so the message 
