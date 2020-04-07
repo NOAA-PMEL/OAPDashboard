@@ -24,6 +24,7 @@ The DOC seal and logo, or the seal and logo of a DOC bureau, shall not
 be used in any manner to imply endorsement of any commercial product 
 or activity by the DOC or the United States Government.*
 
+Running document with questions: https://docs.google.com/document/d/1yLCgp28rCm7ISRa7cYJ5YPoNz6Sm3MtSl2617vqPug0/edit
 
 ## Building the war file
 ### Add missing jar files
