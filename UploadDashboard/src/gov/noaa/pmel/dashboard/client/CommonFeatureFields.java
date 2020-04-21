@@ -91,7 +91,7 @@ public class CommonFeatureFields extends Composite implements FeatureTypeFields 
         semicolonRadio.addValueChangeHandler(radioChange);
         tabRadio.addValueChangeHandler(radioChange);
         
-//        delimiterPanel.setVisible(false);
+        delimiterPanel.setVisible(false);
         
         String DATASET_ID_TT_TEXT = "Name of column specifying dataset ID. Only necessary if non-standard.";
         datasetColNameLabel.setText("Dataset ID Column Name:");
