@@ -24,7 +24,7 @@
                     <g:Anchor addStyleNames="{style.featureTypeHelpAnchor}" ui:field="featureTypeHelpAnchor" />
                 </g:FlowPanel>
                 <g:FlowPanel>
-                    <g:Label addStyleNames="{style.featureTypeSelectorLabel}">Please Select File Format:</g:Label>
+                    <!--g:Label addStyleNames="{style.featureTypeSelectorLabel}">Please Select File Format:</g:Label>  -->
                     <g:ListBox addStyleNames="{style.fileTypeSelectBox}" ui:field="fileTypeSelector"/>
                     <g:Anchor addStyleNames="{style.featureTypeHelpAnchor},{style.fileTypeHelpAnchor}" ui:field="fileTypeHelpAnchor" />
                 </g:FlowPanel>
@@ -48,10 +48,8 @@
     			</g:FlowPanel>
     			<g:CaptionPanel addStyleNames="{style.settingscaptionpanel}" ui:field="settingsCaption">
     				<g:FlowPanel>
-    <!--						
                         <g:FlowPanel ui:field="featureTypeSpecificContentPanel"></g:FlowPanel>
-    -->
-    					<g:FlowPanel addStyleNames="{style.settingsradiopanel}">
+    					<g:FlowPanel ui:field="actionSettingsPanel" addStyleNames="{style.settingsradiopanel}">
     						<g:RadioButton addStyleNames="{style.settingsradiobutton}"
     								name="actionRadioGroup" ui:field="createRadio" />
     <!--						
@@ -64,7 +62,6 @@
     					<g:DisclosurePanel addStyleNames="{style.advancedoptionspanel}" ui:field="advancedPanel">
     						<g:header>Advanced Options</g:header>
     						<g:FlowPanel>
-                                <g:FlowPanel ui:field="featureTypeSpecificContentPanel"></g:FlowPanel>
     							<g:HTML addStyleNames="{style.introhtml}" ui:field="advancedHtml"/>
     							<g:FlowPanel addStyleNames="{style.labeledlistpanel}">
     								<g:Label addStyleNames="{style.labeledlistlabel}" ui:field="encodingLabel" />

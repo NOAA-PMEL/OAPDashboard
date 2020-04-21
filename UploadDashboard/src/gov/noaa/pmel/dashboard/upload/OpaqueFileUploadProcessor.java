@@ -11,10 +11,12 @@ import org.apache.logging.log4j.Logger;
 import org.apache.tomcat.util.http.fileupload.FileItem;
 
 import gov.noaa.pmel.dashboard.handlers.DataFileHandler;
+import gov.noaa.pmel.dashboard.handlers.RawUploadFileHandler;
 import gov.noaa.pmel.dashboard.shared.DashboardDataset;
 import gov.noaa.pmel.dashboard.shared.DashboardUtils;
 import gov.noaa.pmel.dashboard.shared.FileType;
 import gov.noaa.pmel.dashboard.util.FormUtils;
+import gov.noaa.pmel.tws.util.FileUtils;
 import gov.noaa.pmel.tws.util.StringUtils;
 
 /**
@@ -30,12 +32,10 @@ public class OpaqueFileUploadProcessor extends FileUploadProcessor {
     }
 
     @Override
-    public void doFeatureSpecificProcessing(List<FileItem> datafiles) throws UploadProcessingException {
+    public void processUploadedFile() throws UploadProcessingException {
         boolean multiFileUpload = false;
-        String username = _uploadFields.username();
         String datasetId = FormUtils.getFormField("datasetId", _uploadFields.parameterMap());
-        String action = _uploadFields.dataAction();
-        DataFileHandler datasetHandler = _configStore.getDataFileHandler();
+        List<FileItem> datafiles = _uploadFields.dataFiles();
 
         if ( datafiles.size() > 1 ) {
             multiFileUpload = true;
@@ -44,7 +44,7 @@ public class OpaqueFileUploadProcessor extends FileUploadProcessor {
             String filename = item.getName();
             logger.info("processing OPAQUE upload file " + filename);
             datasetId = getDatasetId(datasetId, filename, multiFileUpload);
-            OpaqueDataset pseudoDataset = createPseudoDataset(datasetId, item, _uploadFields);
+            OpaqueDataset pseudoDataset = createPseudoDataset(datasetId, item, _uploadedFile, _uploadFields);
 //            try {
 //                saveRawFile(item);
 //            } catch (Exception ex) {
@@ -53,13 +53,13 @@ public class OpaqueFileUploadProcessor extends FileUploadProcessor {
 //            }
                 // Check if the dataset already exists
                 String itemDatasetId = pseudoDataset.getDatasetId();
-                boolean datasetExists = datasetHandler.dataFileExists(itemDatasetId);
+                boolean datasetExists = _datasetHandler.dataFileExists(itemDatasetId);
                 if ( datasetExists ) {
                     String owner = "";
                     String status = "";
                     try {
                         // Read the original dataset info to get the current owner and submit status
-                        DashboardDataset oldDataset = datasetHandler.getDatasetFromInfoFile(itemDatasetId);
+                        DashboardDataset oldDataset = _datasetHandler.getDatasetFromInfoFile(itemDatasetId);
                         owner = oldDataset.getOwner();
                         status = oldDataset.getSubmitStatus();
                     } catch ( Exception ex ) {
@@ -74,7 +74,7 @@ public class OpaqueFileUploadProcessor extends FileUploadProcessor {
                     }
                     // Make sure this user has permission to modify this dataset
                     try {
-                        datasetHandler.verifyOkayToDeleteDataset(itemDatasetId, username);
+                        _datasetHandler.verifyOkayToDeleteDataset(itemDatasetId, username);
                     } catch ( Exception ex ) {
                         _messages.add(DashboardUtils.DATASET_EXISTS_HEADER_TAG + " " + 
                                 filename + " ; " + itemDatasetId + " ; " + owner + " ; " + status);
@@ -82,10 +82,10 @@ public class OpaqueFileUploadProcessor extends FileUploadProcessor {
                     }
                 } 
                 try {
-                    File datasetDir = datasetHandler.datasetDataFile(itemDatasetId).getParentFile();
+                    File datasetDir = _datasetHandler.datasetDataFile(itemDatasetId).getParentFile();
                     File uploadedFile = saveOpaqueFileData(pseudoDataset, datasetDir);
                     pseudoDataset.setUploadedFile(uploadedFile.getPath());
-                    datasetHandler.saveDatasetInfoToFile(pseudoDataset, "save opaque data info");
+                    _datasetHandler.saveDatasetInfoToFile(pseudoDataset, "save opaque data info");
                     generateEmptyMetadataFile(itemDatasetId);
                     _successes.add(itemDatasetId);
                     // datasetHandler.saveDatasetDataToFile(pseudoDataset, "save opaque data data");
@@ -108,13 +108,17 @@ public class OpaqueFileUploadProcessor extends FileUploadProcessor {
     }
     
     private File saveOpaqueFileData(OpaqueDataset pseudoDataset, File datasetDir) throws Exception {
-        return _rawFileHandler.writeItem(pseudoDataset.getFileItem(), datasetDir);
+        // don't need to do this. -- Why not?
+        File datasetFile = new File(datasetDir, _uploadedFile.getName());
+        FileUtils.copyFile(_uploadedFile, datasetFile);
+        return datasetFile;
     }
 
-    private OpaqueDataset createPseudoDataset(String itemId, FileItem item, StandardUploadFields _uploadFields) {
+    private OpaqueDataset createPseudoDataset(String itemId, FileItem item, File _uploadedFile, StandardUploadFields _uploadFields) {
         OpaqueDataset odd = new OpaqueDataset(itemId);
         odd.setUploadFilename(item.getName());
         odd.setUploadTimestamp(_uploadFields.timestamp());
+        odd.setUploadedFile(_uploadedFile.getPath());
         odd.setOwner(_uploadFields.username());
         odd.setFileItem(item);
         odd.setFeatureType(_uploadFields.featureType().name());

@@ -3,67 +3,39 @@
  */
 package gov.noaa.pmel.dashboard.upload;
 
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
+import java.io.BufferedInputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.io.OutputStream;
-import java.io.OutputStreamWriter;
-import java.lang.reflect.Method;
-import java.nio.charset.Charset;
-import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Calendar;
-import java.util.Collection;
-import java.util.Comparator;
-import java.util.Date;
-import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
-import java.util.Map;
-import java.util.SortedMap;
-import java.util.TreeMap;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
-import javax.xml.parsers.DocumentBuilder;
-import javax.xml.parsers.DocumentBuilderFactory;
-
-import org.jdom2.Document;
-import org.jdom2.Element;
-import org.jdom2.JDOMException;
-import org.jdom2.input.DOMBuilder;
-import org.jdom2.output.Format;
-import org.jdom2.output.XMLOutputter;
-
-import gov.noaa.pmel.tws.util.StringUtils;
-
-import org.apache.commons.csv.CSVFormat;
-import org.apache.commons.csv.CSVParser;
-import org.apache.commons.csv.CSVRecord;
-import org.apache.poi.poifs.filesystem.FileMagic;
 import org.apache.poi.ss.usermodel.Cell;
-import org.apache.poi.ss.usermodel.CellType;
 import org.apache.poi.ss.usermodel.DataFormatter;
-import org.apache.poi.ss.usermodel.DateUtil;
 import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.ss.usermodel.Sheet;
 import org.apache.poi.ss.usermodel.Workbook;
 import org.apache.poi.ss.usermodel.WorkbookFactory;
-import org.apache.poi.util.IOUtils;
 
 /**
  * @author kamb
  *
  */
-public class ExcelFileReader {
+public class ExcelFileReader implements RecordOrientedFileReader, Iterator<String[]> {
     
 
+    private InputStream _inStream;
+    private DataFormatter df;
+    private Workbook wb;
+    private Sheet sheet;
+    private Iterator<Row> rows;
+    private int rowIdx = 0;
+    
+    public ExcelFileReader(InputStream inStream) throws IOException {
+        this._inStream = inStream.markSupported() ? inStream : new BufferedInputStream(inStream);
+        df = new DataFormatter();
+        wb = WorkbookFactory.create(_inStream);
+    }
 //    private static List<String[]> extractFileRows(InputStream inStream) throws Exception, IOException {
 //        List<String[]> rows;
 //        ByteArrayOutputStream copyOut = new ByteArrayOutputStream();
@@ -86,6 +58,16 @@ public class ExcelFileReader {
 //        return rows;
 //    }
         
+    /**
+     * Extract all the rows at once into memory.
+     * 
+     * @param inStream
+     * @return
+     * @throws Exception
+     * @throws IOException
+     * 
+     * @deprecated Prefer iterator;
+     */
     public static List<String[]> extractExcelRows(InputStream inStream) throws Exception, IOException {
         List<String[]> rows = new ArrayList<>();
         DataFormatter df = new DataFormatter();
@@ -106,9 +88,62 @@ public class ExcelFileReader {
         }
         return rows;
     }
+
+    /* (non-Javadoc)
+     * @see java.lang.Iterable#iterator()
+     */
+    @Override
+    public Iterator<String[]> iterator() {
+        sheet = wb.getSheetAt(0);
+        rows = sheet.rowIterator();
+        return this;
+    }
+
+    /* (non-Javadoc)
+     * @see java.util.Iterator#hasNext()
+     */
+    @Override
+    public boolean hasNext() {
+        if ( ! rows.hasNext()) {
+            try { wb.close(); } 
+            catch (IOException iox) {} // ignore
+            return false;
+        }
+        return true;
+    }
+
+    /* (non-Javadoc)
+     * @see java.util.Iterator#next()
+     */
+    @Override
+    public String[] next() {
+        // TODO Auto-generated method stub
+        Row row = rows.next();
+//        int rowCellCount = row.getLastCellNum(); // this can be a lie
+        
+        List<String> rowList = new ArrayList<>();
+        int cellIdx = 0;
+        for ( Cell c : row ) {
+            String cellValue = df.formatCellValue(c);
+            if ( cellValue == null ) {
+                System.out.println("Null at " + rowIdx + ":" + cellIdx);
+            }
+            rowList.add(cellValue != null ? cellValue : "");
+            cellIdx+=1;
+        }
+        for (int i = rowList.size()-1; i>=0; i--) {
+            if ( rowList.get(i).isEmpty()) {
+                rowList.remove(i);
+            }
+        }
+        rowIdx += 1;
+        return rowList.toArray(new String[rowList.size()]);
+    }
     
     /*
     private static List<String[]> tryDelimited(InputStream inStream) throws Exception, IOException {
+    private static List<String[]> tryDelimited_usingUnivocity(InputStream inStream) throws Exception, IOException {
+    private static List<String[]> tryDelimited_usingApacheCSV(InputStream inStream) throws Exception, IOException {
         List<String[]> rows = new ArrayList<>();
 //        byte[] peak = IOUtils.peekFirstNBytes(inStream, 512);
             byte[] bytes = IOUtils.peekFirstNBytes(inStream, 4096);

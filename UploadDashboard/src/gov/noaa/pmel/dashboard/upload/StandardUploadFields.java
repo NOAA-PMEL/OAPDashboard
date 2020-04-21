@@ -3,7 +3,6 @@
  */
 package gov.noaa.pmel.dashboard.upload;
 
-import java.util.Date;
 import java.util.List;
 import java.util.Map;
 
@@ -11,7 +10,6 @@ import org.apache.tomcat.util.http.fileupload.FileItem;
 
 import gov.noaa.pmel.dashboard.shared.FeatureType;
 import gov.noaa.pmel.dashboard.shared.FileType;
-import gov.noaa.pmel.tws.util.TimeUtils;
 import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.Data;
@@ -35,7 +33,14 @@ public class StandardUploadFields {
     protected String _username;
     protected String _datasetId;
     protected String _datasetIdColumnName;
+    @Setter(AccessLevel.PUBLIC)
+    protected String _checkedFileType;
+    @Setter(AccessLevel.PUBLIC)
+    protected String _uploadFileName;
+    @Setter(AccessLevel.PUBLIC)
+    protected String _uploadType;
     @Builder.Default
+    @Setter(AccessLevel.PUBLIC)
     protected FileType _fileType = FileType.UNSPECIFIED;
     @Builder.Default
     protected FeatureType _featureType = FeatureType.UNSPECIFIED;

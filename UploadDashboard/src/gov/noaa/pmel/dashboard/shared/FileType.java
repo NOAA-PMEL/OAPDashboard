@@ -10,6 +10,7 @@ package gov.noaa.pmel.dashboard.shared;
 public enum FileType {
 
     UNSPECIFIED,
+    UNKNOWN,
     DELIMITED,
 //    NETCDF,
 //    NC_DSG,
