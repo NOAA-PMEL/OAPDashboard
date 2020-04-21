@@ -33,6 +33,11 @@ public class RawUploadFileHandler /* extends VersionedFileHandler */ {
         filesDir = new File(filesDirName);
 	}
 
+    public File writeFileItem(FileItem item,  String username) throws Exception {
+        File targetDir = createUploadTargetDir(username);
+        File itemFile = writeItem(item, targetDir);
+        return itemFile;
+    }
 	public File createUploadTargetDir(String username) {
 		File rawFiles = filesDir;
 		if ( !rawFiles.exists()) {
