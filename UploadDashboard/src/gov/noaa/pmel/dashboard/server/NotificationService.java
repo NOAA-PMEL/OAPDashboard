@@ -60,14 +60,18 @@ public class NotificationService extends HttpServlet {
         String docId = location.substring(location.lastIndexOf('/')+1);
         String datasetId = path.substring(1);
         logger.info(new Date() + "Notified of update to " + datasetId + " at location: " + location +", path: " + path);
-//        setupRetrieveMetadataFile(location, datasetId);
+        String contentType = request.getHeader("Content-Type");
+        if ( contentType != null && "text/xml".equals(contentType)) {
+            saveXml(datasetId, request);
+        } else {
+            setupRetrieveMetadataFile(location, datasetId);
+        }
         response.getOutputStream().write(("gotcha baby #"+docId+"@"+location).getBytes());
         response.flushBuffer();
         logger.debug("flushed");
         response.setStatus(HttpServletResponse.SC_ACCEPTED);
-        retrieveMetadataFile(location, datasetId);
 	}
-	
+    
 	/**
      * @param location
      * @param datasetId
@@ -78,7 +82,7 @@ public class NotificationService extends HttpServlet {
             public void run() {
                 try {
                     System.out.println("Retriver running.");
-                    Thread.sleep(50);
+                    Thread.sleep(500);
                     retrieveMetadataFile(location, datasetId);
                 } catch (Exception ex) {
                     ex.printStackTrace();
@@ -88,26 +92,19 @@ public class NotificationService extends HttpServlet {
         new Thread(retriever).start();
     }
 
-    /**
-     * @param datasetId
-	 * @throws IOException 
-	 * @throws  
-     */
-    @SuppressWarnings("resource")
-    private static void retrieveMetadataFile(String location, String datasetId) throws IOException {
-        logger.info(new Date() + " Retrieving " + datasetId + " from " + location);
+	private static void saveXml(String datasetId, HttpServletRequest request) {
+        try ( InputStream in = request.getInputStream(); ) {
+            saveXmlFromStream(datasetId, in);
+        } catch(Exception ex) {
+            logger.warn("Exception saving XML from MetadataEditor: " + ex, ex);
+        }
+	}
+    
+	private static void saveXmlFromStream(String datasetId, InputStream in) throws IOException {
         MetadataFileHandler metaHandler = DashboardConfigStore.get().getMetadataFileHandler();
         File metaFile = metaHandler.getMetadataFile(datasetId);
-        HttpClient client = HttpClients.createDefault();
-        HttpGet get = new HttpGet(location);
-        HttpResponse response = client.execute(get);
-        if ( response.getStatusLine().getStatusCode() != HttpServletResponse.SC_OK ) {
-            throw new IOException(response.getStatusLine().toString());
-        }
-        try ( InputStream is = response.getEntity().getContent(); ) {
-            Path metaFilePath = metaFile.toPath();
-            Files.copy(is, metaFilePath, StandardCopyOption.REPLACE_EXISTING);
-        }
+        Path metaFilePath = metaFile.toPath();
+        Files.copy(in, metaFilePath, StandardCopyOption.REPLACE_EXISTING);
         String validationMessage = ApplicationConfiguration.getProperty("oap.metadata.validate", true) ? 
                                     OADSMetadata.validateMetadata(metaFile) :
                                     "Not checked.";
@@ -119,6 +116,25 @@ public class NotificationService extends HttpServlet {
         String msg = new Date() + " Updating metadata timestamp on user upload metadata file.";
         logger.info(msg);
         df.saveDatasetInfoToFile(dataset, msg);
+	}
+	
+    /**
+     * @param datasetId
+	 * @throws IOException 
+	 * @throws  
+     */
+    @SuppressWarnings("resource")
+    private static void retrieveMetadataFile(String location, String datasetId) throws IOException {
+        logger.info(new Date() + " Retrieving " + datasetId + " from " + location);
+        HttpClient client = HttpClients.createDefault();
+        HttpGet get = new HttpGet(location);
+        HttpResponse response = client.execute(get);
+        if ( response.getStatusLine().getStatusCode() != HttpServletResponse.SC_OK ) {
+            throw new IOException(response.getStatusLine().toString());
+        }
+        try ( InputStream is = response.getEntity().getContent(); ) {
+            saveXmlFromStream(datasetId, is);
+        }
     }
     
     /**
