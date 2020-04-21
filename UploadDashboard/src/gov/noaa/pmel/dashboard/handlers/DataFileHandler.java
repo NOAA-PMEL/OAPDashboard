@@ -462,6 +462,10 @@ public class DataFileHandler extends VersionedFileHandler {
 			for ( String[] record : records) {
 
                 rowNum += 1;
+                if ( rowIsEmpty(record) || isComment(record)) {
+                    logger.debug("empty or comment row at " + rowNum);
+                    continue;
+                }
                 int nColumns = record.length;
                 
 				// Still looking for headers?
@@ -509,6 +513,31 @@ public class DataFileHandler extends VersionedFileHandler {
 
                 if ( ! isEndTag(record)) {
     
+    				// Check that the number of columns is consistent
+                    // We don't check the (possible) units row, as it may have empty columns at the end
+    				// which may get trimmed off.
+    				if ( nColumns != numDataColumns ) {
+                        String msg = "Inconsistent number of data columns (" + 
+        							nColumns + " instead of " + numDataColumns + 
+        							") at row " + rowNum;
+                        logger.warn(msg);
+                        if ( nColumns < numDataColumns ) { // may have been trimmed by record parser
+                            String[] padded = new String[numDataColumns];
+                            int i = 0;
+                            for ( ; i < nColumns; i++ ) {
+                                padded[i] = record[i];
+                            }
+                            for ( ; i < numDataColumns; i++ ) {
+                                record[i] = "";
+                            }
+                        } else {
+        					throw new IllegalStateException( "Inconsistent number of data columns (" + 
+        							nColumns + " instead of " + numDataColumns + 
+        							") at row " + rowNum + ":\n    " +
+        							rebuildDataline(record, ','));
+                        }
+        			}
+                    
     				if ( checkForUnits ) {
     					// The line immediately following the data column names could be units
     					checkForUnits = false;
@@ -579,18 +608,6 @@ public class DataFileHandler extends VersionedFileHandler {
     						continue;
     				}
     
-                    if ( rowIsEmpty(record) || isComment(record)) {
-                        continue;
-                    }
-    				// Check that the number of columns is consistent
-                    // We don't check the (possible) units row, as it may have empty columns at the end
-    				// which may get trimmed off.
-    				if ( nColumns != numDataColumns ) {
-        					throw new IllegalStateException("Inconsistent number of data columns (" + 
-        							nColumns + " instead of " + numDataColumns + 
-        							") at row " + rowNum + ":\n    " +
-        							rebuildDataline(record, ','));
-        			}
                     
     				ArrayList<String> datavals = new ArrayList<String>(numDataColumns);
     				for ( String val : record ) {
@@ -1234,7 +1251,7 @@ public class DataFileHandler extends VersionedFileHandler {
 	 * 			committing the deletion in version control
 	 */
 	public void deleteDatasetFiles(String datasetId, String username, 
-			Boolean deleteMetadata) throws IllegalArgumentException {
+                        			boolean deleteMetadata) throws IllegalArgumentException {
 		// Verify this cruise can be deleted
 		DashboardDataset dataset;
 		try {
@@ -1262,8 +1279,9 @@ public class DataFileHandler extends VersionedFileHandler {
 		// Delete the cruise data file
 		String commitMsg = "Cruise file for " + datasetId + " owned by " + 
 				dataset.getOwner() + " deleted by " + username;
+        File datasetDataFile = datasetDataFile(datasetId);
 		try {
-			deleteVersionedFile(datasetDataFile(datasetId), commitMsg);
+			deleteVersionedFile(datasetDataFile, commitMsg);
 		} catch ( SVNException sex ) {
             logger.warn("Exception deleting versioned file: " + sex);
 		} catch ( Exception ex ) {
@@ -1279,6 +1297,16 @@ public class DataFileHandler extends VersionedFileHandler {
 			throw new IllegalArgumentException("Problems deleting the cruise information file: " + 
 					ex.getMessage());
 		}
+        File parentDir = datasetDataFile.getParentFile();
+        for (File file : parentDir.listFiles()) {
+            logger.info("Deleting extraneous file " + file.getPath());
+            if ( ! file.delete()) {
+                logger.warn("Failed to delete extraneous file " + file.getPath());
+            }
+        }
+        if ( ! parentDir.delete()) {
+            logger.warn("Failed to delete directory " + parentDir.getPath());
+        }
 
 		if ( deleteMetadata ) {
 			// Delete the metadata and additional documents associated with this cruise
