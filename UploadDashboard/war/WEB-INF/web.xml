@@ -23,6 +23,14 @@
         <url-pattern>/OAPUploadDashboard/DataUploadService</url-pattern>
         <url-pattern>/OAPUploadDashboard/SessionServices</url-pattern>
     </filter-mapping>
+    <filter>
+        <filter-name>LoginDetectionFilter</filter-name>
+        <filter-class>gov.noaa.pmel.dashboard.server.LoginDetectionFilter</filter-class>
+    </filter>
+    <filter-mapping>
+        <filter-name>LoginDetectionFilter</filter-name>
+        <url-pattern>/*</url-pattern>
+    </filter-mapping>
 	
     <filter>
         <filter-name>WsRequestValidator</filter-name>
@@ -32,15 +40,14 @@
         <filter-name>WsRequestValidator</filter-name>
         <url-pattern>/tws/*</url-pattern>
     </filter-mapping>
-    
-<!--
+<!-- This seems to have no effect here.
    <multipart-config>
-      ~150MB max
-      <max-file-size>152428800</max-file-size>
-      <max-request-size>152428800</max-request-size>
-      <file-size-threshold>0</file-size-threshold>
+ ~10KB test   
+      <max-file-size>10242</max-file-size>
+      <max-request-size>10242</max-request-size>
+      <file-size-threshold>1024</file-size-threshold>
     </multipart-config>
- -->  
+-->
 	<!-- Servlets -->
 	<servlet>
 		<servlet-name>DashboardServlet</servlet-name>
@@ -154,8 +161,10 @@
             <url-pattern>/tx/*</url-pattern>
             <url-pattern>/tws/*</url-pattern>
             <url-pattern>/twx/*</url-pattern>
+            <!--
 			<http-method>GET</http-method>
 			<http-method>POST</http-method>
+       --> 
 		</web-resource-collection>
 	</security-constraint>
 	
@@ -169,7 +178,7 @@
 		</auth-constraint>
 	</security-constraint>
 <!--  NOTE: This next section has to be commented out when running in SuperDevMode
-      because Jetty redirects to login page (whereas Tomcat forwards to it.)    -->
+      because Jetty redirects to login page (whereas Tomcat forwards to it.) 
 <security-constraint>
 	<display-name>excluded</display-name>
 	<web-resource-collection>
@@ -178,6 +187,7 @@
 	</web-resource-collection>
 	<auth-constraint />
 </security-constraint>
+   -->
 <!--
 <security-constraint>
 	<display-name>excluded</display-name>
