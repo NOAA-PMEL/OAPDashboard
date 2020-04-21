@@ -7,15 +7,27 @@ import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.TreeMap;
 import java.util.TreeSet;
 
+import org.apache.log4j.Logger;
+import org.apache.tika.Tika;
+import org.apache.tika.config.TikaConfig;
+import org.apache.tika.detect.Detector;
+import org.apache.tika.parser.AutoDetectParser;
+import org.apache.tika.parser.Parser;
 import org.apache.tomcat.util.http.fileupload.FileItem;
 
+import gov.noaa.pmel.dashboard.handlers.DataFileHandler;
 import gov.noaa.pmel.dashboard.handlers.MetadataFileHandler;
 import gov.noaa.pmel.dashboard.handlers.RawUploadFileHandler;
 import gov.noaa.pmel.dashboard.server.DashboardConfigStore;
+import gov.noaa.pmel.dashboard.server.DataUploadService;
+import gov.noaa.pmel.dashboard.shared.DashboardDatasetData;
 import gov.noaa.pmel.dashboard.shared.FeatureType;
 import gov.noaa.pmel.dashboard.shared.FileType;
+import gov.noaa.pmel.dashboard.util.FormUtils;
+import gov.noaa.pmel.tws.util.Logging;
 import lombok.AccessLevel;
 import lombok.Data;
 import lombok.Setter;
@@ -24,53 +36,60 @@ import lombok.Setter;
  * @author kamb
  *
  */
-@Data
+//@Data
 @Setter(AccessLevel.NONE)
 public abstract class FileUploadProcessor {
 
-    protected static final String DATASET_ID_FIELD_NAME = "datasetId";
-    protected static final String DATASET_ID_COLUMN_FIELD_NAME = "datasetIdColumn";
+    private static Logger logger = Logging.getLogger(FileUploadProcessor.class);
+
+    static final String DATASET_ID_FIELD_NAME = "datasetId";
+    static final String DATASET_ID_COLUMN_FIELD_NAME = "datasetIdColumn";
     
     protected StandardUploadFields _uploadFields;
     protected DashboardConfigStore _configStore;
     protected RawUploadFileHandler _rawFileHandler;
+    protected DataFileHandler _datasetHandler;
     
     protected ArrayList<String> _messages = new ArrayList<String>();
     protected TreeSet<String> _successes = new TreeSet<String>();
 
     protected FeatureType _featureType;
-    protected FileType _fileType;
+    
+    protected String action;
+    protected String username;
+    protected String timestamp;
+    protected String encoding;
+    protected String dataFormat;
+    protected String specifiedDatasetId;
+    protected String datasetIdColName;
+    protected FileType fileType;
+
+    protected File _uploadedFile;
     
     protected FileUploadProcessor(StandardUploadFields uploadFields) {
         this._uploadFields = uploadFields;
         this._featureType = uploadFields.featureType();
-        this._fileType = uploadFields.fileType();
+        action = _uploadFields.dataAction();
+        username = _uploadFields.username();
+        timestamp = _uploadFields.timestamp();
+        encoding = _uploadFields.fileDataEncoding();
+        dataFormat = FormUtils.getFormField("dataformat", _uploadFields.parameterMap());
+        specifiedDatasetId = FormUtils.getFormField(DATASET_ID_FIELD_NAME, _uploadFields.parameterMap());
+        datasetIdColName = FormUtils.getFormField(DATASET_ID_COLUMN_FIELD_NAME, _uploadFields.parameterMap());
+        fileType = _uploadFields.fileType();
     }
     
-    public void processUpload() throws IOException, UploadProcessingException {
-        _configStore = DashboardConfigStore.get(true);
-		_rawFileHandler = _configStore.getRawUploadFileHandler();
-        List<FileItem> files = _uploadFields.dataFiles();
-        doFeatureSpecificProcessing(files);
+    public void processUpload(File uploadedFile) throws IOException, UploadProcessingException {
+        this._uploadedFile = uploadedFile;
+        _configStore = DashboardConfigStore.get(false);
+        _datasetHandler = _configStore.getDataFileHandler();
+        
+        processUploadedFile();
     }
     
-    protected abstract void doFeatureSpecificProcessing(List<FileItem> fileItems) throws UploadProcessingException;
+    abstract void processUploadedFile() throws UploadProcessingException;
     
-    protected void doOnEntryGeneralProcessing(FileItem file) {
-        // save raw upload files
-    }
-    
-    protected void doOnExitGeneralProcessing(FileItem file) {
-    }
-    
-    protected File saveRawFile(FileItem item) throws Exception {
-        File targetDir = _rawFileHandler.createUploadTargetDir(_uploadFields.username());
-        System.out.println("Saving raw " + item.getName());
-        File itemFile = _rawFileHandler.writeItem(item, targetDir);
-        return itemFile;
-    }
-    
-    protected void generateEmptyMetadataFile(String datasetId) throws IOException {
+    protected static void generateEmptyMetadataFile(String datasetId) throws IOException {
         MetadataFileHandler mdf = DashboardConfigStore.get().getMetadataFileHandler();
         mdf.createEmptyOADSMetadataFile(datasetId);
     }
@@ -82,4 +101,18 @@ public abstract class FileUploadProcessor {
     public TreeSet<String> getSuccesses() {
         return _successes;
     }
+    
+    /**
+     * @param itemType
+     * @param tikaType
+     * @return
+     */
+
+    public static FileUploadProcessor getProcessor(File uploadFile, StandardUploadFields stdFields) {
+        return ( stdFields.fileType().equals(FileType.DELIMITED) ?
+                 new GeneralizedUploadProcessor(stdFields) :
+                 new OpaqueFileUploadProcessor(stdFields)
+               );
+    }
+
 }

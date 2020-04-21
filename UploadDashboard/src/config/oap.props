@@ -57,11 +57,13 @@ oap.feedback.recipients=linus.kamb@noaa.gov
 # metadata_editor.url=
 # metadata_editor.post.url=
 
-# selects db access parameters
+# selects db access parameters from/for mybatis configuration
 # (current) options are:
-#  development (mysql:localhost:3306/oapdashboard?oapadmin)
-#  my-dashboard (mysql:localhost:3306/oapdashboard?scientist)
+#  development, my-dashboard 
 # 
 oap.db.environment=my-dashboard
 
 tws.pkauth.certificates_dir=/usr/local/src/oads/apache-tomcat-8.5.34/content/OAPUploadDashboard/config
+
+oap.upload.max_size=51200000
+oap.upload.max_size.display=~50MB

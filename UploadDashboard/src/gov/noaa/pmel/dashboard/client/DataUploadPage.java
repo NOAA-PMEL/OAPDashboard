@@ -26,6 +26,7 @@ import com.google.gwt.user.client.ui.Button;
 import com.google.gwt.user.client.ui.CaptionPanel;
 import com.google.gwt.user.client.ui.DisclosurePanel;
 import com.google.gwt.user.client.ui.FileUpload;
+import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.FormPanel;
 import com.google.gwt.user.client.ui.FormPanel.SubmitCompleteEvent;
 import com.google.gwt.user.client.ui.FormPanel.SubmitEvent;
@@ -55,12 +56,12 @@ public class DataUploadPage extends CompositeWithUsername {
 	// private static final String UPLOAD_FILE_DESCRIPTION_HTML = 
 	private static final String UPLOAD_FILE_INTRO_HTML = 
             "<h3>Upload data files for data sanity checks, QC, and archiving.</h3>" 
-            + "Any file can be uploaded for archival.  However, only ASCII-delimited (CSV, etc.) files can be sanity-checked and QC'd."
-            + "<br style=\"padding-bottom: .5em;\"/>To be checked, a delimited file much include:"
+            + "Any file can be uploaded for archival.  However, only ASCII-delimited (CSV, etc.) files and Excel spreadsheets can be sanity-checked and QC'd."
+            + "<br style=\"padding-bottom: .5em;\"/>To be checked, a delimited file must include:"
 			+ "<ul style=\"list-style-type:none\">"
 			+ "  <li>a header line of data column names,</li>"
 			+ "  <li>an optional header line of data column units,</li>"
-			+ "  <li>and for each sample, a line of data values.</li>"
+			+ "  <li>followed by any number of lines of data values.</li>"
 			+ "</ul>"
             + "Data files must be identified by a dataset ID.  This may be by including a column indicating the dataset ID, or by explicitly specifying the dataset ID."
             + "<br/>By default, the service will attempt to automatically identify a dataset ID column by checking for columns named dataset or cruise id or name."
@@ -132,7 +133,7 @@ public class DataUploadPage extends CompositeWithUsername {
 	        + "</ul>";
 	private static final String FILE_TYPE_HELP_ANCHOR_TEXT = "Help about file formats.";
 	private static final String FILE_TYPE_HELP_HTML = 
-            "Currently only ASCII-delimited files in known formats are supported for inspection and checking."
+            "Currently only ASCII-delimited files and Excel spreadsheets in known formats are supported for inspection and checking."
             + " All other file types should be identified as 'OTHER'.";
             
 			
@@ -193,7 +194,7 @@ public class DataUploadPage extends CompositeWithUsername {
 			"</pre></p>";
     private static final String UPLOAD_FAILED_SUGGESTIONS = 
             "This may be due to failure to properly parse the file.<br/>"
-            + "Only ASCII delimited files are accepted.<br/>"
+            + "Only ASCII delimited files and Excel spreadsheets are accepted.<br/>"
             + "You can use the Preview function to check the file.";
 	private static final String NO_DATASET_NAME_FAIL_MSG = 
 			"<br />Dataset/Cruise name column not found.</h3>" +
@@ -248,6 +249,7 @@ public class DataUploadPage extends CompositeWithUsername {
 	@UiField RadioButton createRadio;
 //	@UiField RadioButton appendRadio;
 	@UiField RadioButton overwriteRadio;
+    @UiField FlowPanel actionSettingsPanel;
 	@UiField Button submitButton;
 	@UiField Button cancelButton;
 
@@ -298,6 +300,9 @@ public class DataUploadPage extends CompositeWithUsername {
         featureTypeHelpAnchor.setText(FEATURE_TYPE_HELP_ANCHOR_TEXT);
         featureTypeHelpPopup = null;
 
+        fileTypeHelpAnchor.setVisible(false);
+        fileTypeSelector.setVisible(false);
+        
         fileTypeSelector.addItem("-- File Format --");
         fileTypeSelector.getElement().<SelectElement>cast().getOptions().getItem(0).setDisabled(true); // Please select...
         fileTypeSelector.addItem("ASCII Delimited", FileType.DELIMITED.name());
@@ -366,6 +371,7 @@ public class DataUploadPage extends CompositeWithUsername {
 		createRadio.setValue(true, false);
 //		appendRadio.setValue(false, false);
 		overwriteRadio.setValue(false, false);
+        actionSettingsPanel.setVisible(false);
 
 		submitButton.setText(SUBMIT_TEXT);
         submitButton.setEnabled(false); // files and feature type must be selected.
@@ -603,15 +609,15 @@ public class DataUploadPage extends CompositeWithUsername {
             featureTypeSelector.addStyleName("missingInfoItem");
             errorMessage = SELECT_FEATURE_TYPE_MSG;
         }
-        if ( fileTypeSelector.getSelectedIndex() <= 0 ) {
-            fileTypeSelector.addStyleName("missingInfoItem");
-            if ( errorMessage != null ) { 
-                errorMessage += "<br/>";
-                errorMessage += SELECT_FILE_TYPE_MSG;
-            } else {
-                errorMessage += SELECT_FILE_TYPE_MSG;
-            }
-        }
+//        if ( fileTypeSelector.getSelectedIndex() <= 0 ) {
+//            fileTypeSelector.addStyleName("missingInfoItem");
+//            if ( errorMessage != null ) { 
+//                errorMessage += "<br/>";
+//                errorMessage += SELECT_FILE_TYPE_MSG;
+//            } else {
+//                errorMessage += SELECT_FILE_TYPE_MSG;
+//            }
+//        }
         if ( errorMessage != null ) {
 			UploadDashboard.showMessage(errorMessage);
             return;

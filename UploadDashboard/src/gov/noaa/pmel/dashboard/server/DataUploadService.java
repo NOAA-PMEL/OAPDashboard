@@ -33,7 +33,10 @@ import gov.noaa.pmel.dashboard.shared.FileType;
 import gov.noaa.pmel.dashboard.upload.FileUploadProcessor;
 import gov.noaa.pmel.dashboard.upload.FileUploadProcessorFactory;
 import gov.noaa.pmel.dashboard.upload.StandardUploadFields;
+import gov.noaa.pmel.dashboard.upload.UploadProcessor;
 import gov.noaa.pmel.dashboard.util.FormUtils;
+import gov.noaa.pmel.oads.util.StringUtils;
+import gov.noaa.pmel.tws.util.ApplicationConfiguration;
 
 
 /**
@@ -46,6 +49,11 @@ public class DataUploadService extends HttpServlet {
 
     private static Logger logger = LogManager.getLogger(DataUploadService.class);
     
+    public static int DEFAULT_MAX_ALLOWED_UPLOAD_SIZE = 102400000;
+    public static String DEFAULT_MAX_ALLOWED_SIZE_DISPLAY_STR = "~100MB";
+    public static int MAX_ALLOWED_UPLOAD_SIZE = ApplicationConfiguration.getProperty("oap.upload.max_size", DEFAULT_MAX_ALLOWED_UPLOAD_SIZE);
+    public static String MAX_ALLOWED_SIZE_DISPLAY_STR = ApplicationConfiguration.getProperty("oap.upload.max_size.display", DEFAULT_MAX_ALLOWED_SIZE_DISPLAY_STR);
+
 	private ServletFileUpload datafileUpload;
 
     public static class BadRequestException extends Exception {
@@ -92,6 +100,7 @@ public class DataUploadService extends HttpServlet {
         
         try {
             String username = getUsername(request);
+            logger.info("Processing upload for user " + username);
             
     	    // verify message
             checkRequestMime(request);
@@ -107,7 +116,7 @@ public class DataUploadService extends HttpServlet {
                 return;
             }
             
-            FileUploadProcessor uploadProcessor = getUploadFileProcessor(stdFields);
+            UploadProcessor uploadProcessor = new UploadProcessor(stdFields);
             uploadProcessor.processUpload();
             List<String>messages = uploadProcessor.getMessages();
             Set<String>successes = uploadProcessor.getSuccesses();
@@ -127,9 +136,9 @@ public class DataUploadService extends HttpServlet {
         } catch (IllegalArgumentException iex) { // no files
             logger.warn(iex);
             sendErrMsg(response, iex);
-        } catch (Exception ex) {
+        } catch (Throwable ex) {
             logger.warn(ex, ex);
-            sendErrMsg(response, ex);
+            sendErrMsg(response, "There was an error on the server.  Please try again later.");
         } finally {
 			for ( Entry<String,List<FileItem>> paramEntry : paramMap.entrySet() ) {
 				for ( FileItem item : paramEntry.getValue() ) {
@@ -139,11 +148,6 @@ public class DataUploadService extends HttpServlet {
         }
 	}
     
-    private static FileUploadProcessor getUploadFileProcessor(StandardUploadFields stdFields) {
-        FileUploadProcessor uploadProcessor = FileUploadProcessorFactory.getProcessor(stdFields);
-        return uploadProcessor;
-    }
-
     private Map<String, List<FileItem>> extractParameterMap(HttpServletRequest request) throws FileUploadException {
         Map<String,List<FileItem>> paramMap = datafileUpload.parseParameterMap(request);
         return paramMap;
@@ -175,6 +179,11 @@ public class DataUploadService extends HttpServlet {
         if ( datafiles == null || datafiles.isEmpty()) {
             throw new IllegalArgumentException("No upload files found.");
         }
+        for ( FileItem item : datafiles ) {
+            if ( item.getSize() > MAX_ALLOWED_UPLOAD_SIZE ) {
+                throw new IllegalArgumentException("File size exceeds max allowable size of " + MAX_ALLOWED_SIZE_DISPLAY_STR );
+            }
+        }
         return datafiles;
     }
 
@@ -196,9 +205,16 @@ public class DataUploadService extends HttpServlet {
     }
     
     private static FileType getFileType(Map<String, List<FileItem>> paramMap) throws NoSuchFieldException {
-        FileType fileType;
-        String fileTypeName = getRequiredField("fileType", paramMap);
-        fileType = fileTypeName != null ? FileType.valueOf(fileTypeName) : FileType.UNSPECIFIED;
+        FileType fileType = null;
+        String fileTypeName = getUploadField("fileType", paramMap);
+        try { 
+            if ( ! StringUtils.emptyOrNull(fileTypeName)) {
+                fileType = FileType.valueOf(fileTypeName);
+            }
+        } catch (Exception ex) {
+            logger.warn("Unknown file type specified: " + fileTypeName);
+            fileType = FileType.UNKNOWN;
+        }
         return fileType;
     }
 
@@ -290,7 +306,7 @@ public class DataUploadService extends HttpServlet {
 	 */
 	private static void sendErrMsg(HttpServletResponse response, String errMsg) {
         try {
-    		response.setStatus(HttpServletResponse.SC_OK);
+    		response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
     		response.setContentType("text/html;charset=UTF-8");
             try ( PrintWriter respWriter = response.getWriter(); ) {
         		respWriter.println(errMsg);
