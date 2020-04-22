@@ -8,7 +8,7 @@
        <Realm className="org.apache.catalina.realm.LockOutRealm">
         <Realm className="org.apache.catalina.realm.JDBCRealm"
                driverName="com.mysql.jdbc.Driver"
-               connectionURL="jdbc:mysql://localhost:3306/oapdashboard?user=oapweb&amp;password=webster"
+               connectionURL="jdbc:mysql://localhost:3306/oapdashboard?user=erddap&amp;password=dapper"
                userTable="tomcatusers"
                userRoleTable="tomcatroles"
                userNameCol="username"
@@ -25,7 +25,30 @@
                </CredentialHandler>
            </Realm> 
          </Realm>
-        <!-- mysql dunkel, matisse pw=twilightparis
+         <!-- mysql new-bock
+       <Realm className="org.apache.catalina.realm.LockOutRealm">
+        <Realm className="org.apache.catalina.realm.JDBCRealm"
+               driverName="com.mysql.jdbc.Driver"
+               connectionURL="jdbc:mysql://localhost:3306/oapdashboard?user=erddap&amp;password=dapper"
+               userTable="tomcatusers"
+               userRoleTable="tomcatroles"
+               userNameCol="username"
+               userCredCol="password"
+               roleNameCol="userrole" >
+               <CredentialHandler className="org.apache.catalina.realm.NestedCredentialHandler">
+                  <CredentialHandler className="org.apache.catalina.realm.SecretKeyCredentialHandler"
+                          algorithm="PBKDF2WithHmacSHA512"
+                          iterations="100000"
+                          keyLength="256"
+                          saltLength="16"
+                   />
+                  <CredentialHandler className="org.apache.catalina.realm.MessageDigestCredentialHandler" /> 
+               </CredentialHandler>
+           </Realm> 
+         </Realm>
+          -->
+       <!-- check what port mysql is running on. -->
+        <!-- mysql matisse pw=twilightparis 
        <Realm className="org.apache.catalina.realm.LockOutRealm">
         <Realm className="org.apache.catalina.realm.JDBCRealm"
                driverName="com.mysql.jdbc.Driver"
@@ -46,6 +69,28 @@
                </CredentialHandler>
            </Realm> 
          </Realm>
+         -->
+         <!-- mysql dunkel 
+       <Realm className="org.apache.catalina.realm.LockOutRealm">
+        <Realm className="org.apache.catalina.realm.JDBCRealm"
+               driverName="com.mysql.jdbc.Driver"
+               connectionURL="jdbc:mysql://localhost:3306/oapdashboard?user=erddap&amp;password=dapper"
+               userTable="tomcatusers"
+               userRoleTable="tomcatroles"
+               userNameCol="username"
+               userCredCol="password"
+               roleNameCol="userrole" >
+               <CredentialHandler className="org.apache.catalina.realm.NestedCredentialHandler">
+                  <CredentialHandler className="org.apache.catalina.realm.SecretKeyCredentialHandler"
+                          algorithm="PBKDF2WithHmacSHA512"
+                          iterations="100000"
+                          keyLength="256"
+                          saltLength="16"
+                   />
+                  <CredentialHandler className="org.apache.catalina.realm.MessageDigestCredentialHandler" /> 
+               </CredentialHandler>
+           </Realm> 
+         </Realm> 
          -->
          <!-- postgres
        <Realm className="org.apache.catalina.realm.LockOutRealm">
