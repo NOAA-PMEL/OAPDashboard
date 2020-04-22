@@ -197,6 +197,8 @@ public class MetadataManagerPage extends CompositeWithUsername {
     private AsyncCallback<MetadataPreviewInfo> getUpdatedMetadataCallback = new AsyncCallback<MetadataPreviewInfo>() {
             @Override
             public void onFailure(Throwable ex) {
+                UploadDashboard.logToConsole("Exception getting updated metadata preview info: " + ex);
+//                UploadDashboard.showMessage("There was an error getting the updated metadata.<br/>Please check with your administrator.");
                 ex.printStackTrace();
             }
 

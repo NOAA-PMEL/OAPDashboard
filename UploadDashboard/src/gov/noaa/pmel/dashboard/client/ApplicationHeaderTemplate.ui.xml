@@ -12,7 +12,7 @@
                     <g:InlineLabel  ui:field="titleLabel" addStyleNames="{style.headerpagelabel}" >DataSet List</g:InlineLabel> <!-- -->
                     <g:FlowPanel>
                     <g:Label  addStyleNames="{style.headersoftwaretitle}" >OAP Scientific Data Integration System</g:Label>
-                    <g:Label  addStyleNames="{style.headerversionlabel}" >alpha software</g:Label>
+                    <g:Label  addStyleNames="{style.headerversionlabel}" >pre-release</g:Label>
                     <g:FlowPanel ui:field="headerRightPanel" addStyleNames="{style.titleRightGroup}">
                         <g:Label ui:field="userInfoLabel" addStyleNames="{style.headeruserlabel}">Not Logged In</g:Label>
                         <g:Label addStyleNames="{style.titlereset}" />

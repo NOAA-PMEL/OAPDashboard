@@ -166,7 +166,7 @@ public class DashboardConfigStore {
     private static String _serverAppName;
 	private static Properties _configProps;
     // Map of username to user info
-	private static HashMap<String,DashboardUserInfo> _userInfoMap; // XXX This really can't be static.
+	private HashMap<String,DashboardUserInfo> _userInfoMap;
 	private HashSet<File> filesToWatch;
 	private Thread watcherThread;
 	private WatchService watcher;
@@ -694,7 +694,7 @@ public class DashboardConfigStore {
     public static void addUser(String username, String roleName) throws Exception {
         DashboardUserInfo dbUser = new DashboardUserInfo(username);
         dbUser.addUserRoles(roleName);
-        _userInfoMap.put(username, dbUser);
+//        _userInfoMap.put(username, dbUser);  // XXX TODO: Needs to be added somehow
         String configProp = USER_ROLE_NAME_TAG_PREFIX+username;
 //        configProps.put(configProp, roleName);
         try ( FileWriter cfgWriter = new FileWriter(getConfigFile(), true); ) {
@@ -1119,9 +1119,12 @@ public class DashboardConfigStore {
 	 * 		privileges over othername
 	 */
 	public boolean userManagesOver(String username, String othername) {
+        if ( username.equals(othername)) { return true; } // XXX TODO: This isn't really right here.
 		DashboardUserInfo userInfo = _userInfoMap.get(DashboardUtils.cleanUsername(username));
-		if ( userInfo == null )
+		if ( userInfo == null ) {
+		    logger.warn("No userInfo found for user : " + username);
 			return false;
+		}
 		return userInfo.managesOver(_userInfoMap.get(DashboardUtils.cleanUsername(othername)));
 	}
 
@@ -1145,7 +1148,7 @@ public class DashboardConfigStore {
 	 * @return
 	 * 		true is this user is an admin
 	 */
-	public static boolean isAdmin(String username) {
+	public boolean isAdmin(String username) {
 		DashboardUserInfo userInfo = _userInfoMap.get(DashboardUtils.cleanUsername(username));
 		if ( userInfo == null )
 			return false;
