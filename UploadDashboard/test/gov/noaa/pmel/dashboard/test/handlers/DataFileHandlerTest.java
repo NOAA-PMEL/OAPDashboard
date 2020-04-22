@@ -75,7 +75,7 @@ public class DataFileHandlerTest {
 		BufferedReader cruiseReader = new BufferedReader(new StringReader(CSV_DATA)); 
 		TreeMap<String,DashboardDatasetData> datasetsMap = 
 				dataHandler.createDatasetsFromInput(cruiseReader, 
-						DashboardUtils.COMMA_FORMAT_TAG, owner, filename, timestamp, null);
+						DashboardUtils.COMMA_FORMAT_TAG, owner, filename, timestamp, null, null);
 		assertEquals(1, datasetsMap.size());
 		DashboardDatasetData cruiseData = datasetsMap.firstEntry().getValue();
 		

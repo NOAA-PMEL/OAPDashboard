@@ -200,7 +200,7 @@ public class DataUploadService extends HttpServlet {
     private static FeatureType getFeatureType(Map<String, List<FileItem>> paramMap) throws NoSuchFieldException {
         FeatureType featureType;
         String featureTypeName = getRequiredField("featureType", paramMap);
-        featureType = featureTypeName != null ? FeatureType.valueOf(featureTypeName) : FeatureType.UNSPECIFIED;
+        featureType = featureTypeName != null ? FeatureType.valueOf(featureTypeName) : FeatureType.UNSPECIFIED; // XXX The field is REQUIRED.  It won't be null.
         return featureType;
     }
     
