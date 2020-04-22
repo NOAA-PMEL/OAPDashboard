@@ -1514,13 +1514,28 @@ public class DatasetListPage extends CompositeWithUsername {
 				new Column<DashboardDataset,String> (new ClickableTextCell()) {
 			@Override
 			public String getValue(DashboardDataset cruise) {
+				//SafeHtmlBuilder sb = new SafeHtmlBuilder();
+                String mdMessage = cruise.getMdStatus();
+                if ( ! mdMessage.isEmpty()) {
+                    return mdMessage;
+                }
 				String mdTimestamp = cruise.getMdTimestamp();
 				if ( mdTimestamp.isEmpty() ) {
 					mdTimestamp = NO_METADATA_STATUS_STRING;
 				} else {
 				    mdTimestamp = getZoneTrimmedTime(mdTimestamp);
 				}
+				// sb.appendHtmlConstant("<small>");
+				//sb.appendEscaped(mdTimestamp);
+				// sb.appendHtmlConstant("</small>");
+				//return sb.toSafeHtml().asString();
 				return mdTimestamp;
+			}
+			public void _render(Cell.Context ctx, DashboardDataset cruise, 
+													SafeHtmlBuilder sb) {
+				sb.appendHtmlConstant("<div style=\"cursor:pointer;\"><u><em>");
+				sb.appendHtmlConstant(getValue(cruise));
+				sb.appendHtmlConstant("</em></u></div>");
 			}
 			@Override
 			public void render(Cell.Context ctx, DashboardDataset cruise, 
@@ -1574,7 +1589,7 @@ public class DatasetListPage extends CompositeWithUsername {
 						sb.appendHtmlConstant("<br />");
 					String[] pieces = DashboardMetadata.splitAddlDocsTitle(title);
 					sb.appendEscaped(pieces[0]);
-					sb.appendHtmlConstant("<br /><small>&nbsp;&nbsp;(");
+					sb.appendHtmlConstant("<small>&nbsp;&nbsp;(");
 					sb.appendEscaped(pieces[1]);
 					sb.appendHtmlConstant(")</small>");
 				}
