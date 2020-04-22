@@ -195,7 +195,7 @@ public class PreviewPlotsHandler {
             throw new IllegalArgumentException("Cannot create preview plots for feature type: " + dataset.getFeatureTypeName());
         }
 
-		logger.debug("created preview DSG file " + dsgFile.getPath());
+		logger.debug("creating preview DSG file " + dsgFile.getPath());
 
 		// Create the preview NetCDF DSG file
 		try {

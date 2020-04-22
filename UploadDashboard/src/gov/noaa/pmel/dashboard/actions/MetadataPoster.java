@@ -166,6 +166,12 @@ public class MetadataPoster {
             String requestBase = requestUrl.substring(0, requestUrl.indexOf(context));
             url = requestBase + meUrlProp;
         }
+        if ( docId.endsWith("/")) {
+            docId = docId.substring(0, docId.length()-1);
+        }
+        if ( docId.indexOf('/') >= 0 ) {
+            docId = docId.substring(docId.lastIndexOf('/')+1);
+        }
         url = url + "?id="+docId;
         System.out.println("Editor page: " + url);
         return url;

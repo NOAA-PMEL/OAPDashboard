@@ -74,12 +74,12 @@ public class SignedMsgVerifier implements Filter {
                 if ( !configDir.canRead()) { throw new IllegalStateException("OAPDashboardWS: unable to read configuration dir! Exiting."); }
                 ApplicationConfiguration.Initialize(configDir, "oap");
             }
+        } catch (ConfigurationException ex) {
+            logger.warn("Exception initializing application configuration:"+ ex + ". This may or may not be a problem.", ex);
+        }
             logger = Logging.getLogger(SignedMsgVerifier.class);
     		logger.debug("init");
             Logging.showLogFiles(logger);
-        } catch (ConfigurationException ex) {
-            ex.printStackTrace();
-        }
         if ( !HttpRequestValidator.checkConfiguration()) {
             System.err.println("HttpRequestValidator configuration problem.");
             throw new ServletException("Problem with HttpRequestValidator");

@@ -192,7 +192,7 @@ public class VersionedFileHandler {
 	 */
 	void commitVersion(File wcfile, String message) throws SVNException {
 		if ( (filesToCommit == null) || (parentToUpdate == null) || (commitMessage == null) )
-			throw new NullPointerException("commitVersion called for VersionedFileHandler that is not version controlled");
+			throw new IllegalStateException("commitVersion called for VersionedFileHandler that is not version controlled");
 		boolean needsAdd = false;
 		try {
 			SVNStatus status = svnManager.getStatusClient()

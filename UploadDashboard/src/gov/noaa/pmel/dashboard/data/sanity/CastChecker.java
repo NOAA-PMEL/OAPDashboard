@@ -31,8 +31,8 @@ public class CastChecker {
 
 	private static Logger logger = LogManager.getLogger(CastChecker.class.getName());
 	
-	private static final double ABS_MAX_SPEED_knots = 20; // knots
-	private static final double MAX_REASONABLE_SPEED_knots = 15; // knots
+	private static final double ABS_MAX_SPEED_knots = 50; // knots
+	private static final double MAX_REASONABLE_SPEED_knots = 25; // knots
 	private static final double MAX_REASONABLE_TIME_BETWEEN_CASTS_h = 7 * 24; // 1 week
 	private static final double MAX_REASONABLE_TIME_BETWEEN_SAMPLES_h = 12; 
 	private static final double PRESSURE_DEPTH_TOLERANCE = 0.002;
