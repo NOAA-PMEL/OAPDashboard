@@ -324,7 +324,8 @@ public class DatasetListPage extends CompositeWithUsername {
 	private DashboardAskPopup askDataAutofailPopup;
 	// private boolean managerButtonsShown;
 	private TextColumn<DashboardDataset> timestampColumn;
-	private TextColumn<DashboardDataset> expocodeColumn;
+	private TextColumn<DashboardDataset> recordIdColumn;
+    private TextColumn<DashboardDataset> filenameColumn;
 
 	// The singleton instance of this page
 	private static DatasetListPage singleton;
@@ -489,7 +490,7 @@ public class DatasetListPage extends CompositeWithUsername {
 		if ( singleton == null )
 			singleton = new DatasetListPage();
 		ColumnSortList sortList = singleton.datasetsGrid.getColumnSortList();
-		sortList.push(new ColumnSortInfo(singleton.expocodeColumn, true));
+		sortList.push(new ColumnSortInfo(singleton.filenameColumn, true));
 		sortList.push(new ColumnSortInfo(singleton.timestampColumn, false));
 		ColumnSortEvent.fire(singleton.datasetsGrid, sortList);
 	}
@@ -1069,7 +1070,8 @@ public class DatasetListPage extends CompositeWithUsername {
 		// Create the columns for this table
 		TextColumn<DashboardDataset> rowNumColumn = buildRowNumColumn();
 		Column<DashboardDataset,Boolean> selectedColumn = buildSelectedColumn();
-		expocodeColumn = buildDatasetIdColumn();
+		recordIdColumn = buildDatasetIdColumn();
+		filenameColumn = buildFilenameColumn();
 		timestampColumn = buildTimestampColumn();
 		Column<DashboardDataset,String> featureTypeColumn = buildFeatureTypeColumn();
 		Column<DashboardDataset,String> dataCheckColumn = buildDataCheckColumn();
@@ -1078,14 +1080,13 @@ public class DatasetListPage extends CompositeWithUsername {
 //		TextColumn<DashboardDataset> versionColumn = buildVersionColumn();
 //		Column<DashboardDataset,String> qcStatusColumn = buildQCStatusColumn();
 		Column<DashboardDataset,String> archiveStatusColumn = buildArchiveStatusColumn();
-		TextColumn<DashboardDataset> filenameColumn = buildFilenameColumn();
 		TextColumn<DashboardDataset> ownerColumn = buildOwnerColumn();
 
 		// Add the columns, with headers, to the table
 		datasetsGrid.addColumn(rowNumColumn, selectHeader);
 		datasetsGrid.addColumn(selectedColumn, selectHeader);
-		datasetsGrid.addColumn(expocodeColumn, 
-				SafeHtmlUtils.fromSafeConstant(DATASET_ID_COLUMN_NAME));
+		datasetsGrid.addColumn(filenameColumn, 
+				SafeHtmlUtils.fromSafeConstant(FILENAME_COLUMN_NAME));
 		datasetsGrid.addColumn(featureTypeColumn, 
 				SafeHtmlUtils.fromSafeConstant(FEATURE_TYPE_COLUMN_NAME));
 		datasetsGrid.addColumn(timestampColumn, 
@@ -1102,8 +1103,8 @@ public class DatasetListPage extends CompositeWithUsername {
 //				SafeHtmlUtils.fromSafeConstant(SUBMITTED_COLUMN_NAME));
 		datasetsGrid.addColumn(archiveStatusColumn, 
 				SafeHtmlUtils.fromSafeConstant(ARCHIVED_COLUMN_NAME));
-		datasetsGrid.addColumn(filenameColumn, 
-				SafeHtmlUtils.fromSafeConstant(FILENAME_COLUMN_NAME));
+		datasetsGrid.addColumn(recordIdColumn, 
+				SafeHtmlUtils.fromSafeConstant(DATASET_ID_COLUMN_NAME));
 		datasetsGrid.addColumn(ownerColumn, 
 				SafeHtmlUtils.fromSafeConstant(OWNER_COLUMN_NAME));
 
@@ -1115,7 +1116,7 @@ public class DatasetListPage extends CompositeWithUsername {
 		datasetsGrid.setColumnWidth(selectedColumn, 
 				UploadDashboard.SELECT_COLUMN_WIDTH, Style.Unit.EM);
 		minTableWidth += UploadDashboard.NARROW_COLUMN_WIDTH;
-		datasetsGrid.setColumnWidth(expocodeColumn, 
+		datasetsGrid.setColumnWidth(recordIdColumn, 
 				UploadDashboard.NORMAL_COLUMN_WIDTH, Style.Unit.EM);
 		minTableWidth += UploadDashboard.NORMAL_COLUMN_WIDTH;
 		datasetsGrid.setColumnWidth(featureTypeColumn, 
@@ -1157,7 +1158,7 @@ public class DatasetListPage extends CompositeWithUsername {
 		listProvider.addDataDisplay(datasetsGrid);
 
 		// Make the columns sortable
-		expocodeColumn.setSortable(true);
+		recordIdColumn.setSortable(true);
         featureTypeColumn.setSortable(true);
 		timestampColumn.setSortable(true);
 		dataCheckColumn.setSortable(true);
@@ -1172,7 +1173,7 @@ public class DatasetListPage extends CompositeWithUsername {
 		// Add a column sorting handler for these columns
 		ListHandler<DashboardDataset> columnSortHandler = 
 				new ListHandler<DashboardDataset>(listProvider.getList());
-		columnSortHandler.setComparator(expocodeColumn, 
+		columnSortHandler.setComparator(recordIdColumn, 
 				DashboardDataset.datasetIdComparator);
 		columnSortHandler.setComparator(featureTypeColumn, 
 				DashboardDataset.featureTypeComparator);
@@ -1473,6 +1474,12 @@ public class DatasetListPage extends CompositeWithUsername {
 					// Only warnings or a few minor errors - use warning background color
 					sb.appendHtmlConstant("<div style=\"cursor:pointer; background-color:" +
 							UploadDashboard.CHECKER_WARNING_COLOR + ";\"><u><em>");
+					sb.appendEscaped(msg);
+					sb.appendHtmlConstant("</em></u></div>");
+				}
+				else if (NO_DATA_CHECK_STATUS_STRING.equals(msg)) {
+					sb.appendHtmlConstant("<div style=\"cursor:pointer; background-color:" +
+							UploadDashboard.CHECKER_LIGHT_WARNING_COLOR + ";\"><u><em>");
 					sb.appendEscaped(msg);
 					sb.appendHtmlConstant("</em></u></div>");
 				}
