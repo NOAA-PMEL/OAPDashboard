@@ -99,8 +99,9 @@ html, body {
     margin-right: 0.5em;
 }
 .datagrid {
-	height: 27em;
-	margin: 1em;
+    margin-top: 1em;
+    margin-left: 1em;
+    margin-right: 0.5em;
 }
 .datagridscroll {
 	height: 27em;
