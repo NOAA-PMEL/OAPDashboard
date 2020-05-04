@@ -139,10 +139,11 @@ public class MetadataPoster {
         System.out.println("get notify URL request: " + requestUrl);
         String notifyUrl = null;
         if ( requestUrl.indexOf("pmel") > 0 ) {
-            notifyUrl = "https://www.pmel.noaa.gov/sdig" + requestUrl.substring(requestUrl.indexOf("/oa"));
-            System.out.println("n1: " + notifyUrl);
-            notifyUrl = notifyUrl.substring(0, notifyUrl.indexOf("OAPUploadDashboard"));
-            System.out.println("n2: " + notifyUrl);
+            // requests through the F5/Kemp come as http:
+            notifyUrl = "https://www.pmel.noaa.gov" + 
+                            requestUrl.substring(requestUrl.indexOf("/sdig"),
+                                                 requestUrl.indexOf("OAPUploadDashboard"));
+            logger.debug("n1: " + notifyUrl);
             notifyUrl = notifyUrl + "DashboardUpdateService/notify/"+datasetId;
         } else {
             notifyUrl = requestUrl.substring(0, requestUrl.lastIndexOf("OAPUploadDashboard"));
