@@ -119,7 +119,7 @@ public class DashboardServerUtils {
 	/**
 	 * User-provided name for the dataset
 	 */
-	public static final StringDashDataType DATASET_NAME = new StringDashDataType(DashboardUtils.DATASET_NAME, 
+	public static final StringDashDataType DATASET_NAME = new StringDashDataType(DashboardUtils.DATASET_IDENTIFIER, 
 			"cruise_name", IDENTIFIER_CATEGORY, null, null, null, null, null);
 
 	public static final StringDashDataType STATION_ID = new StringDashDataType(DashboardUtils.STATION_ID, 
@@ -178,7 +178,7 @@ public class DashboardServerUtils {
 			"latitude", LOCATION_CATEGORY, "degrees_north", "-90.0", null, null, "90.0");
 	public static final DoubleDashDataType SAMPLE_DEPTH = new DoubleDashDataType(DashboardUtils.SAMPLE_DEPTH, 
 			"sample_depth", BATHYMETRY_CATEGORY, "meters", "0.0", null, null, "16000");
-	public static final DoubleDashDataType CTD_PRESSURE = new DoubleDashDataType(DashboardUtils.CTD_PRESSURE, 
+	public static final DoubleDashDataType WATER_PRESSURE = new DoubleDashDataType(DashboardUtils.WATER_PRESSURE, 
 			"sample_pressure", BATHYMETRY_CATEGORY, "decibars", "0.0", null, null, "16000");
 
 	/**

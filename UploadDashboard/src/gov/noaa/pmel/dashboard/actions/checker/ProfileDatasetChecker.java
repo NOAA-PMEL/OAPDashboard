@@ -35,51 +35,6 @@ public class ProfileDatasetChecker extends BaseDatasetChecker implements Dataset
 
     private static Logger logger = LogManager.getLogger(ProfileDatasetChecker.class);
     
-	private class RowColumn {
-		int row;
-		int column;
-
-		public RowColumn(Integer rowIndex, Integer columnIndex) {
-			if ( rowIndex == null )
-				row = DashboardUtils.INT_MISSING_VALUE.intValue();
-			else
-				row = rowIndex.intValue();
-			if ( columnIndex == null )
-				column = DashboardUtils.INT_MISSING_VALUE.intValue();
-			else
-				column = columnIndex.intValue();
-		}
-
-		@Override
-		public int hashCode() {
-			return 37 * row + column;
-		}
-
-		@Override
-		public boolean equals(Object obj) {
-			if ( this == obj )
-				return true;
-			if ( obj == null )
-				return false;
-			if ( ! ( obj instanceof RowColumn ) )
-				return false;
-			RowColumn other = (RowColumn) obj;
-			if ( row != other.row )
-				return false;
-			if ( column != other.column )
-				return false;
-			return true;
-		}
-
-		@Override
-		public String toString() {
-			return "RowColumn[row=" + row + ", column=" + column + "]";
-		}
-	}
-
-	private CheckerMessageHandler msgHandler;
-	private KnownDataTypes knownUserDataTypes;
-
 	/**
 	 * @param userDataTypes
 	 * 		all known user data types
@@ -147,8 +102,7 @@ public class ProfileDatasetChecker extends BaseDatasetChecker implements Dataset
 		
 		// Check for missing lon/lat/time 
 		boolean timesAreOk = stdUserData.checkMissingLonLatTime();
-        boolean depthsOk = stdUserData.checkForMissingValues(DashboardServerUtils.SAMPLE_DEPTH) || 
-                           stdUserData.checkForMissingValues(DashboardServerUtils.CTD_PRESSURE);
+        boolean depthsOk = checkForMissingPressureOrDepth(stdUserData);
 
 		// Bounds check the standardized data values
 		stdUserData.checkBounds();
@@ -248,7 +202,38 @@ public class ProfileDatasetChecker extends BaseDatasetChecker implements Dataset
 		return stdUserData;
 	}
     
-   public boolean hasRequiredColumns(StdUserDataArray stdUserData) {
+   /**
+     * @return
+     */
+    private static boolean checkForMissingPressureOrDepth(StdUserDataArray stdUserData) {
+        boolean allGood = true;
+        Integer depthIdx = stdUserData.lookForDataColumnIndex(DashboardUtils.SAMPLE_DEPTH_VARNAME);
+        Integer pressureIdx = stdUserData.lookForDataColumnIndex(DashboardUtils.WATER_PRESSURE_VARNAME);
+        for (int row = 0; row < stdUserData.getNumSamples(); row++) {
+            Object depth = depthIdx != null ? stdUserData.getStdVal(row, depthIdx.intValue()) : null;
+            Object press = pressureIdx != null ? stdUserData.getStdVal(row, pressureIdx.intValue()) : null;
+            if (( depth == null || DashboardUtils.FP_MISSING_VALUE.equals(depth)) && 
+                ( press == null | DashboardUtils.FP_MISSING_VALUE.equals(press))) {
+                ADCMessage msg = stdUserData.messageFor(Severity.ERROR, new Integer(row), null, "Missing value", 
+                                                        "No pressure or depth value for row " + (row+1));
+                stdUserData.addStandardizationMessage(msg);
+                allGood = false;
+            } else if ( depthIdx != null && depth == null || DashboardUtils.FP_MISSING_VALUE.equals(depth)) {
+                // warn missing depth
+                ADCMessage msg = stdUserData.messageFor(Severity.WARNING, new Integer(row), depthIdx, "Missing value", 
+                                                        "No depth value for row " + (row+1));
+                stdUserData.addStandardizationMessage(msg);
+            } else if ( pressureIdx != null && press == null || DashboardUtils.FP_MISSING_VALUE.equals(press)) {
+                // warn missing pressure
+                ADCMessage msg = stdUserData.messageFor(Severity.WARNING, new Integer(row), pressureIdx, "Missing value", 
+                                                        "No pressure value for row " + (row+1));
+                stdUserData.addStandardizationMessage(msg);
+            }
+        }
+        return allGood;
+    }
+
+    public static boolean hasRequiredColumns(StdUserDataArray stdUserData) {
         boolean gotem = true;
         if ( ! stdUserData.hasDate()) {
             gotem = false;
@@ -283,7 +268,7 @@ public class ProfileDatasetChecker extends BaseDatasetChecker implements Dataset
             stdUserData.addStandardizationMessage(msg);
         }
         if ( ! ( stdUserData.hasDataColumn(DashboardServerUtils.SAMPLE_DEPTH.getStandardName()) || 
-                 stdUserData.hasDataColumn("water_pressure"))) {
+                 stdUserData.hasDataColumn(DashboardUtils.WATER_PRESSURE_VARNAME))) {
             gotem = false;
             ADCMessage msg = new ADCMessage();
             msg.setSeverity(Severity.CRITICAL);
@@ -307,9 +292,9 @@ public class ProfileDatasetChecker extends BaseDatasetChecker implements Dataset
 
 	private static void checkCastConsistency(StdUserDataArray stdData) {
 		if ( !stdData.hasCastIdColumn()) {
-            logger.info("No CastID column found for dataset " + stdData.getDatasetId());
+            logger.info("No CastID column found for dataset " + stdData.getDatasetName());
             if ( !stdData.hasStationIdColumn()) {
-                logger.warn("No CastID OR StationID found for dataset: " + stdData.getDatasetId());
+                logger.warn("No CastID OR StationID found for dataset: " + stdData.getDatasetName());
                 throw new IllegalStateException("No station or cast identifier found.");
             }
 		}

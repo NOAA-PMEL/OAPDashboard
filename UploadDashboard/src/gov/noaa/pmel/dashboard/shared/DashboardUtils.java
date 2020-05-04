@@ -203,7 +203,8 @@ public class DashboardUtils {
 	/**
 	 * UNASSIGNED needs to be respecified as one of the (other) data column types.
 	 */
-	public static final DataColumnType UNKNOWN = new DataColumnType("unknown", 
+	public static final String UNKNOWN_VARNAME = "unknown";
+	public static final DataColumnType UNKNOWN = new DataColumnType(UNKNOWN_VARNAME, 
 			0.0, "(unknown)", "unknown type of data", false, NO_UNITS);
 
 	/**
@@ -212,31 +213,39 @@ public class DashboardUtils {
 	 * be part of the metadata, but the values are not validated or used. 
 	 * Multiple columns may have this type.
 	 */
-	public static final DataColumnType OTHER = new DataColumnType("other",
+	public static final String OTHER_VARNAME = "other";
+	public static final DataColumnType OTHER = new DataColumnType(OTHER_VARNAME,
 			1.0, "other", "unused and unchecked supplementary data", false, NO_UNITS);
 
 	/**
 	 * User-provided name of the cruise/dataset
 	 */
-	public static final DataColumnType DATASET_NAME = new DataColumnType("dataset_name", 
+	public static final String DATASET_IDENTIFIER_VARNAME = "dataset_name";
+	public static final DataColumnType DATASET_IDENTIFIER = new DataColumnType(DATASET_IDENTIFIER_VARNAME,
 			100.0, "cruise/dataset name", "unique name for this dataset", true, NO_UNITS);
 
-	public static final DataColumnType EXPO_CODE = new DataColumnType("expocode", 
+	public static final String EXPO_CODE_VARNAME = "expocode";
+	public static final DataColumnType EXPO_CODE = new DataColumnType(EXPO_CODE_VARNAME, 
 			100.0, "expo code", "expocode for the cruise", false, NO_UNITS);
 
-	public static final DataColumnType PLATFORM_CODE = new DataColumnType("platform_code", 
+	public static final String PLATFORM_CODE_VARNAME = "platform_code";
+	public static final DataColumnType PLATFORM_CODE = new DataColumnType(PLATFORM_CODE_VARNAME,
 			101.0, "platform code", "platform code", false, NO_UNITS);
 
-	public static final DataColumnType PLATFORM_NAME = new DataColumnType("platform_name", 
+	public static final String PLATFORM_NAME_VARNAME = "platform_name";
+	public static final DataColumnType PLATFORM_NAME = new DataColumnType(PLATFORM_NAME_VARNAME,
 			101.5, "platform name", "platform name", false, NO_UNITS);
 
-	public static final DataColumnType PLATFORM_TYPE = new DataColumnType("platform_type", 
+	public static final String PLATFORM_TYPE_VARNAME = "platform_type";
+	public static final DataColumnType PLATFORM_TYPE = new DataColumnType(PLATFORM_TYPE_VARNAME,
 			102.0, "platform type", "platform type", false, NO_UNITS);
 
-	public static final DataColumnType ORGANIZATION_NAME = new DataColumnType("organization", 
+	public static final String ORGANIZATION_NAME_VARNAME = "organization";
+	public static final DataColumnType ORGANIZATION_NAME = new DataColumnType(ORGANIZATION_NAME_VARNAME,
 			103.0, "organization", "organization", false, NO_UNITS);
 	
-	public static final DataColumnType INVESTIGATOR_NAMES = new DataColumnType("investigators", 
+	public static final String INVESTIGATOR_NAMES_VARNAME = "investigators";
+	public static final DataColumnType INVESTIGATOR_NAMES = new DataColumnType(INVESTIGATOR_NAMES_VARNAME,
 			104.0, "PI names", "investigators", false, NO_UNITS);
 
 	/**
@@ -247,77 +256,96 @@ public class DashboardUtils {
 			200.0, "station/cast", "station", true, NO_UNITS);
 	 */
 
-	public static final DataColumnType STATION_ID = new DataColumnType("station", 
+	public static final String STATION_ID_VARNAME = "station";
+	public static final DataColumnType STATION_ID = new DataColumnType(STATION_ID_VARNAME,
 			200.0, "station ID", "station", true, NO_UNITS);
-	public static final DataColumnType CAST_ID = new DataColumnType("cast", 
+	public static final String CAST_ID_VARNAME = "cast";
+	public static final DataColumnType CAST_ID = new DataColumnType(CAST_ID_VARNAME,
 			201.0, "cast ID", "cast", true, NO_UNITS);
-	public static final DataColumnType NISKIN = new DataColumnType("niskin", 
+	public static final String NISKIN_VARNAME = "niskin";
+	public static final DataColumnType NISKIN = new DataColumnType(NISKIN_VARNAME,
 			202.0, "bottle ID", "niskin", false, NO_UNITS);
 
 	/**
 	 * User-provided unique ID for a sample in a dataset (user data type only). 
 	 * Used when merging files of different data types measured for a sample.
 	 */
-	public static final DataColumnType SAMPLE_ID = new DataColumnType("sample_id",
+	public static final String SAMPLE_ID_VARNAME = "sample_id";
+	public static final DataColumnType SAMPLE_ID = new DataColumnType(SAMPLE_ID_VARNAME,
 			300.0, "sample ID", "unique ID for this sample in the dataset", false, NO_UNITS);
 
-	public static final DataColumnType LONGITUDE = new DataColumnType("longitude", 
+	public static final String LONGITUDE_VARNAME = "longitude";
+	public static final DataColumnType LONGITUDE = new DataColumnType(LONGITUDE_VARNAME,
 			301.0, "longitude", "sample longitude", true, LONGITUDE_UNITS);
 
-	public static final DataColumnType LATITUDE = new DataColumnType("latitude", 
+	public static final String LATITUDE_VARNAME = "latitude";
+	public static final DataColumnType LATITUDE = new DataColumnType(LATITUDE_VARNAME,
 			302.0, "latitude", "sample latitude", true, LATITUDE_UNITS);
 
-	public static final DataColumnType CTD_PRESSURE = new DataColumnType("ctd_pressure", 
-			303.0, "CTD pressure", "CTD pressure", true, PRESSURE_UNITS);
+	public static final String WATER_PRESSURE_VARNAME = "water_pressure";
+	public static final DataColumnType WATER_PRESSURE = new DataColumnType(WATER_PRESSURE_VARNAME,
+			303.0, "water pressure", "water pressure", true, PRESSURE_UNITS);
 
-	public static final DataColumnType SAMPLE_DEPTH = new DataColumnType("sample_depth", 
+	public static final String SAMPLE_DEPTH_VARNAME = "sample_depth";
+	public static final DataColumnType SAMPLE_DEPTH = new DataColumnType(SAMPLE_DEPTH_VARNAME,
 			304.0, "sample depth", "sample depth", true, DEPTH_UNITS);
 
 	/**
 	 * Date and time of the measurement
 	 */
-	public static final DataColumnType TIMESTAMP = new DataColumnType("date_time", 
+	public static final String TIMESTAMP_VARNAME = "date_time";
+	public static final DataColumnType TIMESTAMP = new DataColumnType(TIMESTAMP_VARNAME,
 			310.0, "date time", "sample date and time", false, TIMESTAMP_UNITS);
 
 	/**
 	 * Date of the measurement - no time.
 	 */
-	public static final DataColumnType DATE = new DataColumnType("date", 
+	public static final String DATE_VARNAME = "date";
+	public static final DataColumnType DATE = new DataColumnType(DATE_VARNAME,
 			311.0, "date", "sample date", false, DATE_UNITS);
 
-	public static final DataColumnType YEAR = new DataColumnType("year", 
+	public static final String YEAR_VARNAME = "year";
+	public static final DataColumnType YEAR = new DataColumnType(YEAR_VARNAME,
 			312.0, "year", "sample year", false, NO_UNITS);
 
-	public static final DataColumnType MONTH_OF_YEAR = new DataColumnType("month", 
+	public static final String MONTH_OF_YEAR_VARNAME = "month";
+	public static final DataColumnType MONTH_OF_YEAR = new DataColumnType(MONTH_OF_YEAR_VARNAME,
 			313.0, "month of year", "sample month of year", false, NO_UNITS);
 	
-	public static final DataColumnType DAY_OF_MONTH = new DataColumnType("day", 
+	public static final String DAY_OF_MONTH_VARNAME = "day";
+	public static final DataColumnType DAY_OF_MONTH = new DataColumnType(DAY_OF_MONTH_VARNAME,
 			314.0, "day of month", "sample day of month", false, NO_UNITS);
 
-	public static final DataColumnType TIME_OF_DAY = new DataColumnType("time_of_day", 
+	public static final String TIME_OF_DAY_VARNAME = "time_of_day";
+	public static final DataColumnType TIME_OF_DAY = new DataColumnType(TIME_OF_DAY_VARNAME,
 			315.0, "time of day", "sample time of day", false, TIME_OF_DAY_UNITS);
 
-	public static final DataColumnType HOUR_OF_DAY = new DataColumnType("hour", 
+	public static final String HOUR_OF_DAY_VARNAME = "hour";
+	public static final DataColumnType HOUR_OF_DAY = new DataColumnType(HOUR_OF_DAY_VARNAME,
 			316.0, "hour of day", "sample hour of day", false, NO_UNITS);
 
-	public static final DataColumnType MINUTE_OF_HOUR = new DataColumnType("minute", 
+	public static final String MINUTE_OF_HOUR_VARNAME = "minute";
+	public static final DataColumnType MINUTE_OF_HOUR = new DataColumnType(MINUTE_OF_HOUR_VARNAME,
 			317.0, "minute of hour", "sample minute of hour", false, NO_UNITS);
 
-	public static final DataColumnType SECOND_OF_MINUTE = new DataColumnType("second", 
+	public static final String SECOND_OF_MINUTE_VARNAME = "second";
+	public static final DataColumnType SECOND_OF_MINUTE = new DataColumnType(SECOND_OF_MINUTE_VARNAME,
 			318.0, "sec of minute", "sample second of minute", false, NO_UNITS);
 
 	/**
 	 * DAY_OF_YEAR, along with YEAR, and possibly SECOND_OF_DAY,
 	 * may be used to specify the date and time of the measurement.
 	 */
-	public static final DataColumnType DAY_OF_YEAR = new DataColumnType("day_of_year", 
+	public static final String DAY_OF_YEAR_VARNAME = "day_of_year";
+	public static final DataColumnType DAY_OF_YEAR = new DataColumnType(DAY_OF_YEAR_VARNAME,
 			320.0, "day of year", "sample day of year", false, DAY_OF_YEAR_UNITS);
 
 	/**
 	 * SECOND_OF_DAY, along with YEAR and DAY_OF_YEAR may
 	 * be used to specify date and time of the measurement
 	 */
-	public static final DataColumnType SECOND_OF_DAY = new DataColumnType("sec_of_day", 
+	public static final String SECOND_OF_DAY_VARNAME = "sec_of_day";
+	public static final DataColumnType SECOND_OF_DAY = new DataColumnType(SECOND_OF_DAY_VARNAME,
 			321.0, "sec of day", "sample second of day", false, NO_UNITS);
 
 	/**

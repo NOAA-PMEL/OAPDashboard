@@ -15,7 +15,7 @@ import gov.noaa.pmel.dashboard.shared.DashboardUtils;
  */
 public class CastSet implements Comparable<CastSet> {
 
-	private final String _expoCode;
+	private final String _datasetId;
 	private final String _castId;
 	private List<Integer> _castRowIndeces;
 	private double _expectedLat = DashboardUtils.FP_MISSING_VALUE.doubleValue();
@@ -29,15 +29,16 @@ public class CastSet implements Comparable<CastSet> {
 		Double[] lats = dataset.getSampleLatitudes();
 		Double[] lons = dataset.getSampleLongitudes();
 		Double[] times = dataset.getSampleTimes();
-		Integer dsNameCol = dataset.lookForDataColumnIndex("dataset_name");
-		if ( dsNameCol == null ) {
-			throw new IllegalStateException("No dataset name column found");
-		}
-		String expoCode = String.valueOf(dataset.getStdVal(0, dsNameCol.intValue()));
+//		Integer dsNameCol = dataset.lookForDataColumnIndex(DashboardUtils.DATASET_IDENTIFIER_VARNAME);
+//		if ( dsNameCol == null ) {
+//            System.out.println("No dataset column specified.  Using specified datasetId:"+ dataset.getDatasetId());
+////			throw new IllegalStateException("No dataset name column found");
+//		}
 		for (int row = 0; row < dataset.getNumSamples(); row++) {
-			String castId = dataset.getStationCastId(row);
+			String castId = dataset.getDatasetStationCastIdentifier(row);
+    		String datasetId = dataset.getDatasetId(row);
 			if ( ! lastId.equals(castId)) {
-				cast = new CastSet(castId, expoCode);
+				cast = new CastSet(castId, datasetId);
 				casts.add(cast);
 				lastId = castId;
 				if ( lats[row] != null ) {
@@ -61,15 +62,13 @@ public class CastSet implements Comparable<CastSet> {
 		return casts;
 	}
 	
-	public CastSet(String castId, String expoCode) {
-		this._castId = castId;
-		this._expoCode = expoCode;
-		this._castRowIndeces = new ArrayList<>();
+	public CastSet(String castId, String datasetId) {
+        this(castId, datasetId, new ArrayList<>());
 	}
 	
-	public CastSet(String castId, String expoCode, List<Integer> castRowIndeces) {
+	public CastSet(String castId, String datasetId, List<Integer> castRowIndeces) {
 		this._castId = castId;
-		this._expoCode = expoCode;
+		this._datasetId = datasetId;
 		this._castRowIndeces = castRowIndeces;
 	}
 	
@@ -81,8 +80,8 @@ public class CastSet implements Comparable<CastSet> {
 		return _castId;
 	}
 	
-	public String expoCode() {
-		return _expoCode;
+	public String datasetId() {
+		return _datasetId;
 	}
 	
 	public List<Integer> indeces() {
@@ -108,10 +107,10 @@ public class CastSet implements Comparable<CastSet> {
 	
 	@Override
 	public String toString() {
-		return _expoCode + ":" + _castId;
+		return _castId;
 	}
 	public String debugString() {
-		return _expoCode + ":" + _castId + _castRowIndeces;
+		return _castId + _castRowIndeces;
 	}
 
 	@Override
@@ -124,6 +123,7 @@ public class CastSet implements Comparable<CastSet> {
 	public int hashCode() {
 		final int prime = 31;
 		int result = 1;
+		result = prime * result + ((_datasetId == null) ? 0 : _datasetId.hashCode());
 		result = prime * result + ((_castId == null) ? 0 : _castId.hashCode());
 		result = prime * result + ((_castRowIndeces == null) ? 0 : _castRowIndeces.hashCode());
 		long temp;
@@ -133,10 +133,15 @@ public class CastSet implements Comparable<CastSet> {
 		result = prime * result + (int) (temp ^ (temp >>> 32));
 		temp = Double.doubleToLongBits(_expectedTime);
 		result = prime * result + (int) (temp ^ (temp >>> 32));
-		result = prime * result + ((_expoCode == null) ? 0 : _expoCode.hashCode());
+		result = prime * result + ((_datasetId == null) ? 0 : _datasetId.hashCode());
 		return result;
 	}
 
+    private static boolean strEquals(String s1, String s2) {
+        if ( s1 == s2 ) { return true; }
+        if ( s1 == null ) { return s2 == null; }
+        return s1.equals(s2);
+    }
 	@Override
 	public boolean equals(Object obj) {
 		if (this == obj)
@@ -146,6 +151,11 @@ public class CastSet implements Comparable<CastSet> {
 		if (getClass() != obj.getClass())
 			return false;
 		CastSet other = (CastSet) obj;
+		if (_datasetId == null) {
+			if (other._datasetId != null)
+				return false;
+		} else if (!_datasetId.equals(other._datasetId))
+			return false;
 		if (_castId == null) {
 			if (other._castId != null)
 				return false;
@@ -162,10 +172,10 @@ public class CastSet implements Comparable<CastSet> {
 			return false;
 		if (Double.doubleToLongBits(_expectedTime) != Double.doubleToLongBits(other._expectedTime))
 			return false;
-		if (_expoCode == null) {
-			if (other._expoCode != null)
+		if (_datasetId == null) {
+			if (other._datasetId != null)
 				return false;
-		} else if (!_expoCode.equals(other._expoCode))
+		} else if (!_datasetId.equals(other._datasetId))
 			return false;
 		return true;
 	}

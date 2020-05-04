@@ -4,11 +4,14 @@
 package gov.noaa.pmel.dashboard.data.sanity;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Calendar;
 import java.util.Comparator;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.TimeZone;
 import java.util.TreeSet;
@@ -16,6 +19,7 @@ import java.util.TreeSet;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+import gov.noaa.pmel.dashboard.client.UploadDashboard;
 import gov.noaa.pmel.dashboard.datatype.CastSet;
 import gov.noaa.pmel.dashboard.dsg.StdUserDataArray;
 import gov.noaa.pmel.dashboard.server.DashboardServerUtils;
@@ -36,6 +40,8 @@ public class CastChecker {
 	private static final double MAX_REASONABLE_TIME_BETWEEN_CASTS_h = 7 * 24; // 1 week
 	private static final double MAX_REASONABLE_TIME_BETWEEN_SAMPLES_h = 12; 
 	private static final double PRESSURE_DEPTH_TOLERANCE = 0.002;
+	private static final double PRESSURE_DELTA_TOLERANCE = 0.02;
+	private static final double DEPTH_DELTA_TOLERANCE = 0.02;
 	private StdUserDataArray _dataset;
 	private List<CastSet> _casts;
 	
@@ -62,10 +68,11 @@ public class CastChecker {
 	 * </ul>
 	 */
 	public void checkCastConsistency() {
-		Double lastLat = null;
-		Double lastLon = null;
-		Double lastTime = null;
-		String lastId = null;
+//		Double lastLat = null;
+//		Double lastLon = null;
+//		Double lastTime = null;
+//		String lastId = null;
+        CastSet lastCast = null;
 		checkForDuplicateCastIds(_dataset, _casts);
 		for (CastSet cast : _casts) {
 			logger.debug("Cast " + cast.id() + " time " + new Date((long)(cast.expectedTime()*1000)));
@@ -73,17 +80,16 @@ public class CastChecker {
 				singleCastWarning(cast);
 				continue;
 			}
-			checkBoatSpeed(_dataset, cast, lastId, lastLat, lastLon, lastTime);
-			checkTimeBetweenCasts(_dataset, cast, lastId, lastTime);
+			checkBoatSpeed(_dataset, cast, lastCast); // lastId, lastLat, lastLon, lastTime);
+			checkTimeBetweenCasts(_dataset, cast, lastCast); // lastId, lastTime);
 			checkTimeBetweenSamples(_dataset, cast);
 			checkCastLocations(_dataset, cast);
 			checkCastDates(_dataset, cast);
 			checkCastDepths(_dataset, cast);
-			checkCastPressureDepth(_dataset, cast);
-			lastLat = new Double(cast.expectedLat());
-			lastLon = new Double(cast.expectedLon());
-			lastTime = new Double(cast.expectedTime());
-			lastId = cast.id();
+//			checkCastPressureDepth(_dataset, cast);
+            // happens in checkDepths
+//            checkCastBottles(_dataset, cast);
+            lastCast = cast;
 		}
 	}
 	private static void checkForDuplicateCastIds(StdUserDataArray dataset, List<CastSet> casts) {
@@ -145,10 +151,14 @@ public class CastChecker {
 		msg.setLongitude(rowLon);
 	}
 		
-	private void checkTimeBetweenCasts(StdUserDataArray stda, CastSet cast, String lastId, Double lastTime) {
-		if ( lastTime == null || lastId == null ) {
-			return;
-		}
+	private static void checkTimeBetweenCasts(StdUserDataArray stda, CastSet cast, CastSet lastCast) {
+        if ( lastCast == null ) { return; }
+        if ( ! lastCast.datasetId().equals(cast.datasetId())) {
+            return;
+        }
+        Double lastTime = new Double(lastCast.expectedTime());
+        String lastId = lastCast.id();
+
 		Integer row = cast.indeces().get(0);
 		double thisTime = cast.expectedTime();
 		if ( thisTime == DashboardUtils.FP_MISSING_VALUE.doubleValue()) {
@@ -182,15 +192,19 @@ public class CastChecker {
 	private void checkTimeBetweenSamples(StdUserDataArray stda, CastSet cast) {
 		if ( cast.size() < 2 ) { return; }
 		Double[] times = stda.getSampleTimes();
+        Integer timeColIdx = stda.lookForDataColumnIndex(DashboardUtils.TIME_OF_DAY_VARNAME);
 		for (int i = 1; i < cast.size(); i++) {
 			Integer row = cast.indeces().get(i);
 			double lastTime = times[cast.indeces().get(i-1).intValue()].doubleValue();
 			double thisTime = times[row.intValue()].doubleValue();
 			double deltaTs = thisTime - lastTime;
 			double deltaTh = deltaTs / 3600;
-			if ( Math.abs(deltaTh) > MAX_REASONABLE_TIME_BETWEEN_SAMPLES_h) {
+			if ( deltaTh > MAX_REASONABLE_TIME_BETWEEN_SAMPLES_h) {
 				ADCMessage msg = new ADCMessage();
 				msg.setRowIndex(row);
+                if ( timeColIdx != null ) {
+                    msg.setColIndex(timeColIdx.intValue());
+                }
 				msg.setSeverity(Severity.WARNING);
 				msg.setGeneralComment("Excessive time interval");
 				msg.setDetailedComment("Excessive apparent time of " + deltaTh + " hours between samples");
@@ -198,16 +212,29 @@ public class CastChecker {
 				stda.addStandardizationMessage(msg);
 			}
 			if ( deltaTh < 0 ) {
+				ADCMessage msg = new ADCMessage();
+				msg.setRowIndex(row);
+                if ( timeColIdx != null ) {
+                    msg.setColIndex(timeColIdx.intValue());
+                }
+				msg.setSeverity(Severity.WARNING);
+				msg.setGeneralComment("Negative time interval");
+				msg.setDetailedComment("Negative apparent time of " + deltaTh + " hours between samples");
+				addTimeAndLocation(msg, cast, i);
+				stda.addStandardizationMessage(msg);
 				logger.info("Negative time of " + deltaTh + " hours between samples of " + cast + " at row " + (row.intValue()+1));
 			}
 		}
 	}
 
-	private static void checkBoatSpeed(StdUserDataArray stda, CastSet cast, 
-	                                   String lastId, Double lastLat, Double lastLon, Double lastTime) {
-		if ( lastId == null || lastLat == null || lastLon == null || lastTime == null ) {
-			return;
-		}
+	private static void checkBoatSpeed(StdUserDataArray stda, CastSet cast, CastSet lastCast) {
+//	                                   String lastId, Double lastLat, Double lastLon, Double lastTime) {
+        if ( lastCast == null ) { return; }
+		Double lastLat = new Double(lastCast.expectedLat());
+        Double lastLon = new Double(lastCast.expectedLon());
+        Double lastTime = new Double(lastCast.expectedTime());
+        String lastId = lastCast.id();
+
 		double thisLat = cast.expectedLat();
 		double thisLon = cast.expectedLon();
 		double thisTime = cast.expectedTime();
@@ -228,13 +255,20 @@ public class CastChecker {
 		}
 		double deltaDistance = DashboardServerUtils.greatCircleDistance_NM(thisLat, thisLon, 
 				                                                     lastLat.doubleValue(), lastLon.doubleValue());
-		double deltaT_h = (thisTime - lastTime.doubleValue()) / 3600;
+		double deltaT = (thisTime - lastTime.doubleValue());
+		double deltaT_h = deltaT / 3600;
 		double knots = deltaDistance / Math.abs(deltaT_h);
-		logger.debug(String.format("  [%s] distance: %.2f nm, boat speed: %.2f", cast.id(), deltaDistance, knots));
+		logger.trace(String.format("  [%s] distance: %.2f nm, boat speed: %.2f", cast.id(), deltaDistance, knots));
 		if ( knots > MAX_REASONABLE_SPEED_knots ) {
+    		logger.info(String.format("  [%s] distance: %.2f nm, boat speed: %.2f", cast.id(), deltaDistance, knots));
 			ADCMessage msg = new ADCMessage();
 			msg.setRowIndex(row);
-			msg.setSeverity(knots > ABS_MAX_SPEED_knots ? Severity.ERROR : Severity.WARNING);
+            Severity severus = Double.isInfinite(knots) ? 
+                                  Severity.WARNING :
+                                  knots > ABS_MAX_SPEED_knots ? 
+                                        Severity.ERROR : 
+                                        Severity.WARNING;
+			msg.setSeverity(severus);
 			msg.setGeneralComment("Unreasonable boat speed");
 			msg.setDetailedComment("Apparent boat speed of " + knots + " knots between casts " + cast.id() + " and " + lastId);
 			addTimeAndLocation(msg, cast);
@@ -277,33 +311,35 @@ public class CastChecker {
 			int nextRowIdx = castRows.get(idx).intValue();
 			double thisLat = lats[prevRowIdx];
 			double thisLon = lons[prevRowIdx];
-			if ( thisLat <= -90 || thisLat >= 90 ) {
+			if ( Double.isInfinite(thisLat) || Double.isNaN(thisLat) ||
+			     thisLat <= -90 || thisLat >= 90 ) {
 				int thisRow = nextRowIdx;
 				String genlComment = "Bad cast latitude.";
 				String detailMsg = "Invalid latitude for cast " + cs.toString() +
 	                                " at row " + thisRow + ". " +
-									" Found [" + lats[prevRowIdx] + "] ";
+									" Found [" + thisLat + "] ";
 				ADCMessage amsg = new ADCMessage();
 				amsg.setSeverity(Severity.ERROR); 
 				amsg.setRowIndex(prevRowIdx);
 				amsg.setColIndex(latCol);
-				amsg.setColName("latitude");
+				amsg.setColName(stda.getUserColumnNames()[latCol.intValue()]);
 				amsg.setDetailedComment(detailMsg);
 				amsg.setGeneralComment(genlComment);
 				addTimeAndLocation(amsg, cs, idx);
 				stda.addStandardizationMessage(amsg);
 			}
-			if ( thisLon <= -180 || thisLon >= 180 ) {
+			if ( Double.isInfinite(thisLon) || Double.isNaN(thisLon) ||
+			     thisLon <= -180 || thisLon >= 180 ) {
 				int thisRow = nextRowIdx;
 				String genlComment = "Bad cast longitude.";
 				String detailMsg = "Invalid longitude for cast " + cs.toString() +
 	                                " at row " + thisRow + ". " +
-									" Found [" + lons[prevRowIdx] + "] ";
+									" Found [" + thisLon + "] ";
 				ADCMessage amsg = new ADCMessage();
 				amsg.setSeverity(Severity.ERROR); 
 				amsg.setRowIndex(prevRowIdx);
 				amsg.setColIndex(lonCol);
-				amsg.setColName("longitude");
+				amsg.setColName(stda.getUserColumnNames()[lonCol.intValue()]);
 				amsg.setDetailedComment(detailMsg);
 				amsg.setGeneralComment(genlComment);
 				addTimeAndLocation(amsg, cs, idx);
@@ -324,7 +360,7 @@ public class CastChecker {
 				amsg.setSeverity(severity); 
 				amsg.setRowIndex(nextRowIdx);
 				amsg.setColIndex(latCol);
-				amsg.setColName("latitude");
+				amsg.setColName(stda.getUserColumnNames()[latCol.intValue()]);
 				amsg.setDetailedComment(detailMsg);
 				amsg.setGeneralComment(genlComment);
 				addTimeAndLocation(amsg, cs, idx);
@@ -345,7 +381,7 @@ public class CastChecker {
 				amsg.setSeverity(severity); 
 				amsg.setRowIndex(nextRowIdx);
 				amsg.setColIndex(lonCol);
-				amsg.setColName("longitude");
+				amsg.setColName(stda.getUserColumnNames()[lonCol.intValue()]);
 				amsg.setDetailedComment(detailMsg);
 				amsg.setGeneralComment(genlComment);
 				addTimeAndLocation(amsg, cs, idx);
@@ -403,14 +439,15 @@ public class CastChecker {
 			logger.info("Cast of one. Not doing cast depth check.");
 			return;
 		}
-        String columnName = "sample_depth";
+        String columnName = DashboardUtils.SAMPLE_DEPTH_VARNAME;
         Double[] depthOrPressures = null;
 		Integer depthCol = stda.lookForDataColumnIndex(columnName);
 		if ( depthCol == null ) {
-			logger.info("No sample depth column.  Checking for pressure column.");
-            columnName = "ctd_pressure";
+			logger.info("No sample depth column.  Checking for water pressure column.");
+            columnName = DashboardUtils.WATER_PRESSURE_VARNAME;
     		depthCol = stda.lookForDataColumnIndex(columnName);
             if ( depthCol == null ) {
+                // The critical error of their being no pressure or depth column is added in ProfileDatasetChecker.checkRequiredColumns()
     			logger.warn("No sample depth or pressure column.  Aborting cast depth checking.");
     			return;
             } else {
@@ -419,7 +456,7 @@ public class CastChecker {
 		} else {
             depthOrPressures = stda.getSampleDepths();
 		}
-        
+        columnName = stda.getUserColumnNames()[depthCol.intValue()];
         Integer bottleIdx = stda.lookForDataColumnIndex("niskin");
         Object[] bottles = bottleIdx != null ? stda.getStdValues(bottleIdx.intValue()) : null ;
 						 
@@ -444,13 +481,13 @@ public class CastChecker {
     				addTimeAndLocation(amsg, cs, check);
     				stda.addStandardizationMessage(amsg);
                 } else if ( ! checkBottles.add(bottle)) {
-    				String genlComment = "Duplicate bottles in cast.";
-    				String detailMsg =  "Duplicate bottles in cast " + cs.toString() + " at row " + (checkRow + 1); 
+    				String genlComment = "Duplicate bottle in cast.";
+    				String detailMsg =  "Duplicate bottle " + bottle + " in cast " + cs.toString() + " at row " + (checkRow + 1); 
     				ADCMessage amsg = new ADCMessage();
     				amsg.setSeverity(Severity.ERROR); 
     				amsg.setRowIndex(checkRow);
     				amsg.setColIndex(bottleIdx);
-    				amsg.setColName("niskin");
+    				amsg.setColName(stda.getUserColumnNames()[bottleIdx.intValue()]);
     				amsg.setDetailedComment(detailMsg);
     				amsg.setGeneralComment(genlComment);
     				addTimeAndLocation(amsg, cs, check);
@@ -467,63 +504,75 @@ public class CastChecker {
 			logger.info("Cast of one. Not doing pressure-depth consistency check.");
 			return;
 		}
-		Integer pressureCol = stda.lookForDataColumnIndex("ctd_pressure");
+        int start = castRows.get(0).intValue();
+        int last = castRows.get(castRows.size()-1).intValue() + 1;
+		Integer pressureCol = stda.lookForDataColumnIndex(DashboardUtils.WATER_PRESSURE_VARNAME);
 		if ( pressureCol == null ) {
 			logger.warn("No pressure column found. Not doing pressure-depth consistency check.");
 			return;
 		}
 		int pressureIdx = pressureCol.intValue();
-		Integer depthCol = stda.lookForDataColumnIndex("sample_depth");
+		Integer depthCol = stda.lookForDataColumnIndex(DashboardUtils.SAMPLE_DEPTH_VARNAME);
 		if ( depthCol == null ) {
 			logger.warn("No depth column found. Not doing pressure-depth consistency check.");
 			return;
 		}
 		Double[] depths = stda.getSampleDepths();
-		if ( hasMissingDepths(depths)) {
-		    logger.warn("Dataset has missing depth values.  No pressure-depth correlation done.");
+		if ( hasMissingValues((Double[])Arrays.asList(depths).subList(start, last).toArray(new Double[last-start]))) {
+		    logger.warn("Cast has missing depth values.  No pressure-depth correlation done.");
 		    return;
 		}
-		Double d0 = depths[castRows.get(0).intValue()]; // .doubleValue(); 
-		Double d1 = getNextDepth(d0,castRows,depths);
-		boolean isDesc = d1 > d0;
-		double lastPressure = ((Double)stda.getStdVal(castRows.get(0), pressureIdx)).doubleValue();
+        Double[] pressures = stda.getStdValuesAsDouble(pressureIdx);
+		if ( hasMissingValues((Double[])Arrays.asList(pressures).subList(start, last).toArray(new Double[last-start]))) {
+		    logger.warn("Cast has missing pressure values.  No pressure-depth correlation done.");
+		    return;
+		}
+		double d0 = pressures[castRows.get(0).intValue()].doubleValue(); 
+		double d1 = pressures[castRows.get(castRows.size()-1).intValue()].doubleValue(); 
+		boolean isDescendingProile = d1 > d0;
+        double lastPressure = pressures[castRows.get(0)].doubleValue();
 		double lastDepth = depths[castRows.get(0)].doubleValue();
 		String generalComment = "Pressure-Depth consitency error";
 		for (int check = 1; check < castRows.size(); check++) {
 			int checkRow = castRows.get(check).intValue();
-			Double dPressure = (Double)stda.getStdVal(checkRow, pressureIdx);
+			Double dPressure = pressures[checkRow];
 			if ( dPressure == null ) {
 				logger.info("No pressure recorded at row " + checkRow);
 				continue;
 			}
 			double depth = depths[checkRow].doubleValue();
 			double pressure = dPressure.doubleValue();
+            double deltaD = Math.abs(lastDepth-depth) / depth;
+            double deltaP = Math.abs(lastPressure-pressure) / pressure;
 			if ( pressure == lastPressure && Math.abs(depth-lastDepth) > PRESSURE_DEPTH_TOLERANCE) {
 				ADCMessage msg = new ADCMessage();
 				msg.setSeverity(Severity.ERROR);
 				msg.setRowIndex(checkRow);
-				msg.setColName("ctd_pressure");
+				msg.setColName(stda.getUserColumnNames()[pressureIdx]);
 				msg.setColIndex(pressureCol);
 				msg.setDepth(depth);
 				msg.setGeneralComment(generalComment);
 				addTimeAndLocation(msg, cs, check);
 				String detailedComment = "Pressure unchanged between samples at different depths.";
+                logger.info("Cast " + cs.id() + "@"+checkRow+":"+ detailedComment);
 				msg.setDetailedComment(detailedComment);
 				stda.addStandardizationMessage(msg);
-			} else if (( isDesc && 
-						 pressure < lastPressure && 
-						 depth > lastDepth ) ||			// Sometimes 2 samples at approx. same depth are out of order
-					   ( pressure > lastPressure &&
-						 depth < lastDepth )) {
+			} else if (( isDescendingProile && // Sometimes 2 samples at approx. same depth are out of order
+					     (( pressure < lastPressure && deltaP > PRESSURE_DELTA_TOLERANCE ) || 
+					      ( depth < lastDepth && deltaD > DEPTH_DELTA_TOLERANCE ))) ||	
+					   ( !isDescendingProile &&
+					     (( pressure > lastPressure && deltaP > PRESSURE_DELTA_TOLERANCE ) ||
+						  ( depth > lastDepth && deltaD > DEPTH_DELTA_TOLERANCE )))) {
 				ADCMessage msg = new ADCMessage();
 				msg.setSeverity(Severity.ERROR);
 				msg.setRowIndex(checkRow);
-				msg.setColName("ctd_pressure");
+				msg.setColName(stda.getUserColumnNames()[pressureIdx]);
 				msg.setColIndex(pressureCol);
 				msg.setDepth(depth);
 				msg.setGeneralComment(generalComment);
-				String detailedComment = "Pressure did not " + (isDesc ? "increase" : "decrease") + 
+				String detailedComment = "Pressure did not " + (isDescendingProile ? "increase" : "decrease") + 
 										 " between consecutive samples.";
+                logger.info("Cast " + cs.id() + "@"+checkRow+":"+ detailedComment);
 				msg.setDetailedComment(detailedComment);
 				addTimeAndLocation(msg, cs, check);
 				stda.addStandardizationMessage(msg);
@@ -532,7 +581,39 @@ public class CastChecker {
 			lastPressure = pressure;
 		}
 	}
-	private boolean hasMissingDepths(Double[] depths) {
+//    // happens in checkCastDepths
+//    private static void checkCastBottles(StdUserDataArray stda, CastSet cs) {
+//        Map<String, Integer> bottles = new HashMap<String, Integer>();
+//        Map<String, Integer> samples = new HashMap<String, Integer>();
+//        Integer bottleIdx = stda.lookForDataColumnIndex(DashboardUtils.NISKIN_VARNAME);
+//        Integer sampleIdx = stda.lookForDataColumnIndex(DashboardUtils.SAMPLE_ID_VARNAME);
+//        for (Integer row : cs.indeces()) {
+//            if ( bottleIdx != null ) {
+//                String bottle = (String)stda.getStdVal(row.intValue(), bottleIdx.intValue());
+//                Integer already = bottles.put(bottle, row);
+//                if ( already != null ) {
+//                    ADCMessage msg = stda.messageFor(Severity.ERROR, row, bottleIdx, 
+//                                                     "Duplicate bottle in cast", 
+//                                                     "Duplicate bottle " + bottle + " in cast " + 
+//                                                     cs.id() + " at row " + (row.intValue()+1));
+//                    stda.addStandardizationMessage(msg);
+//                }
+//            }
+//            if ( sampleIdx != null ) {
+//                String sample = (String)stda.getStdVal(row.intValue(), sampleIdx.intValue());
+//                Integer already = samples.put(sample, row);
+//                if ( already != null ) {
+//                    ADCMessage msg = stda.messageFor(Severity.ERROR, row, sampleIdx, 
+//                                                     "Duplicate sample in cast", 
+//                                                     "Duplicate sample " + sample + " in cast " + 
+//                                                     cs.id() + " at row " + (row.intValue()+1));
+//                    stda.addStandardizationMessage(msg);
+//                }
+//            }
+//        }
+//    }
+        
+	private boolean hasMissingValues(Double[] depths) {
 	    for (Double d : depths) {
 	        if ( d == null ) {
 	            return true;
@@ -541,7 +622,7 @@ public class CastChecker {
         return false;
     }
 
-    private static double getNextDepth(double d0, List<Integer> castRows, Double[] depths) {
+    private static double getN_extDepth(double d0, List<Integer> castRows, Double[] depths) {
 		double next = d0;
 		for (Integer row : castRows) {
 			double dd = depths[row.intValue()].doubleValue();

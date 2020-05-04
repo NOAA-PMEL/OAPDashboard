@@ -5,37 +5,19 @@ package gov.noaa.pmel.dashboard.server;
 
 import java.io.ByteArrayOutputStream;
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.FilenameFilter;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.attribute.BasicFileAttributeView;
-import java.nio.file.attribute.BasicFileAttributes;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.TreeSet;
 
 import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
 
-import org.apache.http.HttpEntity;
-import org.apache.http.HttpResponse;
-import org.apache.http.StatusLine;
-import org.apache.http.client.HttpClient;
-import org.apache.http.client.methods.HttpPost;
-import org.apache.http.conn.HttpHostConnectException;
-import org.apache.http.entity.ContentType;
-import org.apache.http.entity.mime.MultipartEntityBuilder;
-import org.apache.http.entity.mime.content.FileBody;
-import org.apache.http.entity.mime.content.StringBody;
-import org.apache.http.impl.client.HttpClients;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -390,8 +372,9 @@ public class DashboardServices extends RemoteServiceServlet implements Dashboard
 		for ( DashDataType<?> dtype : knownTypesSet )
 			knownTypesList.add(dtype.duplicate());
 
+        DataFileHandler dataFileHandler = configStore.getDataFileHandler();
 		// Get the cruise with the first maximum-needed number of rows
-		DashboardDatasetData dataset = configStore.getDataFileHandler()
+        DashboardDatasetData dataset = dataFileHandler
 				.getDatasetDataFromFiles(datasetId, 0, DashboardUtils.MAX_ROWS_PER_GRID_PAGE);
 		if ( dataset == null )
 			throw new IllegalArgumentException(datasetId + " does not exist");
@@ -411,7 +394,7 @@ public class DashboardServices extends RemoteServiceServlet implements Dashboard
 		return typesAndDataset;
 	}
 
-	@Override
+    @Override
 	public ArrayList<ArrayList<String>> getDataWithRowNum(String pageUsername, 
 			String datasetId, int firstRow, int numRows) throws IllegalArgumentException {
 		// Get the dashboard data store and current username, and validate that username
@@ -437,7 +420,7 @@ public class DashboardServices extends RemoteServiceServlet implements Dashboard
 		int myLastRow = myFirstRow + dataWithRowNums.size() - 1;
 		logger.info(datasetId + " dataset data [" + Integer.toString(myFirstRow) + 
 				" - " + Integer.toString(myLastRow) + "] returned for " + username);
-		if ( logger.isDebugEnabled() ) {
+		if ( logger.isTraceEnabled()) {
 			for (k = 0; k < dataWithRowNums.size(); k++) {
 				logger.debug("  data[" + Integer.toString(k) + "]=" + dataWithRowNums.get(k).toString());
 			}
@@ -512,7 +495,7 @@ public class DashboardServices extends RemoteServiceServlet implements Dashboard
 		StdUserDataArray stdArray;
         try {
     		stdArray = checker.standardizeDataset(dataset, null);
-        } catch (Exception ex) {
+        } catch (Throwable ex) {
             logger.warn("Exception checking dataset:"+ ex, ex);
             throw new IllegalArgumentException("There was an error checking the dataset: " + ex.getMessage());
         }
@@ -817,7 +800,7 @@ public class DashboardServices extends RemoteServiceServlet implements Dashboard
 		if ( dataTime > plotsTime ) {
 			return true;
 		}
-		File dataInfoFile = configStore.getDataFileHandler().datasetInfoFile(datasetId);
+		File dataInfoFile = configStore.getDataFileHandler().datasetInfoFile(datasetId, true);
 		long infoTime = dataInfoFile.lastModified();
 		if ( infoTime > plotsTime ) {
 			return true;

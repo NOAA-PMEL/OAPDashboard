@@ -14,6 +14,7 @@ import com.google.gwt.core.client.GWT;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.i18n.client.DateTimeFormat;
+import com.google.gwt.safehtml.shared.SafeHtmlUtils;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.uibinder.client.UiHandler;
@@ -33,6 +34,7 @@ import gov.noaa.pmel.dashboard.shared.DashboardServicesInterface;
 import gov.noaa.pmel.dashboard.shared.DashboardServicesInterfaceAsync;
 import gov.noaa.pmel.dashboard.shared.DashboardUtils;
 import gov.noaa.pmel.dashboard.shared.DataColumnType;
+import gov.noaa.pmel.dashboard.shared.FileType;
 
 /**
  * @author kamb
@@ -266,6 +268,107 @@ public class SubmitToArchivePage extends CompositeWithUsername implements DataSu
 		UploadDashboard.updateCurrentPage(singleton, UploadDashboard.DO_PING);
 		History.newItem(PagesEnum.SUBMIT_TO_ARCHIVE.name(), false);
 	}
+    // COPIED from DatasetListPage, where it's not currently being used...
+    private static final String[] EMPTY_MESSAGES = new String[0];
+	private static boolean checkDatasetsForSubmitting(DashboardDatasetList checkSet) {
+        boolean okToSubmit = true;
+        StringBuilder errorMsgBldr = new StringBuilder("The following problems were found:");
+        errorMsgBldr.append("<ul>");
+        
+		for ( DashboardDataset dataset : checkSet.values() ) {
+            boolean thisOneIsOk = true;
+            String[] errorMessages;
+            errorMsgBldr.append("<li>").append(dataset.getDatasetId())
+                        .append("<ul>");
+            errorMessages = checkMetadata(dataset);
+            if ( errorMessages.length > 0 ) {
+                addErrorMessages(errorMsgBldr, errorMessages);
+                thisOneIsOk = false;
+            }
+            errorMessages = dataCheck(dataset);
+            if ( errorMessages.length > 0 ) {
+                addErrorMessages(errorMsgBldr, errorMessages);
+                thisOneIsOk = false;
+            }
+            errorMessages = columnCheck(dataset);
+            if ( errorMessages.length > 0 ) {
+                addErrorMessages(errorMsgBldr, errorMessages);
+                thisOneIsOk = false;
+            }
+            errorMsgBldr.append("</ul></li>");
+            okToSubmit = okToSubmit && thisOneIsOk;
+		}
+        errorMsgBldr.append("</ul>");
+        if ( !okToSubmit ) {
+            UploadDashboard.showMessage(errorMsgBldr.toString());
+        }
+        return okToSubmit;
+	}
+    /**
+     * @param dataset
+     * @return
+     */
+    private static String[] checkMetadata(DashboardDataset dataset) {
+        String[] messages = EMPTY_MESSAGES;
+        if ( dataset.getMdTimestamp().isEmpty()) {
+            messages = new String[] { "Missing or incomplete metadata." };
+        }
+        return messages;
+    }
+
+    /**
+     * @param dataset
+     * @return
+     */
+    private static String[] dataCheck(DashboardDataset dataset) {
+        String status = dataset.getDataCheckStatus();
+        if ( FileType.OTHER.equals(dataset.getFileType()) 
+             || DashboardUtils.CHECK_STATUS_ACCEPTABLE.equals(status)) {
+            return EMPTY_MESSAGES;
+        }
+        if ( DashboardUtils.CHECK_STATUS_NOT_CHECKED.equals(status)) {
+            return new String[] { "Dataset has not been checked." };
+        }
+        if ( status.contains("error")) {
+            return new String[] { "Dataset has data validation errors." };
+        }
+        return EMPTY_MESSAGES;
+    }
+
+	/**
+     * @param dataset
+     * @return
+     */
+    private static String[] columnCheck(DashboardDataset dataset) {
+        if ( ! hasNoUnknownColumns(dataset)) {
+            return new String[] { "Dataset has Unknown columns." };
+        }
+        return EMPTY_MESSAGES;
+    }
+    
+	/**
+     * @param dd
+     * @return
+     */
+    private static boolean hasNoUnknownColumns(DashboardDataset dd) {
+        for (DataColumnType col : dd.getDataColTypes()) {
+            if ( col.typeNameEquals(DashboardUtils.UNKNOWN)) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    /**
+     * @param errorMsgBldr
+     * @param errorMessages
+     */
+    private static void addErrorMessages(StringBuilder errorMsgBldr, String[] errorMessages) {
+        for ( String msg : errorMessages ) {
+            errorMsgBldr.append("<li>").append(SafeHtmlUtils.htmlEscape(msg)).append("</li>");
+        }
+    }
+
 
     private static void getSubmitStatus(SubmitToArchivePage page) {
         page.submissionTime.setText("Package submitted.");
