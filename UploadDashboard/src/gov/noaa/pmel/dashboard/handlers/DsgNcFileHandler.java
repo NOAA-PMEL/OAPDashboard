@@ -151,7 +151,7 @@ public class DsgNcFileHandler {
 	public void saveDatasetDsg(DsgMetadata metadata, 
 	                           StdUserDataArray stdUserData) throws IllegalArgumentException {
 		// Get the location and name for the NetCDF DSG file
-		DsgNcFile dsgFile = getDsgNcFile(stdUserData.getDatasetId());
+		DsgNcFile dsgFile = getDsgNcFile(stdUserData.getDatasetName());
 
 		// Create the NetCDF DSG file
 		try {

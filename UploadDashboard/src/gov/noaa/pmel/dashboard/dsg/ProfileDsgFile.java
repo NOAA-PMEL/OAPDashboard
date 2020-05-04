@@ -252,8 +252,8 @@ public class ProfileDsgFile extends DsgNcFile {
 		ncfile.addGroupAttribute(null, new Attribute("COORD_SYSTEM", "Geographical"));
 		ncfile.addGroupAttribute(null, new Attribute("creation_date", formatUTC(System.currentTimeMillis())));
 		ncfile.addGroupAttribute(null, new Attribute("history", DSG_VERSION));
-		ncfile.addGroupAttribute(null, new Attribute("id", _stdUser.getDatasetId()));
-		ncfile.addGroupAttribute(null, new Attribute("dataset_id", _stdUser.getDatasetId()));
+		ncfile.addGroupAttribute(null, new Attribute("id", _stdUser.getDatasetName()));
+		ncfile.addGroupAttribute(null, new Attribute("dataset_id", _stdUser.getDatasetName()));
 		addMetadataAttributes(ncfile);
 	}
 	

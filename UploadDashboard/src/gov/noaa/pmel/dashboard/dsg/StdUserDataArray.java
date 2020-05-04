@@ -3,11 +3,9 @@
  */
 package gov.noaa.pmel.dashboard.dsg;
 
-import java.lang.reflect.Array;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
-import java.util.SortedSet;
 import java.util.TreeSet;
 
 import gov.noaa.pmel.dashboard.datatype.CharDashDataType;
@@ -38,8 +36,6 @@ public class StdUserDataArray extends StdDataArray {
 	public static final String INCONSISTENT_NUMBER_OF_DATA_VALUES_MSG = 
 			"inconstistent number of data values";
 
-	private String datasetId;
-	
 	private String[] userColNames;
 	private String[] userUnits;
 	private String[] userMissVals;
@@ -91,10 +87,8 @@ public class StdUserDataArray extends StdDataArray {
 	 */
 	public StdUserDataArray(DashboardDatasetData dataset, 
 							KnownDataTypes knownTypes) throws IllegalArgumentException {
-		super(dataset.getDataColTypes(), knownTypes);
+		super(dataset.getDatasetId(), dataset.getDataColTypes(), knownTypes);
 		
-		datasetId = dataset.getDatasetId();
-
 		// Add the user's units, missing values, and user column names
 		userUnits = new String[numDataCols];
 		userMissVals = new String[numDataCols];
@@ -847,11 +841,6 @@ public class StdUserDataArray extends StdDataArray {
 		return repr;
 	}
 
-
-	public String getDatasetId() {
-		return datasetId;
-	}
-
 //	public String getExpoCode() {
 //		if ( expoCode == null ) {
 //			expoCode = findExpoCode();
@@ -951,11 +940,44 @@ public class StdUserDataArray extends StdDataArray {
         return sampleNo -1;
     }
 
+    public ADCMessage messageFor(Severity severity, Integer row, Integer column, 
+                                 String generalComment, String detailedComment) {
+		ADCMessage msg = new ADCMessage();
+		msg.setSeverity(severity);
+        if ( row != null ) { msg.setRowIndex(row); }
+		if ( column != null ) { 
+		    msg.setColIndex(column); 
+    		msg.setColName(userColNames[column.intValue()]);
+		}
+		msg.setGeneralComment(generalComment);
+		msg.setDetailedComment(detailedComment);
+        addTimeAndLocation(msg, row);
+        return msg;
+    }
+	public void addTimeAndLocation(ADCMessage msg, Integer row) {
+        if ( row == null ) { return; }
+        int rowIdx = row.intValue();
+        if ( hasTimeOfDay()) {
+    		Date rowTime = getSampleTime(rowIdx);
+            if ( rowTime != null ) {
+        		msg.setTimestamp(DashboardServerUtils.formatUTC(rowTime));
+            }
+        }
+        if ( hasLatitude()) {
+            Double latitude = getSampleLatitude(rowIdx);
+            if ( latitude != null ) {
+        		msg.setLatitude(latitude);
+            }
+        }
+            
+        Double longitude = getSampleLongitude(rowIdx);
+		msg.setLongitude(getSampleLongitudes()[rowIdx]);
+	}
     /**
      * @param dataType
      * @return
      */
-    public boolean checkForMissingValues(DashDataType dataType) {
+    public boolean checkForMissingValues(DashDataType dataType, Severity severity) {
         if ( ! hasDataColumn(dataType.getStandardName())) {
             return false;
         }
@@ -970,7 +992,7 @@ public class StdUserDataArray extends StdDataArray {
                      value.equals(dataType.missingValue())) {
 					isOk = false;
 					ADCMessage msg = new ADCMessage();
-					msg.setSeverity(Severity.CRITICAL);
+					msg.setSeverity(severity);
 					msg.setRowIndex(rowIdx);
 					msg.setColIndex(columnIdx);
 					msg.setColName(userColName);

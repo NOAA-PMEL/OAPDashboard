@@ -172,23 +172,29 @@ public class UserFileHandler extends VersionedFileHandler {
 		DashboardDatasetList datasetList = new DashboardDatasetList(cleanUsername);
 		for ( String datasetId : dataIdsSet ) {
 			// Create the DashboardDataset from the info file
-			DashboardDataset dataset = dataHandler.getDatasetFromInfoFile(datasetId);
-			if ( dataset == null ) {
+            if ( dataHandler.infoFileExists(datasetId)) {
+    			DashboardDataset dataset = dataHandler.getDatasetFromInfoFile(datasetId);
+    			if ( dataset == null ) {
+    				// Dataset no longer exists - remove this ID from the saved list
+    				needsCommit = true;
+    				commitMessage += "remove non-existant dataset " + datasetId + "; ";
+    			}
+    			else {
+    				String owner = dataset.getOwner();
+    				if ( ! configStore.userManagesOver(cleanUsername, owner) ) {
+    					// No longer authorized to view - remove this ID from the saved list
+    					needsCommit = true;
+    					commitMessage += "remove unauthorized dataset " + datasetId + "; ";
+    				}
+    				else {
+    					datasetList.put(datasetId, dataset);
+    				}
+    			}
+            } else {
 				// Dataset no longer exists - remove this ID from the saved list
 				needsCommit = true;
 				commitMessage += "remove non-existant dataset " + datasetId + "; ";
-			}
-			else {
-				String owner = dataset.getOwner();
-				if ( ! configStore.userManagesOver(cleanUsername, owner) ) {
-					// No longer authorized to view - remove this ID from the saved list
-					needsCommit = true;
-					commitMessage += "remove unauthorized dataset " + datasetId + "; ";
-				}
-				else {
-					datasetList.put(datasetId, dataset);
-				}
-			}
+            }
 		}
 		if ( needsCommit )
 			saveDatasetListing(datasetList, commitMessage);
@@ -491,19 +497,19 @@ public class UserFileHandler extends VersionedFileHandler {
 			DataColumnType thisColType = null;
 			if ( DashboardUtils.isEmptyNull(datasetIdColName)) {
 				thisColType = userColNamesToTypes.get(key);
-                if ( thisColType != null && thisColType.typeNameEquals(DashboardUtils.DATASET_NAME)) {
+                if ( thisColType != null && thisColType.typeNameEquals(DashboardUtils.DATASET_IDENTIFIER)) {
                     foundDatasetIdCol = true;
                 }
 			} else {
 				if ( datasetIdColName.equalsIgnoreCase(colName) || 
 					 userDsIdColKey.equalsIgnoreCase(key)) {
-					thisColType = DashboardUtils.DATASET_NAME;
+					thisColType = DashboardUtils.DATASET_IDENTIFIER;
                     foundDatasetIdCol = true;
 				} else {
 					thisColType = userColNamesToTypes.get(key);
 					// If a datasetId column was specified (which it is on this branch), 
 					// don't accept the default ones.
-					if ( DashboardUtils.DATASET_NAME.typeNameEquals(thisColType)) {
+					if ( DashboardUtils.DATASET_IDENTIFIER.typeNameEquals(thisColType)) {
 						thisColType = null;
 					}
 				}
@@ -519,7 +525,7 @@ public class UserFileHandler extends VersionedFileHandler {
                 idx += 1;
     			String key = DashboardServerUtils.getKeyForName(colName);
                 DataColumnType defaultType = defaultColNamesToTypes.get(key);
-				if ( defaultType != null && DashboardUtils.DATASET_NAME.equals(defaultType)) {
+				if ( defaultType != null && DashboardUtils.DATASET_IDENTIFIER.equals(defaultType)) {
         			colTypes.set(idx, defaultType.duplicate());
 				}
     		}

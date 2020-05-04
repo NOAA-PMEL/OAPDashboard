@@ -45,6 +45,7 @@ import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.gwt.view.client.ListDataProvider;
 
+import gov.noaa.pmel.dashboard.client.DashboardAskPopup.QuestionType;
 import gov.noaa.pmel.dashboard.client.UploadDashboard.PagesEnum;
 import gov.noaa.pmel.dashboard.shared.DashboardDataset;
 import gov.noaa.pmel.dashboard.shared.DashboardDatasetList;
@@ -263,7 +264,8 @@ public class DatasetListPage extends CompositeWithUsername {
 	private static final String VERSION_COLUMN_NAME = "Version";
 	private static final String SUBMITTED_COLUMN_NAME = "QC Status";
 	private static final String ARCHIVED_COLUMN_NAME = "Archival";
-	private static final String FILENAME_COLUMN_NAME = "Filename";
+	private static final String FILENAME_COLUMN_NAME = "File Name";
+	private static final String DATASET_NAME_COLUMN_NAME = "Dataset Name";
 	private static final String OWNER_COLUMN_NAME = "Owner";
 
 	// Replacement strings for empty or null values
@@ -1810,6 +1812,7 @@ public class DatasetListPage extends CompositeWithUsername {
 	    checkSet.put(dataset.getDatasetId(), dataset);
         return checkDatasetsForSubmitting(checkSet, to);
 	}
+    static boolean doItLater = true;
 	private static boolean checkDatasetsForSubmitting(DashboardDatasetList checkSet, final SubmitFor to) {
         boolean okToSubmit = true;
         StringBuilder errorMsgBldr = new StringBuilder("The following problems were found:");
@@ -1825,6 +1828,16 @@ public class DatasetListPage extends CompositeWithUsername {
                 addErrorMessages(errorMsgBldr, errorMessages);
                 thisOneIsOk = false;
             }
+            okToSubmit = okToSubmit && thisOneIsOk;
+		}
+        if ( !okToSubmit ) {
+            errorMsgBldr.append("</ul>");
+            UploadDashboard.showMessage(errorMsgBldr.toString());
+            return false;
+        }
+		for ( DashboardDataset dataset : checkSet.values() ) {
+            boolean thisOneIsOk = true;
+            String[] errorMessages;
             errorMessages = dataCheck(dataset);
             if ( errorMessages.length > 0 ) {
                 addErrorMessages(errorMsgBldr, errorMessages);
@@ -1839,8 +1852,23 @@ public class DatasetListPage extends CompositeWithUsername {
             okToSubmit = okToSubmit && thisOneIsOk;
 		}
         errorMsgBldr.append("</ul>");
+        
         if ( !okToSubmit ) {
-            UploadDashboard.showMessage(errorMsgBldr.toString());
+            boolean finalAnswer;
+            errorMsgBldr.append("<br/><br/>Do you still wish to submit to the archive?");
+            UploadDashboard.ask(errorMsgBldr.toString(), "Yes", "No", QuestionType.WARNING, 
+                                new AsyncCallback<Boolean>() {
+                                    @Override
+                                    public void onFailure(Throwable t) {
+                                        UploadDashboard.logToConsole("Failure to ask: " + String.valueOf(t));
+                                    }
+                                    @Override
+                                    public void onSuccess(Boolean answer) {
+                                        if ( answer.booleanValue() ) {
+                                            submitDatasets(checkSet, SubmitFor.ARCHIVE);
+                                        }
+                                    }
+                                });
         }
         return okToSubmit;
 	}
@@ -1851,7 +1879,10 @@ public class DatasetListPage extends CompositeWithUsername {
      */
     private static String[] checkMetadata(DashboardDataset dataset) {
         String[] messages = EMPTY_MESSAGES;
-        if ( dataset.getMdTimestamp().isEmpty()) {
+        String status = dataset.getMdStatus();
+        if ( dataset.getMdTimestamp().isEmpty() ||
+             status.isEmpty() || 
+             status.contains("incomplete")) {
             messages = new String[] { "Missing or incomplete metadata." };
         }
         return messages;
@@ -1862,7 +1893,7 @@ public class DatasetListPage extends CompositeWithUsername {
      * @return
      */
     private static String[] dataCheck(DashboardDataset dataset) {
-        String status = dataset.getDataCheckStatus();
+        String status = dataset.getDataCheckStatus().toLowerCase();
         if ( FileType.OTHER.equals(dataset.getFileType()) 
              || DashboardUtils.CHECK_STATUS_ACCEPTABLE.equals(status)) {
             return EMPTY_MESSAGES;

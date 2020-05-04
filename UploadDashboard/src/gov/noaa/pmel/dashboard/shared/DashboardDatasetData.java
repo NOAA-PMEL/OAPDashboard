@@ -155,6 +155,30 @@ public class DashboardDatasetData extends DashboardDataset implements Serializab
 				"    userColNames=" + userColNames.toString() + ";\n" + 
 				"    dataColTypes=" + dataColTypes.toString() + ";\n" + 
 				"    checkerFlags = " + checkerFlags.toString() + ";\n" + 
+				"    userFlags = " + userFlags.toString() + ";\n" ;
+        return repr;
+	}
+	public String detailString() {
+		String repr = 
+				"DashboardDatasetData[\n" +
+				"    selected=" + Boolean.toString(selected) + ";\n" + 
+				"    version = " + version + ";\n" + 
+				"    owner=" + owner +  ";\n" + 
+				"    datasetId=" + datasetId +  ";\n" + 
+				"    dataCheckStatus=" + dataCheckStatus + ";\n" + 
+				"    omeTimestamp=" + mdTimestamp + ";\n" + 
+				"    addlDocs=" + addlDocs.toString() + ";\n" + 
+				"    submitStatus=" + submitStatus + ";\n" + 
+				"    archiveStatus=" + archiveStatus + ";\n" + 
+				"    archiveDate=" + archiveDate + ";\n" + 
+				"    uploadFilename=" + uploadFilename + ";\n" + 
+				"    uploadTimestamp=" + uploadTimestamp + ";\n" + 
+				"    numDataRows=" + Integer.toString(getNumDataRows()) + ";\n" + 
+				"    numErrorRows=" + Integer.toString(numErrorRows) + ";\n" + 
+				"    numWarnRows=" + Integer.toString(numWarnRows) + ";\n" + 
+				"    userColNames=" + userColNames.toString() + ";\n" + 
+				"    dataColTypes=" + dataColTypes.toString() + ";\n" + 
+				"    checkerFlags = " + checkerFlags.toString() + ";\n" + 
 				"    userFlags = " + userFlags.toString() + ";\n" + 
 				"    dataValues = [\n";
 		for (int k = 0; k < rowNums.size(); k++)

@@ -80,7 +80,7 @@ public class DataMessagesPage extends CompositeWithUsername {
 			GWT.create(DashboardServicesInterface.class);
 
 //	@UiField InlineLabel titleLabel;
-	@UiField HTML introHtml;
+//	@UiField HTML introHtml;
 	@UiField DataGrid<ADCMessage> messagesGrid;
 	@UiField Button dismissButton;
 	@UiField SimplePager messagesPager;

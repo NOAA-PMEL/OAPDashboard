@@ -6,6 +6,7 @@ package gov.noaa.pmel.dashboard.dsg;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.Date;
 import java.util.GregorianCalendar;
 import java.util.HashMap;
 import java.util.List;
@@ -23,6 +24,7 @@ import gov.noaa.pmel.dashboard.shared.DashboardUtils;
 import gov.noaa.pmel.dashboard.shared.DataColumnType;
 import gov.noaa.pmel.dashboard.shared.QCFlag.Severity;
 import gov.noaa.pmel.tws.util.StringUtils;
+import static gov.noaa.pmel.dashboard.shared.DashboardUtils.*;
 
 /**
  * A 2-D array of objects corresponding to the standardized values in a dataset, 
@@ -32,6 +34,8 @@ import gov.noaa.pmel.tws.util.StringUtils;
  */
 public class StdDataArray {
 
+	private String datasetName;
+	
 	protected int numSamples;
 	protected int numDataCols;
 	protected DashDataType<?>[] dataTypes;
@@ -40,6 +44,7 @@ public class StdDataArray {
 	protected int latitudeIndex;
 	protected int sampleDepthIndex;
 	protected int samplePressureIndex;
+	protected int datasetIdIndex;
 	protected int stationIdIndex;
 	protected int castIdIndex;
 	protected int timestampIndex;
@@ -72,8 +77,9 @@ public class StdDataArray {
 	 * 		if there are no known user data types, or 
 	 * 		if a data column description is not a known user data type
 	 */
-	protected StdDataArray(List<DataColumnType> dataColumnTypes, 
+	protected StdDataArray(String datasetName, List<DataColumnType> dataColumnTypes, 
 			KnownDataTypes knownTypes) throws IllegalArgumentException {
+        this.datasetName = datasetName;
 		if ( (dataColumnTypes == null) || dataColumnTypes.isEmpty() )
 			throw new IllegalArgumentException("no data column types given");
 		if ( (knownTypes == null) || knownTypes.isEmpty() )
@@ -219,9 +225,13 @@ public class StdDataArray {
 	 * 		if any of the user data types is {@link DashboardServerUtils#UNKNOWN}
 	 * 		if any sample longitude, latitude, sample depth is missing, or
 	 * 		if any sample time cannot be computed.
+     * 
+     *  ** THIS IS ONLY USED BY TEST CLASSES **
+     *  
 	 */
 	public StdDataArray(StdDataArray userStdData, 
 						KnownDataTypes dataFileTypes) throws IllegalArgumentException {
+        this.datasetName = userStdData.datasetName;
 		// StdUserDataArray has to have data columns, but could be missing the data values
 		numSamples = userStdData.getNumSamples();
 		if ( numSamples <= 0 )
@@ -370,6 +380,7 @@ public class StdDataArray {
 		latitudeIndex = DashboardUtils.INT_MISSING_VALUE;
 		sampleDepthIndex = DashboardUtils.INT_MISSING_VALUE;
 		samplePressureIndex = DashboardUtils.INT_MISSING_VALUE;
+		datasetIdIndex = DashboardUtils.INT_MISSING_VALUE;
 		stationIdIndex = DashboardUtils.INT_MISSING_VALUE;
 		castIdIndex = DashboardUtils.INT_MISSING_VALUE;
 		timestampIndex = DashboardUtils.INT_MISSING_VALUE;
@@ -390,8 +401,10 @@ public class StdDataArray {
 				latitudeIndex = k;
 			else if ( DashboardServerUtils.SAMPLE_DEPTH.typeNameEquals(dataTypes[k]) )
 				sampleDepthIndex = k;
-			else if ( DashboardServerUtils.CTD_PRESSURE.typeNameEquals(dataTypes[k]) )
+			else if ( DashboardServerUtils.WATER_PRESSURE.typeNameEquals(dataTypes[k]) )
 				samplePressureIndex = k;
+			else if ( DashboardServerUtils.DATASET_ID.typeNameEquals(dataTypes[k]))
+				datasetIdIndex = k;
 			else if ( DashboardServerUtils.STATION_ID.typeNameEquals(dataTypes[k]))
 				stationIdIndex = k;
 			else if ( DashboardServerUtils.CAST_ID.typeNameEquals(dataTypes[k]))
@@ -473,6 +486,12 @@ public class StdDataArray {
 	public int getLongitudeIndex() {
 		return longitudeIndex;
 	}
+	public Double getSampleLongitude(int rowIdx) {
+		if ( ! isUsableIndex(longitudeIndex) )
+			return null;
+		Double sampleLongitude = (Double) stdObjects[rowIdx][longitudeIndex];
+		return sampleLongitude;
+	}
 
 	/**
 	 * @return
@@ -491,6 +510,12 @@ public class StdDataArray {
 	}
 	public int getLatitudeIndex() {
 		return latitudeIndex;
+	}
+	public Double getSampleLatitude(int rowIdx) {
+		if ( ! isUsableIndex(latitudeIndex) )
+			return null;
+		Double sampleLatitude = (Double) stdObjects[rowIdx][latitudeIndex];
+		return sampleLatitude;
 	}
 
 	/**
@@ -512,6 +537,7 @@ public class StdDataArray {
 		return sampleDepthIndex;
 	}
 
+    private Double[] _sampleTimes = null;
 	/**
 	 * Computes the fully-specified time, in units of "seconds since 1970-01-01T00:00:00Z" 
 	 * from the standardized date and time data values that can be found in the data.
@@ -538,7 +564,21 @@ public class StdDataArray {
 	 * @throws IllegalStateException
 	 * 		if specification of the sample date and time is incomplete
 	 */
-	public Double[] getSampleTimes() throws IllegalStateException {
+	public synchronized Double[] getSampleTimes() throws IllegalStateException {
+        if ( _sampleTimes == null ) {
+            _sampleTimes = extractSampleTimes();
+        }
+        return _sampleTimes;
+	}
+	public Date getSampleTime(int rowIdx) throws IllegalStateException {
+        if ( _sampleTimes == null || _sampleTimes.length == 0 ) { return null; }
+        Double doubleTime = _sampleTimes[rowIdx];
+        if ( doubleTime == null ) { return null; }
+        Date time = null;
+        time = new Date((long)(doubleTime.doubleValue()*1000));
+        return time;
+	}
+	private Double[] extractSampleTimes() throws IllegalStateException {
 		GregorianCalendar cal = new GregorianCalendar(TimeZone.getTimeZone("UTC"));
 		cal.setLenient(false);
 		Double[] sampleTimes = new Double[numSamples];
@@ -961,9 +1001,9 @@ public class StdDataArray {
 		return stationId;
 	}
 	
-	private int getStationIdIndex() {
+	private int getStationIdIndex() throws IllegalStateException {
 		if ( stationIdIndex == DashboardUtils.INT_MISSING_VALUE.intValue() ) {
-			Integer checkIdx = lookForDataColumnIndex("station");
+			Integer checkIdx = lookForDataColumnIndex(STATION_ID_VARNAME);
 			if ( checkIdx == null ) {
 				throw new IllegalStateException("No stationId column found.");
 			}
@@ -985,18 +1025,48 @@ public class StdDataArray {
 		}
 	}
 
-	/**
-	 * Get the cast ID for the specified row.
+    public String getDatasetId(int row) {
+        if (hasDatasetIdColumn()) {
+            return String.valueOf(getStdVal(row, getDatasetIdIndex()));
+        } else {
+            return getDatasetName();
+        }
+    }
+
+	public String getDatasetName() {
+		return datasetName;
+	}
+
+    private int getDatasetIdIndex() throws IllegalStateException {
+        if ( hasDatasetIdColumn()) {
+            return datasetIdIndex;
+        } else {
+            throw new IllegalStateException("No datasetId column found.");
+        }
+    }
+    public boolean hasDatasetIdColumn() {
+        if ( datasetIdIndex != DashboardUtils.INT_MISSING_VALUE.intValue()) {
+            return true;
+        }
+        Integer index = lookForDataColumnIndex(DATASET_IDENTIFIER_VARNAME);
+        if ( index != null ) {
+            datasetIdIndex = index.intValue();
+            return true;
+        }
+        return false;
+}
+/**
+ * Get the cast ID for the specified row.
 	 * 
 	 * @param row Zero-based row index
 	 * @return The castId for the specified row.
 	 * @throws IllegalStateException If there is no cast ID column defined.
 	 */
-	public String getStationCastId(int row) throws IllegalStateException {
-        String stationCastId = null;
+	public String getDatasetStationCastIdentifier(int row) throws IllegalStateException {
+        String stationCastId = getDatasetId(row);
         if ( hasStationIdColumn()) {
             int sidx = getStationIdIndex();
-            stationCastId = String.valueOf((getStdVal(row, sidx)));
+            stationCastId += ":" + String.valueOf((getStdVal(row, sidx)));
         }
         if ( hasCastIdColumn()) {
     		String castId = null;
@@ -1011,7 +1081,7 @@ public class StdDataArray {
 	
 	private int getCastIdIndex() {
 		if ( castIdIndex == DashboardUtils.INT_MISSING_VALUE.intValue() ) {
-			Integer checkIdx = lookForDataColumnIndex("cast");
+			Integer checkIdx = lookForDataColumnIndex(CAST_ID_VARNAME);
 			if ( checkIdx == null ) {
 				throw new IllegalStateException("No castId column found.");
 			}

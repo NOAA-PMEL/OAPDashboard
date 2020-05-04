@@ -19,10 +19,8 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.Properties;
 
+import org.apache.log4j.Logger;
 import org.apache.tomcat.util.http.fileupload.FileItem;
-import org.jdom2.Document;
-import org.jdom2.output.Format;
-import org.jdom2.output.XMLOutputter;
 import org.tmatesoft.svn.core.SVNException;
 
 import gov.noaa.pmel.dashboard.oads.DashboardOADSMetadata;
@@ -32,6 +30,7 @@ import gov.noaa.pmel.dashboard.server.DashboardServerUtils;
 import gov.noaa.pmel.dashboard.shared.DashboardMetadata;
 import gov.noaa.pmel.dashboard.shared.DashboardUtils;
 import gov.noaa.pmel.tws.util.FileUtils;
+import gov.noaa.pmel.tws.util.Logging;
 import gov.noaa.pmel.tws.util.TimeUtils;
 
 /**
@@ -41,6 +40,8 @@ import gov.noaa.pmel.tws.util.TimeUtils;
  */
 public class MetadataFileHandler extends VersionedFileHandler {
 
+    private static Logger logger = Logging.getLogger(MetadataFileHandler.class);
+    
 	private static final String INFOFILE_SUFFIX = ".properties";
 	private static final String UPLOAD_TIMESTAMP_ID = "uploadtimestamp";
 	private static final String METADATA_OWNER_ID = "metadataowner";
@@ -50,10 +51,10 @@ public class MetadataFileHandler extends VersionedFileHandler {
 
     private static final String EMPTY_OADS_XML_METADATA_ELEMENT_OPENING = 
             "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n" + 
-            "<metadata>\n" + 
-                "<expocode>";
+            "<metadata>\n" ;
+//                + "<expocode>";
     private static final String EMPTY_OADS_XML_METADATA_ELEMENT_CLOSING = 
-                "</expocode>\n"+
+//                "</expocode>\n"+
             "</metadata>";
     
 	private static final SimpleDateFormat DATETIME_FORMATTER = new SimpleDateFormat("YYYY-MM-dd HH:mm");
@@ -761,6 +762,8 @@ public class MetadataFileHandler extends VersionedFileHandler {
 	public void deleteMetadata(String username, String datasetId,
 							String metaname) throws IllegalArgumentException {
 		File metadataFile = getMetadataFile(datasetId, metaname);
+        File metaDir = metadataFile.getParentFile();
+        File backupDir = getBackupDir(metadataFile);
 		File propsFile = new File(metadataFile.getPath() + INFOFILE_SUFFIX);
         File extractedInfoFile = getAutoExtractedMetadataFile(datasetId);
 		// Do not throw an error if the props file does not exist
@@ -768,7 +771,7 @@ public class MetadataFileHandler extends VersionedFileHandler {
 			// Throw an exception if not allowed to overwrite
 			verifyOkayToDelete(username, datasetId, metaname);
 			try {
-                backupFile(propsFile, propsFile.getPath(), "."+TimeUtils.format_ISO_COMPRESSED(new Date())+"_bak");
+                backupFile(propsFile, backupDir, "."+TimeUtils.format_ISO_COMPRESSED(new Date())+"_bak");
 				deleteVersionedFile(propsFile, "Deleted metadata properties " + propsFile.getPath());
 			} catch ( Exception ex ) {
 				throw new IllegalArgumentException(
@@ -779,7 +782,7 @@ public class MetadataFileHandler extends VersionedFileHandler {
 		// If the props file does not exist, assume it is okay to delete the metadata file.
 		if ( metadataFile.exists() ) { 
 			try {
-                backupFile(metadataFile, metadataFile.getPath(), "."+TimeUtils.format_ISO_COMPRESSED(new Date())+"_bak");
+                backupFile(metadataFile, backupDir, "."+TimeUtils.format_ISO_COMPRESSED(new Date())+"_bak");
 				deleteVersionedFile(metadataFile, "Deleted metadata document " + metadataFile.getPath());
 			} catch ( Exception ex ) {
 				throw new IllegalArgumentException(
@@ -789,24 +792,59 @@ public class MetadataFileHandler extends VersionedFileHandler {
 		if ( extractedInfoFile.exists() ) { 
 			try {
                 extractedInfoFile.delete();
-//              backupFile(metadataFile, metadataFile.getPath(), "."+TimeUtils.format_ISO_COMPRESSED(new Date())+"_bak");
-//				deleteVersionedFile(metadataFile, "Deleted metadata document " + metadataFile.getPath());
 			} catch ( Exception ex ) {
 				throw new IllegalArgumentException(
 						"Unable to delete metadata file " + metadataFile.getPath());
 			}
 		}
+        boolean deletedAllFiles = true;
+        try {
+            for (File f : metaDir.listFiles()) {
+                deletedAllFiles = f.delete() && deletedAllFiles;
+            }
+            if ( ! deletedAllFiles ) {
+                logger.warn("Failed to delete all files from " + metaDir.getPath());
+            }
+        } catch (Exception ex) {
+            logger.warn("Exception deleting files from " + metaDir.getPath());
+        }
+        if ( deletedAllFiles ) {
+            try {
+                if ( !metaDir.delete()) {
+                    logger.warn("Failed to delete metadata directory " + metaDir.getPath());
+                }
+            } catch (Exception ex) {
+                logger.warn("Exception deleting metadata directory " + metaDir.getPath());
+            }
+        }
 	}
 
 	/**
+     * @param metadataFile
+     * @return
+     */
+    private static File getBackupDir(File metadataFile) {
+        File parent = metadataFile.getParentFile();
+        String backupDirName = parent.getName() + "_bak";
+        return new File(parent.getParentFile(), backupDirName);
+    }
+
+    /**
      * @param propsFile
      * @param path
      * @param string
 	 * @throws IOException 
      */
-    private static void backupFile(File file, String filePath, String backupExtension) throws IOException {
+    private static void backupFile(File file, File backupDir, String backupExtension) throws IOException {
         String dotExtension = backupExtension.startsWith(".") ? backupExtension : "." + backupExtension;
-        File outFile = new File(file.getParent(), file.getName()+dotExtension);
+        if ( ! backupDir.exists()) {
+            boolean created = backupDir.mkdirs();
+            if ( !created ) {
+                logger.warn("Failed to create backup dir: " + backupDir.getAbsolutePath());
+                return;
+            }
+        }
+        File outFile = new File(backupDir, file.getName()+dotExtension);
         FileUtils.copyFile(file, outFile);
     }
 
@@ -906,7 +944,7 @@ public class MetadataFileHandler extends VersionedFileHandler {
 		}
         try ( FileWriter writer = new FileWriter(mdataFile); ) {
             writer.write(EMPTY_OADS_XML_METADATA_ELEMENT_OPENING);
-            writer.write(datasetId);
+//            writer.write(datasetId);
             writer.write(EMPTY_OADS_XML_METADATA_ELEMENT_CLOSING);
             writer.flush();
         }

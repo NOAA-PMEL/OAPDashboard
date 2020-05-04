@@ -27,6 +27,7 @@ import org.apache.tomcat.util.http.fileupload.FileUploadException;
 import org.apache.tomcat.util.http.fileupload.disk.DiskFileItemFactory;
 import org.apache.tomcat.util.http.fileupload.servlet.ServletFileUpload;
 
+import gov.noaa.pmel.dashboard.server.util.UIDGen;
 import gov.noaa.pmel.dashboard.shared.DashboardUtils;
 import gov.noaa.pmel.dashboard.shared.FeatureType;
 import gov.noaa.pmel.dashboard.shared.FileType;
@@ -116,8 +117,10 @@ public class DataUploadService extends HttpServlet {
                 return;
             }
             
+            String submissionRecordId = UIDGen.genId();
+            
             UploadProcessor uploadProcessor = new UploadProcessor(stdFields);
-            uploadProcessor.processUpload();
+            uploadProcessor.processUpload(submissionRecordId);
             List<String>messages = uploadProcessor.getMessages();
             Set<String>successes = uploadProcessor.getSuccesses();
             sendResponseMsg(response, successes, messages);

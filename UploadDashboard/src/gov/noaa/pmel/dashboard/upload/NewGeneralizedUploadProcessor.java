@@ -7,6 +7,9 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.file.FileAlreadyExistsException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.TreeMap;
 import java.util.TreeSet;
@@ -19,18 +22,20 @@ import gov.noaa.pmel.dashboard.shared.DashboardDataset;
 import gov.noaa.pmel.dashboard.shared.DashboardDatasetData;
 import gov.noaa.pmel.dashboard.shared.DashboardMetadata;
 import gov.noaa.pmel.dashboard.shared.DashboardUtils;
+import gov.noaa.pmel.oads.util.StringUtils;
+import gov.noaa.pmel.tws.util.FileUtils;
 import gov.noaa.pmel.tws.util.Logging;
 
 /**
  * @author kamb
  *
  */
-public class GeneralizedUploadProcessor extends FileUploadProcessor {
+public class NewGeneralizedUploadProcessor extends FileUploadProcessor {
 
     
-    private static Logger logger = Logging.getLogger(GeneralizedUploadProcessor.class);
+    private static Logger logger = Logging.getLogger(NewGeneralizedUploadProcessor.class);
     
-    public GeneralizedUploadProcessor(StandardUploadFields uploadFields) {
+    public NewGeneralizedUploadProcessor(StandardUploadFields uploadFields) {
         super(uploadFields);
     }
 
@@ -39,19 +44,24 @@ public class GeneralizedUploadProcessor extends FileUploadProcessor {
             String filename = _uploadedFile.getName();
 //            String itemType = item.getContentType();
             // Get the datasets from this file
-            TreeMap<String,DashboardDatasetData> datasetsMap = null;
+//            TreeMap<String,DashboardDatasetData> datasetsMap = null;
             
+            datasetIdColName = null; // we no longer deal with this
+            specifiedDatasetId = StringUtils.emptyOrNull(specifiedDatasetId) ? 
+                                    filename :
+                                    specifiedDatasetId; 
+            DashboardDatasetData datasetData;
             try ( InputStream inStream = new FileInputStream(_uploadedFile); ) {
                 RecordOrientedFileReader recordReader = getFileReader(_uploadedFile, inStream);
-                datasetsMap = DataFileHandler.createDatasetsFromInput(recordReader, dataFormat, 
+                datasetData = DataFileHandler.createSingleDatasetFromInput(recordReader, dataFormat, 
                                                                       username, filename, timestamp, 
-                                                                      specifiedDatasetId, datasetIdColName);
+                                                                      submissionRecordId,
+//                                                                      specifiedDatasetId, 
+                                                                      datasetIdColName);
             } catch (IllegalStateException ex) {
-                _messages.add(DashboardUtils.INVALID_FILE_HEADER_TAG + " " + filename);
-                _messages.add(ex.getMessage());
-                _messages.add(DashboardUtils.END_OF_ERROR_MESSAGE_TAG);
-                return;
-            } catch (Exception ex) {
+                logger.warn(ex);
+                throw ex;
+            } catch (IOException ex) {
                 // Mark as a failed file, and go on to the next
                 _messages.add(DashboardUtils.INVALID_FILE_HEADER_TAG + " " + filename);
                 _messages.add("There was an error processing the data file.");
@@ -61,10 +71,19 @@ public class GeneralizedUploadProcessor extends FileUploadProcessor {
 
             // Process all the datasets created from this file
             String datasetId = null;
-            for ( DashboardDatasetData datasetData : datasetsMap.values() ) {
+//            for ( DashboardDatasetData datasetData : datasetsMap.values() ) {
+            try {
+                File datasetFile = new File(_dataFileHandler.datasetDataDir(submissionRecordId), _uploadedFile.getName());
+                try {
+                    Path path = copyFile(_uploadedFile, datasetFile);
+                    _uploadedFile = path.toFile();
+                } catch (IOException iox) {
+                    throw new UploadProcessingException(iox);
+                }
                 datasetData.setFileType(fileType.name());
                 datasetData.setFeatureType(_featureType.name());
                 datasetData.setUploadedFile(_uploadedFile.getPath());
+                datasetData.setUserDatasetName(specifiedDatasetId);
                 // Check if the dataset already exists
                 datasetId = datasetData.getDatasetId();
                 boolean datasetExists = _dataFileHandler.dataFileExists(datasetId);
@@ -72,6 +91,14 @@ public class GeneralizedUploadProcessor extends FileUploadProcessor {
                 if ( datasetExists ) {
                     String owner = "";
                     String status = "";
+                    // If only create new datasets, add error message and skip the dataset
+                    if ( DashboardUtils.NEW_DATASETS_REQUEST_TAG.equals(action) ) {
+                        _messages.add(DashboardUtils.DATASET_EXISTS_HEADER_TAG + " " + 
+                                filename + " ; " + datasetId + " ; " + owner + " ; " + status);
+                        throw new UploadProcessingException("Request to create new dataset, but dataset exists for " 
+                                                            + filename + " ; " + datasetId + " ; " + owner );
+//                        continue;
+                    }
                     try {
                         // Read the original dataset info to get the current owner and submit status
                         DashboardDataset oldDataset = _dataFileHandler.getDatasetFromInfoFile(datasetId);
@@ -79,13 +106,6 @@ public class GeneralizedUploadProcessor extends FileUploadProcessor {
                         status = oldDataset.getSubmitStatus();
                     } catch ( Exception ex ) {
                         // Some problem with the properties file
-                        ;
-                    }
-                    // If only create new datasets, add error message and skip the dataset
-                    if ( DashboardUtils.NEW_DATASETS_REQUEST_TAG.equals(action) ) {
-                        _messages.add(DashboardUtils.DATASET_EXISTS_HEADER_TAG + " " + 
-                                filename + " ; " + datasetId + " ; " + owner + " ; " + status);
-                        continue;
                     }
                     // Make sure this user has permission to modify this dataset
                     try {
@@ -93,7 +113,8 @@ public class GeneralizedUploadProcessor extends FileUploadProcessor {
                     } catch ( Exception ex ) {
                         _messages.add(DashboardUtils.DATASET_EXISTS_HEADER_TAG + " " + 
                                 filename + " ; " + datasetId + " ; " + owner + " ; " + status);
-                        continue;
+                        throw new UploadProcessingException(ex);
+//                        continue;
                     }
                     if ( DashboardUtils.APPEND_DATASETS_REQUEST_TAG.equals(action) ) {
                         // Get all the data from the existing dataset
@@ -105,7 +126,8 @@ public class GeneralizedUploadProcessor extends FileUploadProcessor {
                                     filename + " ; " + datasetId);
                             _messages.add(ex.getMessage());
                             _messages.add(DashboardUtils.END_OF_ERROR_MESSAGE_TAG);
-                            continue;
+                            throw new UploadProcessingException(ex);
+//                            continue;
                         }
                         // If append to dataset, at this time insist on the column names being the same
                         if ( ! datasetData.getUserColNames().equals(oldDataset.getUserColNames()) ) {
@@ -115,7 +137,8 @@ public class GeneralizedUploadProcessor extends FileUploadProcessor {
                             _messages.add("do not match those in uploaded file " + filename);
                             _messages.add("    " + datasetData.getUserColNames());
                             _messages.add(DashboardUtils.END_OF_ERROR_MESSAGE_TAG);
-                            continue;
+                            throw new UploadProcessingException("Uploaded file headers do not match existing dataset headers.");
+//                            continue;
                         }
                         // Update information on the existing dataset to reflect updated data
                         // leave the original owner and any archive date
@@ -178,17 +201,25 @@ public class GeneralizedUploadProcessor extends FileUploadProcessor {
                                 username + " from uploaded file " + filename;           
                     _dataFileHandler.saveDatasetInfoToFile(datasetData, "Dataset info " + commitMsg);
                     _dataFileHandler.saveDatasetDataToFile(datasetData, "Dataset data " + commitMsg);
+                    
+                    // Success
+                    _messages.add(DashboardUtils.SUCCESS_HEADER_TAG + " " + datasetId);
+                    _successes.add(datasetId);
+                
                 } catch (IllegalArgumentException ex) {
                     _messages.add(DashboardUtils.UNEXPECTED_FAILURE_HEADER_TAG + " " + 
                             filename + " ; " + datasetId);
                     _messages.add(ex.getMessage());
                     _messages.add(DashboardUtils.END_OF_ERROR_MESSAGE_TAG);
-                    continue;
+                    throw new UploadProcessingException(ex);
+//                    continue;
                 }
         
-                // Success
-                _messages.add(DashboardUtils.SUCCESS_HEADER_TAG + " " + datasetId);
-                _successes.add(datasetId);
+//                // Success
+//                _messages.add(DashboardUtils.SUCCESS_HEADER_TAG + " " + datasetId);
+//                _successes.add(datasetId);
+            } catch (UploadProcessingException upx) {
+                logger.warn(upx);
             }
 //        }
         // Update the list of cruises for the user
@@ -214,6 +245,7 @@ public class GeneralizedUploadProcessor extends FileUploadProcessor {
             return new ExcelFileReader(inputStream);
         } else if ( ! ( itemType.contains("text") 
                         && ( itemType.contains("delimited")
+                             || itemType.contains("separated")
                              || itemType.contains("csv")))) {
             throw new IllegalStateException("Unknown file type:"+ itemType);
         }

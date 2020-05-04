@@ -20,11 +20,13 @@ import java.util.List;
 import java.util.Set;
 
 import javax.xml.bind.JAXBContext;
+import javax.xml.bind.JAXBException;
 import javax.xml.bind.Marshaller;
 import javax.xml.bind.Unmarshaller;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.xml.sax.SAXException;
 
 import gov.noaa.ncei.oads.xml.v_a0_2_2.BaseVariableType;
 import gov.noaa.ncei.oads.xml.v_a0_2_2.OadsMetadataDocumentType;
@@ -77,12 +79,12 @@ public class OADSMetadata {
 		}
 	}
 	static GeoTemporalExtents extractGeospatialTemporalExtents(StdUserDataArray stdArray) {
-		double maxLat = Double.MIN_VALUE;
-		double minLat = Double.MAX_VALUE;
+		double maxLat = Double.NEGATIVE_INFINITY;
+		double minLat = Double.POSITIVE_INFINITY;
 		double maxLon = Double.NEGATIVE_INFINITY;
 		double minLon = Double.POSITIVE_INFINITY;
-		double maxTime = Double.MIN_VALUE;
-		double minTime = Double.MAX_VALUE;
+		double maxTime = Double.NEGATIVE_INFINITY;
+		double minTime = Double.POSITIVE_INFINITY;
 		Double[] lats = stdArray.getSampleLatitudes();
 		Double[] lons = stdArray.getSampleLongitudes();
 		Double[] times = stdArray.getSampleTimes();
@@ -119,7 +121,7 @@ public class OADSMetadata {
 	};
 	
 	public static DashboardOADSMetadata extractOADSMetadata(StdUserDataArray stdArray) {
-		DashboardOADSMetadata oads = new DashboardOADSMetadata(stdArray.getDatasetId());
+		DashboardOADSMetadata oads = new DashboardOADSMetadata(stdArray.getDatasetName());
 		GeoTemporalExtents gtExtents = extractGeospatialTemporalExtents(stdArray);
 		oads.westernBound(gtExtents.lonExtents.minValue);
 		oads.easternBound(gtExtents.lonExtents.maxValue);
@@ -310,17 +312,26 @@ public class OADSMetadata {
     /**
      * @param metaFile
      * @return
+     * @throws Exception 
+     * @throws IOException 
+     * @throws SAXException 
+     * @throws JAXBException 
      */
-    public static String validateMetadata(File metaFile) {
+    public static String validateMetadata(File metaFile) throws JAXBException, SAXException, 
+                                                                IOException, Exception {
+        OadsMetadataDocumentType mdDoc = OadsXmlReader.read(metaFile);
+        return validateMetadata(mdDoc);
+    }
+                
+    public static String validateMetadata(OadsMetadataDocumentType metadata) {
         String validationMsg;
         try {
-            OadsMetadataDocumentType mdDoc = OadsXmlReader.read(metaFile);
-            checkSubmitter(mdDoc);
-            checkInvestigators(mdDoc);
-            checkCitationInfo(mdDoc);
-            checkSpatialExtents(mdDoc);
-            checkTemporalExtents(mdDoc);
-            checkVariables(mdDoc);
+            checkSubmitter(metadata);
+            checkInvestigators(metadata);
+            checkCitationInfo(metadata);
+            checkSpatialExtents(metadata);
+            checkTemporalExtents(metadata);
+            checkVariables(metadata);
             validationMsg = "Validated.";
 //        } catch (JAXBException ex) {
 //            validationMsg = "There was an error processing the metadata file.";
@@ -333,10 +344,10 @@ public class OADSMetadata {
 //            ex.printStackTrace();
         } catch (IllegalArgumentException iax) {
             validationMsg = "Metadata has invalid data";
-            logger.info(metaFile + " : " + validationMsg + ": " + iax);
+            logger.info(metadata + " : " + validationMsg + ": " + iax);
         } catch (IllegalStateException isx) {
             validationMsg = "Metadata is incomplete";
-            logger.info(metaFile + " : " + validationMsg + ": " + isx);
+            logger.info(metadata + " : " + validationMsg + ": " + isx);
         } catch (Exception ex) {
             validationMsg = "Processing Error";
             ex.printStackTrace();
