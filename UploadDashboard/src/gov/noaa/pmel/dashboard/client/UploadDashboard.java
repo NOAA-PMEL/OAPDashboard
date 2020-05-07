@@ -511,7 +511,8 @@ public class UploadDashboard implements EntryPoint, ValueChangeHandler<String> {
             "<td><input type=\"password\" name=\"j_password\" /></td>" +
           "</tr>" +
           "<tr>" +
-            "<td style=\"text-align:center;\" colspan=\"2\"><input type=\"submit\" onclick=\"completeRelogin()\" value=\"Submit\" /></td>" + // completeRelogin submitAndClosePopup onclick=\"completeRelogin()\" 
+            "<td style=\"text-align:center;\" colspan=\"2\"><input type=\"submit\" class=\"reloginSubmit\"" +
+                " onclick=\"completeRelogin()\" value=\"Submit\" /></td>" + 
           "</tr>" +
         "</table>" +
       "</form>" ;

@@ -71,7 +71,7 @@ body {
 }
 
 .blankPopupClose {
-	color: button;
+	color: buttontext;
 	background-color: white;
     padding: 2px 8px 3px;
     position:absolute;
@@ -81,7 +81,7 @@ body {
     border-radius: 5px;
 }
 .blankPopupPanel {
-	background-color: #BBDDFF;
+	background-color: #e4ffff; /*#BBDDFF;*/
     padding: 1em;
 /* 	width: 35em;
     height: 15em; */

@@ -6,6 +6,17 @@
 	Runtime styling needs to be available to the browser.
 */
 
+.reloginSubmit {
+    color: buttontext;
+    background-color: #f0f1f0;
+    border: 1px solid #bbb;
+    padding: 2px 8px 3px;
+    position:absolute;
+    bottom: 5px;
+    right: 65px;
+    font: 400 11px system-ui;
+    border-radius: 5px;
+}
 .oa_cell {
 	border: none !important;
 }
