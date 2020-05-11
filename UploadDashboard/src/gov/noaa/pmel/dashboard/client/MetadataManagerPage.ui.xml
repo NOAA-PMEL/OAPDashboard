@@ -6,7 +6,7 @@
 	<ui:style src="FullWidth.css" />
 
 	<g:DockLayoutPanel unit="EM" addStyleNames="{style.fullpagecontainer} {style.letItOverFlow}" >
-        <g:north size="4"> <oap:ApplicationHeaderTemplate ui:field="header"/> </g:north>
+        <g:north size="4.2"> <oap:ApplicationHeaderTemplate ui:field="header"/> </g:north>
         <g:west size="8">
     		<g:FlowPanel>
     			<g:VerticalPanel addStyleNames="{style.cruisebuttonspanel}">
