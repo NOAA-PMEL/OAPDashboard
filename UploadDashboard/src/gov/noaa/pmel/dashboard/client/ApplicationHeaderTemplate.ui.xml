@@ -7,7 +7,7 @@
 	<ui:style src="FullWidth.css" />
     
             <g:FlowPanel addStyleNames="{style.pageheader}">
-                <g:Image styleName="{style.headerLogo}" url="images/noaa_logo_50x50.png" />
+                <g:Image width="50" height="50" styleName="{style.headerLogo}" url="images/NOAA_logo.png" />
                 <g:FlowPanel addStyleNames="{style.headerInfo}">
                     <g:Label  ui:field="titleLabel" addStyleNames="{style.headerpagelabel}" >DataSet List</g:Label> <!-- -->
                     <g:FlowPanel>
