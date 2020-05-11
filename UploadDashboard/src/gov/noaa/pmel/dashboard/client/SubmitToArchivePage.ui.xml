@@ -33,7 +33,7 @@
 	</ui:style>
 	
     <g:DockLayoutPanel unit="EM" addStyleNames="{style.fullpagecontainer} {style.letItOverFlow}" >
-        <g:north size="4.0" ><oap:ApplicationHeaderTemplate ui:field="header" /> </g:north>
+        <g:north size="4.2" ><oap:ApplicationHeaderTemplate ui:field="header" /> </g:north>
 		<g:south size="3">
             <g:FlowPanel>
                 <oap:ApplicationFooter/>

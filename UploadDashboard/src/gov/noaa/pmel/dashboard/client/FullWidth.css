@@ -509,12 +509,12 @@ hr .hline {
 .pageheader {
 	display: table;
     width: 100%;
-    height: 4em;
+    height: 4.2em;
 	padding-top: 0em;
 	padding-bottom: 0em;
     padding-right: .5em;
     overflow: visible;
-    /* background-color: #55a3e8; */
+    background-color: #55a3e8;
 }
 .normalText {
     font-weight: normal !important;
@@ -528,8 +528,11 @@ hr .hline {
     border-width: 0px 1px;
     border-color: rgb(204, 204, 204);
 }
+.blueByYou {
+	background-color: #55a3e8;
+}
 .headerLogo {
-/*     background-color: white; */
+	background-color: #55a3e8;
     margin: .5em 2.4em 0.3em;
 /*     margin-left:1.25em;
     margin-right:1.25em;
@@ -556,7 +559,7 @@ hr .hline {
 	font-weight: bold;
     margin: 0.25em 1em 0.3em;
     color: white;
-	float: left;
+/* 	float: left; */
 }
 .headerversionlabel {
 	position: absolute;

@@ -9,7 +9,7 @@
             <g:FlowPanel addStyleNames="{style.pageheader}">
                 <g:Image styleName="{style.headerLogo}" url="images/noaa_logo_50x50.png" />
                 <g:FlowPanel addStyleNames="{style.headerInfo}">
-                    <g:InlineLabel  ui:field="titleLabel" addStyleNames="{style.headerpagelabel}" >DataSet List</g:InlineLabel> <!-- -->
+                    <g:Label  ui:field="titleLabel" addStyleNames="{style.headerpagelabel}" >DataSet List</g:Label> <!-- -->
                     <g:FlowPanel>
                     <g:Label  addStyleNames="{style.headersoftwaretitle}" >OAP Scientific Data Integration System</g:Label>
                     <g:Label  addStyleNames="{style.headerversionlabel}" >pre-release</g:Label>
