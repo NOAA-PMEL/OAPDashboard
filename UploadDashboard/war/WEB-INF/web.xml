@@ -21,6 +21,7 @@
         <filter-name>LoginPageMisdirectFilter</filter-name>
         <url-pattern>/OAPUploadDashboard/DashboardServices</url-pattern>
         <url-pattern>/OAPUploadDashboard/DataUploadService</url-pattern>
+        <url-pattern>/OAPUploadDashboard/DataUploadService/*</url-pattern>
         <url-pattern>/OAPUploadDashboard/SessionServices</url-pattern>
     </filter-mapping>
     <filter>
@@ -73,7 +74,8 @@
 	</servlet>
 	<servlet-mapping>
 		<servlet-name>DashboardDataUploadServlet</servlet-name>
-		<url-pattern>/OAPUploadDashboard/DataUploadService</url-pattern>
+        <url-pattern>/OAPUploadDashboard/DataUploadService</url-pattern>
+        <url-pattern>/OAPUploadDashboard/DataUploadService/*</url-pattern>
 	</servlet-mapping>
 
 	<servlet>
@@ -153,6 +155,7 @@
 			<web-resource-name>DashboardServices</web-resource-name>
 			<url-pattern>/DashboardUpdateService/*</url-pattern>
 			<url-pattern>/images/*</url-pattern>
+			<url-pattern>/css/*</url-pattern>
             <url-pattern>/accountrequested.html</url-pattern>
             <url-pattern>/dashboardlogout.html</url-pattern>
             <url-pattern>/passwordhelp.html</url-pattern>
