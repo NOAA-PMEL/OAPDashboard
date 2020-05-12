@@ -22,7 +22,7 @@ public class DashboardUtils {
 	// Cruise upload action strings
 	public static final String PREVIEW_REQUEST_TAG = "PREVIEW REQUEST";
 	public static final String NEW_DATASETS_REQUEST_TAG = "NEW DATASETS REQUEST";
-	public static final String APPEND_DATASETS_REQUEST_TAG = "APPEND DATASETS REQUEST";
+//	public static final String APPEND_DATASETS_REQUEST_TAG = "APPEND DATASETS REQUEST";
 	public static final String OVERWRITE_DATASETS_REQUEST_TAG = "OVERWRITE DATASETS REQUEST";
 
 	// Recognized data formats

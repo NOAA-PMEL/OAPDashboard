@@ -40,6 +40,7 @@ import com.google.gwt.user.client.ui.UIObject;
 import com.google.gwt.user.client.ui.VerticalPanel;
 
 import gov.noaa.pmel.dashboard.client.DashboardAskPopup.QuestionType;
+import gov.noaa.pmel.dashboard.shared.DashboardDataset;
 import gov.noaa.pmel.dashboard.shared.DashboardServiceResponse;
 import gov.noaa.pmel.dashboard.shared.DashboardServicesInterface;
 import gov.noaa.pmel.dashboard.shared.DashboardServicesInterfaceAsync;
@@ -126,6 +127,7 @@ public class UploadDashboard implements EntryPoint, ValueChangeHandler<String> {
     
 	private DashboardBlankPagePopup blankMsgPopup;
 	private FileDataPreviewPopup dataPreviewPopup;
+    private DataUpdatePopup dataUpdatePopup;
 
     private DashboardFeedbackPopup feedbackPopup;
     private ChangePasswordPopup changePasswordPopup;
@@ -708,5 +710,15 @@ public class UploadDashboard implements EntryPoint, ValueChangeHandler<String> {
         singleton.changePasswordPopup.reset();
 		singleton.changePasswordPopup.show(singleton.currentPage.getUsername());
     }
-
-}
+    
+    /**
+     * @param datasetId
+     */
+    public static void showUpdateSubmissionDialog(String username, DashboardDataset dataset) {
+        getSingleton();
+		if ( singleton.dataUpdatePopup == null ) {
+            singleton.dataUpdatePopup = new DataUpdatePopup(singleton.currentPage.getUsername());
+		}
+        singleton.dataUpdatePopup.showPage(dataset);
+    }
+ }

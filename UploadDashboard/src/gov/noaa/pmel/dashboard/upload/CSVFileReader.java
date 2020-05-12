@@ -27,6 +27,7 @@ public class CSVFileReader implements RecordOrientedFileReader {
     
     private BufferedReader dataReader;
     private CsvParser dataParser;
+    private CsvFormat fileFormat;
     
 //    public static CSVFileReader readerFor(File inputFile) {
 //        return new CSVFileReader(inputFile);
@@ -59,8 +60,14 @@ public class CSVFileReader implements RecordOrientedFileReader {
         
         dataParser = new CsvParser(settings);
         dataParser.beginParsing(dataReader);
-        CsvFormat fileFormat = dataParser.getDetectedFormat();
+        fileFormat = dataParser.getDetectedFormat();
         logger.info("Detected file format: " + fileFormat);
         return dataParser.iterate(dataReader).iterator();
     }
+    
+    @Override
+    public String getDelimiter() {
+        return fileFormat.getDelimiterString();
+    }
+    
 }

@@ -32,7 +32,7 @@ public class OpaqueFileUploadProcessor extends FileUploadProcessor {
     }
 
     @Override
-    public void processUploadedFile() throws UploadProcessingException {
+    public void processUploadedFile(boolean isUpdateRequest) throws UploadProcessingException {
         boolean multiFileUpload = false;
         String datasetId = FormUtils.getFormField("datasetId", _uploadFields.parameterMap());
         List<FileItem> datafiles = _uploadFields.dataFiles();

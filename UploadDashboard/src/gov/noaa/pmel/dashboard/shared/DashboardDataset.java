@@ -445,14 +445,15 @@ public class DashboardDataset implements Serializable, IsSerializable {
 	}
 
 	public String getUserDatasetName() {
+        if ( userDatasetName == null || userDatasetName.trim().equals("")) {
+            return uploadFilename;
+        }
         return userDatasetName;
     }
-
 
     public void setUserDatasetName(String userDatasetName) {
         this.userDatasetName = userDatasetName;
     }
-
 
     /**
 	 * @return 
@@ -964,5 +965,12 @@ XXX This allows the possibility that numDataRows != the actual number of data ro
 			return d1.getUploadFilename().compareTo(d2.getUploadFilename());
 		}
 	};
+
+    /**
+     * @return
+    public String getDisplayName() {
+        return datasetId; // XXX TODO: Change
+    }
+     */
 
 }

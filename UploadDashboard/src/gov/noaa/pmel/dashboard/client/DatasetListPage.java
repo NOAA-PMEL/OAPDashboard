@@ -23,6 +23,8 @@ import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.Style;
 import com.google.gwt.event.dom.client.ClickEvent;
+import com.google.gwt.event.dom.client.DoubleClickEvent;
+import com.google.gwt.event.dom.client.DoubleClickHandler;
 import com.google.gwt.i18n.client.DateTimeFormat;
 import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
 import com.google.gwt.safehtml.shared.SafeHtmlUtils;
@@ -43,6 +45,7 @@ import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.google.gwt.user.client.ui.Button;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.Widget;
+import com.google.gwt.view.client.CellPreviewEvent;
 import com.google.gwt.view.client.ListDataProvider;
 
 import gov.noaa.pmel.dashboard.client.DashboardAskPopup.QuestionType;
@@ -78,10 +81,12 @@ public class DatasetListPage extends CompositeWithUsername {
     
 	private static final String TITLE_TEXT = "My Datasets";
 
-	private static final String UPLOAD_TEXT = "New Submission";
-	private static final String UPLOAD_HOVER_HELP = 
-			"upload data to create a new dataset " +
-			"or replace an existing dataset";
+	private static final String NEW_SUBMISSION_BUTTON_TEXT = "New Submission";
+	private static final String NEW_SUBMISSION_BUTTON_HOVER_HELP = 
+			"Create a new archive submission record";
+	private static final String UPDATE_SUBMISSION_BUTTON_TEXT = "Update Submission";
+	private static final String UPDATE_SUBMISSION_BUTTON_HOVER_HELP = 
+			"Create a new archive submission record";
 
 	private static final String VIEW_DATA_TEXT = "Identify Columns";
 	private static final String VIEW_DATA_HOVER_HELP =
@@ -296,7 +301,7 @@ public class DatasetListPage extends CompositeWithUsername {
 //	@UiField InlineLabel userInfoLabel;
 //	@UiField Button logoutButton;
 	
-	@UiField Button uploadButton;
+	@UiField Button newSubmissionButton;
 	@UiField Button viewDataAndColumnsButton;
 	@UiField Button metadataButton;
 	@UiField Button addlDocsButton;
@@ -325,31 +330,68 @@ public class DatasetListPage extends CompositeWithUsername {
 	private DashboardDatasetList selectedDatasets;
 	private DashboardAskPopup askDataAutofailPopup;
 	// private boolean managerButtonsShown;
+    private Column<DashboardDataset,Boolean> selectedColumn;
 	private TextColumn<DashboardDataset> timestampColumn;
 	private TextColumn<DashboardDataset> recordIdColumn;
     private TextColumn<DashboardDataset> filenameColumn;
 
+    private boolean doUpdateSubmission = false;
+    
 	// The singleton instance of this page
 	private static DatasetListPage singleton;
 
+    private int clickRowIdx = -1;
+    private DashboardDataset clickedDataset;
+    
+	private class SelectionHandler implements CellPreviewEvent.Handler<DashboardDataset> {
+        @Override
+        public void onCellPreview(CellPreviewEvent<DashboardDataset> event) {
+            clickRowIdx = event.getIndex();
+            clickedDataset = event.getValue();
+        }
+	}
+    private SelectionHandler selectionHandler = new SelectionHandler();
+    
+    private void setSelection(DoubleClickEvent event) {
+        GWT.log(event.getNativeEvent().getType());
+        if ( clickRowIdx >= 0 && clickRowIdx < 50 
+             && clickedDataset != null ) {
+            GWT.log(String.valueOf(clickedDataset));
+            clickedDataset.setSelected(! clickedDataset.isSelected());
+            datasetsGrid.redrawRow(clickRowIdx);
+            updateAvailableButtons();
+        } else {
+            Window.alert("bad click : " + clickRowIdx + ":" + clickedDataset);
+        }
+    }
+    
 	/**
 	 * Creates an empty dataset list page.  Do not call this 
 	 * constructor; instead use the showPage static method 
 	 * to show the singleton instance of this page with the
 	 * latest dataset list from the server. 
 	 */
-	DatasetListPage() {
+	DatasetListPage(DashboardDatasetList datasets) {
 		initWidget(uiBinder.createAndBindUi(this));
+        boolean showManagerFields = datasets.isManager();
 		singleton = this;
 
-		buildDatasetListTable();
+		buildDatasetListTable(showManagerFields);
 
 		buildSelectionSets();
 		
+        datasetsGrid.addCellPreviewHandler(selectionHandler);
+        datasetsGrid.addDomHandler(new DoubleClickHandler() {
+            @Override
+            public void onDoubleClick(DoubleClickEvent event) {
+                setSelection(event);
+            }
+        }, DoubleClickEvent.getType());
+        
         header.setPageTitle(TITLE_TEXT);
 
-		uploadButton.setText(UPLOAD_TEXT);
-		uploadButton.setTitle(UPLOAD_HOVER_HELP);
+		newSubmissionButton.setText(NEW_SUBMISSION_BUTTON_TEXT);
+		newSubmissionButton.setTitle(NEW_SUBMISSION_BUTTON_HOVER_HELP);
 
 		viewDataAndColumnsButton.setText(VIEW_DATA_TEXT);
 		viewDataAndColumnsButton.setTitle(VIEW_DATA_HOVER_HELP);
@@ -369,18 +411,16 @@ public class DatasetListPage extends CompositeWithUsername {
 		archiveSubmitButton.setText(ARCHIVE_SUBMIT_TEXT);
 		archiveSubmitButton.setTitle(ARCHIVE_SUBMIT_HOVER_HELP);
 
-//		suspendDatasetButton.setText(SUSPEND_TEXT);
-//		suspendDatasetButton.setTitle(SUSPEND_HOVER_HELP);
-
 		showDatasetButton.setText(SHOW_DATASETS_TEXT);
 		showDatasetButton.setTitle(SHOW_DATASETS_HOVER_HELP);
+        showDatasetButton.setVisible(showManagerFields);
 
 		hideDatasetButton.setText(HIDE_DATASETS_TEXT);
 		hideDatasetButton.setTitle(HIDE_DATASETS_HOVER_HELP);
+        hideDatasetButton.setVisible(showManagerFields);
 
-//		changeOwnerButton.setText(CHANGE_OWNER_TEXT);
-//		changeOwnerButton.setTitle(CHANGE_OWNER_HOVER_HELP);
-
+        secondSeparator.setVisible(showManagerFields);
+        
 		deleteButton.setText(DELETE_TEXT);
 		deleteButton.setTitle(DELETE_HOVER_HELP);
 
@@ -388,7 +428,7 @@ public class DatasetListPage extends CompositeWithUsername {
 		askDeletePopup = null;
 		askRemovePopup = null;
 		askDataAutofailPopup = null;
-		uploadButton.setFocus(true);
+		newSubmissionButton.setFocus(true);
 	}
 
 	private void buildSelectionSets() {
@@ -434,7 +474,7 @@ public class DatasetListPage extends CompositeWithUsername {
 			@Override
 			public void onSuccess(DashboardDatasetList cruises) {
 				if ( singleton == null )
-					singleton = new DatasetListPage();
+					singleton = new DatasetListPage(cruises);
 				UploadDashboard.updateCurrentPage(singleton);
 				singleton.updateDatasets(cruises);
 				History.newItem(PagesEnum.SHOW_DATASETS.name(), false);
@@ -489,8 +529,8 @@ public class DatasetListPage extends CompositeWithUsername {
 	 * in descending order, then by dataset in ascending order.
 	 */
 	static void resortTable() {
-		if ( singleton == null )
-			singleton = new DatasetListPage();
+		if ( singleton == null ) // do nothing
+            return;
 		ColumnSortList sortList = singleton.datasetsGrid.getColumnSortList();
 		sortList.push(new ColumnSortInfo(singleton.filenameColumn, true));
 		sortList.push(new ColumnSortInfo(singleton.timestampColumn, false));
@@ -593,78 +633,6 @@ public class DatasetListPage extends CompositeWithUsername {
 	}
 
 	/**
-	 * @return
-	 * 		the ..._SELECTION_OPTION String that describes the currently selected cruises;
-	 * 		one of SELECTION_OPTION_LABEL, ALL_SELECTION_OPTION, EDITABLE_SELECTION_OPTION, 
-	 * 		SUBMITTED_SELECTION_OPTION, PUBLISHED_SELECTION_OPTION, CLEAR_SELECTION_OPTION
-	 * - unused at this time, thus commented out
-	private String getSelectedDatasetsType() {
-		List<DashboardDataset> cruiseList = listProvider.getList();
-		boolean isCleared = true;
-		boolean isAll = true;
-		Boolean isAllEditable = null;
-		Boolean isAllSubmitted = null;
-		Boolean isAllPublished = null;
-		for ( DashboardDataset cruise : cruiseList ) {
-			Boolean editable = isEditableDataset(cruise);
-			if ( cruise.isSelected() ) {
-				isCleared = false;
-				if ( null == editable ) {
-					// Published cruise selected
-					if ( null == isAllPublished )
-						isAllPublished = true;
-					isAllEditable = false;
-					isAllSubmitted = false;
-				}
-				else if ( ! editable ) {
-					// Submitted cruise selected
-					if ( null == isAllSubmitted )
-						isAllSubmitted = true;
-					isAllEditable = false;
-					isAllPublished = false;
-				}
-				else {
-					// Editable cruise selected
-					if ( null == isAllEditable )
-						isAllEditable = true;
-					isAllSubmitted = false;
-					isAllPublished = false;
-				}
-			}
-			else {
-				isAll = false;
-				if ( null == editable ) {
-					// Published cruise not selected
-					isAllPublished = false;
-				}
-				else if ( ! editable ) {
-					// Submitted cruise not selected
-					isAllSubmitted = false;
-				}
-				else {
-					// Editable cruise not selected
-					isAllEditable = false;
-				}
-			}
-		}
-		String selectType;
-		if ( isCleared )
-			selectType = CLEAR_SELECTION_OPTION;
-		else if ( isAll )
-			selectType = ALL_SELECTION_OPTION;
-		else if ( Boolean.TRUE.equals(isAllEditable) )
-			selectType = EDITABLE_SELECTION_OPTION;
-		else if ( Boolean.TRUE.equals(isAllSubmitted) )
-			selectType = SUBMITTED_SELECTION_OPTION;
-		else if ( Boolean.TRUE.equals(isAllPublished) )
-			selectType = PUBLISHED_SELECTION_OPTION;
-		else
-			selectType = SELECTION_OPTION_LABEL;
-		return selectType;
-	}
-	*/
-
-	/**
 	 * Assigns datasetsSet with the selected cruises, and 
 	 * datasetIdsSet with the expocodes of these cruises. 
 	 *  
@@ -719,12 +687,29 @@ public class DatasetListPage extends CompositeWithUsername {
         return true;
     }
 
-    @UiHandler("uploadButton")
+    @UiHandler("newSubmissionButton")
 	void uploadDatasetOnClick(ClickEvent event) {
 		// Save the IDs of the currently selected datasets
 		getSelectedDatasets(null);
-		// Go to the dataset upload page
-		DataUploadPage.showPage(getUsername());
+        if ( doUpdateSubmission ) {
+            if ( selectedDatasets.size() == 0 ) {
+                Window.alert("No dataasets are selected!");
+                updateAvailableButtons();
+                doUpdateSubmission = false;
+                return;
+            }
+            if ( selectedDatasets.size() > 1 ) {
+                Window.alert("You can only update 1 submission at a time.");
+                updateAvailableButtons();
+                doUpdateSubmission = false;
+                return;
+            }
+            DashboardDataset selectedDataset = selectedDatasets.values().iterator().next();
+            UploadDashboard.showUpdateSubmissionDialog(getUsername(), selectedDataset);
+        } else {
+    		// Go to the dataset upload page
+    		DataUploadPage.showPage(getUsername());
+        }
 	}
 
 	@UiHandler("viewDataAndColumnsButton")
@@ -911,7 +896,20 @@ public class DatasetListPage extends CompositeWithUsername {
 
 	@UiHandler("showDatasetButton")
 	void addToListOnClick(ClickEvent event) {
-		String wildDatasetId = Window.prompt(DATASETS_TO_SHOW_MSG, "");
+	    UploadDashboard.pingService(new OAPAsyncCallback<Void>() {
+            @Override
+            public void onSuccess(Void arg0) {
+                GWT.log("successful ping.");
+                _addToListOnClick(event);
+            }
+            @Override
+            public void customFailure(Throwable t) {
+                GWT.log("ping fail: "+ t);
+            }
+        });
+	}
+	void _addToListOnClick(ClickEvent event) {
+		String wildDatasetId = Window.prompt(DATASETS_TO_SHOW_MSG, "");  // UploadDashboard.getResponse(DATASETS_TO_SHOW_MSG, "");
 		if ( (wildDatasetId != null) && ! wildDatasetId.trim().isEmpty() ) {
 			UploadDashboard.showWaitCursor();
 			// Save the currently selected cruises
@@ -1065,13 +1063,14 @@ public class DatasetListPage extends CompositeWithUsername {
 	/**
 	 * Creates the cruise data table columns.  The table will still need 
 	 * to be populated using {@link #updateDatasets(DashboardDatasetList)}.
+	 * @param showManagerColumns 
 	 */
-	private void buildDatasetListTable() {
+	private void buildDatasetListTable(boolean showManagerColumns) {
 		selectHeader = buildSelectionHeader();
 
 		// Create the columns for this table
 		TextColumn<DashboardDataset> rowNumColumn = buildRowNumColumn();
-		Column<DashboardDataset,Boolean> selectedColumn = buildSelectedColumn();
+		selectedColumn = buildSelectedColumn();
 		recordIdColumn = buildDatasetIdColumn();
 		filenameColumn = buildFilenameColumn();
 		timestampColumn = buildTimestampColumn();
@@ -1107,8 +1106,10 @@ public class DatasetListPage extends CompositeWithUsername {
 				SafeHtmlUtils.fromSafeConstant(ARCHIVED_COLUMN_NAME));
 		datasetsGrid.addColumn(recordIdColumn, 
 				SafeHtmlUtils.fromSafeConstant(DATASET_ID_COLUMN_NAME));
-		datasetsGrid.addColumn(ownerColumn, 
-				SafeHtmlUtils.fromSafeConstant(OWNER_COLUMN_NAME));
+        if (showManagerColumns) {
+    		datasetsGrid.addColumn(ownerColumn, 
+    				SafeHtmlUtils.fromSafeConstant(OWNER_COLUMN_NAME));
+        }
 
 		// Set the minimum widths of the columns
 		double minTableWidth = 0.0;
@@ -1277,14 +1278,14 @@ public class DatasetListPage extends CompositeWithUsername {
 	 * @return the selection column for the table
 	 */
 	private Column<DashboardDataset,Boolean> buildSelectedColumn() {
-		Column<DashboardDataset,Boolean> selectedColumn = 
+		Column<DashboardDataset,Boolean> theSelectedColumn = 
 				new Column<DashboardDataset,Boolean>(new CheckboxCell(true, true)) {
 			@Override
 			public Boolean getValue(DashboardDataset cruise) {
-				return cruise.isSelected();
+				return new Boolean(cruise.isSelected());
 			}
 		};
-		selectedColumn.setFieldUpdater(new FieldUpdater<DashboardDataset,Boolean>() {
+		theSelectedColumn.setFieldUpdater(new FieldUpdater<DashboardDataset,Boolean>() {
 			@Override
 			public void update(int index, DashboardDataset cruise, Boolean value) {
 				cruise.setSelected(value.booleanValue());
@@ -1292,7 +1293,7 @@ public class DatasetListPage extends CompositeWithUsername {
 			}
 
 		});
-		return selectedColumn;
+		return theSelectedColumn;
 	}
 
 	private void updateAvailableButtons() {
@@ -1315,9 +1316,25 @@ public class DatasetListPage extends CompositeWithUsername {
 		if ( selectCount > 1) {
 			disableButtons(singleSet, ONLY_ONE_TO_ENABLE_MSG);
 		}
+        updateSubmissionButton(selectCount);
 	}
 			
 	/**
+     * @param selectCount
+     */
+    private void updateSubmissionButton(int selectCount) {
+        if ( selectCount == 1 ) {
+            newSubmissionButton.setText(UPDATE_SUBMISSION_BUTTON_TEXT);
+            newSubmissionButton.setTitle(UPDATE_SUBMISSION_BUTTON_HOVER_HELP);
+            doUpdateSubmission = true;
+        } else {
+            newSubmissionButton.setText(NEW_SUBMISSION_BUTTON_TEXT);
+            newSubmissionButton.setTitle(NEW_SUBMISSION_BUTTON_HOVER_HELP);
+            doUpdateSubmission = false;
+        }
+    }
+
+    /**
      * @param selectedFeatures
      */
     private void disableInapropriateButtons(Set<FileType> selectedFileTypes) {

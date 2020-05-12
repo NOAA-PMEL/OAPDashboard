@@ -32,7 +32,7 @@ public class NewOpaqueFileUploadProcessor extends FileUploadProcessor {
     }
 
     @Override
-    public void processUploadedFile() throws UploadProcessingException {
+    public void processUploadedFile(boolean isUpdateRequest) throws UploadProcessingException {
         String datasetId = FormUtils.getFormField("datasetId", _uploadFields.parameterMap());
         List<FileItem> datafiles = _uploadFields.dataFiles();
 
@@ -48,18 +48,19 @@ public class NewOpaqueFileUploadProcessor extends FileUploadProcessor {
             OpaqueDataset pseudoDataset = createPseudoDataset(datasetId, item, _uploadedFile, _uploadFields);
                 // Check if the dataset already exists
                 String itemDatasetId = pseudoDataset.getDatasetId();
-                boolean datasetExists = _dataFileHandler.dataFileExists(itemDatasetId);
-                if ( datasetExists ) {
+                boolean datasetDataDirExists = _dataFileHandler.datasetDataDirExists(itemDatasetId);
+                if ( datasetDataDirExists ) {
                     String owner = "";
                     String status = "";
-                    try {
+                    DashboardDataset oldDataset = null;
+//                    try {
                         // Read the original dataset info to get the current owner and submit status
-                        DashboardDataset oldDataset = _dataFileHandler.getDatasetFromInfoFile(itemDatasetId);
+                        oldDataset = _dataFileHandler.getDatasetFromInfoFile(datasetId);
                         owner = oldDataset.getOwner();
                         status = oldDataset.getSubmitStatus();
-                    } catch ( Exception ex ) {
+//                    } catch ( Exception ex ) {
                         // Some problem with the properties file
-                    }
+//                    }
                     // If only create new datasets, add error message and skip the dataset
                     if ( DashboardUtils.NEW_DATASETS_REQUEST_TAG.equals(action) ) {
                         _messages.add(DashboardUtils.DATASET_EXISTS_HEADER_TAG + " " + 
@@ -73,6 +74,15 @@ public class NewOpaqueFileUploadProcessor extends FileUploadProcessor {
                         _messages.add(DashboardUtils.DATASET_EXISTS_HEADER_TAG + " " + 
                                 filename + " ; " + itemDatasetId + " ; " + owner + " ; " + status);
                         continue;
+                    }
+                    String uploadedFilePath = oldDataset.getUploadedFile();
+                    if ( ! StringUtils.emptyOrNull(uploadedFilePath)) {
+                        File previousFile = new File(uploadedFilePath);
+                        if ( ! _uploadedFile.getName().equals(previousFile.getName())) {
+                            if ( !previousFile.delete()) {
+                                logger.warn("Failed to delete previous file:" + uploadedFilePath);
+                            }
+                        }
                     }
                 } 
                 try {
