@@ -17,6 +17,9 @@
     font: 400 11px system-ui;
     border-radius: 5px;
 }
+.dataColumnSelectionCell {
+	width: 97%;
+}
 .oa_cell {
 	border: none !important;
 }

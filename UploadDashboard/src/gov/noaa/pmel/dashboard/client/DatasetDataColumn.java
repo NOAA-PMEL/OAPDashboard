@@ -8,6 +8,7 @@ import java.util.Arrays;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+import com.google.gwt.cell.client.AbstractInputCell;
 import com.google.gwt.cell.client.Cell;
 import com.google.gwt.cell.client.CompositeCell;
 import com.google.gwt.cell.client.FieldUpdater;
@@ -140,23 +141,25 @@ public class DatasetDataColumn {
 		// Create the SelectionCell listing the known standard headers
 		HasCell<DatasetDataColumn,String> stdNameCell = new HasCell<DatasetDataColumn,String>() {
 			@Override
-			public SelectionCell getCell() {
+			public AbstractInputCell<String, String> getCell() {
 				// Create a list of all the standard column headers with units;
 				// render as a block-level element
-				return new SelectionCell(typeUnitStringList) {
-					@Override
-					public void render(Cell.Context context, String value, SafeHtmlBuilder sb) {
-						super.render(context, value, sb);
-						sb.appendHtmlConstant("<br />");
-					}
-//                    @Override
-//                    protected void finishEditing(Element parent,
-//                                                 String value,
-//                                                 java.lang.Object key,
-//                                                 ValueUpdater<String> valueUpdater) {
-//                        logger.fine(ID + " finished with " + value);
-//                    }
-				};
+                AbstractInputCell<String, String> cell = 
+    				new StyledSelectionCell(typeUnitStringList, "dataColumnSelectionCell") {
+    					@Override
+    					public void render(Cell.Context context, String value, SafeHtmlBuilder sb) {
+    						super.render(context, value, sb);
+    						sb.appendHtmlConstant("<br />");
+    					}
+    //                    @Override
+    //                    protected void finishEditing(Element parent,
+    //                                                 String value,
+    //                                                 java.lang.Object key,
+    //                                                 ValueUpdater<String> valueUpdater) {
+    //                        logger.fine(ID + " finished with " + value);
+    //                    }
+    				};
+                return cell;
 			}
 			@Override
 			public FieldUpdater<DatasetDataColumn,String> getFieldUpdater() {
