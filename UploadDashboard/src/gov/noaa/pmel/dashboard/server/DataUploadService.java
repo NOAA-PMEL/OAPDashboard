@@ -27,6 +27,7 @@ import org.apache.tomcat.util.http.fileupload.FileUploadException;
 import org.apache.tomcat.util.http.fileupload.disk.DiskFileItemFactory;
 import org.apache.tomcat.util.http.fileupload.servlet.ServletFileUpload;
 
+import gov.noaa.pmel.dashboard.server.util.FileTypeTest;
 import gov.noaa.pmel.dashboard.server.util.UIDGen;
 import gov.noaa.pmel.dashboard.shared.DashboardUtils;
 import gov.noaa.pmel.dashboard.shared.FeatureType;
@@ -37,7 +38,6 @@ import gov.noaa.pmel.dashboard.upload.UploadProcessor;
 import gov.noaa.pmel.dashboard.util.FormUtils;
 import gov.noaa.pmel.oads.util.StringUtils;
 import gov.noaa.pmel.tws.util.ApplicationConfiguration;
-import scratch.FileTypeTest;
 
 
 /**
