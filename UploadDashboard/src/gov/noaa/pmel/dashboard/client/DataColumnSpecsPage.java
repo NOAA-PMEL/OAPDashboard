@@ -1019,7 +1019,7 @@ public class DataColumnSpecsPage extends CompositeWithUsername {
 //			errMsg += UNKNOWN_COLUMN_TYPE_EPILOGUE;
 //            UploadDashboard.showMessage(errMsg);
 //			return;
-			UploadDashboard.theresAproblem("There are data columns of unknown type. Continue anyways?", "Continue", "Cancel", new AsyncCallback<Boolean>() {
+			UploadDashboard.theresAproblem("There are data columns of unknown type. Continue anyway?", "Continue", "Cancel", new AsyncCallback<Boolean>() {
                 @Override
                 public void onFailure(Throwable arg0) {
                     // Doesn't happen
