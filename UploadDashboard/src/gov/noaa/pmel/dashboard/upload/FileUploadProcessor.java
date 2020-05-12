@@ -84,17 +84,17 @@ public abstract class FileUploadProcessor {
         fileType = _uploadFields.fileType();
     }
     
-    public void processUpload(String submissionId, File uploadedFile) throws IOException, UploadProcessingException {
+    public void processUpload(String submissionId, boolean isUpdateRequest, File uploadedFile) throws IOException, UploadProcessingException {
         this._uploadedFile = uploadedFile;
         this.submissionRecordId = submissionId;
 //        this.specifiedDatasetId = submissionId;
         _configStore = DashboardConfigStore.get(false);
         _dataFileHandler = _configStore.getDataFileHandler();
         
-        processUploadedFile();
+        processUploadedFile(isUpdateRequest);
     }
     
-    abstract void processUploadedFile() throws UploadProcessingException;
+    abstract void processUploadedFile(boolean isUpdateRequest) throws UploadProcessingException;
     
     static Path copyFile(File sourceFile, File destFile, CopyOption... options) throws IOException {
         return Files.copy(sourceFile.toPath(), destFile.toPath(), options);

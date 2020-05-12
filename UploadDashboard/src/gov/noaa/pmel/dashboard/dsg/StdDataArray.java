@@ -13,6 +13,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.TimeZone;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
 import gov.noaa.pmel.dashboard.datatype.CharDashDataType;
 import gov.noaa.pmel.dashboard.datatype.DashDataType;
 import gov.noaa.pmel.dashboard.datatype.DoubleDashDataType;
@@ -61,6 +64,8 @@ public class StdDataArray {
 
 	protected Map<String, DashDataType<?>> dataTypeMap = new HashMap<>();
 	
+    static Logger logger = LogManager.getLogger(StdDataArray.class);
+    
 	/**
 	 * Create and assign the 1-D arrays of data column types from 
 	 * the given user's descriptions of the data column.  Appends 
@@ -720,7 +725,11 @@ public class StdDataArray {
 //				try {
 					String stdYMD = (String) stdObjects[j][dateIndex];
 					if ( DashboardUtils.isEmptyNull(stdYMD)) {
-						throw new IllegalStateException("Invalid (empty or null) date string (possibly due to wrong date format specified) at row: " + j);
+                        String msg = "Invalid (empty or null) date string (possibly due to wrong time format specified) at row: " + j;
+                        logger.warn(msg);
+                        sampleTimes[j] = new Double(0.0);
+                        continue;
+//						throw new IllegalStateException("Invalid (empty or null) date string (possibly due to wrong date format specified) at row: " + j);
 					}
 					String[] ymd = stdYMD.split("-");
 					if ( ymd.length != 3 )
@@ -730,7 +739,11 @@ public class StdDataArray {
 					int day = Integer.parseInt(ymd[2]);
 					String stdHMS = (String) stdObjects[j][timeOfDayIndex];
 					if ( DashboardUtils.isEmptyNull(stdHMS)) {
-						throw new IllegalStateException("Invalid (empty or null) time string (possibly due to wrong time format specified) at row: " + j);
+                        String msg = "Invalid (empty or null) time string (possibly due to wrong time format specified) at row: " + j;
+                        logger.warn(msg);
+                        sampleTimes[j] = new Double(0.0);
+                        continue;
+//						throw new IllegalStateException("Invalid (empty or null) time string (possibly due to wrong time format specified) at row: " + j);
 					}
 					String[] hms = stdHMS.split(":");
 					if ( hms.length != 3 )

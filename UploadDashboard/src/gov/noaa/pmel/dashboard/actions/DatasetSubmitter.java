@@ -281,7 +281,7 @@ public class DatasetSubmitter {
 					errorMsgs.add("Failed to submit request for immediate archival of " + 
 							datasetId + ": " + ex.getMessage());
 					thisStatus = "Submission Failed";
-//					continue;
+					continue;
 				}
 				// When successful, update the archived timestamp
 				DashboardDataset cruise = dataHandler.getDatasetFromInfoFile(datasetId);
@@ -333,7 +333,8 @@ public class DatasetSubmitter {
      */
     private static String createArchiveReferenceKey(String datasetId, String submitter) {
 //        return Generators.timeBasedGenerator().generate().toString();
-        return "SDIS_"+ UIDGen.idToShortURL(new Date().getTime());
+//        return "SDIS_"+ UIDGen.idToShortURL(new Date().getTime());
+        return datasetId;
     }
     
     /**
@@ -464,9 +465,11 @@ public class DatasetSubmitter {
      * @return
 	 * @throws Exception
      */
-    private File getArchiveBundle(SubmissionRecord submitRecord, String datasetId, List<String> columnsList, String submitMsg, boolean generateDOI) throws Exception {
+    private static File getArchiveBundle(SubmissionRecord submitRecord, String datasetId, 
+                                         List<String> columnsList, String submitMsg, 
+                                         boolean generateDOI) throws Exception {
         File archiveBundle = null;
-        if ( ApplicationConfiguration.getProperty("oap.archive.use_bagit", true)) {
+//        if ( ApplicationConfiguration.getProperty("oap.archive.use_bagit", true)) {
             String submitComment = "generate_doi: " + String.valueOf(generateDOI) + "\n";
             submitComment += "submission_record_id:" + submitRecord.submissionKey() + "\n";
             submitComment += "user_dataset_id:" + datasetId + "\n";
@@ -474,9 +477,9 @@ public class DatasetSubmitter {
                 submitComment += USER_COMMENT_HEADER + submitMsg;
             }
             archiveBundle = Bagger.Bag(submitRecord, datasetId, submitComment);
-        } else {
-            archiveBundle = filesBundler.createArchiveDataFile(datasetId, columnsList);
-        }
+//        } else {
+//            archiveBundle = filesBundler.createArchiveDataFile(datasetId, columnsList);
+//        }
         return archiveBundle;
     }
 

@@ -359,7 +359,7 @@ public class StdUserDataArray extends StdDataArray {
 			msg.setSeverity(Severity.CRITICAL);
 			String comment = "incomplete columns specifying sample date/time";
 			msg.setGeneralComment(comment);
-			msg.setDetailedComment(comment);
+			msg.setDetailedComment(ex.getMessage());
 			stdMsgList.add(msg);
 		}
 

@@ -10,7 +10,10 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.apache.poi.ss.usermodel.Cell;
+import org.apache.poi.ss.usermodel.CellType;
 import org.apache.poi.ss.usermodel.DataFormatter;
 import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.ss.usermodel.Sheet;
@@ -23,7 +26,8 @@ import org.apache.poi.ss.usermodel.WorkbookFactory;
  */
 public class ExcelFileReader implements RecordOrientedFileReader, Iterator<String[]> {
     
-
+    static Logger logger = LogManager.getLogger(ExcelFileReader.class);
+    
     private InputStream _inStream;
     private DataFormatter df;
     private Workbook wb;
@@ -36,27 +40,6 @@ public class ExcelFileReader implements RecordOrientedFileReader, Iterator<Strin
         df = new DataFormatter();
         wb = WorkbookFactory.create(_inStream);
     }
-//    private static List<String[]> extractFileRows(InputStream inStream) throws Exception, IOException {
-//        List<String[]> rows;
-//        ByteArrayOutputStream copyOut = new ByteArrayOutputStream();
-//        IOUtils.copy(inStream, copyOut);
-//        InputStream inCopy = new ByteArrayInputStream(copyOut.toByteArray());
-//        try ( InputStream bufIn = FileMagic.prepareToCheckMagic(inCopy); ) {
-//              FileMagic fm = FileMagic.valueOf(bufIn);
-//            switch (fm) {
-//                case OLE2:
-//                case OOXML:
-//                    rows = extractExcelRows(bufIn);
-//                    break;
-//                case UNKNOWN:
-//                    rows = tryDelimited(inCopy);
-//                    break;
-//                default:
-//                    throw new IOException("Cannot parse input stream of type: "+fm);
-//            }
-//        }
-//        return rows;
-//    }
         
     /**
      * Extract all the rows at once into memory.
@@ -73,14 +56,29 @@ public class ExcelFileReader implements RecordOrientedFileReader, Iterator<Strin
         DataFormatter df = new DataFormatter();
         try ( Workbook wb = WorkbookFactory.create(inStream); ) {
             Sheet sheet = wb.getSheetAt(0);
-            int rowNum = 0;
             for (Row row : sheet) {
-                rowNum += 1;
                 int rowCellCount = row.getLastCellNum();
                 String[] rowValues = new String[rowCellCount];
                 int cellIdx = 0;
-                for ( Cell c : row ) {
-                    String cellValue = df.formatCellValue(c);
+                for ( Cell cell : row ) {
+                    String cellValue;
+                    if ( cell.getCellType() == CellType.FORMULA ) {
+                        switch (cell.getCachedFormulaResultType()) {
+                            case BOOLEAN:
+                                cellValue = String.valueOf(cell.getBooleanCellValue());
+                                break;
+                            case NUMERIC:
+                                cellValue = String.valueOf(cell.getNumericCellValue());
+                                break;
+                            case STRING:
+                                cellValue = String.valueOf(cell.getRichStringCellValue());
+                                break;
+                            default:
+                                cellValue = df.formatCellValue(cell);
+                        }                    
+                    } else {
+                        cellValue = df.formatCellValue(cell);
+                    }
                     rowValues[cellIdx++] = cellValue;
                 }
                 rows.add(rowValues);
@@ -123,23 +121,57 @@ public class ExcelFileReader implements RecordOrientedFileReader, Iterator<Strin
         
         List<String> rowList = new ArrayList<>();
         int cellIdx = 0;
-        for ( Cell c : row ) {
-            String cellValue = df.formatCellValue(c);
+        for ( Cell cell : row ) {
+            String cellValue;
+            if ( cell.getCellType() == CellType.FORMULA ) {
+                switch (cell.getCachedFormulaResultType()) {
+                    case BOOLEAN:
+                        cellValue = String.valueOf(cell.getBooleanCellValue());
+                        break;
+                    case NUMERIC:
+                        cellValue = String.valueOf(cell.getNumericCellValue());
+                        break;
+                    case STRING:
+                        cellValue = String.valueOf(cell.getRichStringCellValue());
+                        break;
+                    default:
+                        cellValue = df.formatCellValue(cell);
+                }                    
+            } else {
+                cellValue = df.formatCellValue(cell);
+            }
+
             if ( cellValue == null ) {
-                System.out.println("Null at " + rowIdx + ":" + cellIdx);
+                logger.warn("Null at " + rowIdx + ":" + cellIdx);
+                cellValue = "";
             }
             rowList.add(cellValue != null ? cellValue : "");
             cellIdx+=1;
         }
+        // Remove trailing empty cells. Depending on how the excel file is set up, 
+        // there are sometimes extraneous empty cells returned at the end of a row.
+        // If they are actually appropriately empty cells at the end of the row,
+        // they will be added back in during the parse/extract dataset phase.
+        // This is determined by the row size being less than the number of header columns.
         for (int i = rowList.size()-1; i>=0; i--) {
             if ( rowList.get(i).isEmpty()) {
                 rowList.remove(i);
+            } else {
+                break;  // stop when a non-empty cell is found.
             }
         }
         rowIdx += 1;
         return rowList.toArray(new String[rowList.size()]);
     }
-    
+
+    /* (non-Javadoc)
+     * @see gov.noaa.pmel.dashboard.upload.RecordOrientedFileReader#getDelimiter()
+     */
+    @Override
+    public String getDelimiter() {
+        return ", ";
+    }
+
     /*
     private static List<String[]> tryDelimited(InputStream inStream) throws Exception, IOException {
     private static List<String[]> tryDelimited_usingUnivocity(InputStream inStream) throws Exception, IOException {

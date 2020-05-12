@@ -74,7 +74,6 @@ public class Bagger implements ArchiveBundler {
     
     private SubmissionRecord _submitRecord;
     private String _datasetId;
-    private FeatureType _featureType;
     private boolean _includeHiddenFiles = false;
     private File _contentRoot;
     private SimpleDateFormat _tsFormatter;
@@ -122,13 +121,13 @@ public class Bagger implements ArchiveBundler {
         this(submitRecord, datasetId, false, store);
     }
     
-    public Bagger(SubmissionRecord submitRecord, String datasetId, boolean includeHiddenFiles, DashboardConfigStore store) {
+    public Bagger(SubmissionRecord submitRecord, String datasetId, 
+                  boolean includeHiddenFiles, DashboardConfigStore store) {
         _submitRecord = submitRecord;
         _datasetId = datasetId.toUpperCase();
         _includeHiddenFiles = includeHiddenFiles;
         _store = store;
         _contentRoot = _store.getAppContentDir();
-        _featureType = _store.getDataFileHandler().getDatasetFromInfoFile(datasetId).getFeatureType();
     }
 
     /**
@@ -137,18 +136,7 @@ public class Bagger implements ArchiveBundler {
      */
     private Path stuffit() throws IOException {
         DataFileHandler dataFiler = _store.getDataFileHandler();
-        File dataFile  = dataFiler.datasetDataFile(_datasetId);
-        DashboardDataset dataset = dataFiler.getDatasetFromInfoFile(_datasetId);
-        String rawUpload = dataset.getUploadedFile();
-        if ( ! StringUtils.emptyOrNull(rawUpload)) {
-            File rawFile = new File(rawUpload);
-            if ( rawFile.exists()) {
-                dataFile = rawFile;
-            } else {
-                logger.info("Raw upload file " + rawUpload + " does not exist for dataset " + _datasetId + ". "
-                            + "Archiving data file " + dataFile.getPath() + "." );
-            }
-        }
+        File dataFile  = dataFiler.datasetUploadedFile(_datasetId);
         return stuffit(dataFile);
     }
     
@@ -168,11 +156,7 @@ public class Bagger implements ArchiveBundler {
         
         writeFileTo(dataFile, dataDir);
         
-//        DataFileHandler dataFiler = _store.getDataFileHandler();
-//        File infoFile = dataFiler.datasetInfoFile(_datasetId);
-//        writeFileTo(infoFile, dataDir);
-        
-        File meta = dataDir; // new File(dataDir, "metadata");
+        File meta = dataDir;
         meta.mkdirs();
         if ( !meta.exists()) { throw new IllegalStateException("Unable to create bag metadata dir: " + meta); }
         
@@ -182,7 +166,6 @@ public class Bagger implements ArchiveBundler {
         
         MetadataFileHandler metaFiler = _store.getMetadataFileHandler();
         File metaFile = metaFiler.getMetadataFile(_datasetId);
-//        File metaProps = new File(metaFile.getPath()+".properties");
         File metaDir = metaFile.getParentFile();
         for ( File mfile : metaDir.listFiles(new FileFilter() {
                 @Override
@@ -195,7 +178,7 @@ public class Bagger implements ArchiveBundler {
         {
            if (mfile.getName().startsWith("extracted_")) { continue; } // Ignore auto extracted metadata file
            if (mfile.getAbsoluteFile().equals(metaFile.getAbsoluteFile())) {
-               writeFileTo(mfile, meta);
+               writeFileTo(mfile, meta, "oap_metadata.xml"); // XXX this may change 
            } else {
                writeFileTo(mfile, supl);
            }
@@ -203,7 +186,7 @@ public class Bagger implements ArchiveBundler {
         if ( supl.list().length == 0 ) {
            supl.delete();
         }
-        if ( !_featureType.equals(FeatureType.OTHER)) {
+        if ( _store.getDataFileHandler().dataFileExists(_datasetId)) { // else can't read the data file
             addLatLonFile(bagRoot);
         }
         
@@ -219,7 +202,6 @@ public class Bagger implements ArchiveBundler {
     private void addLatLonFile(File bagRoot) throws FileNotFoundException {
         File lonLatFile = new File(bagRoot, "lonlat.tsv");
         try ( PrintWriter lonLatFileWriter = new PrintWriter(lonLatFile); ) {
-//            writeBounds(lonLatFileWriter, metaFile);
             writeAll(lonLatFileWriter);
         }
     }
@@ -521,10 +503,14 @@ public class Bagger implements ArchiveBundler {
     }
 
     private static void writeFileTo(File inFile, File destDir) throws IOException {
+        writeFileTo(inFile, destDir, inFile.getName());
+    }
+    
+    private static void writeFileTo(File inFile, File destDir, String destName) throws IOException {
         if ( !destDir.exists()) {
             destDir.mkdirs();
         }
-        File destFile = new File(destDir, inFile.getName());
+        File destFile = new File(destDir, destName);
         writeFile(inFile, destFile);
     }
     

@@ -49,7 +49,7 @@ public class UploadProcessor {
     public UploadProcessor(StandardUploadFields stdFields) {
         _stdFields = stdFields;
     }
-    public void processUpload(String submissionRecordId) throws UploadProcessingException {
+    public void processUpload(String submissionRecordId, boolean isUpdateRequest) throws UploadProcessingException {
         List<FileItem> datafiles = _stdFields.dataFiles();
         for ( FileItem item : datafiles ) {
             
@@ -78,11 +78,11 @@ public class UploadProcessor {
             }
             try {
                 _processor = getUploadFileProcessor(rawFile, _stdFields);
-                _processor.processUpload(submissionRecordId, rawFile);
+                _processor.processUpload(submissionRecordId, isUpdateRequest, rawFile);
             } catch (IllegalStateException isx) {
                 logger.warn(isx,isx);
 //                if ( _processor instanceof NewGeneralizedUploadProcessor ) {
-                    _processor = new NewOpaqueFileUploadProcessor(_stdFields);
+//                    _processor = new NewOpaqueFileUploadProcessor(_stdFields);
                     _processor.getMessages().add(DashboardUtils.INVALID_FILE_HEADER_TAG + " " + _stdFields.uploadFileName());
                     _processor.getMessages().add(isx.getMessage());
                     _processor.getMessages().add(DashboardUtils.END_OF_ERROR_MESSAGE_TAG);
