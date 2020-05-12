@@ -15,10 +15,10 @@ import org.apache.tomcat.util.http.fileupload.FileItem;
 
 import gov.noaa.pmel.dashboard.handlers.RawUploadFileHandler;
 import gov.noaa.pmel.dashboard.server.DashboardConfigStore;
+import gov.noaa.pmel.dashboard.server.util.FileTypeTest;
 import gov.noaa.pmel.dashboard.shared.DashboardUtils;
 import gov.noaa.pmel.dashboard.shared.FileType;
 import gov.noaa.pmel.tws.util.Logging;
-import scratch.FileTypeTest;
 
 /**
  * @author kamb
