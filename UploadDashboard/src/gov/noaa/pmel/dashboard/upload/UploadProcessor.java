@@ -134,7 +134,7 @@ public class UploadProcessor {
         if ( itemType.contains("excel")
              || itemType.contains("spreadsheet")
              || itemType.contains("ooxml")) {
-            return new ExcelFileReader(dataFileStream);
+            return ExcelFileReader.newInstance(dataFileStream);
         } else if ( ! ( itemType.contains("text") 
                         && ( itemType.contains("delimited")
                              || itemType.contains("separated")

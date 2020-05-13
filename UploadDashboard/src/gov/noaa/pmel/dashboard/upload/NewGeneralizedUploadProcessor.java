@@ -52,7 +52,8 @@ public class NewGeneralizedUploadProcessor extends FileUploadProcessor {
                                     specifiedDatasetId; 
             DashboardDatasetData datasetData;
             try ( InputStream inStream = new FileInputStream(_uploadedFile); ) {
-                RecordOrientedFileReader recordReader = getFileReader(_uploadedFile, inStream);
+                RecordOrientedFileReader recordReader = 
+                        UploadProcessor.getFileReader(_uploadFields.checkedFileType(), inStream);
                 datasetData = DataFileHandler.createSingleDatasetFromInput(recordReader, dataFormat, 
                                                                       username, filename, timestamp, 
                                                                       submissionRecordId,
@@ -246,27 +247,5 @@ public class NewGeneralizedUploadProcessor extends FileUploadProcessor {
         } catch (IllegalArgumentException ex) {
             throw new UploadProcessingException("Unexpected error updating list of datasets \n" + ex.getMessage(), ex);
         }
-    }
-
-
-    /**
-     * @param tikaType
-     * @return
-     * @throws IOException 
-     * @throws java.io.IOException 
-     */
-    private RecordOrientedFileReader getFileReader(File uploadFile, InputStream inputStream) throws IOException {
-        String itemType = _uploadFields.checkedFileType();
-        if ( itemType.contains("excel")
-             || itemType.contains("spreadsheet")
-             || itemType.contains("ooxml")) {
-            return new ExcelFileReader(inputStream);
-        } else if ( ! ( itemType.contains("text") 
-                        && ( itemType.contains("delimited")
-                             || itemType.contains("separated")
-                             || itemType.contains("csv")))) {
-            throw new IllegalStateException("Unknown file type:"+ itemType);
-        }
-        return new CSVFileReader(inputStream);
     }
 }
