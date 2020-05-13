@@ -320,7 +320,7 @@ public class DataColumnSpecsPage extends CompositeWithUsername {
 						if ( actualStart < 0 )
 							actualStart = range.getStart();
 						updateRowData(actualStart, newData);
-						updateScroll();
+						updateScroll(true);
 						UploadDashboard.showAutoCursor();
 					}
 					@Override
@@ -396,12 +396,13 @@ public class DataColumnSpecsPage extends CompositeWithUsername {
 	Integer scrollToRow = null;
 	Integer scrollToCol = null;
 	
-	private void updateScroll() {
-        int rowIdx = -2;
-        int colIdx = -2;
+	private void updateScroll(boolean pageChanged) {
+        int rowAdjustment = pageChanged ? 4 : 0;
+        int rowIdx = 0;
+        int colIdx = 0;
 	    try {
 			if ( scrollToRow != null ) {
-				rowIdx = scrollToRow != null ? scrollToRow.intValue() : 0;
+				rowIdx = scrollToRow != null ? scrollToRow.intValue() + rowAdjustment : 0;
 				colIdx = scrollToCol != null ? scrollToCol.intValue() : 0;
                 // TODO: Adjust row and column indexes to put row&cell +/- center
                 UploadDashboard.logToConsole("scrollRow:" + scrollToRow + ", scrollCol:"+ scrollToCol);
@@ -544,20 +545,19 @@ public class DataColumnSpecsPage extends CompositeWithUsername {
 			int totalRows = dataGrid.getRowCount();
 			pageMaxIdx = ( totalRows % pageSize ) - 1;
 		}
-		pageRow = Math.min(pageRow+6, pageMaxIdx);
+		pageRow = Math.min(pageRow, pageMaxIdx);
         pageRow = pageRow + ( pageSize * showPage );
-        int nCols = dataGrid.getRowElement(0).getCells().getLength();
-		showColumnIdx = Math.min(showColumnIdx+3, nCols);
+//        int nCols = dataGrid.getRowElement(0).getCells().getLength();
 		scrollToRow = new Integer(pageRow);
 		scrollToCol = new Integer(showColumnIdx);
 		int cPage = gridPager.getPage();
 		if ( cPage != showPage ) {
             UploadDashboard.logToConsole("Set page from " + cPage + " to " + showPage);
-			gridPager.setPage(showPage);
+			gridPager.setPage(showPage); // scroll will happen (if necessary) on page data load
 		} 
 		else {
     		try {
-    			updateScroll();
+    			updateScroll(false);
     		} catch (Exception ex) {
                 UploadDashboard.logToConsole(String.valueOf(ex));
                 String msg = "page:"+gridPager.getPage() + ", rowIdx:"+showRowIdx + ", showRow:"+ pageRow + ", colIdx: " + showColumnIdx + " : " + ex;
