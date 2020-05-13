@@ -16,7 +16,7 @@ public interface RecordOrientedFileReader extends Iterable<String[]> {
         if ( fileType.contains("excel") 
                 || fileType.contains("spreadsheet")
                 || fileType.contains("ooxml")) {
-               return new ExcelFileReader(inputStream);
+               return ExcelFileReader.newInstance(inputStream);
         } else if ( ! ( fileType.contains("text") 
                         && ( fileType.contains("delimited")
                              || fileType.contains("separated")

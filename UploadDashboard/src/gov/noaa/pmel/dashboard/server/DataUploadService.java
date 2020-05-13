@@ -273,6 +273,8 @@ public class DataUploadService extends HttpServlet {
     				contentsList.add(dataline);
     			}
 			}
+		} finally {
+		    firstItem.delete();
 		}
 
 		// Respond with some info and the interpreted contents
