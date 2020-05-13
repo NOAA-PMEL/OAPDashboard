@@ -756,7 +756,20 @@ public class DatasetListPage extends CompositeWithUsername {
 	}
 
 	@UiHandler("previewButton")
-	void reviewOnClick(ClickEvent event) {
+	void previewButtonOnClick(ClickEvent event) {
+	    UploadDashboard.pingService(new OAPAsyncCallback<Void>() {
+            @Override
+            public void onSuccess(Void arg0) {
+                GWT.log("successful ping.");
+                _previewButtonOnClick(event);
+            }
+            @Override
+            public void customFailure(Throwable t) {
+                GWT.log("ping fail: "+ t);
+            }
+        });
+	}
+	void _previewButtonOnClick(ClickEvent event) {
 		getSelectedDatasets(null);
 		if ( selectedDatasets.size() < 1 ) {
 			UploadDashboard.showMessage(
@@ -829,6 +842,19 @@ public class DatasetListPage extends CompositeWithUsername {
 	
 	@UiHandler("deleteButton")
 	void deleteDatasetOnClick(ClickEvent event) {
+	    UploadDashboard.pingService(new OAPAsyncCallback<Void>() {
+            @Override
+            public void onSuccess(Void arg0) {
+                GWT.log("successful ping.");
+                _deleteDatasetOnClick(event);
+            }
+            @Override
+            public void customFailure(Throwable t) {
+                GWT.log("ping fail: "+ t);
+            }
+        });
+	}
+	void _deleteDatasetOnClick(ClickEvent event) {
 		if ( ! getSelectedDatasets(true) ) {
 			UploadDashboard.showMessage(
 					SUBMITTED_DATASETS_SELECTED_ERR_START + FOR_DELETE_ERR_END);
@@ -938,6 +964,19 @@ public class DatasetListPage extends CompositeWithUsername {
 
 	@UiHandler("hideDatasetButton")
 	void removeFromListOnClick(ClickEvent event) {
+	    UploadDashboard.pingService(new OAPAsyncCallback<Void>() {
+            @Override
+            public void onSuccess(Void arg0) {
+                GWT.log("successful ping.");
+                _removeFromListOnClick(event);
+            }
+            @Override
+            public void customFailure(Throwable t) {
+                GWT.log("ping fail: "+ t);
+            }
+        });
+	}
+	void _removeFromListOnClick(ClickEvent event) {
 		getSelectedDatasets(null);
 		if ( selectedDatasets.size() == 0 ) {
 			UploadDashboard.showMessage(
