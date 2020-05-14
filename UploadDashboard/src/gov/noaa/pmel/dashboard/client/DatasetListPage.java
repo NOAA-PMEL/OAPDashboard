@@ -816,7 +816,24 @@ public class DatasetListPage extends CompositeWithUsername {
 
 	@UiHandler("archiveSubmitButton")
 	void archiveSubmitOnClick(ClickEvent event) {
-		if ( checkDatasetsForSubmitting(SubmitFor.ARCHIVE)) {
+        GWT.log("arhiveSubmitButton pressed.");
+        preLaunchArchiveSubmit(getSelectedDatasets());
+	}
+	void preLaunchArchiveSubmit(DashboardDatasetList datasets) {
+	    UploadDashboard.pingService(new OAPAsyncCallback<Void>() {
+            @Override
+            public void onSuccess(Void arg0) {
+                GWT.log("successful ping.");
+                _archiveSubmitOnClick(datasets);
+            }
+            @Override
+            public void customFailure(Throwable t) {
+                GWT.log("ping fail: "+ t);
+            }
+        });
+	}
+	void _archiveSubmitOnClick(DashboardDatasetList datasets) {
+		if ( checkDatasetsForSubmitting(datasets, SubmitFor.ARCHIVE)) {
 		    submitDatasets(selectedDatasets, SubmitFor.ARCHIVE);
 		}
 	}
@@ -1779,9 +1796,7 @@ public class DatasetListPage extends CompositeWithUsername {
 			@Override
 			public void update(int index, DashboardDataset dataset, String value) {
                 DashboardDatasetList dlist = new DashboardDatasetList(getUsername()) {{ put(dataset.getDatasetId(), dataset); }};
-                if ( checkDatasetsForSubmitting(dlist, SubmitFor.ARCHIVE)) {
-                    submitDatasets(dlist, SubmitFor.ARCHIVE);
-                }
+                preLaunchArchiveSubmit(dlist);
 			}
 		});
 		return archiveStatusColumn;
