@@ -80,25 +80,33 @@ public class ApplicationHeaderTemplate extends CompositeWithUsername {
     }
     
     void doLogout() {
-        GWT.log("GWT log Header logout: " + this);
         logger.info("Logger Header logout");
         UploadDashboard.closePopups();
+        try {
         UploadDashboard.getService().logoutUser(new OAPAsyncCallback<Void>() {
             @Override
             public void onSuccess(Void nada) {
+                UploadDashboard.logToConsole("Logout success");
                 Cookies.removeCookie("JSESSIONID");
                 UploadDashboard.stopHistoryHandling();
                 UploadDashboard.showAutoCursor();
+                Window.Location.assign("dashboardlogout.html");
             }
             @Override
             public void onFailure(Throwable ex) {
-                GWT.log("Logout error:" + ex.toString());
+                UploadDashboard.logToConsole("Logout error:" + ex.toString());
+//                Window.alert(String.valueOf(ex));
                 Cookies.removeCookie("JSESSIONID");
                 UploadDashboard.stopHistoryHandling();
                 UploadDashboard.showAutoCursor();
+                Window.Location.assign("dashboardlogout.html");
             }
         });
-        Window.Location.assign("dashboardlogout.html");
+        } catch (Throwable t) {
+            UploadDashboard.logToConsole("logout exception: "+ String.valueOf(t));
+//            Window.alert(String.valueOf(t));
+            Window.Location.assign("dashboardlogout.html");
+        }
     }
 
     static void doSendFeedback() {
