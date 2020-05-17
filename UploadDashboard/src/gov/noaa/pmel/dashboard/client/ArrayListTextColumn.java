@@ -125,10 +125,10 @@ import gov.noaa.pmel.dashboard.shared.QCFlag.Severity;
 		TreeSet<QCFlag> checkerFlags = cruise.getCheckerFlags();
 		QCFlag woceCell = new QCFlag(null, null, Severity.ERROR, colNum-1, rowIdx);
 		QCFlag woceRow = new QCFlag(null, null, Severity.ERROR, null, rowIdx);
-		QCFlag woceCol = new QCFlag(null, null, Severity.ERROR, colNum-1, null);
-		if ( checkerFlags.contains(woceCell) || 
+//		QCFlag woceCol = new QCFlag(null, null, Severity.ERROR, colNum-1, null);
+		if ( checkerFlags.contains(woceCell)) { // || 
 //			 checkerFlags.contains(woceRow) || 
-			 checkerFlags.contains(woceCol) ) {
+//			 checkerFlags.contains(woceCol) ) {
 			sb.appendHtmlConstant("<div style=\"background-color:" + 
 					UploadDashboard.CHECKER_ERROR_COLOR + ";font-weight:bold;" + hideContents + "\">");
 			sb.appendEscaped(cellValue);
@@ -137,9 +137,9 @@ import gov.noaa.pmel.dashboard.shared.QCFlag.Severity;
 			return;
 		}
 		TreeSet<QCFlag> userFlags = cruise.getUserFlags();
-		if ( userFlags.contains(woceCell) || 
+		if ( userFlags.contains(woceCell)) { // || 
 //			 userFlags.contains(woceRow) || 
-			 userFlags.contains(woceCol) ) {
+//			 userFlags.contains(woceCol) ) {
 			sb.appendHtmlConstant("<div style=\"background-color:" + 
 					UploadDashboard.USER_ERROR_COLOR + ";font-weight:bold;" + hideContents + "\">");
 			sb.appendEscaped(cellValue);
@@ -149,10 +149,10 @@ import gov.noaa.pmel.dashboard.shared.QCFlag.Severity;
 		}
 		woceCell.setSeverity(Severity.WARNING);
 		woceRow.setSeverity(Severity.WARNING);
-		woceCol.setSeverity(Severity.WARNING);
-		if ( checkerFlags.contains(woceCell) || 
+//		woceCol.setSeverity(Severity.WARNING);
+		if ( checkerFlags.contains(woceCell)) { // || 
 //			 checkerFlags.contains(woceRow) || 
-			 checkerFlags.contains(woceCol) ) {
+//			 checkerFlags.contains(woceCol) ) {
 			sb.appendHtmlConstant("<div style=\"background-color:" + 
 					UploadDashboard.CHECKER_WARNING_COLOR + ";font-weight:bold;" + hideContents + "\">");
 			sb.appendEscaped(cellValue);
@@ -160,9 +160,9 @@ import gov.noaa.pmel.dashboard.shared.QCFlag.Severity;
 			if ( addedTitle ) closeTitle(sb);
 			return;
 		}
-		if ( userFlags.contains(woceCell) || 
+		if ( userFlags.contains(woceCell)) { // || 
 //			 userFlags.contains(woceRow) || 
-			 userFlags.contains(woceCol) ) {
+//			 userFlags.contains(woceCol) ) {
 			sb.appendHtmlConstant("<div style=\"background-color:" + 
 					UploadDashboard.USER_WARNING_COLOR + ";font-weight:bold;" + hideContents + "\">");
 			sb.appendEscaped(cellValue);
@@ -172,10 +172,10 @@ import gov.noaa.pmel.dashboard.shared.QCFlag.Severity;
 		}
 		woceCell.setSeverity(Severity.CRITICAL);
 		woceRow.setSeverity(Severity.CRITICAL);
-		woceCol.setSeverity(Severity.CRITICAL);
-		if ( checkerFlags.contains(woceCell) || 
+//		woceCol.setSeverity(Severity.CRITICAL);
+		if ( checkerFlags.contains(woceCell)) { // || 
 //			 checkerFlags.contains(woceRow) || 
-			 checkerFlags.contains(woceCol) ) {
+//			 checkerFlags.contains(woceCol) ) {
 			sb.appendHtmlConstant("<div style=\"background-color:" + 
 					UploadDashboard.CHECKER_ERROR_COLOR + ";font-weight:bold;" + hideContents + "\">");
 			sb.appendEscaped(cellValue);
@@ -183,9 +183,9 @@ import gov.noaa.pmel.dashboard.shared.QCFlag.Severity;
 			if ( addedTitle ) closeTitle(sb);
 			return;
 		}
-		if ( userFlags.contains(woceCell) || 
+		if ( userFlags.contains(woceCell)) { // || 
 //			 userFlags.contains(woceRow) || 
-			 userFlags.contains(woceCol) ) {
+//			 userFlags.contains(woceCol) ) {
 			sb.appendHtmlConstant("<div style=\"background-color:" + 
 					UploadDashboard.USER_ERROR_COLOR + ";font-weight:bold;" + hideContents + "\">");
 			sb.appendEscaped(cellValue);

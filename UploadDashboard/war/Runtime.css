@@ -20,6 +20,9 @@
 .dataColumnSelectionCell {
 	width: 97%;
 }
+.dataColumnTypeWarning {
+	background-color: #f9eb8b;
+}
 .oa_cell {
 	border: none !important;
 }
