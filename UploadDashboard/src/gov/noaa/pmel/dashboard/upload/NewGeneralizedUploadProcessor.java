@@ -65,7 +65,7 @@ public class NewGeneralizedUploadProcessor extends FileUploadProcessor {
             } catch (IOException ex) {
                 // Mark as a failed file, and go on to the next
                 _messages.add(DashboardUtils.INVALID_FILE_HEADER_TAG + " " + filename);
-                _messages.add("There was an error processing the data file.");
+                _messages.add("There was an error processing the data file: " + ex.getMessage() + ".");
                 _messages.add(DashboardUtils.END_OF_ERROR_MESSAGE_TAG);
                 return;
             }
