@@ -94,7 +94,7 @@ public class ExcelFileReader implements RecordOrientedFileReader, Iterator<Strin
         return new ExcelFileReader(workbook);
     }
     
-    static final int MAX_PEEK = 8192;
+    static final int MAX_PEEK = 8192 * 2;
     static final String STRICT_NS_1 = "http://purl.oclc.org/ooxml/spreadsheetml/main";
 
     /**
@@ -105,16 +105,22 @@ public class ExcelFileReader implements RecordOrientedFileReader, Iterator<Strin
      */
     private static boolean checkForStrict(InputStream inStream) throws IOException {
         boolean isStrict = false;
+        boolean stop = false;
         XMLInputFactory XIF = XMLInputFactory.newInstance();
         ZipInputStream zis = new ZipInputStream(inStream);
         ZipEntry ze;
-        while( !isStrict && (ze = zis.getNextEntry()) != null) {
+        while( !isStrict && !stop && (ze = zis.getNextEntry()) != null) {
             FilterInputStream filterIs = new FilterInputStream(zis) {
                 @Override
                 public void close() throws IOException {
                 }
             };
-            logger.debug("ZipEntry " + ze.getName());
+            String zeName = ze.getName();
+            logger.debug("ZipEntry " + zeName);
+            if ( "xl/workbook.xml".equals(zeName)) {
+                logger.info("Processing workbook.xml, then stopping.");
+                stop = true;
+            }
             if(isXml(ze.getName())) {
                 try {
                     XMLEventReader xer = XIF.createXMLEventReader(filterIs);
@@ -135,6 +141,7 @@ public class ExcelFileReader implements RecordOrientedFileReader, Iterator<Strin
                 }
             }
         }
+        logger.info("Found strict: " + isStrict);
         return isStrict;
     }
     private static boolean isXml(final String fileName) {
