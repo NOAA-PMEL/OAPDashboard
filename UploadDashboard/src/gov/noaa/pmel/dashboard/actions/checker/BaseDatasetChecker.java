@@ -75,6 +75,7 @@ public class BaseDatasetChecker {
                 msg.setGeneralComment("unknown column");
                 msg.setDetailedComment("Data column " + userNames[colIdx] + "[" + (colIdx+1) + "] is of unknown type.");
                 msg.setColIndex(colIdx);
+                msg.setColName(userNames[colIdx]);
                 stdUserData.addStandardizationMessage(msg);
             }
             colIdx += 1;
