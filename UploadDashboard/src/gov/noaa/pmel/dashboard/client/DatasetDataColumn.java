@@ -5,6 +5,8 @@ package gov.noaa.pmel.dashboard.client;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
+import java.util.TreeSet;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -13,11 +15,8 @@ import com.google.gwt.cell.client.Cell;
 import com.google.gwt.cell.client.CompositeCell;
 import com.google.gwt.cell.client.FieldUpdater;
 import com.google.gwt.cell.client.HasCell;
-import com.google.gwt.cell.client.SelectionCell;
 import com.google.gwt.cell.client.TextCell;
 import com.google.gwt.cell.client.TextInputCell;
-import com.google.gwt.cell.client.ValueUpdater;
-import com.google.gwt.dom.client.Element;
 import com.google.gwt.logging.client.ConsoleLogHandler;
 import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
 import com.google.gwt.user.cellview.client.Header;
@@ -25,6 +24,8 @@ import com.google.gwt.user.cellview.client.Header;
 import gov.noaa.pmel.dashboard.shared.DashboardDataset;
 import gov.noaa.pmel.dashboard.shared.DashboardUtils;
 import gov.noaa.pmel.dashboard.shared.DataColumnType;
+import gov.noaa.pmel.dashboard.shared.QCFlag;
+import gov.noaa.pmel.dashboard.shared.QCFlag.Severity;
 
 /**
  * Class for creating a CompositeCell Header for a cruise data column.
@@ -115,6 +116,17 @@ public class DatasetDataColumn {
 	 */
 	private Header<DatasetDataColumn> createHeader(final int columnNumber) {
 
+        String columnStyle = "";
+        TreeSet<QCFlag> checkerFlags = cruise.getCheckerFlags();
+        for ( QCFlag flag : checkerFlags ) {
+            Integer flagCol = flag.getColumnIndex();
+            Integer flagRow = flag.getRowIndex();
+            if ( ( flagRow == null || flagRow.intValue() == DashboardUtils.INT_MISSING_VALUE.intValue() ) 
+                    && flagCol != null && flagCol.intValue() == (columnNumber-1) ) {
+                Severity s = flag.getSeverity();
+                columnStyle = "dataColumnTypeWarning";
+            }
+        }
 		// Create the TextCell giving the column name given by the user
 		HasCell<DatasetDataColumn,String> userNameCell = new HasCell<DatasetDataColumn,String>() {
 			@Override
@@ -140,11 +152,13 @@ public class DatasetDataColumn {
 
 		// Create the SelectionCell listing the known standard headers
 		HasCell<DatasetDataColumn,String> stdNameCell = new HasCell<DatasetDataColumn,String>() {
+			private AbstractInputCell<String, String> theCell = null;
 			@Override
 			public AbstractInputCell<String, String> getCell() {
+                if ( theCell == null ) {
 				// Create a list of all the standard column headers with units;
 				// render as a block-level element
-                AbstractInputCell<String, String> cell = 
+                    theCell = 
     				new StyledSelectionCell(typeUnitStringList, "dataColumnSelectionCell") {
     					@Override
     					public void render(Cell.Context context, String value, SafeHtmlBuilder sb) {
@@ -159,7 +173,8 @@ public class DatasetDataColumn {
     //                        logger.fine(ID + " finished with " + value);
     //                    }
     				};
-                return cell;
+                }
+                return theCell;
 			}
 			@Override
 			public FieldUpdater<DatasetDataColumn,String> getFieldUpdater() {
@@ -262,7 +277,11 @@ public class DatasetDataColumn {
 				return DatasetDataColumn.this;
 			}
 		};
+        CompositeCell<DatasetDataColumn> headerComp = (CompositeCell<DatasetDataColumn>)headerCell.getCell();
+        List<HasCell<DatasetDataColumn,?>> compCells = headerComp.getHasCells();
+        HasCell<DatasetDataColumn,String> compNameHasCell = (HasCell<DatasetDataColumn, String>) compCells.get(1);
+        StyledSelectionCell compNameCell = (StyledSelectionCell)compNameHasCell.getCell();
+        compNameCell.addStyle(columnStyle);
 		return headerCell;
 	}
-
 }

@@ -119,4 +119,23 @@ public class StyledSelectionCell extends AbstractInputCell<String, String> {
         return index.intValue();
     }
 
+    public String getStyle() {
+        return style;
+    }
+
+    public void setStyle(String style) {
+        if ( style == null ) { style = ""; }
+        this.style = style.trim();
+    }
+    
+    public void addStyle(String addedStyle) {
+        if ( addedStyle == null || addedStyle.trim() == "" ) { return; }
+        this.style = (addedStyle + " " + this.style).trim();
+    }
+    
+    public void removeStyle(String removedStyle) {
+        if ( removedStyle == null || removedStyle.trim() == "" ) { return; }
+        this.style = this.style.replaceAll(removedStyle, "").trim();
+    }
+
 }
