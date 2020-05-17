@@ -51,7 +51,7 @@ public class CSVFileReader implements RecordOrientedFileReader {
     public Iterator<String[]> iterator() {
         CsvParserSettings settings = new CsvParserSettings();
         settings.detectFormatAutomatically();
-        settings.setDelimiterDetectionEnabled(true, '\t', ';', ',', '|');
+        settings.setDelimiterDetectionEnabled(true, ',', '\t', ';', '|');
         
         settings.setCommentCollectionEnabled(true);
         settings.setNullValue("");
