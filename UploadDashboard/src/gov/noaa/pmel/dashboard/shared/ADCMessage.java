@@ -230,7 +230,7 @@ public class ADCMessage implements Serializable, IsSerializable {
 	 * 		setColNumber(colIndex + 1).
 	 */
 	public void setColIndex(Integer colIndex) {
-		if ( (colIndex == null) || (colIndex < 1) || (colNumber > 999) )
+		if ( (colIndex == null) || (colIndex < 0) || (colNumber > 999) )
 			this.colNumber = DashboardUtils.INT_MISSING_VALUE;
 		else
 			this.colNumber = new Integer(colIndex.intValue()+1);
