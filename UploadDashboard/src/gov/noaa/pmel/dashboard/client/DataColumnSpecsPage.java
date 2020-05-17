@@ -398,12 +398,16 @@ public class DataColumnSpecsPage extends CompositeWithUsername {
 	
 	private void updateScroll(boolean pageChanged) {
         int rowAdjustment = pageChanged ? 4 : 0;
+        int colAdjustment = -2;
         int rowIdx = 0;
         int colIdx = 0;
 	    try {
 			if ( scrollToRow != null ) {
 				rowIdx = scrollToRow != null ? scrollToRow.intValue() + rowAdjustment : 0;
 				colIdx = scrollToCol != null ? scrollToCol.intValue() : 0;
+                if ( colIdx >= 3 ) {
+                    colIdx += colAdjustment;
+                }
                 // TODO: Adjust row and column indexes to put row&cell +/- center
                 UploadDashboard.logToConsole("scrollRow:" + scrollToRow + ", scrollCol:"+ scrollToCol);
                 UploadDashboard.logToConsole("currentPage:"+ gridPager.getPage() + ", start: " + gridPager.getPageStart() + ", size: "+ gridPager.getPageSize());
@@ -1183,102 +1187,4 @@ public class DataColumnSpecsPage extends CompositeWithUsername {
 		});
 		
 	}
-
-//	/**
-//	 * TextColumn for displaying the value at a given index 
-//	 * of an ArrayList of Strings 
-//	 */
-//	private class ArrayListTextColumn extends TextColumn<ArrayList<String>> {
-//		private int colNum;
-//		/**
-//		 * Creates a TextColumn for an ArrayList of Strings that 
-//		 * displays the value at the given index in the ArrayList.
-//		 * @param colNum
-//		 * 		display data at this index of the ArrayList
-//		 */
-//		ArrayListTextColumn(int colNum) {
-//			super();
-//			this.colNum = colNum;
-//		}
-//		@Override
-//		public String getValue(ArrayList<String> dataRow) {
-//			if ( (dataRow != null) && (0 <= colNum) && (colNum < dataRow.size()) )
-//				return dataRow.get(colNum);
-//			return "";
-//		}
-//		private void closeTitle(SafeHtmlBuilder sb) {
-//			sb.appendHtmlConstant("</div>");
-//		}
-//		@Override
-//		public void render(Cell.Context ctx, ArrayList<String> obj, SafeHtmlBuilder sb) {
-//			Integer rowIdx = ctx.getIndex();
-//			ADCMessage msg = rowMsgMap.get(rowIdx);
-//			boolean addedTitle = false;
-//			if ( msg != null ) {
-//				sb.appendHtmlConstant("<div title=\"" + msg.getDetailedComment() + "\">");
-//				addedTitle = true;
-//			}
-//			if ( colNum == 0 ) {
-//				sb.appendHtmlConstant("<div style=\"color:" + 
-//						UploadDashboard.ROW_NUMBER_COLOR + ";text-align:right\">");
-//				sb.appendEscaped(getValue(obj));
-//				sb.appendHtmlConstant("</div>");
-//				if ( addedTitle ) closeTitle(sb);
-//				return;
-//			}
-//			TreeSet<QCFlag> checkerFlags = cruise.getCheckerFlags();
-//			QCFlag woceCell = new QCFlag(null, null, Severity.ERROR, colNum-1, rowIdx);
-//			QCFlag woceRow = new QCFlag(null, null, Severity.ERROR, null, rowIdx);
-//			QCFlag woceCol = new QCFlag(null, null, Severity.ERROR, colNum-1, null);
-//			if ( checkerFlags.contains(woceCell) || 
-//				 checkerFlags.contains(woceRow) || 
-//				 checkerFlags.contains(woceCol) ) {
-//				sb.appendHtmlConstant("<div style=\"background-color:" + 
-//						UploadDashboard.CHECKER_ERROR_COLOR + ";font-weight:bold;\">");
-//				sb.appendEscaped(getValue(obj));
-//				sb.appendHtmlConstant("</div>");
-//				if ( addedTitle ) closeTitle(sb);
-//				return;
-//			}
-//			TreeSet<QCFlag> userFlags = cruise.getUserFlags();
-//			if ( userFlags.contains(woceCell) || 
-//				 userFlags.contains(woceRow) || 
-//				 userFlags.contains(woceCol) ) {
-//				sb.appendHtmlConstant("<div style=\"background-color:" + 
-//						UploadDashboard.USER_ERROR_COLOR + ";\">");
-//				sb.appendEscaped(getValue(obj));
-//				sb.appendHtmlConstant("</div>");
-//				if ( addedTitle ) closeTitle(sb);
-//				return;
-//			}
-//			woceCell.setSeverity(Severity.WARNING);
-//			woceRow.setSeverity(Severity.WARNING);
-//			woceCol.setSeverity(Severity.WARNING);
-//			if ( checkerFlags.contains(woceCell) || 
-//				 checkerFlags.contains(woceRow) || 
-//				 checkerFlags.contains(woceCol) ) {
-//				sb.appendHtmlConstant("<div style=\"background-color:" + 
-//						UploadDashboard.CHECKER_WARNING_COLOR + ";font-weight:bold;\">");
-//				sb.appendEscaped(getValue(obj));
-//				sb.appendHtmlConstant("</div>");
-//				if ( addedTitle ) closeTitle(sb);
-//				return;
-//			}
-//			if ( userFlags.contains(woceCell) || 
-//				 userFlags.contains(woceRow) || 
-//				 userFlags.contains(woceCol) ) {
-//				sb.appendHtmlConstant("<div style=\"background-color:" + 
-//						UploadDashboard.USER_WARNING_COLOR + ";\">");
-//				sb.appendEscaped(getValue(obj));
-//				sb.appendHtmlConstant("</div>");
-//				if ( addedTitle ) closeTitle(sb);
-//				return;
-//			}
-//			// Render normally
-//			super.render(ctx, obj, sb);
-//			// Shouldn't happen, but ...
-//			if ( addedTitle ) closeTitle(sb);
-//		}
-//	}
-
 }
