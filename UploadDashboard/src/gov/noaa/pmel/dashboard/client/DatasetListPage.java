@@ -83,23 +83,23 @@ public class DatasetListPage extends CompositeWithUsername {
 
 	private static final String NEW_SUBMISSION_BUTTON_TEXT = "New Submission";
 	private static final String NEW_SUBMISSION_BUTTON_HOVER_HELP = 
-			"Create a new archive submission record";
+			"Create a new archive submission record.";
 	private static final String UPDATE_SUBMISSION_BUTTON_TEXT = "Update Submission";
 	private static final String UPDATE_SUBMISSION_BUTTON_HOVER_HELP = 
-			"Create a new archive submission record";
+			"Update the selected submission.";
 
 	private static final String VIEW_DATA_TEXT = "Identify Columns";
 	private static final String VIEW_DATA_HOVER_HELP =
-			"review and modify data column type assignments for the " +
-			"selected dataset;\nidentify issues in the data";
+			"Review and modify data column type assignments for the " +
+			"selected dataset;\nidentify issues in the data.";
 
 	static final String METADATA_TEXT = "Manage Metadata";
 	private static final String METADATA_HOVER_HELP =
-			"manage metadata for the selected datasets";
+			"Enter metadata for the selected datasets.";
 
 	private static final String ADDL_DOCS_TEXT = "Supplemental Documents";
 	private static final String ADDL_DOCS_HOVER_HELP =
-			"manage supplemental documents for the selected datasets";
+			"Add supplemental documents for the selected datasets.";
 
 //	private static final String QC_SUBMIT_TEXT = "Submit for QC";
 //	private static final String QC_SUBMIT_HOVER_HELP =
@@ -107,7 +107,7 @@ public class DatasetListPage extends CompositeWithUsername {
 
 	private static final String ARCHIVE_SUBMIT_TEXT = "Submit to Archive";
 	private static final String ARCHIVE_SUBMIT_HOVER_HELP =
-			"submit selected dataset to permanent data archive";
+			"Submit dataset to permanent data archive.";
 
 //	private static final String SUSPEND_TEXT = "Suspend Dataset";
 //	private static final String SUSPEND_HOVER_HELP =
@@ -115,18 +115,18 @@ public class DatasetListPage extends CompositeWithUsername {
 
 	private static final String REVIEW_TEXT = "Preview Dataset";
 	private static final String REVIEW_HOVER_HELP =
-			"examine various plots of data given in the selected dataset";
+			"Reveiw plots of selected data in the dataset.";
 
 	private static final String SHOW_DATASETS_TEXT = 
 			"Filter Datasets";
 	private static final String SHOW_DATASETS_HOVER_HELP = 
-			"filter datasets displayed in your list";
+			"Filter datasets displayed in your list.";
 
 	private static final String HIDE_DATASETS_TEXT = 
 			"Hide Datasets";
 	private static final String HIDE_DATASETS_HOVER_HELP =
-			"hides the selected datasets from your list of displayed datasets; " +
-			"this will NOT delete the datasets from the system";
+			"Hides the selected datasets from your list of displayed datasets; " +
+			"this will NOT delete the datasets from the system.";
 
 //	private static final String CHANGE_OWNER_TEXT =
 //			"Change Datasets Owner";
@@ -135,11 +135,11 @@ public class DatasetListPage extends CompositeWithUsername {
 
 	private static final String DELETE_TEXT = "Delete Datasets";
 	private static final String DELETE_HOVER_HELP =
-			"delete the selected datasets from the system";
+			"Delete the selected datasets from the system.";
 
 	// Error message when the request for the latest cruise list fails
 	private static final String GET_DATASET_LIST_ERROR_MSG = 
-			"Problems obtaining the latest dataset listing";
+			"Problems obtaining the latest dataset listing.";
 
 	// Starts of error messages for improper cruise selections
 	private static final String SUBMITTED_DATASETS_SELECTED_ERR_START = 
