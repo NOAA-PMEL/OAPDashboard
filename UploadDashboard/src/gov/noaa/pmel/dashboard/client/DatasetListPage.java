@@ -210,7 +210,7 @@ public class DatasetListPage extends CompositeWithUsername {
 
 	private static final String HIDE_DATASET_HTML_PROLOGUE = 
 			"The following datasets will be hidden from your " +
-			"list of displayed datasets; the data, metadata, and " +
+			"list of displayed datasets;<br/>The data, metadata, and " +
 			"supplemental documents will <b>not</b> be removed: <ul>";
 	private static final String HIDE_DATASET_HTML_EPILOGUE = 
 			"</ul> Do you want to proceed?";
@@ -894,7 +894,8 @@ public class DatasetListPage extends CompositeWithUsername {
 		message += DELETE_DATASET_HTML_EPILOGUE;
 		if ( askDeletePopup == null ) {
 			askDeletePopup = new DashboardAskPopup(DELETE_YES_TEXT, 
-					DELETE_NO_TEXT, new AsyncCallback<Boolean>() {
+					DELETE_NO_TEXT, QuestionType.WARNING,
+					new AsyncCallback<Boolean>() {
 				@Override
 				public void onSuccess(Boolean okay) {
 					// Only proceed only if yes button was selected
@@ -1012,7 +1013,8 @@ public class DatasetListPage extends CompositeWithUsername {
 		message += HIDE_DATASET_HTML_EPILOGUE;
 		if ( askRemovePopup == null ) {
 			askRemovePopup = new DashboardAskPopup(HIDE_YES_TEXT, 
-					HIDE_NO_TEXT, new AsyncCallback<Boolean>() {
+					HIDE_NO_TEXT, DashboardAskPopup.QuestionType.QUESTION,
+					new AsyncCallback<Boolean>() {
 				@Override
 				public void onSuccess(Boolean result) {
 					// Only proceed if yes; ignore if no or null
