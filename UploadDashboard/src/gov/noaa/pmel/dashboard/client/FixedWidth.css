@@ -36,7 +36,7 @@ body {
     display: block;
 	margin-top: 0.5em;
 	margin-bottom: 1em;
-    align-content: center;
+    /* align-content: center; */
 }
 .adjustingbutton {
     display: inline-block;
@@ -145,7 +145,7 @@ pre {
 .infopanel {
 	background-color: #9eb9d7; /* #CCCCCC; */
     padding: 1em 2em;
-	width: 40em;
+/* 	width: 40em; */
 }
 .infoPanelLeftLabel {
 	vertical-align: middle !important;
