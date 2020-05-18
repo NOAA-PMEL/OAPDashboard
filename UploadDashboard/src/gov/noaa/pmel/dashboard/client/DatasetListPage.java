@@ -705,7 +705,12 @@ public class DatasetListPage extends CompositeWithUsername {
                 return;
             }
             DashboardDataset selectedDataset = selectedDatasets.values().iterator().next();
-            UploadDashboard.showUpdateSubmissionDialog(getUsername(), selectedDataset);
+            UploadDashboard.pingService(new OAPAsyncCallback<Void>() {
+                @Override
+                public void onSuccess(Void arg0) {
+                    UploadDashboard.showUpdateSubmissionDialog(getUsername(), selectedDataset);
+                }
+            });
         } else {
     		// Go to the dataset upload page
     		DataUploadPage.showPage(getUsername());
