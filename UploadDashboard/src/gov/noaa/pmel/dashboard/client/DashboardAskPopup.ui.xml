@@ -3,7 +3,7 @@
 	xmlns:g="urn:import:com.google.gwt.user.client.ui">
 	<ui:style src="FixedWidth.css" />
 
-	<g:VerticalPanel addStyleNames="{style.infopanel}" horizontalAlignment="ALIGN_CENTER">
+	<g:VerticalPanel addStyleNames="{style.infopanel}" > <!-- horizontalAlignment="ALIGN_CENTER"> -->
         <g:FlowPanel addStyleNames="{style.horizontalpanel}" >
             <g:Image addStyleNames="{style.askDialogIcon}" ui:field="askTypeIcon"/>
     		<g:HTML addStyleNames="{style.infohtml}" ui:field="askHtml" />
