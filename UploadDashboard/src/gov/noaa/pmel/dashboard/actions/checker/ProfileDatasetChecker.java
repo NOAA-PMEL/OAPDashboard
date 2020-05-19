@@ -96,6 +96,7 @@ public class ProfileDatasetChecker extends BaseDatasetChecker implements Dataset
         
 		if ( ! hasRequiredColumns(stdUserData)) {
 			msgHandler.processCheckerMessages(dataset, stdUserData);
+            dataset.setDataCheckStatus(DashboardUtils.CHECK_STATUS_UNACCEPTABLE);
             return stdUserData;
 //			throw new IllegalStateException("Dataset is missing required columns. See messages for details.");
 		}
@@ -236,6 +237,7 @@ public class ProfileDatasetChecker extends BaseDatasetChecker implements Dataset
     public static boolean hasRequiredColumns(StdUserDataArray stdUserData) {
         boolean gotem = true;
         if ( ! stdUserData.hasDate()) {
+            logger.info("dataset " + stdUserData.getDatasetName() + " missing date.");
             gotem = false;
             ADCMessage msg = new ADCMessage();
             msg.setSeverity(Severity.CRITICAL);
@@ -244,6 +246,7 @@ public class ProfileDatasetChecker extends BaseDatasetChecker implements Dataset
             stdUserData.addStandardizationMessage(msg);
         }
         if ( ! stdUserData.hasSampleTime()) {
+            logger.info("dataset " + stdUserData.getDatasetName() + " missing sample time.");
             gotem = false;
             ADCMessage msg = new ADCMessage();
             msg.setSeverity(Severity.CRITICAL);
@@ -252,6 +255,7 @@ public class ProfileDatasetChecker extends BaseDatasetChecker implements Dataset
             stdUserData.addStandardizationMessage(msg);
         }
         if ( ! stdUserData.hasDataColumn(DashboardServerUtils.LATITUDE.getStandardName())) {
+            logger.info("dataset " + stdUserData.getDatasetName() + " missing sample latitude.");
             gotem = false;
             ADCMessage msg = new ADCMessage();
             msg.setSeverity(Severity.CRITICAL);
@@ -260,6 +264,7 @@ public class ProfileDatasetChecker extends BaseDatasetChecker implements Dataset
             stdUserData.addStandardizationMessage(msg);
         }
         if ( ! stdUserData.hasDataColumn(DashboardServerUtils.LONGITUDE.getStandardName())) {
+            logger.info("dataset " + stdUserData.getDatasetName() + " missing sample longitude.");
             gotem = false;
             ADCMessage msg = new ADCMessage();
             msg.setSeverity(Severity.CRITICAL);
@@ -269,6 +274,7 @@ public class ProfileDatasetChecker extends BaseDatasetChecker implements Dataset
         }
         if ( ! ( stdUserData.hasDataColumn(DashboardServerUtils.SAMPLE_DEPTH.getStandardName()) || 
                  stdUserData.hasDataColumn(DashboardUtils.WATER_PRESSURE_VARNAME))) {
+            logger.info("dataset " + stdUserData.getDatasetName() + " missing sample depth and pressure.");
             gotem = false;
             ADCMessage msg = new ADCMessage();
             msg.setSeverity(Severity.CRITICAL);
