@@ -22,6 +22,7 @@ public class DashboardDataset implements Serializable, IsSerializable {
 	private static final long serialVersionUID = 5005454171404329101L;
 
 	protected boolean selected;
+    protected String recordId;
     protected String userDatasetName;
 	protected String version;
 	protected String owner;
@@ -57,6 +58,7 @@ public class DashboardDataset implements Serializable, IsSerializable {
 	 */
 	public DashboardDataset() {
 		selected = false;
+        recordId = DashboardUtils.STRING_MISSING_VALUE;
         userDatasetName = DashboardUtils.STRING_MISSING_VALUE;
 		version = DashboardUtils.STRING_MISSING_VALUE;
 		owner = DashboardUtils.STRING_MISSING_VALUE;
@@ -443,6 +445,14 @@ public class DashboardDataset implements Serializable, IsSerializable {
 		else
 			this.uploadTimestamp = uploadTimestamp.trim();
 	}
+
+	public String getRecordId() {
+        return recordId;
+    }
+
+    public void setRecordId(String recordId) {
+        this.recordId = recordId;
+    }
 
 	public String getUserDatasetName() {
         if ( userDatasetName == null || userDatasetName.trim().equals("")) {

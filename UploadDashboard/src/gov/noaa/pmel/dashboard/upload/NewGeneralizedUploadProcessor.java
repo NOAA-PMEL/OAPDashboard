@@ -57,7 +57,7 @@ public class NewGeneralizedUploadProcessor extends FileUploadProcessor {
                 datasetData = DataFileHandler.createSingleDatasetFromInput(recordReader, dataFormat, 
                                                                       username, filename, timestamp, 
                                                                       submissionRecordId,
-//                                                                      specifiedDatasetId, 
+                                                                      specifiedDatasetId, 
                                                                       datasetIdColName);
             } catch (IllegalStateException ex) {
                 logger.warn(ex);

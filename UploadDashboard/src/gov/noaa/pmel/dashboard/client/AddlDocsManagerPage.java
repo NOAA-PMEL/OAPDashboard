@@ -241,8 +241,10 @@ public class AddlDocsManagerPage extends CompositeWithUsername {
 		// Update the HTML intro naming the cruises
 		StringBuilder sb = new StringBuilder();
 		sb.append(INTRO_HTML_PROLOGUE);
-		for ( String expo : datasetIds )
-			sb.append("<li>" + SafeHtmlUtils.htmlEscape(expo) + "</li>");
+		for ( DashboardDataset dataset : cruises.values()) {
+            String name = dataset.getUserDatasetName();
+			sb.append("<li>" + SafeHtmlUtils.htmlEscape(name) + "</li>");
+		}
 		sb.append(INTRO_HTML_EPILOGUE);
 		introHtml.setHTML(sb.toString());
 

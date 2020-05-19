@@ -729,7 +729,7 @@ public class DatasetListPage extends CompositeWithUsername {
 					NO_DATASET_SELECTED_ERR_START + FOR_REVIEWING_ERR_END);
 			return;
 		}
-		DataColumnSpecsPage.showPage(getUsername(), new ArrayList<String>(selectedDatasets.keySet()));
+		DataColumnSpecsPage.showPage(getUsername(), selectedDatasets);
 	}
 
 	@UiHandler("metadataButton")
@@ -889,8 +889,9 @@ public class DatasetListPage extends CompositeWithUsername {
 		}
 		// Confirm cruises to be deleted
 		String message = DELETE_DATASET_HTML_PROLOGUE;
-		for ( String datasetId : selectedDatasets.keySet() )
-			message += "<li>" + SafeHtmlUtils.htmlEscape(datasetId) + "</li>";
+		for ( DashboardDataset dataset : selectedDatasets.values()) {
+			message += "<li>" + SafeHtmlUtils.htmlEscape(dataset.getUserDatasetName()) + "</li>";
+		}
 		message += DELETE_DATASET_HTML_EPILOGUE;
 		if ( askDeletePopup == null ) {
 			askDeletePopup = new DashboardAskPopup(DELETE_YES_TEXT, 
@@ -1008,8 +1009,9 @@ public class DatasetListPage extends CompositeWithUsername {
 		}
 		// Confirm cruises to be removed
 		String message = HIDE_DATASET_HTML_PROLOGUE;
-		for ( String expocode : selectedDatasets.keySet() )
-			message += "<li>" + SafeHtmlUtils.htmlEscape(expocode) + "</li>";
+		for ( DashboardDataset dataset : selectedDatasets.values()) {
+			message += "<li>" + SafeHtmlUtils.htmlEscape(dataset.getUserDatasetName()) + "</li>";
+		}
 		message += HIDE_DATASET_HTML_EPILOGUE;
 		if ( askRemovePopup == null ) {
 			askRemovePopup = new DashboardAskPopup(HIDE_YES_TEXT, 
@@ -1585,9 +1587,9 @@ public class DatasetListPage extends CompositeWithUsername {
 				// Save the currently selected cruises
 				getSelectedDatasets(null);
 				// Open the data column specs page for this one cruise
-				ArrayList<String> expocodes = new ArrayList<String>(1);
-				expocodes.add(cruise.getDatasetId());
-				DataColumnSpecsPage.showPage(getUsername(), expocodes);
+				ArrayList<DashboardDataset> cruises = new ArrayList<>(1);
+				cruises.add(cruise);
+				DataColumnSpecsPage.showPage(getUsername(), cruises);
 			}
 		});
 		return dataCheckColumn;

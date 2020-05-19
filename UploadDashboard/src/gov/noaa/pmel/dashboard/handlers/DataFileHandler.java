@@ -64,6 +64,7 @@ public class DataFileHandler extends VersionedFileHandler {
 	private static final String ARCHIVE_FILENAME_EXTENSION = ".csv";
 	private static final String COMMA = ",";
 	private static final String TAB = "\t";
+    private static final String SUBMISSION_RECORD_ID = "recordid";
 	private static final String DATA_OWNER_ID = "dataowner";
 	private static final String FEATURE_TYPE_ID = "featuretype";
 	private static final String FILE_TYPE_ID = "filetype";
@@ -418,14 +419,14 @@ public class DataFileHandler extends VersionedFileHandler {
 	                                                                    String owner, 
 	                                                                    String filename, 
 	                                                                    String timestamp, 
-//                                                                        String submissionRecordId,
+                                                                        String submissionRecordId,
                                                                         String specifiedDatasetId,
 	                                                                    String datasetIdColName) 
 	    throws IOException 
 	{
         BufferedReader dataReader = new BufferedReader( new InputStreamReader(inStream)); 
-        return createDatasetsFromInput(dataReader, dataFormat, owner, filename, timestamp, // submissionRecordId, 
-                                       specifiedDatasetId, datasetIdColName);
+        return createDatasetsFromInput(dataReader, dataFormat, owner, filename, timestamp, 
+                                       submissionRecordId, specifiedDatasetId, datasetIdColName);
 	}
     
 	public static TreeMap<String,DashboardDatasetData> createDatasetsFromInput(BufferedReader dataReader, 
@@ -433,7 +434,7 @@ public class DataFileHandler extends VersionedFileHandler {
 	                                                                    String owner, 
 	                                                                    String filename, 
 	                                                                    String timestamp, 
-//                                                                        String submissionRecordId,
+                                                                        String submissionRecordId,
                                                                         String specifiedDatasetId,
 	                                                                    String datasetIdColName) 
 	    throws IOException 
@@ -472,7 +473,7 @@ public class DataFileHandler extends VersionedFileHandler {
                 logger.info("Detected file format: " + fileFormat);
             }
             return createDatasetsFromInput(dataParser.iterate(dataReader), dataFormat, owner, 
-                                           filename, timestamp, // submissionRecordId, 
+                                           filename, timestamp, submissionRecordId, 
                                            specifiedDatasetId, datasetIdColName);
 	}
     
@@ -481,14 +482,14 @@ public class DataFileHandler extends VersionedFileHandler {
 	                                                                    String owner, 
 	                                                                    String filename, 
 	                                                                    String timestamp, 
-//                                                                        String submissionRecordId,
+                                                                        String submissionRecordId,
                                                                         String specifiedDatasetId,
 	                                                                    String datasetIdColName) 
 	    throws IOException 
 	{
         Map<String, DashboardDatasetData> datasetMap = createDatasetsFromInput(records, dataFormat, 
                                                                                owner, filename, timestamp, 
-                                                                               // submissionRecordId, 
+                                                                               submissionRecordId, 
                                                                                specifiedDatasetId, datasetIdColName);
         if ( datasetMap.isEmpty()) {
             throw new IllegalStateException("No datasets returned from " + owner+":"+filename );
@@ -505,7 +506,7 @@ public class DataFileHandler extends VersionedFileHandler {
 	                                                                    String owner, 
 	                                                                    String filename, 
 	                                                                    String timestamp, 
-//                                                                        String submissionRecordId,
+                                                                        String submissionRecordId,
                                                                         String specifiedDatasetId,
 	                                                                    String datasetIdColName) 
 	    throws IOException 
@@ -644,25 +645,25 @@ public class DataFileHandler extends VersionedFileHandler {
     					}
     					configStore.getUserFileHandler().assignDataColumnTypes(fakeDataset, datasetIdColName);
     					columnTypes = fakeDataset.getDataColTypes();
-                        if ( StringUtils.emptyOrNull(specifiedDatasetId)) {
-        					int k = 0;
-        					for ( DataColumnType dtype : columnTypes ) {
-        						if ( ( ! DashboardUtils.isEmptyNull(datasetIdColName) && columnNames.get(k).equalsIgnoreCase(datasetIdColName)) ||
-        								DashboardServerUtils.DATASET_NAME.typeNameEquals(dtype) ) {
-        							datasetNameColIdx = k;
-        							break;
-        						} 
-        						
-        						k++;
-        					}
-        					if ( datasetNameColIdx < 0 ) {
-        						String msg = "Dataset ID column not found";
-        						if ( ! DashboardUtils.isEmptyNull(datasetIdColName)) {
-        							msg += ": " + datasetIdColName;
-        						}
-        						throw new IllegalStateException(msg);
-        					}
-                        }
+//                        if ( StringUtils.emptyOrNull(specifiedDatasetId)) {
+//        					int k = 0;
+//        					for ( DataColumnType dtype : columnTypes ) {
+//        						if ( ( ! DashboardUtils.isEmptyNull(datasetIdColName) && columnNames.get(k).equalsIgnoreCase(datasetIdColName)) ||
+//        								DashboardServerUtils.DATASET_NAME.typeNameEquals(dtype) ) {
+//        							datasetNameColIdx = k;
+//        							break;
+//        						} 
+//        						
+//        						k++;
+//        					}
+//        					if ( datasetNameColIdx < 0 ) {
+//        						String msg = "Dataset ID column not found";
+//        						if ( ! DashboardUtils.isEmptyNull(datasetIdColName)) {
+//        							msg += ": " + datasetIdColName;
+//        						}
+//        						throw new IllegalStateException(msg);
+//        					}
+//                        }
         
     					// Get the version to record in the datasets
     					version = configStore.getUploadVersion();
@@ -692,13 +693,18 @@ public class DataFileHandler extends VersionedFileHandler {
     										   + " \"" + columnNames.get(datasetNameColIdx) + "\" DatasetID must be between " + DashboardServerUtils.MIN_DATASET_ID_LENGTH
     										   + " and " + DashboardServerUtils.MAX_DATASET_ID_LENGTH + " characters in length.");
                     } else {
-                        datasetId = DashboardServerUtils.getDatasetIDFromName(specifiedDatasetId);
+                        datasetId = DashboardServerUtils.getDatasetIDFromName(submissionRecordId);
                     }
         
+                    String userName = StringUtils.emptyOrNull(specifiedDatasetId) ?
+                                        filename :
+                                        specifiedDatasetId;
+                            
     				DashboardDatasetData dataset = datasetsMap.get(datasetId);
     				if ( dataset == null ) {
     					dataset = new DashboardDatasetData();
     					dataset.setDatasetId(datasetId);
+                        dataset.setUserDatasetName(userName);
     					dataset.setOwner(owner);
     					dataset.setUploadFilename(filename);
     					dataset.setUploadTimestamp(timestamp);
@@ -1267,6 +1273,7 @@ public class DataFileHandler extends VersionedFileHandler {
 			parentFile.mkdirs();
 		// Create the properties for this dataset information file
 		Properties datasetProps = new Properties();
+        datasetProps.setProperty(SUBMISSION_RECORD_ID, dataset.getRecordId());
         datasetProps.setProperty(USER_DATASET_NAME, dataset.getUserDatasetName());
 		// Owner of the dataset
 		datasetProps.setProperty(DATA_OWNER_ID, dataset.getOwner());
@@ -1896,8 +1903,14 @@ public class DataFileHandler extends VersionedFileHandler {
 
 		// Assign the DashboardDataset from the values in the properties file
 
+		String value = cruiseProps.getProperty(SUBMISSION_RECORD_ID);
+		if ( value == null )
+			throw new IllegalArgumentException("No property value for " + 
+					SUBMISSION_RECORD_ID + " given in " + infoFile.getPath());
+		dataset.setRecordId(value);
+        
 		// Owner of the data file
-		String value = cruiseProps.getProperty(DATA_OWNER_ID);
+		value = cruiseProps.getProperty(DATA_OWNER_ID);
 		if ( value == null )
 			throw new IllegalArgumentException("No property value for " + 
 					DATA_OWNER_ID + " given in " + infoFile.getPath());

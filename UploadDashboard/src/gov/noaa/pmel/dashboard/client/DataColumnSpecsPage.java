@@ -5,8 +5,10 @@ package gov.noaa.pmel.dashboard.client;
 
 import java.text.ParseException;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
@@ -49,6 +51,7 @@ import gov.noaa.pmel.dashboard.shared.ADCMessage;
 import gov.noaa.pmel.dashboard.shared.ADCMessageList;
 import gov.noaa.pmel.dashboard.shared.DashboardDataset;
 import gov.noaa.pmel.dashboard.shared.DashboardDatasetData;
+import gov.noaa.pmel.dashboard.shared.DashboardDatasetList;
 import gov.noaa.pmel.dashboard.shared.DashboardServicesInterface;
 import gov.noaa.pmel.dashboard.shared.DashboardServicesInterfaceAsync;
 import gov.noaa.pmel.dashboard.shared.DashboardUtils;
@@ -452,14 +455,20 @@ public class DataColumnSpecsPage extends CompositeWithUsername {
 	 * @param dataset
 	 * 		show the specifications for this cruise
 	 */
-	static void showPage(String username, ArrayList<String> expocodes) {
+	static void showPage(String username, DashboardDatasetList cruises) {
+        showPage(username, cruises.values());
+	}
+	static void showPage(String username, Collection<DashboardDataset> cruises) {
+        if ( cruises.size() < 1 ) {
+            throw new IllegalStateException("No datasets specified for Data Column Identification.");
+        }
 		if ( singleton == null )
 			singleton = new DataColumnSpecsPage();
 
 		singleton.setUsername(username);
-        singleton.setDatasetIds(expocodes);
+        singleton.setDatasetIds(cruises);
 		UploadDashboard.showWaitCursor();
-		service.getDataColumnSpecs(singleton.getUsername(), expocodes.get(0), 
+		service.getDataColumnSpecs(singleton.getUsername(), cruises.iterator().next().getDatasetId(), 
 								new OAPAsyncCallback<TypesDatasetDataPair>() {
 			@Override
 			public void onSuccess(TypesDatasetDataPair cruiseSpecs) {
@@ -491,10 +500,16 @@ public class DataColumnSpecsPage extends CompositeWithUsername {
 	/**
      * @param expocodes2
      */
-    private void setDatasetIds(ArrayList<String> datasetIds) {
+    private void setDatasetIds(Collection<DashboardDataset> datasets) {
 		expocodes.clear();
-		expocodes.addAll(expocodes);
-        header.addDatasetIds(datasetIds);
+        List<String>datasetIds = new ArrayList<>(datasets.size());
+        List<String>names = new ArrayList<>(datasets.size());
+        for (DashboardDataset dd : datasets) {
+            datasetIds.add(dd.getDatasetId());
+            names.add(dd.getUserDatasetName());
+        }
+		expocodes.addAll(datasetIds);
+        header.addDatasetIds(names);
     }
 
     protected void updateCruiseSpecs(TypesDatasetDataPair cruiseSpecs) {
@@ -763,6 +778,14 @@ public class DataColumnSpecsPage extends CompositeWithUsername {
 
 	@UiHandler("doneButton")
 	void doneOnClick(ClickEvent event) {
+        UploadDashboard.pingService(new OAPAsyncCallback<Void>() {
+            @Override
+            public void onSuccess(Void nothing) {
+                _doneOnClick(event);
+            }
+        });
+	}
+	void _doneOnClick(ClickEvent event) {
 		// Check if any changes have been made
 		boolean hasChanged = false;
 		for ( DatasetDataColumn dataCol : cruiseDataCols ) {
@@ -858,6 +881,14 @@ public class DataColumnSpecsPage extends CompositeWithUsername {
 			UploadDashboard.showMessage(DISABLED_SUBMIT_HOVER_HELP);
 			return;
 		}
+        UploadDashboard.pingService(new OAPAsyncCallback<Void>() {
+            @Override
+            public void onSuccess(Void nothing) {
+                _submitOnClick(event);
+            }
+        });
+	}
+	void _submitOnClick(ClickEvent event) {
         
 		// longitude given?
 		boolean hasLongitude = false;
@@ -1154,7 +1185,12 @@ public class DataColumnSpecsPage extends CompositeWithUsername {
 			}
 		}
 		if ( hasChanged ) {
-			doSave();
+            UploadDashboard.pingService(new OAPAsyncCallback<Void>() {
+                @Override
+                public void onSuccess(Void nothing) {
+        			doSave();
+                }
+            });
 		} else {
 			UploadDashboard.showMessage("There have been no changes to data column definitions.");
 		}

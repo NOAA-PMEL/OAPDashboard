@@ -46,6 +46,10 @@ public class NewOpaqueFileUploadProcessor extends FileUploadProcessor {
             logger.info("processing " + _uploadFields.fileType() + " upload file " + filename);
             datasetId = submissionRecordId; // getDatasetId(datasetId, filename, multiFileUpload);
             OpaqueDataset pseudoDataset = createPseudoDataset(datasetId, item, _uploadedFile, _uploadFields);
+            String userDatasetName = StringUtils.emptyOrNull(specifiedDatasetId) ?
+                                      _uploadedFile.getName() :
+                                      specifiedDatasetId;
+            pseudoDataset.setUserDatasetName(userDatasetName );;
                 // Check if the dataset already exists
                 String itemDatasetId = pseudoDataset.getDatasetId();
                 boolean datasetDataDirExists = _dataFileHandler.datasetDataDirExists(itemDatasetId);
