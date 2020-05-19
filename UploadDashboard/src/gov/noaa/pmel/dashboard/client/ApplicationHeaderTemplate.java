@@ -3,7 +3,9 @@
  */
 package gov.noaa.pmel.dashboard.client;
 
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.List;
 import java.util.logging.Logger;
 
 import com.google.gwt.core.client.GWT;
@@ -19,6 +21,7 @@ import com.google.gwt.user.client.ui.MenuBar;
 import com.google.gwt.user.client.ui.MenuItem;
 import com.google.gwt.user.client.ui.Widget;
 
+import gov.noaa.pmel.dashboard.shared.DashboardDataset;
 import gov.noaa.pmel.dashboard.shared.DashboardDatasetList;
 
 /**
@@ -133,7 +136,7 @@ public class ApplicationHeaderTemplate extends CompositeWithUsername {
      * @param cruises
      */
     public void addDatasetIds(DashboardDatasetList cruises) {
-        String cruiseIds = extractCruiseIds(cruises.keySet());
+        String cruiseIds = extractCruiseIds(cruises);
         setDatasetIds(cruiseIds);
     }
     
@@ -142,6 +145,14 @@ public class ApplicationHeaderTemplate extends CompositeWithUsername {
         setDatasetIds(datasetIds);
     }
 
+    private static String extractCruiseIds(DashboardDatasetList cruises) {
+        List<String> names = new ArrayList<>(cruises.values().size()); 
+        for (DashboardDataset dd : cruises.values()) {
+            names.add(dd.getUserDatasetName());
+        }
+        return extractCruiseIds(names);
+    }
+    
     /**
      * @param cruises
      * @return

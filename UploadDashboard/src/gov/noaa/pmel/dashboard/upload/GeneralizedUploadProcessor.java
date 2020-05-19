@@ -46,6 +46,7 @@ public class GeneralizedUploadProcessor extends FileUploadProcessor {
                         UploadProcessor.getFileReader(_uploadFields.checkedFileType(), inStream);
                 datasetsMap = DataFileHandler.createDatasetsFromInput(recordReader, dataFormat, 
                                                                       username, filename, timestamp, 
+                                                                      submissionRecordId,
                                                                       specifiedDatasetId, datasetIdColName);
             } catch (IllegalStateException ex) {
                 _messages.add(DashboardUtils.INVALID_FILE_HEADER_TAG + " " + filename);

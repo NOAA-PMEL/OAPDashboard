@@ -8,9 +8,9 @@
     			<g:Label ui:field="datasetColNameLabel" addStyleNames="{style.labeledlistlabel}" />
     			<g:TextBox ui:field="datasetColName"/>
     			<g:HTML ui:field="datasetColNameDesc" addStyleNames="{style.labeledlistlabel} {style.font_italic}" ><font style="font-weight:bold;">Optional.</font> Used to specify the column containing the dataset ID, if not automatically detected.</g:HTML>
-                <g:Label ui:field="unspecDatasetIdLabel" addStyleNames="{style.unspec_dataset_id_label}">Dataset ID:</g:Label>
+                <g:Label ui:field="unspecDatasetIdLabel" addStyleNames="{style.unspec_dataset_id_label}">User Dataset Name:</g:Label>
                 <g:TextBox ui:field="unspecDatasetIdBox"></g:TextBox>
-    			<g:HTML ui:field="unspecDatasetIdDesc" addStyleNames="{style.labeledlistlabel} {style.font_italic}" ><font style="font-weight:bold;">Optional.</font> Used to specify the dataset unique ID, if a dataset ID column is not included in the data file.</g:HTML>
+    			<g:HTML ui:field="unspecDatasetIdDesc" addStyleNames="{style.labeledlistlabel} {style.font_italic}" ><font style="font-weight:bold;">Optional.</font> Provide a dataset display name.  The default name is the name of the uploaded file. </g:HTML>
               <g:FlexTable ui:field="flexTable">
               </g:FlexTable>
             </g:FlowPanel>

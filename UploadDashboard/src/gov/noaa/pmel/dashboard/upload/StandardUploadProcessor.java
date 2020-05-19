@@ -88,12 +88,12 @@ public class StandardUploadProcessor extends FileUploadProcessor {
                 System.out.println("item type: " + itemType + ", tika md stream type: " + tikaMdType + ", tika default stream type: " + tikaType + ", file type:"+fileType);
                 if ( baseType.equals("text")) {
                     datasetsMap = DataFileHandler.createDatasetsFromInput(bufStream, dataFormat, 
-                                                                         username, filename, timestamp, 
+                                                                         username, filename, timestamp, submissionRecordId,
                                                                          specifiedDatasetId, datasetIdColName);
                 } else if ( baseType.equals("application") && 
                             ( subType.contains("excel") || subType.contains("spreadsheet"))) {
                     datasetsMap = DataFileHandler.createDatasetsFromInput(ExcelFileReader.extractExcelRows(bufStream), dataFormat, 
-                                                                         username, filename, timestamp, 
+                                                                         username, filename, timestamp, submissionRecordId,
                                                                          specifiedDatasetId, datasetIdColName);
                 }
             } catch (IllegalStateException ex) {
