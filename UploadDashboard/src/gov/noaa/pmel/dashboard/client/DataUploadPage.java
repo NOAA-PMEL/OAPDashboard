@@ -19,7 +19,6 @@ import com.google.gwt.safehtml.shared.SafeHtmlUtils;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.uibinder.client.UiHandler;
-import com.google.gwt.user.client.History;
 import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.ui.Anchor;
 import com.google.gwt.user.client.ui.Button;
@@ -273,6 +272,7 @@ public class DataUploadPage extends CompositeWithUsername {
 	 * to show the singleton instance of this page. 
 	 */
 	DataUploadPage() {
+		super(PagesEnum.UPLOAD_DATA.name());
 		initWidget(uiBinder.createAndBindUi(this));
 		singleton = this;
 
@@ -460,7 +460,6 @@ public class DataUploadPage extends CompositeWithUsername {
 		singleton.advancedPanel.setOpen(false);
         singleton.header.userInfoLabel.setText(WELCOME_INTRO + username);
 		UploadDashboard.updateCurrentPage(singleton, true);
-		History.newItem(PagesEnum.UPLOAD_DATA.name(), false);
 	}
 
 	/**

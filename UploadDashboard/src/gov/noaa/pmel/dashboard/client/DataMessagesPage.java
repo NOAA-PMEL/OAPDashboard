@@ -11,7 +11,6 @@ import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.DoubleClickEvent;
 import com.google.gwt.event.dom.client.DoubleClickHandler;
 import com.google.gwt.i18n.client.NumberFormat;
-import com.google.gwt.safehtml.shared.SafeHtmlUtils;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.uibinder.client.UiHandler;
@@ -21,10 +20,7 @@ import com.google.gwt.user.cellview.client.DataGrid;
 import com.google.gwt.user.cellview.client.SimplePager;
 import com.google.gwt.user.cellview.client.TextColumn;
 import com.google.gwt.user.client.History;
-import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.google.gwt.user.client.ui.Button;
-import com.google.gwt.user.client.ui.HTML;
-import com.google.gwt.user.client.ui.InlineLabel;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.gwt.view.client.ListDataProvider;
@@ -102,6 +98,7 @@ public class DataMessagesPage extends CompositeWithUsername {
 	 * latest data messages for a cruise from the server. 
 	 */
 	DataMessagesPage() {
+        super(PagesEnum.SHOW_DATA_MESSAGES.name());
 		initWidget(uiBinder.createAndBindUi(this));
 		singleton = this;
 
@@ -156,7 +153,6 @@ public class DataMessagesPage extends CompositeWithUsername {
 					singleton = new DataMessagesPage();
 				UploadDashboard.updateCurrentPage(singleton);
 				singleton.updateMessages(msgList);
-				History.newItem(PagesEnum.SHOW_DATA_MESSAGES.name(), false);
 				UploadDashboard.showAutoCursor();
 			}
 			@Override

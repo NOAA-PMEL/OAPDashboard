@@ -16,7 +16,11 @@ public class CompositeWithUsername extends Composite {
 	public static final String LOGOUT_TEXT = "Logout";
 	
 	private String username = "";
+    private String pageName = "";
 
+    protected CompositeWithUsername(String pageHistoryName) {
+        pageName = pageHistoryName;
+    }
 	/**
 	 * @return 
 	 * 		the username; never null but may be empty
@@ -35,5 +39,7 @@ public class CompositeWithUsername extends Composite {
 		else
 			this.username = username;
 	}
+    
+	public String pageName() { return pageName; }
 
 }

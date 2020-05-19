@@ -14,14 +14,9 @@ import com.google.gwt.safehtml.shared.SafeHtmlUtils;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.uibinder.client.UiHandler;
-import com.google.gwt.user.client.History;
-import com.google.gwt.user.client.rpc.AsyncCallback;
-import com.google.gwt.user.client.ui.Anchor;
 import com.google.gwt.user.client.ui.Button;
-import com.google.gwt.user.client.ui.CheckBox;
 import com.google.gwt.user.client.ui.HTML;
 import com.google.gwt.user.client.ui.InlineLabel;
-import com.google.gwt.user.client.ui.RadioButton;
 import com.google.gwt.user.client.ui.Widget;
 
 import gov.noaa.pmel.dashboard.client.UploadDashboard.PagesEnum;
@@ -174,6 +169,7 @@ public class SubmitForQCPage extends CompositeWithUsername implements DataSubmis
 	 * instead use the static showPage or redisplayPage method.
 	 */
 	SubmitForQCPage() {
+        super(PagesEnum.SUBMIT_FOR_QC.name());
 		initWidget(uiBinder.createAndBindUi(this));
 		singleton = this;
 
@@ -219,7 +215,6 @@ public class SubmitForQCPage extends CompositeWithUsername implements DataSubmis
 			singleton = new SubmitForQCPage();
 		UploadDashboard.updateCurrentPage(singleton);
 		singleton.updateDatasets(cruises);
-		History.newItem(PagesEnum.SUBMIT_FOR_QC.name(), false);
 	}
 
 	/**

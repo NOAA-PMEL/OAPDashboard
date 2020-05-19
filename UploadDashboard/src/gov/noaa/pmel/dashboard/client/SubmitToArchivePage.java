@@ -18,7 +18,6 @@ import com.google.gwt.safehtml.shared.SafeHtmlUtils;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.uibinder.client.UiHandler;
-import com.google.gwt.user.client.History;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.google.gwt.user.client.ui.Button;
 import com.google.gwt.user.client.ui.CheckBox;
@@ -106,6 +105,7 @@ public class SubmitToArchivePage extends CompositeWithUsername implements DataSu
         + "</div>";
     
 	public SubmitToArchivePage() {
+        super(PagesEnum.SUBMIT_TO_ARCHIVE.name());
 		initWidget(uiBinder.createAndBindUi(this));
 		setupHandlers();
         
@@ -254,6 +254,16 @@ public class SubmitToArchivePage extends CompositeWithUsername implements DataSu
 //		select_all.addClickHandler(new RadioButtonClickHandler(SELECT.ALL));
 	}
 
+    static void redisplayPage(String username) {
+        if ( (username == null) || username.isEmpty() || 
+             (singleton == null) || ! singleton.getUsername().equals(username) ) {
+            DatasetListPage.showPage();
+        }
+        else {
+            UploadDashboard.updateCurrentPage(singleton);
+        }
+    }
+
 	static void showPage(DashboardDatasetList datasets) {
 		if ( singleton == null ) {
 			singleton = new SubmitToArchivePage();
@@ -266,7 +276,6 @@ public class SubmitToArchivePage extends CompositeWithUsername implements DataSu
         singleton.cancelButton.setText("Cancel");
         getStatus(singleton);
 		UploadDashboard.updateCurrentPage(singleton, UploadDashboard.DO_PING);
-		History.newItem(PagesEnum.SUBMIT_TO_ARCHIVE.name(), false);
 	}
     // COPIED from DatasetListPage, where it's not currently being used...
     private static final String[] EMPTY_MESSAGES = new String[0];

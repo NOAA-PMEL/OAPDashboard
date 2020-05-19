@@ -39,7 +39,6 @@ import com.google.gwt.user.cellview.client.ColumnSortList.ColumnSortInfo;
 import com.google.gwt.user.cellview.client.DataGrid;
 import com.google.gwt.user.cellview.client.Header;
 import com.google.gwt.user.cellview.client.TextColumn;
-import com.google.gwt.user.client.History;
 import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.google.gwt.user.client.ui.Button;
@@ -372,6 +371,7 @@ public class DatasetListPage extends CompositeWithUsername {
 	 * latest dataset list from the server. 
 	 */
 	DatasetListPage(DashboardDatasetList datasets) {
+        super(PagesEnum.SHOW_DATASETS.name());
 		initWidget(uiBinder.createAndBindUi(this));
         boolean showManagerFields = datasets.isManager();
 		singleton = this;
@@ -477,7 +477,6 @@ public class DatasetListPage extends CompositeWithUsername {
 					singleton = new DatasetListPage(cruises);
 				UploadDashboard.updateCurrentPage(singleton);
 				singleton.updateDatasets(cruises);
-				History.newItem(PagesEnum.SHOW_DATASETS.name(), false);
 				UploadDashboard.showAutoCursor();
 			}
 			@Override

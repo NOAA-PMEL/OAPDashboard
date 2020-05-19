@@ -48,6 +48,7 @@ public class ApplicationHeaderTemplate extends CompositeWithUsername {
     private static ApplicationHeaderTemplateUiBinder uiBinder = GWT.create(ApplicationHeaderTemplateUiBinder.class);
 
     public ApplicationHeaderTemplate() {
+        super("");
         initWidget(uiBinder.createAndBindUi(this));
         menuBar.setAutoOpen(true);
 		logoutBtn.setText(LOGOUT_TEXT);

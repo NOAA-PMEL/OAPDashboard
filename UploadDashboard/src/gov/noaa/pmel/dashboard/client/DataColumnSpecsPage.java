@@ -33,7 +33,6 @@ import com.google.gwt.uibinder.client.UiHandler;
 import com.google.gwt.user.cellview.client.DataGrid;
 import com.google.gwt.user.cellview.client.RowStyles;
 import com.google.gwt.user.cellview.client.SimplePager;
-import com.google.gwt.user.client.History;
 import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.google.gwt.user.client.ui.Button;
@@ -240,6 +239,7 @@ public class DataColumnSpecsPage extends CompositeWithUsername {
 	 * cruise when populated.
 	 */
 	DataColumnSpecsPage() {
+        super(PagesEnum.IDENTIFY_COLUMNS.name());
 		initWidget(uiBinder.createAndBindUi(this));
 		singleton = this;
         
@@ -475,7 +475,6 @@ public class DataColumnSpecsPage extends CompositeWithUsername {
 				if ( cruiseSpecs != null ) {
 					UploadDashboard.updateCurrentPage(singleton);
 					singleton.updateCruiseSpecs(cruiseSpecs);
-					History.newItem(PagesEnum.IDENTIFY_COLUMNS.name(), false);
 				}
 				else {
 					UploadDashboard.showMessage(GET_COLUMN_SPECS_FAIL_MSG + 
@@ -544,7 +543,6 @@ public class DataColumnSpecsPage extends CompositeWithUsername {
 		}
 		else {
 			UploadDashboard.updateCurrentPage(singleton);
-			History.newItem(PagesEnum.IDENTIFY_COLUMNS.name(), false);
 			singleton.setView(rowNumber, columnNumber);
 		}
 	}

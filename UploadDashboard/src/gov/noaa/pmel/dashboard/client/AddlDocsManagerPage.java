@@ -26,7 +26,6 @@ import com.google.gwt.user.cellview.client.ColumnSortEvent;
 import com.google.gwt.user.cellview.client.ColumnSortEvent.ListHandler;
 import com.google.gwt.user.cellview.client.DataGrid;
 import com.google.gwt.user.cellview.client.TextColumn;
-import com.google.gwt.user.client.History;
 import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.google.gwt.user.client.ui.Button;
@@ -154,6 +153,7 @@ public class AddlDocsManagerPage extends CompositeWithUsername {
 	 * a cruise. 
 	 */
 	AddlDocsManagerPage() {
+        super(PagesEnum.MANAGE_DOCUMENTS.name());
 		initWidget(uiBinder.createAndBindUi(this));
 		singleton = this;
 
@@ -202,7 +202,6 @@ public class AddlDocsManagerPage extends CompositeWithUsername {
 			singleton = new AddlDocsManagerPage();
 		singleton.updateAddlDocs(cruiseList);
 		UploadDashboard.updateCurrentPage(singleton, UploadDashboard.DO_PING);
-		History.newItem(PagesEnum.MANAGE_DOCUMENTS.name(), false);
 	}
 
 	/**
