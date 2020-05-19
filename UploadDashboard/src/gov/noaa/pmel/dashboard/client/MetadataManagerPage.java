@@ -15,12 +15,10 @@ import com.google.gwt.safehtml.shared.SafeHtmlUtils;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.uibinder.client.UiHandler;
-import com.google.gwt.user.client.History;
 import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.google.gwt.user.client.ui.Button;
 import com.google.gwt.user.client.ui.Frame;
-import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.Widget;
 
 import gov.noaa.pmel.dashboard.client.UploadDashboard.PagesEnum;
@@ -103,6 +101,7 @@ public class MetadataManagerPage extends CompositeWithUsername {
 	private static MetadataManagerPage singleton;
 	
 	MetadataManagerPage() {
+        super(PagesEnum.EDIT_METADATA.name());
 		initWidget(uiBinder.createAndBindUi(this));
 		singleton = this;
 
@@ -405,7 +404,6 @@ public class MetadataManagerPage extends CompositeWithUsername {
                 @Override
                 public void onSuccess(MetadataPreviewInfo result) {
             		UploadDashboard.updateCurrentPage(singleton);
-            		History.newItem(PagesEnum.EDIT_METADATA.name(), false);
                     confirmCancel = true;
                     doneButton.setEnabled(true);
                     lastUpdateTime = result.getMetadataFileInfo().getFileModTime();
@@ -416,7 +414,9 @@ public class MetadataManagerPage extends CompositeWithUsername {
                     }
                     // Validate response for valid url...
                     openMetadataEditorWindow(result.getMdDocId());
-                    DatasetListPage.meLink.setAttribute("style", "cursor:pointer;");
+                    if ( DatasetListPage.meLink != null ) {
+                        DatasetListPage.meLink.setAttribute("style", "cursor:pointer;");
+                    }
                 }
                 @Override
                 public void customFailure(Throwable caught) {
@@ -429,7 +429,9 @@ public class MetadataManagerPage extends CompositeWithUsername {
                         UploadDashboard.showFailureMessage(msg, caught);
                     }
                     UploadDashboard.showAutoCursor();
-                    DatasetListPage.meLink.setAttribute("style", "cursor:pointer;");
+                    if ( DatasetListPage.meLink != null ) {
+                        DatasetListPage.meLink.setAttribute("style", "cursor:pointer;");
+                    }
                 }
             });
         } catch (Exception ex) {

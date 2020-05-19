@@ -42,18 +42,15 @@ import com.google.gwt.user.client.ui.RadioButton;
 import com.google.gwt.user.client.ui.Widget;
 
 import gov.noaa.pmel.dashboard.client.DashboardAskPopup.QuestionType;
-import gov.noaa.pmel.dashboard.client.UploadDashboard.PagesEnum;
 import gov.noaa.pmel.dashboard.shared.DashboardDataset;
 import gov.noaa.pmel.dashboard.shared.DashboardUtils;
-import gov.noaa.pmel.dashboard.shared.FeatureType;
-import gov.noaa.pmel.dashboard.shared.FileType;
 
 /**
  * Page for uploading new or updated cruise data files.
  * 
  * @author Karl Smith
  */
-public class DataUpdatePopup extends CompositeWithUsername {
+public class DataUpdatePopup extends Composite {
 
 	private static final String TITLE_TEXT = "Upload Data Files";
 
@@ -189,6 +186,7 @@ public class DataUpdatePopup extends CompositeWithUsername {
 
     private PopupPanel parentPanel;
     
+    private String username;
 
 	/**
 	 * Creates an empty cruise upload page.  Do not call this 
@@ -202,58 +200,7 @@ public class DataUpdatePopup extends CompositeWithUsername {
         parentPanel = new PopupPanel(false, true);
         parentPanel.setWidget(this);
         
-		setUsername(username);
-//        featureTypeSelector.addItem("-- Observation Type --");
-//        featureTypeSelector.addItem("Timeseries", FeatureType.TIMESERIES.name());
-//        featureTypeSelector.addItem("Trajectory", FeatureType.TRAJECTORY.name());
-//        featureTypeSelector.addItem("Profile", FeatureType.PROFILE.name());
-//        featureTypeSelector.addItem("Timeseries Profile", FeatureType.TIMESERIES_PROFILE.name());
-//        featureTypeSelector.addItem("Trajectory Profile", FeatureType.TRAJECTORY_PROFILE.name());
-//        featureTypeSelector.addItem("Other", FeatureType.OTHER.name());
-//        featureTypeSelector.getElement().<SelectElement>cast().getOptions().getItem(0).setDisabled(true); // Please select...
-////        featureTypeSelector.getElement().<SelectElement>cast().getOptions().getItem(3).setDisabled(true); // make sure to disable the correct element, if you do
-//        featureTypeSelector.addChangeHandler(new ChangeHandler() {
-//          @Override
-//          public void onChange(ChangeEvent event) {
-//              if ( featureTypeSelector.getSelectedIndex() > 0 ) {
-//                  featureTypeSelector.removeStyleName("missingInfoItem");
-//              }
-//              selectedFeatureType = FeatureType.valueOf(featureTypeSelector.getSelectedValue());
-//              GWT.log("Selecting obs type " + selectedFeatureType.name());
-//          }
-//        });
-//        featureTypeHelpAnchor.setText(FEATURE_TYPE_HELP_ANCHOR_TEXT);
-//        featureTypeHelpPopup = null;
-//
-//        fileTypeHelpAnchor.setVisible(false);
-//        fileTypeSelector.setVisible(false);
-//        
-//        fileTypeSelector.addItem("-- File Format --");
-//        fileTypeSelector.getElement().<SelectElement>cast().getOptions().getItem(0).setDisabled(true); // Please select...
-//        fileTypeSelector.addItem("ASCII Delimited", FileType.DELIMITED.name());
-////        fileTypeSelector.addItem("NetCDF", FileType.NETCDF.name());
-////        fileTypeSelector.addItem("DSG", FileType.NC_DSG.name());
-//        fileTypeSelector.addItem("Other", FileType.OTHER.name());
-//        fileTypeSelector.addChangeHandler(new ChangeHandler() {
-//          @Override
-//          public void onChange(ChangeEvent event) {
-//              if ( fileTypeSelector.getSelectedIndex() > 0 ) {
-//                  fileTypeSelector.removeStyleName("missingInfoItem");
-//              }
-//              selectedFileType = FileType.valueOf(fileTypeSelector.getSelectedValue());
-//              GWT.log("Selecting file type " + selectedFileType.name());
-//          }
-//        });
-//        fileTypeHelpAnchor.setText(FILE_TYPE_HELP_ANCHOR_TEXT);
-//        fileTypeHelpPopup = null;
-//        
-//        _featureTypeFields = new CommonFeatureFields();
-//        featureTypeSpecificContentPanel.add(_featureTypeFields);
-//        
-//        header.setPageTitle(TITLE_TEXT);
-//		moreHelpAnchor.setText(MORE_HELP_TEXT);
-//        moreHelpAnchor.setVisible(false);
-//		moreHelpPopup = null;
+		this.username = username;
 
 		uploadForm.setEncoding(FormPanel.ENCODING_MULTIPART);
 		uploadForm.setMethod(FormPanel.METHOD_POST);
