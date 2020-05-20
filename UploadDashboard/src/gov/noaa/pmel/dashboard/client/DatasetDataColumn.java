@@ -17,6 +17,9 @@ import com.google.gwt.cell.client.FieldUpdater;
 import com.google.gwt.cell.client.HasCell;
 import com.google.gwt.cell.client.TextCell;
 import com.google.gwt.cell.client.TextInputCell;
+import com.google.gwt.cell.client.ValueUpdater;
+import com.google.gwt.core.client.GWT;
+import com.google.gwt.dom.client.Element;
 import com.google.gwt.logging.client.ConsoleLogHandler;
 import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
 import com.google.gwt.user.cellview.client.Header;
@@ -37,6 +40,9 @@ import gov.noaa.pmel.dashboard.shared.QCFlag.Severity;
 public class DatasetDataColumn {
 
 	static final String DEFAULT_MISSING_VALUE = "(default missing values)";
+
+    private static final String UNKNOWN_COLUMN_WARNING_STYLE = "dataColumnTypeWarning";
+    private static final String TYPE_SELECTOR_BASE_STYLE = "dataColumnSelectionCell";
 
 	// List of all known user data column types and selected units
 	private ArrayList<DataColumnType> knownTypeUnitList;
@@ -124,7 +130,7 @@ public class DatasetDataColumn {
             if ( ( flagRow == null || flagRow.intValue() == DashboardUtils.INT_MISSING_VALUE.intValue() ) 
                     && flagCol != null && flagCol.intValue() == (columnNumber-1) ) {
                 Severity s = flag.getSeverity();
-                columnStyle = "dataColumnTypeWarning";
+                columnStyle = UNKNOWN_COLUMN_WARNING_STYLE;
             }
         }
 		// Create the TextCell giving the column name given by the user
@@ -159,19 +165,22 @@ public class DatasetDataColumn {
 				// Create a list of all the standard column headers with units;
 				// render as a block-level element
                     theCell = 
-    				new StyledSelectionCell(typeUnitStringList, "dataColumnSelectionCell") {
+    				new StyledSelectionCell(typeUnitStringList, TYPE_SELECTOR_BASE_STYLE) {
     					@Override
     					public void render(Cell.Context context, String value, SafeHtmlBuilder sb) {
     						super.render(context, value, sb);
     						sb.appendHtmlConstant("<br />");
     					}
-    //                    @Override
-    //                    protected void finishEditing(Element parent,
-    //                                                 String value,
-    //                                                 java.lang.Object key,
-    //                                                 ValueUpdater<String> valueUpdater) {
-    //                        logger.fine(ID + " finished with " + value);
-    //                    }
+                        @Override
+                        protected void finishEditing(Element parent,
+                                                     String value,
+                                                     java.lang.Object key,
+                                                     ValueUpdater<String> valueUpdater) {
+                            Element input = getInputElement(parent);
+                            GWT.log("DDC finished with input:" + input);
+                            input.setClassName(getStyle());
+                            super.finishEditing(parent, value, key, valueUpdater);
+                        }
     				};
                 }
                 return theCell;
@@ -184,6 +193,8 @@ public class DatasetDataColumn {
 						// Note: index is the row index of the cell in a table 
 						// column where it is normally used; not of use here.
 
+                        GWT.log("update to " + value);
+                        
 						// Ignore this callback if value is null
 						if ( value == null )
 							return;
@@ -199,9 +210,18 @@ public class DatasetDataColumn {
 						ArrayList<DataColumnType> cruiseColTypes = dataCol.cruise.getDataColTypes();
 						DataColumnType oldType = cruiseColTypes.get(dataCol.columnIndex);
 						newType.setSelectedMissingValue(oldType.getSelectedMissingValue());
+                        GWT.log("changed to:"+newType.getDisplayName());
 						if ( newType.equals(oldType) )
 							return;
 						hasChanged = true;
+                        CompositeCell<DatasetDataColumn> headerComp = (CompositeCell<DatasetDataColumn>) getHeader().getCell();
+                        List<HasCell<DatasetDataColumn,?>> compCells = headerComp.getHasCells();
+                        HasCell<DatasetDataColumn,String> compNameHasCell = (HasCell<DatasetDataColumn, String>) compCells.get(1);
+                        StyledSelectionCell compNameCell = (StyledSelectionCell)compNameHasCell.getCell();
+                        compNameCell.resetStyle();
+                        if ( newType.typeNameEquals(DashboardUtils.UNKNOWN)) {
+                            compNameCell.addStyle(UNKNOWN_COLUMN_WARNING_STYLE);
+                        }
 						cruiseColTypes.set(dataCol.columnIndex, newType);
 					}
 				};
@@ -250,6 +270,7 @@ public class DatasetDataColumn {
 						String oldValue = dctype.getSelectedMissingValue();
 						if ( value.equals(oldValue) )
 							return;
+                        
 						dctype.setSelectedMissingValue(value);
 						hasChanged = true;
 					}

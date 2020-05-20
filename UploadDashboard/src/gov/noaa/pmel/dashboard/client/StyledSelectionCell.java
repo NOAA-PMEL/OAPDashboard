@@ -18,7 +18,6 @@ import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.NativeEvent;
 import com.google.gwt.dom.client.SelectElement;
 import com.google.gwt.safehtml.client.SafeHtmlTemplates;
-import com.google.gwt.safehtml.client.SafeHtmlTemplates.Template;
 import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
 
@@ -39,6 +38,7 @@ public class StyledSelectionCell extends AbstractInputCell<String, String> {
     private final List<String> options;
 
     private String style;
+    private String baseStyle;
 
     public StyledSelectionCell(List<String> options) {
         super("change");
@@ -55,6 +55,7 @@ public class StyledSelectionCell extends AbstractInputCell<String, String> {
     public StyledSelectionCell(List<String> options, String style) {
         super("change");
         this.style = style;
+        this.baseStyle = style;
         if (template == null) {
             template = GWT.create(Template.class);
         }
@@ -74,14 +75,23 @@ public class StyledSelectionCell extends AbstractInputCell<String, String> {
             Object key = context.getKey();
             SelectElement select = parent.getFirstChild().cast();
             String newValue = options.get(select.getSelectedIndex());
+            GWT.log("SSC change to:"+newValue);
             setViewData(key, newValue);
-            finishEditing(parent, newValue, key, valueUpdater);
             if (valueUpdater != null) {
                 valueUpdater.update(newValue);
             }
+            finishEditing(parent, newValue, key, valueUpdater);
         }
     }
 
+    @Override
+    protected void finishEditing(Element parent,
+                                 String value,
+                                 java.lang.Object key,
+                                 ValueUpdater<String> valueUpdater) {
+        super.finishEditing(parent, value, key, valueUpdater);
+    }
+        
     @Override
     public void render(Context context, String value, SafeHtmlBuilder sb) {
         // Get the view data.
@@ -92,6 +102,7 @@ public class StyledSelectionCell extends AbstractInputCell<String, String> {
             viewData = null;
         }
 
+        GWT.log("render " + value + " with " + style);
         int selectedIndex = getSelectedIndex(viewData == null ? value
                 : viewData);
         if (style != null && !"".equals(style)) {
@@ -126,6 +137,10 @@ public class StyledSelectionCell extends AbstractInputCell<String, String> {
     public void setStyle(String style) {
         if ( style == null ) { style = ""; }
         this.style = style.trim();
+    }
+    
+    public void resetStyle() {
+        setStyle(baseStyle);
     }
     
     public void addStyle(String addedStyle) {
