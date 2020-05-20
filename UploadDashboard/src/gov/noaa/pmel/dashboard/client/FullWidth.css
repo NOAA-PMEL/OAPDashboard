@@ -218,6 +218,11 @@ hr .hline {
 	display: inline;
 	padding: 1.5em 0em !important;
 }
+.pullRight {
+	float: right;
+    margin-right:1em;
+    margin-bottom:1em;
+}
 .rightButton {
 	display: inline;
 	font-size: 100%;
@@ -488,22 +493,19 @@ hr .hline {
     flex: 1;
 }
 .submit_msg_text {
-/*    display: inline-block;
-     width:98%; */
      width: 100%;
      height: 8.5em;
 }
 .titlepanel {
-/* 	display: block; */
-/* 	display: table-row; */
 	margin-top: 1em;
 	margin-bottom: 1.5em;
-/* 	height: 12em; */
 }
 .pagefooter {
     display: block;
-    width: 35em;
     font-size: 11px;
+}
+.footerLinkPanel {
+    width: 35em;
     margin: 1em auto;
 }
 .pageheader {

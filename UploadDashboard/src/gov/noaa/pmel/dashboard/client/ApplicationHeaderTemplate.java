@@ -15,6 +15,7 @@ import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.user.client.Cookies;
 import com.google.gwt.user.client.Window;
+import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.MenuBar;
@@ -28,9 +29,12 @@ import gov.noaa.pmel.dashboard.shared.DashboardDatasetList;
  * @author kamb
  *
  */
-public class ApplicationHeaderTemplate extends CompositeWithUsername {
+public class ApplicationHeaderTemplate extends Composite {
 
     private static Logger logger = Logger.getLogger(ApplicationHeaderTemplate.class.getName());
+    
+	public static final String LOGOUT_TEXT = "Logout";
+	
     @UiField Label titleLabel;
     @UiField FlowPanel headerRightPanel;
     @UiField Label userInfoLabel;
@@ -48,7 +52,6 @@ public class ApplicationHeaderTemplate extends CompositeWithUsername {
     private static ApplicationHeaderTemplateUiBinder uiBinder = GWT.create(ApplicationHeaderTemplateUiBinder.class);
 
     public ApplicationHeaderTemplate() {
-        super("");
         initWidget(uiBinder.createAndBindUi(this));
         menuBar.setAutoOpen(true);
 		logoutBtn.setText(LOGOUT_TEXT);

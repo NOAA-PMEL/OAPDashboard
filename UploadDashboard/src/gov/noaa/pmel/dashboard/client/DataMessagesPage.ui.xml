@@ -22,7 +22,7 @@
     			<g:FlowPanel addStyleNames="{style.horizontalbuttonpanel}">
     				<g:Button addStyleNames="{style.horizontalbutton}" ui:field="dismissButton" />
     			</g:FlowPanel>
-                <oap:ApplicationFooter/>
+                <oap:ApplicationFooter ui:field="footer"/>
             </g:FlowPanel>
         </g:south>
         
