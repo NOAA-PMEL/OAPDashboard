@@ -82,6 +82,16 @@
 	float: right;
 	margin: 1em !important;
 }
+.footerpanel {
+    width: 35em;
+    margin: 1em auto;
+}
+.buildVersion {
+    position: absolute;
+    right: 2.2em;
+    bottom: 0.8em;
+    color: #0066cc;
+} 
 .slideIn {
    display: block;
    z-index: 25;

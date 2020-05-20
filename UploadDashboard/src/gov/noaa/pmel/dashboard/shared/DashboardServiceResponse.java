@@ -7,6 +7,7 @@ import java.io.Serializable;
 
 import com.google.gwt.user.client.rpc.IsSerializable;
 
+import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Value;
 
@@ -15,9 +16,29 @@ import lombok.Value;
  *
  */
 @Builder
-public class DashboardServiceResponse implements Serializable, IsSerializable {
+@AllArgsConstructor
+public class DashboardServiceResponse<R> implements Serializable, IsSerializable {
 
     private static final long serialVersionUID = 273980474568876388L;
+
+    private R _response;
+    private String _version;
+
+    @SuppressWarnings("unused") // For GWT
+    private DashboardServiceResponse() {
+    }
+    public DashboardServiceResponse(R response) {
+        _response = response;
+    }
+    
+    public R response() { return _response; }
+    
+    public String getVersion() {
+        return _version;
+    }
+    public void setVersion(String version) {
+        _version = version;
+    }
 
     private boolean _wasSuccessful;
     public boolean wasSuccessful() {

@@ -84,7 +84,7 @@
         </g:center>
 		<g:south size="4">
             <g:FlowPanel>
-                <oap:ApplicationFooter/>
+                <oap:ApplicationFooter ui:field="footer"/>
             </g:FlowPanel>
 		</g:south>
     </g:DockLayoutPanel>

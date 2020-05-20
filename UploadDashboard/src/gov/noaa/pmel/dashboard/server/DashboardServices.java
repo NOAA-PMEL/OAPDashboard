@@ -10,6 +10,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -171,17 +172,54 @@ public class DashboardServices extends RemoteServiceServlet implements Dashboard
 	}
 
 	@Override
-	public DashboardDatasetList getDatasetList(String pageUsername) throws IllegalArgumentException, SessionException {
+	public DashboardServiceResponse<DashboardDatasetList> getDatasetList(String pageUsername) throws IllegalArgumentException, SessionException {
 		// Get the dashboard data store and current username
         logger.debug(pageUsername);
 		if ( ! validateRequest(pageUsername) ) 
 			throw new IllegalArgumentException("Invalid user request");
 		DashboardDatasetList datasetList = configStore.getUserFileHandler().getDatasetListing(username);
 		logger.info("dataset list returned for " + username);
-		return datasetList;
+        String buildVersion = getBuildVersion();
+        DashboardServiceResponse<DashboardDatasetList> response = 
+                DashboardServiceResponse.<DashboardDatasetList>builder()
+                    .response(datasetList)
+                    .version(buildVersion)
+                    .build();
+		return response;
 	}
 
-	@Override
+	/**
+     * @return
+     */
+    private static String buildVersion = null;
+    private String getBuildVersion() {
+        if ( buildVersion == null ) {
+            buildVersion = "v_"+findBuildVersion();
+        }
+        return buildVersion;
+    }
+
+    /**
+     * @return
+     */
+    private String findBuildVersion() {
+		HttpServletRequest request = getThreadLocalRequest();
+        String cpath = request.getContextPath();
+        String wpath = "webapps/" + cpath.substring(1).replaceAll("/", "#") + ".war";
+        File warFile = new File(wpath);
+        if ( ! warFile.exists()) {
+            System.out.println(new File(".").getAbsolutePath());
+            warFile = new File("../oa#Dashboard.war");
+            if ( ! warFile.exists()) {
+                return "n/a";
+            }
+        }
+        long modTime = warFile.lastModified();
+        String version =  TimeUtils.formatUTC(new Date(modTime), "yyyyMMdd.HHmm");
+        return version;
+    }
+
+    @Override
 	public DashboardDatasetList deleteDatasets(String pageUsername, TreeSet<String> idsSet, 
 			Boolean deleteMetadata) throws IllegalArgumentException {
 		// Get the dashboard data store and current username, and validate that username

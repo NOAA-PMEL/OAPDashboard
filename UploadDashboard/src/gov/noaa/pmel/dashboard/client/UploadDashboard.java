@@ -132,6 +132,8 @@ public class UploadDashboard implements EntryPoint, ValueChangeHandler<String> {
     private DashboardFeedbackPopup feedbackPopup;
     private ChangePasswordPopup changePasswordPopup;
     
+    private static String buildVersion = "n/a";
+    
 	/**
 	 * Create the manager for the UploadDashboard pages.
 	 * Do not use this constructor; instead use the static
@@ -351,8 +353,9 @@ public class UploadDashboard implements EntryPoint, ValueChangeHandler<String> {
         }
         singleton.currentPage = newPage;
         if ( singleton.currentPage != null ) {
-            RootLayoutPanel.get().add(singleton.currentPage);
             GWT.log("Setting page to " + newPage.pageName());
+            RootLayoutPanel.get().add(singleton.currentPage);
+            newPage.setBuildVersion(buildVersion);
     		History.newItem(newPage.pageName(), false);
             Window.setTitle("SDIS " + newPage.pageName());
         } else {
@@ -431,42 +434,42 @@ public class UploadDashboard implements EntryPoint, ValueChangeHandler<String> {
 			// Initial history setup; show the cruise list page
             GWT.log("Initial page load");
 			DatasetListPage.showPage();
-		}
-        try {
-            PagesEnum page = PagesEnum.valueOf(token);
-            switch (page) {
-                case UPLOAD_DATA:
-        			DataUploadPage.redisplayPage(currentPage.getUsername());
-                    break;
-                case IDENTIFY_COLUMNS:
-        			DataColumnSpecsPage.redisplayPage(currentPage.getUsername());
-                    break; 
-                case SHOW_DATA_MESSAGES:
-                    DataMessagesPage.redisplayPage(currentPage.getUsername());
-                    break;
-                case EDIT_METADATA:
-        			MetadataManagerPage.redisplayPage(currentPage.getUsername());
-                    break;
-                case MANAGE_DOCUMENTS:
-        			AddlDocsManagerPage.redisplayPage(currentPage.getUsername());
-                    break;
-                case PREVIEW_DATASET:
-        			DatasetPreviewPage.redisplayPage(currentPage.getUsername());
-                    break;
-                case SUBMIT_FOR_QC:
-        			SubmitForQCPage.redisplayPage(currentPage.getUsername());
-                    break;
-                case SUBMIT_TO_ARCHIVE:
-        			SubmitToArchivePage.redisplayPage(currentPage.getUsername());
-                case SHOW_DATASETS:
-                default:
-        			DatasetListPage.showPage();
+		} else {
+            try {
+                PagesEnum page = PagesEnum.valueOf(token);
+                switch (page) {
+                    case UPLOAD_DATA:
+            			DataUploadPage.redisplayPage(currentPage.getUsername());
+                        break;
+                    case IDENTIFY_COLUMNS:
+            			DataColumnSpecsPage.redisplayPage(currentPage.getUsername());
+                        break; 
+                    case SHOW_DATA_MESSAGES:
+                        DataMessagesPage.redisplayPage(currentPage.getUsername());
+                        break;
+                    case EDIT_METADATA:
+            			MetadataManagerPage.redisplayPage(currentPage.getUsername());
+                        break;
+                    case MANAGE_DOCUMENTS:
+            			AddlDocsManagerPage.redisplayPage(currentPage.getUsername());
+                        break;
+                    case PREVIEW_DATASET:
+            			DatasetPreviewPage.redisplayPage(currentPage.getUsername());
+                        break;
+                    case SUBMIT_FOR_QC:
+            			SubmitForQCPage.redisplayPage(currentPage.getUsername());
+                        break;
+                    case SUBMIT_TO_ARCHIVE:
+            			SubmitToArchivePage.redisplayPage(currentPage.getUsername());
+                    case SHOW_DATASETS:
+                    default:
+            			DatasetListPage.showPage();
+                }
+            } catch (Exception ex) {
+                logToConsole("Page name error:" + token + ":" + String.valueOf(ex));
+    			DatasetListPage.showPage();
             }
-            
-        } catch (Exception ex) {
-            logToConsole("Page name error:" + token + ":" + String.valueOf(ex));
-			DatasetListPage.showPage();
-        }
+		}
 	}
 
 	/**
@@ -727,5 +730,11 @@ public class UploadDashboard implements EntryPoint, ValueChangeHandler<String> {
             singleton.dataUpdatePopup = new DataUpdatePopup(singleton.currentPage.getUsername());
 		}
         singleton.dataUpdatePopup.showPage(dataset);
+    }
+    /**
+     * @param version
+     */
+    public static void setAppBuildVersion(String version) {
+        buildVersion = version;
     }
  }

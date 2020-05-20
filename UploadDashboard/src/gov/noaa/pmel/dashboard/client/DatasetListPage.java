@@ -52,6 +52,7 @@ import gov.noaa.pmel.dashboard.client.UploadDashboard.PagesEnum;
 import gov.noaa.pmel.dashboard.shared.DashboardDataset;
 import gov.noaa.pmel.dashboard.shared.DashboardDatasetList;
 import gov.noaa.pmel.dashboard.shared.DashboardMetadata;
+import gov.noaa.pmel.dashboard.shared.DashboardServiceResponse;
 import gov.noaa.pmel.dashboard.shared.DashboardServicesInterface;
 import gov.noaa.pmel.dashboard.shared.DashboardServicesInterfaceAsync;
 import gov.noaa.pmel.dashboard.shared.DashboardUtils;
@@ -470,11 +471,13 @@ public class DatasetListPage extends CompositeWithUsername {
 	static void showPage() {
 		UploadDashboard.showWaitCursor();
 		// Request the latest cruise list
-		service.getDatasetList(null, new OAPAsyncCallback<DashboardDatasetList>() {
+		service.getDatasetList(null, new OAPAsyncCallback<DashboardServiceResponse<DashboardDatasetList>>() {
 			@Override
-			public void onSuccess(DashboardDatasetList cruises) {
+			public void onSuccess(DashboardServiceResponse<DashboardDatasetList> result) {
+                DashboardDatasetList cruises = result.response();
 				if ( singleton == null )
 					singleton = new DatasetListPage(cruises);
+                UploadDashboard.setAppBuildVersion(result.getVersion());
 				UploadDashboard.updateCurrentPage(singleton);
 				singleton.updateDatasets(cruises);
 				UploadDashboard.showAutoCursor();
