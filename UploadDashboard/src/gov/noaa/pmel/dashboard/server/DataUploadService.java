@@ -144,13 +144,27 @@ public class DataUploadService extends HttpServlet {
             sendErrMsg(response, iex);
         } catch (Throwable ex) {
             logger.warn(ex, ex);
-            sendErrMsg(response, "There was an error on the server.  Please try again later.");
+            StackTraceElement[] trace = ex.getStackTrace();
+            StackTraceElement spot = trace != null && trace.length > 0 ?
+                                        trace[0] :
+                                        null;    
+            StringBuilder msg = 
+                new StringBuilder("There was an error on the server.  Please try again later.")
+                    .append("\nError:")
+                    .append(ex.getClass().getName());
+            if ( spot != null ) {
+                msg.append(":")
+                   .append(spot.getFileName()).append(":").append(spot.getLineNumber());
+            }
+            sendErrMsg(response, msg.toString());
         } finally {
-			for ( Entry<String,List<FileItem>> paramEntry : paramMap.entrySet() ) {
-				for ( FileItem item : paramEntry.getValue() ) {
-					item.delete();
-				}
-			}
+            if ( paramMap != null ) {
+    			for ( Entry<String,List<FileItem>> paramEntry : paramMap.entrySet() ) {
+    				for ( FileItem item : paramEntry.getValue() ) {
+    					item.delete();
+    				}
+    			}
+            }
         }
 	}
     
@@ -353,6 +367,7 @@ public class DataUploadService extends HttpServlet {
     		response.setStatus(HttpServletResponse.SC_OK);
     		response.setContentType("text/html;charset=UTF-8");
             try ( PrintWriter respWriter = response.getWriter(); ) {
+                respWriter.println("There was an error on the server:");
         		respWriter.println(ex.getMessage());
         		response.flushBuffer();
             }

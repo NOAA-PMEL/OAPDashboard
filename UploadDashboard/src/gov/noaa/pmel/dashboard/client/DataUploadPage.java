@@ -183,17 +183,19 @@ public class DataUploadPage extends CompositeWithUsername {
 			"Please select a data file to upload";
 	private static final String UNEXPLAINED_FAIL_MSG = 
 			"<h3>Upload failed.</h3>" + 
-			"<p>Unexpectedly, no explanation of the failure was given</p>";
+			"<p>Unexpected server error: no explanation of the failure was given.</p>";
 	private static final String FAIL_MSG_START = 
 			"<h3>";
 	private static final String EXPLAINED_FAIL_MSG_START =
-			"<br />Upload failed.</h3>" +
+			"<br /><font style=\"color:red;\">Upload failed.</font></h3>" +
 			"<p><pre>\n";
 	private static final String EXPLAINED_FAIL_MSG_END = 
 			"</pre></p>";
     private static final String UPLOAD_FAILED_SUGGESTIONS = 
-            "This may be due to failure to properly parse the file.<br/>"
-            + "Only ASCII delimited files and Excel spreadsheets are accepted.<br/>"
+            "This may be due to failure to properly parse the file<br/>"
+            + "or a file that does not conform to the format requirements.<br/>"
+            + "Only ASCII delimited files and Excel spreadsheets with a header row<br/>"
+            + "describing the column values can be parsed.<br/>"
             + "You can use the Preview function to check the file.";
 	private static final String NO_DATASET_NAME_FAIL_MSG = 
 			"<br />Dataset/Cruise name column not found.</h3>" +
