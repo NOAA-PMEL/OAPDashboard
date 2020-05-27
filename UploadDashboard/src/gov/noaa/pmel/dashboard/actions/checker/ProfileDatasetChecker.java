@@ -77,7 +77,7 @@ public class ProfileDatasetChecker extends BaseDatasetChecker implements Dataset
 	 * @param dataset
 	 * 		dataset data to check; various fields will be updated by this method
 	 * @param metadata
-	 * 		metadata to update; can be null 
+	 * 		metadata to update; MUST BE null ...
 	 * @return
 	 * 		standardized user data array of checked values
 	 * @throws IllegalArgumentException
@@ -85,6 +85,7 @@ public class ProfileDatasetChecker extends BaseDatasetChecker implements Dataset
 	 * 		if a data column description is not a known user data type,
 	 * 		if a required unit conversion is not supported, 
 	 * 		if a standardizer for a given data type is not known, 
+     *      if the DsgMetadata is not null
 	 * 		if ....
 	 */
 	public StdUserDataArray standardizeDataset(DashboardDatasetData dataset,
@@ -168,7 +169,7 @@ public class ProfileDatasetChecker extends BaseDatasetChecker implements Dataset
 				Integer rowIdx = wtype.getRowIndex();
 				if ( ! ( userErrs.contains(rowCol) || 
 						 userWarns.contains(rowCol) || 
-						 errRows.contains(rowIdx) ) )
+                         ( ! DashboardUtils.INT_MISSING_VALUE.equals(rowIdx) && errRows.contains(rowIdx) )))
 					warnRows.add(rowIdx);
 			}
 		}

@@ -205,7 +205,7 @@ public class TrajectoryDatasetChecker extends BaseDatasetChecker implements Data
 				Integer rowIdx = wtype.getRowIndex();
 				if ( ! ( userErrs.contains(rowCol) || 
 						 userWarns.contains(rowCol) || 
-						 errRows.contains(rowIdx) ) )
+						 ( ! DashboardUtils.INT_MISSING_VALUE.equals(rowIdx) && errRows.contains(rowIdx) )))
 					warnRows.add(rowIdx);
 			}
 		}
