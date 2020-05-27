@@ -103,14 +103,31 @@ public class ProfileDatasetChecker extends BaseDatasetChecker implements Dataset
 		}
 		
 		// Check for missing lon/lat/time 
-		boolean timesAreOk = stdUserData.checkMissingLonLatTime();
+		boolean timesOk = stdUserData.checkMissingLonLatTime();
         boolean depthsOk = checkForMissingPressureOrDepth(stdUserData);
 
 		// Bounds check the standardized data values
 		stdUserData.checkBounds();
 
 		// Perform any other data checks // TODO:
-		checkCastConsistency(stdUserData);
+        if ( timesOk && depthsOk ) {
+    		checkCastConsistency(stdUserData);
+        } else {
+            ADCMessage warn = new ADCMessage();
+            warn.setSeverity(Severity.WARNING);
+            warn.setGeneralComment("Failed to check cast data.");
+            StringBuilder sb = new StringBuilder("Unable to check cast data: There was a problem with ");
+            if ( !timesOk ) { 
+                sb.append("time and location ");
+                if ( !depthsOk ) { 
+                    sb.append("and depth data.");
+                }
+            } else {
+                sb.append("depth data.");
+            }
+            warn.setDetailedComment(sb.toString());
+            stdUserData.addStandardizationMessage(warn);
+        }
 
 		// Save the messages accumulated in stdUserData for this dataset.
 		// Assigns the sets of checker-generated QC flags and user-provided QC flags 
@@ -120,7 +137,7 @@ public class ProfileDatasetChecker extends BaseDatasetChecker implements Dataset
 		// INCLUDING processing the CheckerMessages (since that pulls in User QC flags.)
         // Question: might delaying mess up possible inter-cast checks? TODO: Check it out.
 		// Reorder the data as best possible
-		if ( timesAreOk ) {
+		if ( timesOk ) {
 			Double[] sampleTimes = stdUserData.getSampleTimes();
 			stdUserData.reorderData(sampleTimes);
 		}
