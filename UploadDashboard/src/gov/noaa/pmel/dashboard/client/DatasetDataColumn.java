@@ -41,7 +41,9 @@ public class DatasetDataColumn {
 
 	static final String DEFAULT_MISSING_VALUE = "(default missing values)";
 
-    private static final String UNKNOWN_COLUMN_WARNING_STYLE = "dataColumnTypeWarning";
+    private static final String COLUMN_WARNING_STYLE = "dataColumnTypeWarning";
+    private static final String COLUMN_ERROR_STYLE = "dataColumnTypeError";
+    private static final String COLUMN_CRITICAL_STYLE = "dataColumnTypeCritical";
     private static final String TYPE_SELECTOR_BASE_STYLE = "dataColumnSelectionCell";
 
 	// List of all known user data column types and selected units
@@ -130,7 +132,13 @@ public class DatasetDataColumn {
             if ( ( flagRow == null || flagRow.intValue() == DashboardUtils.INT_MISSING_VALUE.intValue() ) 
                     && flagCol != null && flagCol.intValue() == (columnNumber-1) ) {
                 Severity s = flag.getSeverity();
-                columnStyle = UNKNOWN_COLUMN_WARNING_STYLE;
+                if ( Severity.WARNING.equals(s)) {
+                    columnStyle = COLUMN_WARNING_STYLE;
+                } else if ( Severity.ERROR.equals(s)) {
+                    columnStyle = COLUMN_ERROR_STYLE;
+                } else if ( Severity.CRITICAL.equals(s)) {
+                    columnStyle = COLUMN_CRITICAL_STYLE;
+                }
             }
         }
 		// Create the TextCell giving the column name given by the user
@@ -220,7 +228,7 @@ public class DatasetDataColumn {
                         StyledSelectionCell compNameCell = (StyledSelectionCell)compNameHasCell.getCell();
                         compNameCell.resetStyle();
                         if ( newType.typeNameEquals(DashboardUtils.UNKNOWN)) {
-                            compNameCell.addStyle(UNKNOWN_COLUMN_WARNING_STYLE);
+                            compNameCell.addStyle(COLUMN_WARNING_STYLE);
                         }
 						cruiseColTypes.set(dataCol.columnIndex, newType);
 					}
