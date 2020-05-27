@@ -545,8 +545,8 @@ public class DashboardServices extends RemoteServiceServlet implements Dashboard
 		// Update the user-specific data column names to types, units, and missing values 
 		configStore.getUserFileHandler().updateUserDataColumnTypes(dataset, username);
 		
-//		if ( ! stdArray.hasCriticalError()) {
-        if ( stdArray.hasDate() && stdArray.hasLatitude() && stdArray.hasLongitude()) {
+        if ( stdArray.hasDate() && stdArray.hasLatitude() && stdArray.hasLongitude() &&
+              ! stdArray.hasCriticalError()) {
 			DashboardOADSMetadata mdata = OADSMetadata.extractOADSMetadata(stdArray);
 			configStore.getMetadataFileHandler().saveAsOadsXmlDoc(mdata, 
 			                                                      DashboardUtils.autoExtractedMdFilename(datasetId), 
