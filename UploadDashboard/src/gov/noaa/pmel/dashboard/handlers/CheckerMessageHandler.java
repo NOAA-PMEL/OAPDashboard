@@ -310,7 +310,7 @@ public class CheckerMessageHandler {
 						QCFlag flag;
 //						if ( colNumber != null )
 							flag = new QCFlag(woceFlagName, DashboardServerUtils.WOCE_BAD, 
-									Severity.ERROR, colIdx, rowIdx);
+									severity, colIdx, rowIdx, msg.getDetailedComment());
 //						else
 //							flag = new QCFlag(woceFlagName, DashboardServerUtils.WOCE_BAD, 
 //									Severity.ERROR, null, rowNum-1);
@@ -323,7 +323,7 @@ public class CheckerMessageHandler {
 						QCFlag flag;
 //						if ( colNumber != null && colNumber > 0 )
 							flag = new QCFlag(woceFlagName, DashboardServerUtils.WOCE_QUESTIONABLE, 
-									Severity.WARNING, colIdx, rowIdx);
+									Severity.WARNING, colIdx, rowIdx, msg.getDetailedComment());
 //						else
 //							flag = new QCFlag(woceFlagName, DashboardServerUtils.WOCE_QUESTIONABLE, 
 //									Severity.WARNING, null, rowNum-1);
