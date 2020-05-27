@@ -722,14 +722,11 @@ public class StdDataArray {
 			// Standard format of the date is yyyy-MM-dd
 			// Standard format of time string is HH:mm:ss.SSS
 			for (int j = 0; j < numSamples; j++) {
-//				try {
+				try {
 					String stdYMD = (String) stdObjects[j][dateIndex];
 					if ( DashboardUtils.isEmptyNull(stdYMD)) {
                         String msg = "Invalid (empty or null) date string (possibly due to wrong time format specified) at row: " + j;
-                        logger.warn(msg);
-                        sampleTimes[j] = new Double(0.0);
-                        continue;
-//						throw new IllegalStateException("Invalid (empty or null) date string (possibly due to wrong date format specified) at row: " + j);
+						throw new IllegalStateException(msg);
 					}
 					String[] ymd = stdYMD.split("-");
 					if ( ymd.length != 3 )
@@ -740,10 +737,7 @@ public class StdDataArray {
 					String stdHMS = (String) stdObjects[j][timeOfDayIndex];
 					if ( DashboardUtils.isEmptyNull(stdHMS)) {
                         String msg = "Invalid (empty or null) time string (possibly due to wrong time format specified) at row: " + j;
-                        logger.warn(msg);
-                        sampleTimes[j] = new Double(0.0);
-                        continue;
-//						throw new IllegalStateException("Invalid (empty or null) time string (possibly due to wrong time format specified) at row: " + j);
+						throw new IllegalStateException(msg);
 					}
 					String[] hms = stdHMS.split(":");
 					if ( hms.length != 3 )
@@ -769,9 +763,9 @@ public class StdDataArray {
 					cal.set(year, GregorianCalendar.JANUARY+month-1, day, hour, min, sec);
 					cal.set(GregorianCalendar.MILLISECOND, millisec);
 					sampleTimes[j] = Double.valueOf( cal.getTimeInMillis() / 1000.0 );
-//				} catch ( Exception ex ) {
-//					sampleTimes[j] = null;
-//				}
+				} catch ( Exception ex ) {
+					sampleTimes[j] = null;
+				}
 			}
 		}
 		else if ( isUsableIndex(dateIndex) && isUsableIndex(hourOfDayIndex) && 

@@ -23,6 +23,12 @@
 .dataColumnTypeWarning {
 	background-color: #f9eb8b;
 }
+.dataColumnTypeError {
+	background-color: #ff978d;
+}
+.dataColumnTypeCritical {
+	background-color: #ff1610;
+}
 .oa_cell {
 	border: none !important;
 }
