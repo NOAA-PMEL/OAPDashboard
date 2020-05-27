@@ -67,12 +67,16 @@ public class QCFlag implements Comparable<QCFlag>, Serializable, IsSerializable 
 	 */
 	public QCFlag(String flagName, Character flagValue, Severity severity, 
 			Integer columnIndex, Integer rowIndex) {
+        this(flagName, flagValue, severity, columnIndex, rowIndex, DashboardUtils.STRING_MISSING_VALUE);
+	}
+	public QCFlag(String flagName, Character flagValue, Severity severity, 
+			Integer columnIndex, Integer rowIndex, String comment) {
 		setFlagName(flagName);
 		setFlagValue(flagValue);
 		setSeverity(severity);
 		setColumnIndex(columnIndex);
 		setRowIndex(rowIndex);
-		comment = DashboardUtils.STRING_MISSING_VALUE;
+		setComment(comment);
 	}
 
 	/**
