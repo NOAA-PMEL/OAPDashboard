@@ -12,6 +12,8 @@ import java.util.TreeSet;
 
 import com.google.gwt.user.client.rpc.IsSerializable;
 
+import gov.noaa.pmel.dashboard.shared.QCFlag.Severity;
+
 /**
  * Represents an uploaded dataset and its current status.
  * 
@@ -28,7 +30,7 @@ public class DashboardDataset implements Serializable, IsSerializable {
 	protected String owner;
     protected String featureType;
     protected String fileType;
-	protected String datasetId;
+//	protected String datasetId;
 	protected String dataCheckStatus;
 	protected String mdTimestamp;
 	protected String mdStatus;
@@ -62,7 +64,7 @@ public class DashboardDataset implements Serializable, IsSerializable {
         userDatasetName = DashboardUtils.STRING_MISSING_VALUE;
 		version = DashboardUtils.STRING_MISSING_VALUE;
 		owner = DashboardUtils.STRING_MISSING_VALUE;
-		datasetId = DashboardUtils.STRING_MISSING_VALUE;
+//		datasetId = DashboardUtils.STRING_MISSING_VALUE;
 		dataCheckStatus = DashboardUtils.CHECK_STATUS_NOT_CHECKED;
 		mdTimestamp = DashboardUtils.STRING_MISSING_VALUE;
 		addlDocs = new TreeSet<String>();
@@ -200,21 +202,25 @@ public class DashboardDataset implements Serializable, IsSerializable {
 	 * @return 
 	 * 		the dataset ID; 
 	 * 		never null but may be {@link DashboardUtils#STRING_MISSING_VALUE}
+     * @deprecated use {@link #getRecordId()}
 	 */
 	public String getDatasetId() {
-		return datasetId;
+        return recordId;
+//		return datasetId;
 	}
 
 	/**
 	 * @param datasetId 
 	 * 		the dataset ID to set;
 	 * 		if null, sets to {@link DashboardUtils#STRING_MISSING_VALUE}
+     * @deprecated use {@link #setRecordId(String)}
 	 */
 	public void setDatasetId(String datasetId) {
-		if ( datasetId == null )
-			this.datasetId = DashboardUtils.STRING_MISSING_VALUE;
-		else
-			this.datasetId = datasetId;
+        setRecordId(datasetId);
+//		if ( datasetId == null )
+//			this.datasetId = DashboardUtils.STRING_MISSING_VALUE;
+//		else
+//			this.datasetId = datasetId;
 	}
 
 	/**
@@ -451,7 +457,7 @@ public class DashboardDataset implements Serializable, IsSerializable {
     }
 
     public void setRecordId(String recordId) {
-        this.recordId = recordId;
+        this.recordId =  recordId != null ? recordId : DashboardUtils.STRING_MISSING_VALUE;
     }
 
 	public String getUserDatasetName() {
@@ -633,7 +639,8 @@ XXX This allows the possibility that numDataRows != the actual number of data ro
 		int result = Boolean.valueOf(selected).hashCode();
 		result = result * prime + version.hashCode();
 		result = result * prime + owner.hashCode();
-		result = result * prime + datasetId.hashCode();
+		result = result * prime + recordId.hashCode();
+//		result = result * prime + datasetId.hashCode();
 		result = result * prime + dataCheckStatus.hashCode();
 		result = result * prime + mdTimestamp.hashCode();
 		result = result * prime + addlDocs.hashCode();
@@ -670,7 +677,7 @@ XXX This allows the possibility that numDataRows != the actual number of data ro
 			return false;
 		if ( ! owner.equals(other.owner) )
 			return false;
-		if ( ! datasetId.equals(other.datasetId) )
+		if ( ! recordId.equals(other.recordId) )
 			return false;
 		if ( ! dataCheckStatus.equals(other.dataCheckStatus) )
 			return false;
@@ -707,12 +714,12 @@ XXX This allows the possibility that numDataRows != the actual number of data ro
 		return true;
 	}
 
-	public String fullDetaiString() {
+	public String detaiString() {
 		return "DashboardDataset" +
 				"[ selected=" + Boolean.toString(selected) + 
 				",\n    version = " + version +
 				",\n    owner=" + owner + 
-				",\n    datasetId=" + datasetId + 
+				",\n    recordId=" + recordId + 
 				",\n    dataCheckStatus=" + dataCheckStatus +
 				",\n    omeTimestamp=" + mdTimestamp + 
 				",\n    addlDocs=" + addlDocs.toString() +
@@ -734,7 +741,7 @@ XXX This allows the possibility that numDataRows != the actual number of data ro
 	
 	@Override
 	public String toString() {
-	    return "datasetId:"+datasetId;
+	    return "["+recordId+"]:"+uploadFilename;
 	}
 
 	/**
@@ -983,4 +990,21 @@ XXX This allows the possibility that numDataRows != the actual number of data ro
     }
      */
 
+    public boolean hasCriticalError() {
+        for (QCFlag msg : getCheckerFlags()) {
+            if (Severity.CRITICAL.equals(msg.getSeverity())) {
+                return true;
+            }
+        }
+        return false;
+    }
+    public boolean hasCriticalError(int colIdx) {
+        for (QCFlag msg : getCheckerFlags()) {
+            if (Severity.CRITICAL.equals(msg.getSeverity()) && 
+                msg.getColumnIndex().equals(colIdx)) {
+                return true;
+            }
+        }
+        return false;
+    }
 }
