@@ -56,6 +56,7 @@ import gov.noaa.pmel.dashboard.shared.DashboardServicesInterfaceAsync;
 import gov.noaa.pmel.dashboard.shared.DashboardUtils;
 import gov.noaa.pmel.dashboard.shared.DataColumnType;
 import gov.noaa.pmel.dashboard.shared.QCFlag;
+import gov.noaa.pmel.dashboard.shared.QCFlag.Severity;
 import gov.noaa.pmel.dashboard.shared.TypesDatasetDataPair;
 
 /**
@@ -603,8 +604,7 @@ public class DataColumnSpecsPage extends CompositeWithUsername {
 		header.userInfoLabel.setText(WELCOME_INTRO + getUsername());
 
 		String status = cruiseSpecs.getDataCheckStatus();
-		if ( status.equals(DashboardUtils.CHECK_STATUS_NOT_CHECKED) ||
-			 status.equals(DashboardUtils.CHECK_STATUS_UNACCEPTABLE) ) {
+		if ( status.equals(DashboardUtils.CHECK_STATUS_NOT_CHECKED)) {
 			cruiseNeverChecked = true;
 			messagesLabel.setText(NOT_CHECKED_MSG);
 		}
@@ -1101,7 +1101,7 @@ public class DataColumnSpecsPage extends CompositeWithUsername {
 			@Override
 			public void onSuccess(TypesDatasetDataPair tddp) {
 				if ( tddp == null ) {
-					UploadDashboard.showMessage(SUBMIT_FAIL_MSG + " (unexpected null cruise information returned)");
+					UploadDashboard.showMessage(SUBMIT_FAIL_MSG + " (unexpected null response returned)");
 					UploadDashboard.showAutoCursor();
 					return;
 				}
@@ -1116,7 +1116,7 @@ public class DataColumnSpecsPage extends CompositeWithUsername {
 				if ( status.equals(DashboardUtils.CHECK_STATUS_NOT_CHECKED) ||
 					 status.equals(DashboardUtils.CHECK_STATUS_UNACCEPTABLE) ) {
 					// the sanity checker had serious problems
-					UploadDashboard.showMessage(SANITY_CHECK_FAIL_MSG);
+					UploadDashboard.showMessage(buildFailureMessage(SANITY_CHECK_FAIL_MSG, ddd));
 				}
 				else if ( status.startsWith(DashboardUtils.CHECK_STATUS_ERRORS_PREFIX) ) {
 					// errors issued
@@ -1159,7 +1159,7 @@ public class DataColumnSpecsPage extends CompositeWithUsername {
 				// Show the normal cursor
 				UploadDashboard.showAutoCursor();
 			}
-			@Override
+            @Override
 			public void customFailure(Throwable ex) {
 				UploadDashboard.showFailureMessage(SUBMIT_FAIL_MSG, ex);
 				// Show the normal cursor
@@ -1167,10 +1167,63 @@ public class DataColumnSpecsPage extends CompositeWithUsername {
 			}
 		});
 	}
-
-	@UiHandler("saveButton")
-	void saveOnClick(ClickEvent event) {
-		if ( ! Boolean.TRUE.equals(cruise.isEditable()) ) {
+    private static final int MAX_ERROR_LINES = 5;
+	private String buildFailureMessage(String sanityCheckFailMsg, DashboardDatasetData ddd) {
+        StringBuilder sb = new StringBuilder(sanityCheckFailMsg);
+        int maxLines = MAX_ERROR_LINES;
+        int more = 0;
+        sb.append("<ul>");
+        for (QCFlag qf : ddd.getCheckerFlags()) {
+            if ( qf.getSeverity() == Severity.CRITICAL ) {
+                if ( maxLines > 0 ) {
+                    addMessageLine(sb, qf);
+                    maxLines -= 1;
+                } else {
+                    more += 1;
+                }
+            }
+        }
+        if ( maxLines <= MAX_ERROR_LINES ) {
+            for (QCFlag qf : ddd.getCheckerFlags()) {
+                if ( qf.getSeverity() == Severity.ERROR ) {
+                    if ( maxLines > 0 ) {
+                        addMessageLine(sb, qf);
+                        maxLines -= 1;
+                    } else {
+                        more += 1;
+                    }
+                }
+            }
+        }
+        if ( more > 0 ) {
+            sb.append("<li>Plus ").append(more).append(" additional error")
+              .append(more > 1 ? "s" : "").append(".");
+        }
+        sb.append("</ul>");
+        return sb.toString();
+    }
+    private static void addMessageLine(StringBuilder sb, QCFlag qf) {
+        String comma = "";
+        sb.append("<li>").append(qf.getSeverity().name()).append(": ")
+          .append(qf.getComment());
+        Integer row = qf.getRowIndex() != null ? qf.getRowIndex() : DashboardUtils.INT_MISSING_VALUE;
+        Integer col = qf.getColumnIndex() != null ? qf.getColumnIndex() : DashboardUtils.INT_MISSING_VALUE;
+        if ( ! row.equals(DashboardUtils.INT_MISSING_VALUE) || 
+            ! col.equals(DashboardUtils.INT_MISSING_VALUE)) {
+           sb.append(" at ");
+           if ( ! row.equals(DashboardUtils.INT_MISSING_VALUE)) {
+               sb.append("row: ").append(row.intValue()+1);
+               comma = ", ";
+           }
+           if ( ! col.equals(DashboardUtils.INT_MISSING_VALUE)) {
+               sb.append(comma).append("col: ").append(col);
+           }
+        }
+    }
+    
+    @UiHandler("saveButton")
+    void saveOnClick(ClickEvent event) {
+    		if ( ! Boolean.TRUE.equals(cruise.isEditable()) ) {
 			// Should never get here, but just in case
 			UploadDashboard.showMessage(DISABLED_SUBMIT_HOVER_HELP);
 			return;
