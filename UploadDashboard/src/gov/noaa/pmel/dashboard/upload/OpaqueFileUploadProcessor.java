@@ -118,6 +118,7 @@ public class OpaqueFileUploadProcessor extends FileUploadProcessor {
         OpaqueDataset odd = new OpaqueDataset(itemId);
         odd.setUploadFilename(item.getName());
         odd.setUploadTimestamp(_uploadFields.timestamp());
+        odd.setRecordId(itemId);
         odd.setUploadedFile(_uploadedFile.getPath());
         odd.setOwner(_uploadFields.username());
         odd.setFileItem(item);
