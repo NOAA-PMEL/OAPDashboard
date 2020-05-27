@@ -119,7 +119,8 @@ public abstract class FileUploadProcessor {
      */
 
     public static FileUploadProcessor getProcessor(File uploadFile, StandardUploadFields stdFields) {
-        return ( stdFields.fileType().equals(FileType.DELIMITED) ?
+        return ( ! stdFields.featureType().equals(FeatureType.OTHER) 
+                 && stdFields.fileType().equals(FileType.DELIMITED) ?
                  new NewGeneralizedUploadProcessor(stdFields) :
                  new NewOpaqueFileUploadProcessor(stdFields)
                );
