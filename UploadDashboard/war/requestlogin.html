@@ -35,8 +35,16 @@ boxy {
     display: flex;
     flex-direction: row;
 }
-.first {
+.field_label {
     flex: 0 0 6em;
+    text-align: right;
+    margin-right: 1em;
+}
+.field_required {
+    margin-right: .4em;
+}
+.required {
+    margin-right: .25em;
 }
 .first_plus {
     flex: 0 0 8em;
@@ -155,6 +163,63 @@ var row_id_num = 0;
   function cancelRequest() {
       window.history.back();
   }
+  function doSubmit() {
+	  if ( !checkRequiredFields()) {
+		  highlightMissing();
+		  setMessage("Please fill in required fields.", "red");
+	  } else {
+		  clearHighlights();
+		  setMessage("* Required Field.", "initial");
+          submitForm();
+	  }
+  }
+  function submitForm() {
+      var form = document.getElementById("request_login_form");
+	  form.submit();
+      form.reset();
+  }
+  const required = ["firstName", "lastName", "email"];
+  function checkRequiredFields() {
+      var isGood = true;
+      required.forEach(element => isGood = isGood && elementHasContent(element+"Box"));
+	  return isGood;
+  }
+  function elementHasContent(element) {
+      var e = document.getElementById(element);
+      var v = e.value;
+      var hasContent = v != null && v.trim() != "";
+	  return hasContent;
+  }
+  function highlightMissing() {
+      required.forEach(checkRequiredElement);
+  }
+  function checkRequiredElement(element) {
+	  if ( !elementHasContent(element+"Box")) {
+		  highlight(element);
+	  } else {
+		  clearHighlight(element);
+	  }
+  }
+  function setHighlight(element, style) {
+      var e = document.getElementById(element + "Box");
+      e.style.borderColor = style;
+      e = document.getElementById(element + "Required");
+      e.style.color = style;
+  }
+  function highlight(element) {
+      setHighlight(element, "red");
+  }
+  function clearHighlight(element) {
+      setHighlight(element, "initial");
+  }
+  function clearHighlights() {
+	  required.forEach(clearHighlight);
+  }
+  function setMessage(msg, styleClass) {
+      var msgDiv = document.getElementById("info_msg");
+	  msgDiv.innerHTML = msg;
+      msgDiv.style.color = styleClass;
+  }
 </script>
 <div class="pageheader" style="position: absolute; left: 0px; top: 0px; right: 0px; bottom: 0px;">
     <img class="headerLogo" src="images/NOAA_logo.png"></img>
@@ -169,26 +234,29 @@ var row_id_num = 0;
   <div class="login_form" >
     <div class="header_section"><b>Please enter the following information<br/>to request an OAP Dashboard user account:</b></div>
     <div class="name_block">
-        <div>Name:</div>
+        <!-- <div>Name:</div> -->
         <div class="row">
-            <div class="indented first">First:</div>
-            <input tabindex="1" class="autofocus remainder_width" type="text" name="fname" />
+            <div class="field_label field_required">First Name:</div>
+            <span id="firstNameRequired" class="required">*</span>
+            <input id="firstNameBox" tabindex="1" class="autofocus remainder_width" type="text" name="fname" />
         </div>
         <div class="row">
-            <div class="indented first">Middle:</div>
+            <div class="field_label">Middle:</div>
             <input tabindex="2" class="remainder_width" type="text" name="mname" />
         </div>
         <div class="row">
-            <div class="first indented">Last:</div>
-            <input tabindex="3" tabindex="1" class="remainder_width" type="text" name="lname" />
+            <div class="field_label field_required">Last Name:</div>
+            <span id="lastNameRequired" class="required">*</span>
+            <input id="lastNameBox" tabindex="3" tabindex="1" class="remainder_width" type="text" name="lname" />
         </div>
     </div>
     <div class="row">
-      <div class="first">Email:</div>
-      <input tabindex="4" class="remainder_width" type="text" name="email" />
+        <div class="field_label field_required">Email:</div>
+        <span id="emailRequired" class="required">*</span>
+        <input id="emailBox" tabindex="4" class="remainder_width" type="text" name="email" />
     </div>
     <div class="row">
-      <div class="first">Telephone:</div>
+      <div class="field_label">Telephone:</div>
       <div class="remainder_width telephone_block">
           <input tabindex="5" class="remainder_width" type="text" name="teln" />
           <div style="padding-left:1.5em; padding-right:.5em;">Ext:</div>
@@ -206,11 +274,15 @@ var row_id_num = 0;
     </div>
  --> 
     <div class="row">
-      <div class="first_plus">Organization:</div>
+      <div class="field_label">Organization:</div>
       <input tabindex="12" class="remainder_width" type="text" name="org" />
     </div>
-    <div>
-      <div style="text-align:right;"><input tabindex="14" type="button" value="Cancel" onclick="cancelRequest()" />&nbsp;<input tabindex="13" type="submit" value="Submit" /></div> <!-- onclick="dismissDialog(this)"  -->
+    <div style="padding-top:.5em;">
+      <div style="text-align:left; display:inline;" class="info_msg" id="info_msg">* Required Field.</div>
+      <div style="text-align:right; display:inline; float:right;">
+      <input tabindex="14" type="button" value="Cancel" onclick="cancelRequest()" />
+      &nbsp;
+      <input tabindex="13" type="button" onclick="doSubmit()" value="Submit" /></div> <!-- onclick="dismissDialog(this)"  -->
     </div>
     <div tabindex="15" onfocus="resetFocus()"></div>
   </div>
