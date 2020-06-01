@@ -167,6 +167,8 @@ var row_id_num = 0;
 	  if ( !checkRequiredFields()) {
 		  highlightMissing();
 		  setMessage("Please fill in required fields.", "red");
+	  } else if ( !checkOkEmail()) {
+          setBadEmail();
 	  } else {
 		  clearHighlights();
 		  setMessage("* Required Field.", "initial");
@@ -209,6 +211,34 @@ var row_id_num = 0;
   function highlight(element) {
       setHighlight(element, "red");
   }
+  function checkOkEmail() {
+      var email = document.getElementById("emailBox");
+      return checkEmailFormat(email.value);
+  }
+  function checkEmailFormat(value) {
+      const remail = /^(([^<>()\[\]\.,;:\s@\"]+(\.[^<>()\[\]\.,;:\s@\"]+)*)|(\".+\"))@(([^<>()[\]\.,;:\s@\"]+\.)+[^<>()[\]\.,;:\s@\"]{2,})$/i;
+      return value.match(remail);
+  }
+  function checkEmail(element) {
+      if ( !checkEmailFormat(element.value)) {
+    	  setBadEmail();
+      } else {
+    	  clearBadEmail();
+      }
+  }
+  function clearBadEmail() {
+	  setHighlight("email", "initial");
+	  setMessage("* Required Field.", "initial");
+  }
+  function setBadEmail() {
+	  setHighlight("email", "red");
+	  setMessage("Invalid email address.", "red");
+  }
+  function clearThisHighlight(element) {
+      var boxid = element.id;
+      var elemname = boxid.substring(0, boxid.indexOf("Box"));
+      setHighlight(elemname, "initial");
+  }
   function clearHighlight(element) {
       setHighlight(element, "initial");
   }
@@ -238,7 +268,7 @@ var row_id_num = 0;
         <div class="row">
             <div class="field_label field_required">First Name:</div>
             <span id="firstNameRequired" class="required">*</span>
-            <input id="firstNameBox" tabindex="1" class="autofocus remainder_width" type="text" name="fname" />
+            <input id="firstNameBox" tabindex="1" class="autofocus remainder_width" type="text" name="fname" onchange="clearThisHighlight(this)" />
         </div>
         <div class="row">
             <div class="field_label">Middle:</div>
@@ -247,13 +277,13 @@ var row_id_num = 0;
         <div class="row">
             <div class="field_label field_required">Last Name:</div>
             <span id="lastNameRequired" class="required">*</span>
-            <input id="lastNameBox" tabindex="3" tabindex="1" class="remainder_width" type="text" name="lname" />
+            <input id="lastNameBox" tabindex="3" tabindex="1" class="remainder_width" type="text" name="lname" onchange="clearThisHighlight(this)" />
         </div>
     </div>
     <div class="row">
         <div class="field_label field_required">Email:</div>
         <span id="emailRequired" class="required">*</span>
-        <input id="emailBox" tabindex="4" class="remainder_width" type="text" name="email" />
+        <input id="emailBox" tabindex="4" class="remainder_width" type="text" name="email" onchange="checkEmail(this)" />
     </div>
     <div class="row">
       <div class="field_label">Telephone:</div>
