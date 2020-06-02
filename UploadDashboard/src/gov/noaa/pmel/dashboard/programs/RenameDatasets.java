@@ -12,6 +12,7 @@ import java.util.TreeMap;
 
 import gov.noaa.pmel.dashboard.actions.DatasetModifier;
 import gov.noaa.pmel.dashboard.server.DashboardConfigStore;
+import gov.noaa.pmel.dashboard.server.Users;
 
 /**
  * Renames datasets (changes the dataset IDs).  All files will be moved to the
@@ -73,7 +74,7 @@ public class RenameDatasets {
 		}
 		try {
 
-			if ( ! configStore.isAdmin(username) ) {
+			if ( ! Users.isAdmin(username) ) {
 				System.err.println(username + " is not an admin for the dashboard");
 				System.exit(1);
 			}
@@ -88,7 +89,10 @@ public class RenameDatasets {
 					ex.printStackTrace();
 				}
 			}
-
+		} catch (Exception ex) {
+			System.err.println("Problems getting user: " + ex);
+			ex.printStackTrace();
+			System.exit(1);
 		} finally {
 			DashboardConfigStore.shutdown();
 		}

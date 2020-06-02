@@ -25,8 +25,8 @@ import org.tmatesoft.svn.core.SVNException;
 
 import gov.noaa.pmel.dashboard.oads.DashboardOADSMetadata;
 import gov.noaa.pmel.dashboard.oads.OADSMetadata;
-import gov.noaa.pmel.dashboard.server.DashboardConfigStore;
 import gov.noaa.pmel.dashboard.server.DashboardServerUtils;
+import gov.noaa.pmel.dashboard.server.Users;
 import gov.noaa.pmel.dashboard.shared.DashboardMetadata;
 import gov.noaa.pmel.dashboard.shared.DashboardUtils;
 import gov.noaa.pmel.tws.util.FileUtils;
@@ -204,15 +204,8 @@ public class MetadataFileHandler extends VersionedFileHandler {
 		DashboardMetadata oldMetadata = getMetadataInfo(datasetId, metaname);
 		if ( oldMetadata == null )
 			return;
-		DashboardConfigStore configStore;
-		try {
-			configStore = DashboardConfigStore.get(false);
-		} catch (IOException ex) {
-			throw new IllegalArgumentException(
-					"Unexpected error obtaining the dashboard configuration");
-		}
 		String oldOwner = oldMetadata.getOwner();
-		if ( ! configStore.userManagesOver(username, oldOwner) )
+		if ( ! Users.userManagesOver(username, oldOwner) )
 			throw new IllegalArgumentException("Not permitted to update metadata document " + 
 					oldMetadata.getFilename() + " for dataset " + 
 					oldMetadata.getDatasetId() + " owned by " + oldOwner);

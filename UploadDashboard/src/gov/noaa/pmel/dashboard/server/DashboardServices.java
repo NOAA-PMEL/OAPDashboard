@@ -290,7 +290,7 @@ public class DashboardServices extends RemoteServiceServlet implements Dashboard
 			throw new IllegalArgumentException("Invalid user request");
 		// Get the dashboard username of the new owner
 		String newUsername;
-		if ( configStore.validateUser(newOwner) ) {
+		if ( Users.validateUser(newOwner) ) {
 			// dashboard username was given
 			newUsername = newOwner;
 		}
@@ -302,7 +302,7 @@ public class DashboardServices extends RemoteServiceServlet implements Dashboard
 			} catch (Exception ex) {
 				newUsername = null;
 			}
-			if ( (newUsername == null) || ! configStore.validateUser(newUsername) ) 
+			if ( (newUsername == null) || ! Users.validateUser(newUsername) ) 
 				throw new IllegalArgumentException("Unknown dashboard user " + newOwner);
 		}
 		// Change the owner of the datasets
@@ -326,7 +326,7 @@ public class DashboardServices extends RemoteServiceServlet implements Dashboard
 		// Create the set of updated dataset information to return
 		DataFileHandler dataHandler = configStore.getDataFileHandler();
 		DashboardDatasetList datasetList = new DashboardDatasetList(username);
-		datasetList.setManager(configStore.isManager(username));
+		datasetList.setManager(Users.isManager(username));
 		for ( String datasetId : idsSet ) {
 			datasetList.put(datasetId, dataHandler.getDatasetFromInfoFile(datasetId));
 		}
@@ -384,7 +384,7 @@ public class DashboardServices extends RemoteServiceServlet implements Dashboard
 
 		// Create the set of updated dataset information to return
 		DashboardDatasetList datasetList = new DashboardDatasetList(username);
-		datasetList.setManager(configStore.isManager(username));
+		datasetList.setManager(Users.isManager(username));
 		for ( String id : allIds ) {
 			datasetList.put(id, dataHandler.getDatasetFromInfoFile(id));
 		}

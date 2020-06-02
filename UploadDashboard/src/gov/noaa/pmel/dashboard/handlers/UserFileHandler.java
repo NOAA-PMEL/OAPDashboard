@@ -22,6 +22,7 @@ import gov.noaa.pmel.dashboard.datatype.DashDataType;
 import gov.noaa.pmel.dashboard.datatype.KnownDataTypes;
 import gov.noaa.pmel.dashboard.server.DashboardConfigStore;
 import gov.noaa.pmel.dashboard.server.DashboardServerUtils;
+import gov.noaa.pmel.dashboard.server.Users;
 import gov.noaa.pmel.dashboard.shared.DashboardDataset;
 import gov.noaa.pmel.dashboard.shared.DashboardDatasetList;
 import gov.noaa.pmel.dashboard.shared.DashboardUtils;
@@ -181,7 +182,7 @@ public class UserFileHandler extends VersionedFileHandler {
     			}
     			else {
     				String owner = dataset.getOwner();
-    				if ( ! configStore.userManagesOver(cleanUsername, owner) ) {
+    				if ( ! Users.userManagesOver(cleanUsername, owner) ) {
     					// No longer authorized to view - remove this ID from the saved list
     					needsCommit = true;
     					commitMessage += "remove unauthorized dataset " + datasetId + "; ";
@@ -199,7 +200,7 @@ public class UserFileHandler extends VersionedFileHandler {
 		if ( needsCommit )
 			saveDatasetListing(datasetList, commitMessage);
 		// Determine whether or not this user is a manager/admin 
-		datasetList.setManager(configStore.isManager(cleanUsername));
+		datasetList.setManager(Users.isManager(cleanUsername));
 		// Return the listing of cruises
 		return datasetList;
 	}
@@ -324,7 +325,7 @@ public class UserFileHandler extends VersionedFileHandler {
 			if ( dataset == null ) 
 				throw new IllegalArgumentException("Unexpected error: dataset " +
 						datasetId + " does not exist");
-			if ( configStore.userManagesOver(cleanUsername, dataset.getOwner()) ) {
+			if ( Users.userManagesOver(cleanUsername, dataset.getOwner()) ) {
 				// Add or replace this dataset entry in the dataset list
 				viewableFound = true;
 				if ( datasetList.put(datasetId, dataset) == null ) {
@@ -391,7 +392,7 @@ public class UserFileHandler extends VersionedFileHandler {
 			DashboardDataset dataset = dataHandler.getDatasetFromInfoFile(datasetId);
 			if ( dataset == null ) 
 				throw new IllegalArgumentException("Unexpected error: dataset " + datasetId + " does not exist");
-			if ( configStore.userManagesOver(cleanUsername, dataset.getOwner()) ) {
+			if ( Users.userManagesOver(cleanUsername, dataset.getOwner()) ) {
 				// Add or replace this dataset entry in the dataset list
 				viewableFound = true;
 				if ( datasetList.put(datasetId, dataset) == null ) {

@@ -14,6 +14,7 @@ import gov.noaa.pmel.dashboard.handlers.MetadataFileHandler;
 import gov.noaa.pmel.dashboard.handlers.UserFileHandler;
 import gov.noaa.pmel.dashboard.server.DashboardConfigStore;
 import gov.noaa.pmel.dashboard.server.DashboardServerUtils;
+import gov.noaa.pmel.dashboard.server.Users;
 import gov.noaa.pmel.dashboard.shared.DashboardDataset;
 import gov.noaa.pmel.dashboard.shared.DashboardDatasetList;
 import gov.noaa.pmel.dashboard.shared.DashboardMetadata;
@@ -60,7 +61,7 @@ public class DatasetModifier {
 	public void changeDatasetOwner(String datasetId, String newOwner) 
 									throws IllegalArgumentException {
 		String stdId = DashboardServerUtils.checkDatasetID(datasetId);
-		if ( ! configStore.validateUser(newOwner) )
+		if ( ! Users.validateUser(newOwner) )
 			throw new IllegalArgumentException("Unknown dashboard user " + newOwner);
 
 		DataFileHandler dataHandler = configStore.getDataFileHandler();

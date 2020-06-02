@@ -4,6 +4,7 @@
 package gov.noaa.pmel.dashboard.server.db.dao;
 
 import java.sql.SQLException;
+import java.util.List;
 
 import gov.noaa.pmel.dashboard.server.model.InsertUser;
 import gov.noaa.pmel.dashboard.server.model.User;
@@ -20,6 +21,8 @@ public interface UsersDao {
 
     // also adds access role in transaction
     public int addUser(InsertUser newUser) throws SQLException;
+    
+    public List<User> retrieveAll() throws SQLException;
     
     public User retrieveUser(String username) throws SQLException;
 
