@@ -36,7 +36,7 @@ boxy {
     flex-direction: row;
 }
 .field_label {
-    flex: 0 0 6em;
+    flex: 0 0 7em;
     text-align: right;
     margin-right: 1em;
 }
@@ -47,7 +47,7 @@ boxy {
     margin-right: .25em;
 }
 .first_plus {
-    flex: 0 0 8em;
+    flex: 0 0 9em;
 }
 .indented {
     padding-left: 1em;
@@ -115,14 +115,14 @@ var row_id_num = 0;
       Window.close();
   }
   function addResIdRow() {
-	  var rrows = document.getElementById("resid_rows");
+	  let rrows = document.getElementById("resid_rows");
       console.log("rows:"+rrows);
-      var newRow = document.createElement("div");
-      var resid_row = getResidRow(row_id_num);
+      let newRow = document.createElement("div");
+      let resid_row = getResidRow(row_id_num);
       console.log(resid_row);
       newRow.innerHTML = resid_row;
       rrows.appendChild(newRow);
-      var selectorid = "rid_select_"+row_id_num;
+      let selectorid = "rid_select_"+row_id_num;
       document.getElementById(selectorid).focus();
 	  n_resid = rrows.childElementCount;
       console.log("n_resid:"+n_resid);
@@ -138,9 +138,9 @@ var row_id_num = 0;
 	  console.log("that's it for " + selector + ":" + show);
   }
   function removeResidRow(rowNum) {
-	  var rowid = "resid_row_"+rowNum;
-	  var row = document.getElementById(rowid);
-      var rowParent = row.parentElement;
+	  let rowid = "resid_row_"+rowNum;
+	  let row = document.getElementById(rowid);
+      let rowParent = row.parentElement;
 	  rowParent.remove();
 	  document.getElementById("add_resid_button").disabled = false;
       n_resid -= 1;
@@ -148,16 +148,16 @@ var row_id_num = 0;
   }
   function resetTabIndex(rows) {
       if ( rows == 0 ) { return; }
-      var tx = rows-1;
-	  var rrows = document.getElementById("resid_rows");
-      var row = rrows.childNodes[0].childNodes[0];
-      var rowid = row.id;     
-      var rownum = rowid.substr("resid_row_".length)
-      var selectid = "rid_select_"+rownum;
-      var selector = document.getElementById(selectid);
+      let tx = rows-1;
+	  let rrows = document.getElementById("resid_rows");
+      let row = rrows.childNodes[0].childNodes[0];
+      let rowid = row.id;     
+      let rownum = rowid.substr("resid_row_".length)
+      let selectid = "rid_select_"+rownum;
+      let selector = document.getElementById(selectid);
       selector.tabIndex=8+2*tx;
-      var inputid = "rid_input_"+rownum;
-      var input = document.getElementById(inputid);
+      let inputid = "rid_input_"+rownum;
+      let input = document.getElementById(inputid);
       input.tabIndex=9+2*tx;
   }
   function cancelRequest() {
@@ -167,8 +167,8 @@ var row_id_num = 0;
 	  if ( !checkRequiredFields()) {
 		  highlightMissing();
 		  setMessage("Please fill in required fields.", "red");
-	  } else if ( !checkOkEmail()) {
-          setBadEmail();
+	  } else if ( !emailsMatch()) {
+          setBadEmail("Emails do not match.", "both");
 	  } else {
 		  clearHighlights();
 		  setMessage("* Required Field.", "initial");
@@ -176,20 +176,20 @@ var row_id_num = 0;
 	  }
   }
   function submitForm() {
-      var form = document.getElementById("request_login_form");
+      let form = document.getElementById("request_login_form");
 	  form.submit();
       form.reset();
   }
-  const required = ["firstName", "lastName", "email", "organization"];
+  const required = ["firstName", "lastName", "email", "confEmail", "organization"];
   function checkRequiredFields() {
-      var isGood = true;
+      let isGood = true;
       required.forEach(element => isGood = isGood && elementHasContent(element+"Box"));
 	  return isGood;
   }
   function elementHasContent(element) {
-      var e = document.getElementById(element);
-      var v = e.value;
-      var hasContent = v != null && v.trim() != "";
+      let e = document.getElementById(element);
+      let v = e.value;
+      let hasContent = v != null && v.trim() != "";
 	  return hasContent;
   }
   function highlightMissing() {
@@ -203,7 +203,7 @@ var row_id_num = 0;
 	  }
   }
   function setHighlight(element, style) {
-      var e = document.getElementById(element + "Box");
+      let e = document.getElementById(element + "Box");
       e.style.borderColor = style;
       e = document.getElementById(element + "Required");
       e.style.color = style;
@@ -211,32 +211,50 @@ var row_id_num = 0;
   function highlight(element) {
       setHighlight(element, "red");
   }
-  function checkOkEmail() {
-      var email = document.getElementById("emailBox");
-      return checkEmailFormat(email.value);
-  }
   function checkEmailFormat(value) {
       const remail = /^(([^<>()\[\]\.,;:\s@\"]+(\.[^<>()\[\]\.,;:\s@\"]+)*)|(\".+\"))@(([^<>()[\]\.,;:\s@\"]+\.)+[^<>()[\]\.,;:\s@\"]{2,})$/i;
       return value.match(remail);
   }
-  function checkEmail(element) {
+  function checkEmail(element, fieldName) {
       if ( !checkEmailFormat(element.value)) {
-    	  setBadEmail();
+    	  setBadEmail("Invalid email address.", fieldName);
       } else {
     	  clearBadEmail();
       }
   }
+  function checkConfEmail(element) {
+      if ( !checkEmailFormat(element.value)) {
+    	  setBadEmail("Invalid email address.", "confEmail");
+      } else if ( ! emailsMatch()) {
+    	  setBadEmail("Emails do not match.", "both")
+      } else {
+    	  clearBadEmail();
+      }
+  }
+  function emailsMatch() {
+	  let v1 = document.getElementById("emailBox").value;
+	  let v2 = document.getElementById("confEmailBox").value;
+      return v1 == v2;
+  }
   function clearBadEmail() {
 	  setHighlight("email", "initial");
+	  setHighlight("confEmail", "initial");
 	  setMessage("* Required Field.", "initial");
   }
-  function setBadEmail() {
-	  setHighlight("email", "red");
-	  setMessage("Invalid email address.", "red");
+  function setBadEmail(msg, element) {
+      if ( !msg ) msg = "Invalid email address.";
+      if ( !element ) element = "email";
+      if ( element == "both" ) {
+    	  setHighlight("email", "red");
+    	  setHighlight("confEmail", "red");
+      } else {
+    	  setHighlight(element, "red");
+      }
+	  setMessage(msg, "red");
   }
   function clearThisHighlight(element) {
-      var boxid = element.id;
-      var elemname = boxid.substring(0, boxid.indexOf("Box"));
+      let boxid = element.id;
+      let elemname = boxid.substring(0, boxid.indexOf("Box"));
       setHighlight(elemname, "initial");
   }
   function clearHighlight(element) {
@@ -246,7 +264,7 @@ var row_id_num = 0;
 	  required.forEach(clearHighlight);
   }
   function setMessage(msg, styleClass) {
-      var msgDiv = document.getElementById("info_msg");
+      let msgDiv = document.getElementById("info_msg");
 	  msgDiv.innerHTML = msg;
       msgDiv.style.color = styleClass;
   }
@@ -283,7 +301,12 @@ var row_id_num = 0;
     <div class="row">
         <div class="field_label field_required">Email:</div>
         <span id="emailRequired" class="required">*</span>
-        <input id="emailBox" tabindex="4" class="remainder_width" type="text" name="email" onchange="checkEmail(this)" />
+        <input id="emailBox" tabindex="4" class="remainder_width" type="text" name="email" onchange="checkEmail(this,'email')" />
+    </div>
+    <div class="row">
+        <div class="field_label field_required">Confirm Email:</div>
+        <span id="confEmailRequired" class="required">*</span>
+        <input id="confEmailBox" tabindex="4" class="remainder_width" type="text" name="email" onblur="checkConfEmail(this,'confEmail')" />
     </div>
     <div class="row">
       <div class="field_label">Telephone:</div>
