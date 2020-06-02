@@ -35,7 +35,7 @@
     					<g:Hidden name="dataaction" ui:field="actionToken" />
                         <g:Hidden name="dataformat" ui:field="fileDataFormatToken"/>
     					<g:Hidden name="dataencoding" ui:field="encodingToken" />
-                        <g:Hidden name="featureType" ui:field="featureTypeToken"/>
+                        <g:Hidden name="observationType" ui:field="observationTypeToken"/>
                         <g:Hidden name="fileType" ui:field="fileTypeToken"/>
                         <g:Hidden name="datasetId" ui:field="datasetIdToken"/>
                         <g:Hidden name="datasetIdColumn" ui:field="datasetIdColumnToken"/>

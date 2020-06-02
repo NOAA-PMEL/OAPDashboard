@@ -68,12 +68,14 @@ public abstract class FileUploadProcessor {
     protected String datasetIdColName;
     protected FileType fileType;
     protected String submissionRecordId;
+    protected String observationType;
 
     protected File _uploadedFile;
     
     protected FileUploadProcessor(StandardUploadFields uploadFields) {
         this._uploadFields = uploadFields;
         this._featureType = uploadFields.featureType();
+        observationType = uploadFields.observationType();
         action = _uploadFields.dataAction();
         username = _uploadFields.username();
         timestamp = _uploadFields.timestamp();

@@ -135,6 +135,7 @@ public class DataUpdatePopup extends Composite {
    
 //    @UiField ListBox featureTypeSelector;
     @UiField Hidden featureTypeToken;
+    @UiField Hidden observationTypeToken;
 //    @UiField Anchor featureTypeHelpAnchor;
 //    @UiField Panel featureTypeSpecificContentPanel;
 //    @UiField ListBox fileTypeSelector;
@@ -360,6 +361,7 @@ public class DataUpdatePopup extends Composite {
 		actionToken.setValue(requestAction);
 		encodingToken.setValue(encoding);
         featureTypeToken.setValue(dataset.getFeatureTypeName());
+        observationTypeToken.setValue(dataset.getUserObservationType());
         fileTypeToken.setValue(dataset.getFileTypeName());
 	}
 
