@@ -7,27 +7,35 @@
 
 	<sql id="USERS_TABLE_NAME">users</sql>
 	<sql id="AUTH_TABLE_NAME">tomcatusers</sql>
-	<sql id="ROLES_TABLE_NAME">tomcatroles</sql>
+	<sql id="TOMCAT_ROLES_TABLE_NAME">tomcatroles</sql>
+	<sql id="USER_ROLES_TABLE_NAME">user_roles</sql>
+	<sql id="ROLES_TABLE_NAME">roles</sql>
 	<resultMap type="User" extends="gnpt.db.DbMapper.DbItemMap" id="UserMap">
 	<!--
 	  -->
 		<constructor>
 			<idArg column="db_id" javaType="java.lang.Long"/>
+      <!--
 			<arg column="create_time" javaType="java.util.Date"/>
 			<arg column="modified_time" javaType="java.util.Date"/>
 			<arg column="username" javaType="java.lang.String"/>
 			<arg column="last_login" javaType="java.util.Date"/>
 			<arg column="first_name" javaType="java.lang.String" />
+			<arg column="middle_name" javaType="java.lang.String" />
 			<arg column="last_name" javaType="java.lang.String" />
 			<arg column="email" javaType="java.lang.String" />
+        -->
 			<!-- arg column="last_changed" javaType="java.util.Date"/> -->
 			<!--arg column="auth_string" javaType="java.lang.String" />  -->
 		</constructor>
 		<result property="_username" column="username"/>
 		<result property="_firstName" column="first_name"/>
+		<result property="_middle" column="middle_name"/>
 		<result property="_lastName" column="last_name"/>
 		<result property="_email" column="email"/>
 		<result property="_lastLogin" column="last_login"/>
+        <collection property="_roles" ofType="java.lang.String" javaType="ArrayList" 
+            column="db_id" select="getRolesForUser" />
         <!--
 		<result property="_lastPasswordChange" column="last_changed" />
 		<result property="_authString" column="auth_string" />
@@ -132,14 +140,27 @@
 		</include>
 	</sql>
 	
-    <insert id="addAccessRole">
-        insert into <include refid="ROLES_TABLE_NAME"/> (username, user_dbid, userrole, role_dbid) 
+    <sql id="tomcat_addAccessRole">
+        insert into <include refid="TOMCAT_ROLES_TABLE_NAME"/> (username, user_dbid, userrole, role_dbid) 
         values ( 
             #{param1},
             (select db_id from <include refid="AUTH_TABLE_NAME"/> where username = #{param1} ), 
              #{param2},
             (select db_id from roles where role = #{param2} )
          ) 
+    </sql>
+    <sql id="ng_addAccessRole">
+        Not defined yet.
+    </sql>
+    <insert id="addAccessRole">
+        <choose>
+            <when test="'${general.roles_table}' == 'user_roles'">
+                <include refid="ng_addAccessRole"/>
+            </when>
+            <otherwise>
+                <include refid="tomcat_addAccessRole"/>
+            </otherwise>
+        </choose>
     </insert>
     <delete id="removeAccessRole">
         delete from <include refid="ROLES_TABLE_NAME"/> 
@@ -245,13 +266,13 @@
          --> 
 	</insert>
 	
-	<sql id="select_all">select <include refid="USERS_TABLE_NAME"/>.* from <include refid="USERS_TABLE_NAME"/> </sql>
+	<select id="retrieveAll" resultMap="UserMap">select <include refid="USERS_TABLE_NAME"/>.* from <include refid="USERS_TABLE_NAME"/> </select>
 	
 	<!-- remove ua.auth_string as auth_string  -->
 	<sql id="select_full_profile">select u.*, ua.modified_time as last_changed, null as auth_string from <include refid="USERS_TABLE_NAME"/> u, user_auth ua </sql>
 	<sql id="select_user">select u.* from  <include refid="USERS_TABLE_NAME"/>  u </sql>
 	
-	<select id="retrieveAll" resultMap="UserMap">
+	<select id="retrieveFullAll" resultMap="UserMap">
 		<include refid="select_full_profile"/>  where u.db_id = ua.db_id
 	</select>
 	<select id="retrieveByUserId" parameterType="int" resultMap="UserMap">
@@ -262,6 +283,23 @@
 	</select>
     <select id="retrieveByEmail" parameterType="String" resultMap="UserMap">
 		<include refid="select_user"/> where email = #{_email} 
+    </select>
+    <sql id="tomcat_getRolesForUser">
+        select userrole from  <include refid="TOMCAT_ROLES_TABLE_NAME"/> where user_dbid = #{db_id} 
+    </sql>
+    <sql id="ng_getRolesForUser">
+        select r.role from  <include refid="ROLES_TABLE_NAME"/> r, 
+        <include refid="USER_ROLES_TABLE_NAME"/> ur where ur.user_id = #{db_id} and ur.role_id = r.db_id
+    </sql>
+    <select id="getRolesForUser" resultType="String">
+        <choose>
+            <when test="'${general.roles_table}' == 'tomcatroles'">
+                <include refid="tomcat_getRolesForUser"/>
+            </when>
+            <otherwise>
+                <include refid="ng_getRolesForUser"/>
+            </otherwise>
+        </choose>
     </select>
 	
 	<!--

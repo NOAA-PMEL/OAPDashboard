@@ -4,10 +4,13 @@
 package gov.noaa.pmel.dashboard.server.model;
 
 import java.util.Date;
+import java.util.List;
 
 import lombok.AccessLevel;
+import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 /**
@@ -16,6 +19,8 @@ import lombok.Setter;
  */
 @Data
 @Setter(AccessLevel.NONE)
+@NoArgsConstructor
+@AllArgsConstructor
 @Builder(toBuilder=true)
 public class User {
 
@@ -27,12 +32,19 @@ public class User {
     private Date _lastLogin;
     
     private String _firstName;
+    private String _middle;
     private String _lastName;
     
     private String _email;
     
+    private List<String> _roles;
+    
     public String fullName() {
         return _firstName + " " + _lastName;
+    }
+    
+    public User(Long dbId) {
+        _dbId = dbId;
     }
     
     public InsertUser.InsertUserBuilder asInsertUser() {
@@ -45,5 +57,9 @@ public class User {
                 .firstName(_firstName)
                 .lastName(_lastName)
                 .email(_email);
+    }
+    
+    public boolean hasRole(String roleName) {
+        return _roles != null && _roles.contains(roleName);
     }
 }

@@ -40,6 +40,7 @@ import gov.noaa.pmel.dashboard.dsg.StdUserDataArray;
 import gov.noaa.pmel.dashboard.oads.DashboardOADSMetadata;
 import gov.noaa.pmel.dashboard.server.DashboardConfigStore;
 import gov.noaa.pmel.dashboard.server.DashboardServerUtils;
+import gov.noaa.pmel.dashboard.server.Users;
 import gov.noaa.pmel.dashboard.server.util.FileTypeTest;
 import gov.noaa.pmel.dashboard.shared.DashboardDataset;
 import gov.noaa.pmel.dashboard.shared.DashboardDatasetData;
@@ -734,225 +735,7 @@ public class DataFileHandler extends VersionedFileHandler {
 			throw new IllegalStateException("No data rows found");
 		return datasetsMap;
 	}
-//	public static DashboardDatasetData processInput(Iterable<String[]> records,
-//                                                    String owner, 
-//                                                    String filename, 
-//                                                    String timestamp, 
-//                                                    String specifiedDatasetId) throws IOException {
-//        DashboardDatasetData ddd = null;
-//		int numDataColumns = 0;
-//        int rowNum = 0;
-//        boolean foundHeader = false;
-//
-//        try {
-//			ArrayList<String> columnNames = null;
-//			boolean checkForUnits = false;
-//			ArrayList<DataColumnType> columnTypes = null;
-//			int datasetNameColIdx = -1;
-//			String version = null;
-//            boolean hasTrailer = false;
-//
-//			for ( String[] record : records) {
-//
-//                rowNum += 1;
-//                if ( rowIsEmpty(record) || isComment(record)) {
-//                    logger.debug("empty or comment row at " + rowNum);
-//                    continue;
-//                }
-//                int nColumns = record.length;
-//                
-//				// Still looking for headers?
-//				if ( columnNames == null ) {
-//					if ( nColumns >= MIN_NUM_DATA_COLUMNS ) {
-//						// These could be the column names headers
-//						// column names must not be blank or pure numeric
-//						boolean isHeader = true;
-//                        int fieldNum = 0;
-//						for ( String val : record ) {
-//                            fieldNum += 1;
-//							if ( val.isEmpty() ) {
-//                                if ( fieldNum == nColumns) { // last / extra column ignored
-//                                    hasTrailer = true;
-//                                } else {
-//    								isHeader = false;
-//    								break;
-//                                }
-//							}
-//							try {
-//								Double.parseDouble(val);
-//								isHeader = false;
-//								break;
-//							} catch (Exception ex) {
-//								// Expected result for a name
-//								;
-//							}
-//						}
-//						if ( isHeader ) {
-//                            foundHeader = true;
-//							// These indeed are the column headers
-//							numDataColumns = hasTrailer ? nColumns -1 : nColumns;
-//							columnNames = new ArrayList<String>(numDataColumns);
-//							for ( String val : record ) {
-//								columnNames.add(val);
-//							}
-//                            
-//						}
-//						// Check for units in the next record
-//						checkForUnits = true;
-//					}
-//					// Ignore anything prior to the column headers
-//					continue;
-//				}
-//
-//                if ( ! isEndTag(record)) {
-//    
-//    				// Check that the number of columns is consistent
-//                    // We don't check the (possible) units row, as it may have empty columns at the end
-//    				// which may get trimmed off.
-//    				if ( nColumns != numDataColumns ) {
-//                        String msg = "Inconsistent number of data columns (" + 
-//        							nColumns + " instead of " + numDataColumns + 
-//        							") at row " + rowNum;
-//                        logger.warn(msg);
-//                        if ( nColumns < numDataColumns ) { // may have been trimmed by record parser
-//                            String[] padded = new String[numDataColumns];
-//                            int i = 0;
-//                            for ( ; i < nColumns; i++ ) {
-//                                padded[i] = record[i];
-//                            }
-//                            for ( ; i < numDataColumns; i++ ) {
-//                                record[i] = "";
-//                            }
-//                        } else {
-//        					throw new IllegalStateException( "Inconsistent number of data columns (" + 
-//        							nColumns + " instead of " + numDataColumns + 
-//        							") at row " + rowNum + ":\n    " +
-//        							rebuildDataline(record, ','));
-//                        }
-//        			}
-//                    
-//    				if ( checkForUnits ) {
-//    					// The line immediately following the data column names could be units
-//    					checkForUnits = false;
-//    					boolean isUnits = true;
-//    					// A unit specification cannot be pure numeric
-//    					for ( String val : record ) {
-//    						try {
-//    							Double.valueOf(val);
-//    							isUnits = false;
-//    							break;
-//    						} catch (NumberFormatException ex) {
-//    							// Expected result for a units specification
-//    							;
-//    						}
-//    					}
-//    					if ( isUnits ) {
-//    						// Add the units to the column header names 
-//    						ArrayList<String> namesWithUnits = new ArrayList<String>(numDataColumns);
-//    						int k = 0;
-//    						for ( String units : record ) {
-//    							if ( units.isEmpty() )
-//    								namesWithUnits.add(columnNames.get(k));
-//    							else
-//    								namesWithUnits.add(columnNames.get(k) + " [" + units + "]");
-//    							k++;
-//    						}
-//    						columnNames = namesWithUnits;
-//    					}
-//    					
-//    					// Assign the data column types from the column names (including customizations for this user)
-//    					DashboardDataset fakeDataset = new DashboardDataset();
-//    					fakeDataset.setOwner(owner);
-//    					fakeDataset.setUserColNames(columnNames);
-//    					DashboardConfigStore configStore;
-//    					try {
-//    						configStore = DashboardConfigStore.get(false);
-//    					} catch ( IOException ex ) {
-//    						throw new IOException("Unexpected failure to get the dashboard configuration");
-//    					}
-//    					configStore.getUserFileHandler().assignDataColumnTypes(fakeDataset, null);
-//    					columnTypes = fakeDataset.getDataColTypes();
-//                        // specifiedDatasetId is required.
-////                        if ( StringUtils.emptyOrNull(specifiedDatasetId)) {
-////        					int k = 0;
-////        					for ( DataColumnType dtype : columnTypes ) {
-////        						if ( ( ! DashboardUtils.isEmptyNull(datasetIdColName) && columnNames.get(k).equalsIgnoreCase(datasetIdColName)) ||
-////        								DashboardServerUtils.DATASET_NAME.typeNameEquals(dtype) ) {
-////        							datasetNameColIdx = k;
-////        							break;
-////        						} 
-////        						
-////        						k++;
-////        					}
-////        					if ( datasetNameColIdx < 0 ) {
-////        						String msg = "Dataset ID column not found";
-////        						if ( ! DashboardUtils.isEmptyNull(datasetIdColName)) {
-////        							msg += ": " + datasetIdColName;
-////        						}
-////        						throw new IllegalStateException(msg);
-////        					}
-////                        }
-//        
-//    					// Get the version to record in the datasets
-//    					version = configStore.getUploadVersion();
-//    
-//    					// If this was indeed a line of units, go on to the next line;
-//    					// otherwise this is the first line of data values to parse
-//    					if ( isUnits )
-//    						continue;
-//    				}
-//    
-//                    
-//    				ArrayList<String> datavals = new ArrayList<String>(numDataColumns);
-//    				for ( String val : record ) {
-//    					datavals.add(val);
-//    				}
-//    
-//                    String datasetId;
-//                    if ( StringUtils.emptyOrNull(specifiedDatasetId)) {
-//        				// Actual data line with values
-//        				String datasetName = datavals.get(datasetNameColIdx);
-//        				datasetId = DashboardServerUtils.getDatasetIDFromName(datasetName);
-//        				if ( (datasetId.length() < DashboardServerUtils.MIN_DATASET_ID_LENGTH) ||
-//        					 (datasetId.length() > DashboardServerUtils.MAX_DATASET_ID_LENGTH) ) 
-//        					throw new IllegalStateException("Invalid dataset ID \"" + datasetId + "\" from dataset name \"" 
-//    										   + datasetName + "\" at row number " + rowNum 
-//    										   +". Expecting dataset ID in column number " + (datasetNameColIdx+1) // zero-based indexing confuses the reader
-//    										   + " \"" + columnNames.get(datasetNameColIdx) + "\" DatasetID must be between " + DashboardServerUtils.MIN_DATASET_ID_LENGTH
-//    										   + " and " + DashboardServerUtils.MAX_DATASET_ID_LENGTH + " characters in length.");
-//                    } else {
-//                        datasetId = DashboardServerUtils.getDatasetIDFromName(specifiedDatasetId);
-//                    }
-//        
-//    				DashboardDatasetData dataset = new DashboardDatasetData();
-//					dataset.setDatasetId(datasetId);
-//					dataset.setOwner(owner);
-//					dataset.setUploadFilename(filename);
-//					dataset.setUploadTimestamp(timestamp);
-//					dataset.setUserColNames(columnNames);
-//					dataset.setDataColTypes(columnTypes);
-//					dataset.setVersion(version);
-//    				int dataRowNum = dataset.getNumDataRows();
-//    				dataset.getRowNums().add(dataRowNum);
-//    				dataset.getDataValues().add(datavals);
-//                    dataset.setNumDataRows(dataRowNum+1);
-//    				ddd = dataset;
-//    			}
-//		    }
-//		} catch (Exception ex) {
-//            logger.warn(ex,ex);
-//            throw ex;
-//		} 
-//        logger.debug("Processed " + rowNum + " records.");
-//		if ( numDataColumns < MIN_NUM_DATA_COLUMNS ) {
-//            if ( !foundHeader ) {
-//                throw new IllegalStateException("A data header row was not found." );
-//            } else 
-//    			throw new IllegalStateException("No data columns found, possibly due to incorrect format");
-//		}
-//	    return ddd;
-//	}
-
+    
     /**
      * @param record
      * @return
@@ -1770,13 +1553,9 @@ public class DataFileHandler extends VersionedFileHandler {
 		if ( ! Boolean.TRUE.equals(dataset.isEditable()) )
 			throw new IllegalArgumentException("dataset status is " + dataset.getSubmitStatus());
 		// Check if the user has permission to delete the dataset
-		try {
-			String owner = dataset.getOwner();
-			if ( ! ( owner.equals(username) || DashboardConfigStore.get(false).userManagesOver(username, owner)))
-				throw new IllegalArgumentException("Cannot delete dataset. Dataset owner is " + owner);
-		} catch ( IOException ex ) {
-			throw new IllegalArgumentException("unexpected failure to get the dashboad configuration");
-		}
+		String owner = dataset.getOwner();
+		if ( ! ( owner.equals(username) || Users.userManagesOver(username, owner)))
+			throw new IllegalArgumentException("Cannot delete dataset. Dataset owner is " + owner);
 		return dataset;
 	}
 

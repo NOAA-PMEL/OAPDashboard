@@ -4,6 +4,7 @@
 package gov.noaa.pmel.dashboard.server.model;
 
 import java.util.Date;
+import java.util.List;
 
 import lombok.AccessLevel;
 import lombok.Builder;
@@ -26,8 +27,8 @@ public class InsertUser extends User {
 
     @Builder(builderMethodName="newUser")
     public InsertUser(Long dbId, Date createTime, Date modifiedTime, String username, Date lastLogin,
-                      String firstName, String lastName, String email, String authString) {
-        super(dbId, createTime, modifiedTime, username, lastLogin, firstName, lastName, email);
+                      String firstName, String middle, String lastName, String email, String authString, List<String> _roles) {
+        super(dbId, createTime, modifiedTime, username, lastLogin, firstName, middle, lastName, email, _roles);
         _authString = authString;
     }
     

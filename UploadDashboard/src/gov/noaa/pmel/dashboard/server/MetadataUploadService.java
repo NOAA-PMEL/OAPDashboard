@@ -117,7 +117,7 @@ public class MetadataUploadService extends HttpServlet {
 			// Verify page contents seem okay
 			DashboardConfigStore configStore = DashboardConfigStore.get(true);
 			if ( (username == null) || (datasetIds == null) || (uploadTimestamp == null) ||
-				 (metadataItem == null) || ! configStore.validateUser(username) ) {
+				 (metadataItem == null) || ! Users.validateUser(username) ) {
 				if ( metadataItem != null )
 					metadataItem.delete();
 				sendErrMsg(response, "Invalid request contents for this service.");
