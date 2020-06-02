@@ -475,6 +475,9 @@ public class OADSMetadata {
      */
     private static void checkVariables(OadsMetadataDocumentType mdDoc) {
         List<BaseVariableType> variables = mdDoc.getVariables();
+        if ( variables == null || variables.size() == 0 ) {
+            throw new IllegalStateException("Empty variables element.");
+        }
         StringBuilder errormsgs = new StringBuilder();
         for ( BaseVariableType var : variables ) {
             if ( StringUtils.emptyOrNull(var.getName()) || 
