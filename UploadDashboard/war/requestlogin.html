@@ -180,7 +180,7 @@ var row_id_num = 0;
 	  form.submit();
       form.reset();
   }
-  const required = ["firstName", "lastName", "email"];
+  const required = ["firstName", "lastName", "email", "organization"];
   function checkRequiredFields() {
       var isGood = true;
       required.forEach(element => isGood = isGood && elementHasContent(element+"Box"));
@@ -304,8 +304,9 @@ var row_id_num = 0;
     </div>
  --> 
     <div class="row">
-      <div class="field_label">Organization:</div>
-      <input tabindex="12" class="remainder_width" type="text" name="org" />
+      <div class="field_label field_required">Organization:</div>
+      <span id="organizationRequired" class="required">*</span>
+      <input id="organizationBox" tabindex="12" class="remainder_width" type="text" name="org" onchange="clearThisHighlight(this)" />
     </div>
     <div style="padding-top:.5em;">
       <div style="text-align:left; display:inline;" class="info_msg" id="info_msg">* Required Field.</div>
