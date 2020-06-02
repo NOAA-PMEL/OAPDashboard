@@ -77,6 +77,7 @@ public class NewGeneralizedUploadProcessor extends FileUploadProcessor {
 //                File datasetFile = _dataFileHandler.datasetDataFile(submissionRecordId); // , _uploadedFile.getName());
                 datasetData.setFileType(fileType.name());
                 datasetData.setFeatureType(_featureType.name());
+                datasetData.setUserObservationType(observationType);
                 datasetData.setUploadedFile(_uploadedFile.getPath());
                 datasetData.setUserDatasetName(specifiedDatasetId);
                 // Check if the dataset already exists

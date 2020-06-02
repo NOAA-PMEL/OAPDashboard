@@ -32,6 +32,7 @@ import gov.noaa.pmel.dashboard.server.util.UIDGen;
 import gov.noaa.pmel.dashboard.shared.DashboardUtils;
 import gov.noaa.pmel.dashboard.shared.FeatureType;
 import gov.noaa.pmel.dashboard.shared.FileType;
+import gov.noaa.pmel.dashboard.shared.ObservationType;
 import gov.noaa.pmel.dashboard.upload.RecordOrientedFileReader;
 import gov.noaa.pmel.dashboard.upload.StandardUploadFields;
 import gov.noaa.pmel.dashboard.upload.UploadProcessor;
@@ -198,6 +199,7 @@ public class DataUploadService extends HttpServlet {
                     .dataAction(getRequiredField("dataaction", paramMap))
                     .fileDataEncoding(getUploadField("dataencoding", paramMap))
                     .timestamp(getUploadField("timestamp", paramMap))
+                    .observationType(getUploadField("observationType", paramMap))
                     .featureType(getFeatureType(paramMap))
                     .fileType(getFileType(paramMap))
                     .dataFiles(extractDataFiles(paramMap))
@@ -233,9 +235,8 @@ public class DataUploadService extends HttpServlet {
     }
 
     private static FeatureType getFeatureType(Map<String, List<FileItem>> paramMap) throws NoSuchFieldException {
-        FeatureType featureType;
-        String featureTypeName = getRequiredField("featureType", paramMap);
-        featureType = featureTypeName != null ? FeatureType.valueOf(featureTypeName) : FeatureType.UNSPECIFIED; // XXX The field is REQUIRED.  It won't be null.
+        String observationTypeName = getRequiredField("observationType", paramMap);
+        FeatureType featureType = ObservationType.featureTypeOf(observationTypeName);
         return featureType;
     }
     

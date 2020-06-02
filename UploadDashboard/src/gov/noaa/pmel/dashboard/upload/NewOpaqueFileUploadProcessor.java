@@ -131,6 +131,7 @@ public class NewOpaqueFileUploadProcessor extends FileUploadProcessor {
         odd.setOwner(_uploadFields.username());
         odd.setFileItem(item);
         odd.setFeatureType(_uploadFields.featureType().name());
+        odd.setUserObservationType(_uploadFields.observationType());
         odd.setFileType(_uploadFields.fileType().name());
         return odd;
     }

@@ -49,6 +49,7 @@ import gov.noaa.pmel.dashboard.shared.DashboardUtils;
 import gov.noaa.pmel.dashboard.shared.DataColumnType;
 import gov.noaa.pmel.dashboard.shared.FeatureType;
 import gov.noaa.pmel.dashboard.shared.FileType;
+import gov.noaa.pmel.dashboard.shared.ObservationType;
 import gov.noaa.pmel.dashboard.shared.QCFlag;
 import gov.noaa.pmel.dashboard.upload.RecordOrientedFileReader;
 import gov.noaa.pmel.tws.util.StringUtils;
@@ -68,6 +69,7 @@ public class DataFileHandler extends VersionedFileHandler {
     private static final String SUBMISSION_RECORD_ID = "recordid";
 	private static final String DATA_OWNER_ID = "dataowner";
 	private static final String FEATURE_TYPE_ID = "featuretype";
+	private static final String OBSERVATION_TYPE_ID = "userobservationtype";
 	private static final String FILE_TYPE_ID = "filetype";
 	private static final String VERSION_ID = "version";
 	private static final String UPLOAD_FILENAME_ID = "uploadfilename";
@@ -1060,8 +1062,10 @@ public class DataFileHandler extends VersionedFileHandler {
         datasetProps.setProperty(USER_DATASET_NAME, dataset.getUserDatasetName());
 		// Owner of the dataset
 		datasetProps.setProperty(DATA_OWNER_ID, dataset.getOwner());
-        // observation feature type
+        // DSG feature type
 		datasetProps.setProperty(FEATURE_TYPE_ID, dataset.getFeatureTypeName());
+        // user observation type
+		datasetProps.setProperty(OBSERVATION_TYPE_ID, dataset.getUserObservationType());
         // file format
 		datasetProps.setProperty(FILE_TYPE_ID, dataset.getFileTypeName());
 		// Version 
@@ -1701,6 +1705,15 @@ public class DataFileHandler extends VersionedFileHandler {
 			throw new IllegalArgumentException("No property value for " + 
 					FEATURE_TYPE_ID + " given in " + infoFile.getPath());	
 		dataset.setFeatureType(value);
+        
+        // observation type
+        value = cruiseProps.getProperty(OBSERVATION_TYPE_ID);
+		if ( value == null ) {
+//			throw new IllegalArgumentException("No property value for " + 
+//					FEATURE_TYPE_ID + " given in " + infoFile.getPath());	
+            value = ObservationType.UNSPECIFIED;
+		}
+		dataset.setUserObservationType(value);
         
         // file type
         value = cruiseProps.getProperty(FILE_TYPE_ID);

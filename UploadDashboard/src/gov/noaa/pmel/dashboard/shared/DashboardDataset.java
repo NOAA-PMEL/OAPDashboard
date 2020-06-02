@@ -29,6 +29,7 @@ public class DashboardDataset implements Serializable, IsSerializable {
 	protected String version;
 	protected String owner;
     protected String featureType;
+    protected String userObservationType;
     protected String fileType;
 //	protected String datasetId;
 	protected String dataCheckStatus;
@@ -196,6 +197,14 @@ public class DashboardDataset implements Serializable, IsSerializable {
     
     public void setFileType(String fileType) {
         this.fileType = fileType;
+    }
+
+	public String getUserObservationType() {
+        return userObservationType;
+    }
+    
+    public void setUserObservationType(String userObservationType) {
+        this.userObservationType = userObservationType;
     }
 
     /**

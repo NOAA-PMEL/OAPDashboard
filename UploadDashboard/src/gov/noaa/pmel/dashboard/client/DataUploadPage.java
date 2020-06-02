@@ -39,8 +39,8 @@ import com.google.gwt.user.client.ui.Widget;
 
 import gov.noaa.pmel.dashboard.client.UploadDashboard.PagesEnum;
 import gov.noaa.pmel.dashboard.shared.DashboardUtils;
-import gov.noaa.pmel.dashboard.shared.FeatureType;
 import gov.noaa.pmel.dashboard.shared.FileType;
+import gov.noaa.pmel.dashboard.shared.ObservationType;
 
 /**
  * Page for uploading new or updated cruise data files.
@@ -222,7 +222,7 @@ public class DataUploadPage extends CompositeWithUsername {
 			GWT.create(DashboardDatasetUploadPageUiBinder.class);
    
     @UiField ListBox featureTypeSelector;
-    @UiField Hidden featureTypeToken;
+    @UiField Hidden observationTypeToken;
     @UiField Anchor featureTypeHelpAnchor;
     @UiField Panel featureTypeSpecificContentPanel;
     @UiField ListBox fileTypeSelector;
@@ -262,10 +262,11 @@ public class DataUploadPage extends CompositeWithUsername {
 	// Singleton instance of this page
 	private static DataUploadPage singleton = null;
     private FeatureTypeFields _featureTypeFields = null;
-    private FeatureType selectedFeatureType = FeatureType.UNSPECIFIED;
+//    private FeatureType selectedFeatureType = FeatureType.UNSPECIFIED;
+    private String observationType = null;
     private FileType selectedFileType = FileType.UNSPECIFIED;
     
-    private static Map<FeatureType, FeatureTypeFields> _featureSpecificPanels = new HashMap<FeatureType, FeatureTypeFields>();
+//    private static Map<FeatureType, FeatureTypeFields> _featureSpecificPanels = new HashMap<FeatureType, FeatureTypeFields>();
     private static Map<FileType, FeatureTypeFields> _fileSpecificPanels = new HashMap<FileType, FeatureTypeFields>();
 
 	/**
@@ -281,12 +282,15 @@ public class DataUploadPage extends CompositeWithUsername {
 		setUsername(null);
 
         featureTypeSelector.addItem("-- Observation Type --");
-        featureTypeSelector.addItem("Timeseries", FeatureType.TIMESERIES.name());
-        featureTypeSelector.addItem("Trajectory", FeatureType.TRAJECTORY.name());
-        featureTypeSelector.addItem("Profile", FeatureType.PROFILE.name());
-        featureTypeSelector.addItem("Timeseries Profile", FeatureType.TIMESERIES_PROFILE.name());
-        featureTypeSelector.addItem("Trajectory Profile", FeatureType.TRAJECTORY_PROFILE.name());
-        featureTypeSelector.addItem("Other", FeatureType.OTHER.name());
+        for (String obs : ObservationType.types) {
+            featureTypeSelector.addItem(obs);
+        }
+//        featureTypeSelector.addItem("Timeseries", FeatureType.TIMESERIES.name());
+//        featureTypeSelector.addItem("Trajectory", FeatureType.TRAJECTORY.name());
+//        featureTypeSelector.addItem("Profile", FeatureType.PROFILE.name());
+//        featureTypeSelector.addItem("Timeseries Profile", FeatureType.TIMESERIES_PROFILE.name());
+//        featureTypeSelector.addItem("Trajectory Profile", FeatureType.TRAJECTORY_PROFILE.name());
+//        featureTypeSelector.addItem("Other", FeatureType.OTHER.name());
         featureTypeSelector.getElement().<SelectElement>cast().getOptions().getItem(0).setDisabled(true); // Please select...
 //        featureTypeSelector.getElement().<SelectElement>cast().getOptions().getItem(3).setDisabled(true); // make sure to disable the correct element, if you do
         featureTypeSelector.addChangeHandler(new ChangeHandler() {
@@ -295,8 +299,9 @@ public class DataUploadPage extends CompositeWithUsername {
               if ( featureTypeSelector.getSelectedIndex() > 0 ) {
                   featureTypeSelector.removeStyleName("missingInfoItem");
               }
-              selectedFeatureType = FeatureType.valueOf(featureTypeSelector.getSelectedValue());
-              GWT.log("Selecting obs type " + selectedFeatureType.name());
+//              selectedFeatureType = FeatureType.valueOf(featureTypeSelector.getSelectedValue());
+              observationType = featureTypeSelector.getSelectedValue();
+              GWT.log("Selecting obs type " + observationType);
           }
         });
         featureTypeHelpAnchor.setText(FEATURE_TYPE_HELP_ANCHOR_TEXT);
@@ -490,7 +495,8 @@ public class DataUploadPage extends CompositeWithUsername {
 		timestampToken.setValue(localTimestamp);
 		actionToken.setValue(requestAction);
 		encodingToken.setValue(encoding);
-        featureTypeToken.setValue(selectedFeatureType.name());
+//        featureTypeToken.setValue(selectedFeatureType.name());
+        observationTypeToken.setValue(observationType);
         fileTypeToken.setValue(selectedFileType.name());
         
 		if ( _featureTypeFields != null ) {
