@@ -243,12 +243,17 @@ public class DatasetListPage extends CompositeWithUsername {
 	private static final String UNEXPECTED_INVALID_DATESET_LIST_MSG = 
 			" (unexpected invalid datasets list returned)";
 
+    private static final String NOTICE_PREFIX = "** ";
+    private static final String NOTICE_POSTFIX = " **\n";
+    
 	private static final String SELECT_TO_ENABLE_MSG = 
-			"** SELECT A DATASET TO ENABLE BUTTON **\n";
+			"SELECT A DATASET TO ENABLE BUTTON";
 	private static final String ONLY_ONE_TO_ENABLE_MSG = 
-			"** SELECT ONLY ONE DATASET TO ENABLE BUTTON **\n";
-	private static final String NOT_FOR_OTHER = 
-			"** THIS OPTION IS NOT AVAILABLE FOR OTHER-type DATASETS **\n";
+			"SELECT ONLY ONE DATASET TO ENABLE BUTTON";
+	private static final String NOT_FOR_OTHER_FILES = 
+			"THIS OPTION IS NOT AVAILABLE FOR THIS FILE TYPE.";
+	private static final String NOT_FOR_OTHER_FEATURES = 
+			"THIS OPTION IS NOT AVAILABLE FOR THIS OBSERVATION TYPE.";
 	
 	// Select options
 	private static final String SELECTION_OPTION_LABEL = "Select...";
@@ -1366,21 +1371,14 @@ public class DatasetListPage extends CompositeWithUsername {
 	}
 
 	private void updateAvailableButtons() {
-		int selectCount = 0;
-        Set<FileType>selectedFileTypes = new TreeSet<>();
-		for (DashboardDataset cruise : listProvider.getList()) {
-			if ( cruise.isSelected()) { 
-			    selectCount += 1; 
-                selectedFileTypes.add(cruise.getFileType());
-		    }
-		}
+        DashboardDatasetList selectedList = getSelectedDatasets();
+		int selectCount = selectedList.size();
 		if ( selectCount == 0 ) {
 			disableButtons(selectSet, SELECT_TO_ENABLE_MSG);
 		} else if ( selectCount >= 1 ) {
 			enableButtons(selectSet);
-            if ( selectedFileTypes.contains(FileType.OTHER)) {
-                disableInapropriateButtons(selectedFileTypes);
-            }
+            disableInapropriateButtons(selectedList);
+            disableNotReadyButtons(selectedList);
 		} 
 		if ( selectCount > 1) {
 			disableButtons(singleSet, ONLY_ONE_TO_ENABLE_MSG);
@@ -1389,6 +1387,34 @@ public class DatasetListPage extends CompositeWithUsername {
 	}
 			
 	/**
+     * @param selectedList
+     */
+    private void disableNotReadyButtons(DashboardDatasetList selectedList) {
+        for (DashboardDataset dataset : selectedList.values()) {
+            String datastatus = dataset.getDataCheckStatus();
+            if (datastatus.equals("Unacceptable") ||
+                datastatus.equalsIgnoreCase(DashboardUtils.STRING_MISSING_VALUE)) {
+                previewButton.setEnabled(false);
+                maybeSetTitleAdvisory(previewButton, "Unable to Preview data: " + 
+                        ( DashboardUtils.STRING_MISSING_VALUE.equals(datastatus) ? 
+                                "Data has not been checked." :
+                                "Data Check Unacceptable." ));
+            }
+        }
+    }
+
+    /**
+     * @param previewButton2
+     * @param string
+     */
+    private static void maybeSetTitleAdvisory(Button button, String msg) {
+        String btitle = button.getTitle();
+        if ( btitle.indexOf(NOTICE_PREFIX ) < 0 ) {
+            button.setTitle(NOTICE_PREFIX+msg+NOTICE_POSTFIX+button.getTitle());
+        }
+    }
+
+    /**
      * @param selectCount
      */
     private void updateSubmissionButton(int selectCount) {
@@ -1406,23 +1432,40 @@ public class DatasetListPage extends CompositeWithUsername {
     /**
      * @param selectedFeatures
      */
-    private void disableInapropriateButtons(Set<FileType> selectedFileTypes) {
-        for (Button b : noOpaque) {
-            b.setEnabled(false);
-            String btitle = b.getTitle();
-            if ( btitle.indexOf("**" ) < 0 ) {
-                b.setTitle(NOT_FOR_OTHER+b.getTitle());
+    private void disableInapropriateButtons(DashboardDatasetList selectedList) {
+//                                            Set<FileType> selectedFileTypes) {
+        Set<FileType>selectedFileTypes = new TreeSet<>();
+        Set<FeatureType>selectedFeatureTypes = new TreeSet<>();
+		for (DashboardDataset cruise : selectedList.values()) {
+            selectedFileTypes.add(cruise.getFileType());
+            selectedFeatureTypes.add(cruise.getFeatureType());
+		}
+        if ( selectedFileTypes.contains(FileType.OTHER)) {
+            for (Button b : noOpaque) {
+                b.setEnabled(false);
+                maybeSetTitleAdvisory(b, NOT_FOR_OTHER_FILES);
             }
         }
-        
+        if ( selectedFeatureTypes.contains(FeatureType.OTHER)) {
+            for (Button b : noOpaque) {
+                b.setEnabled(false);
+                maybeSetTitleAdvisory(b, NOT_FOR_OTHER_FEATURES);
+            }
+        }
+        for ( DashboardDataset dd : selectedList.values()) {
+            if ( ! dd.getFeatureType().equals(FeatureType.PROFILE)) {
+                previewButton.setEnabled(false);
+                maybeSetTitleAdvisory(previewButton, "Data Preview is not yet available for this type.");
+            }
+        }
     }
 
     private static void enableButtons(Button[] enableSet) {
 		for (Button button : enableSet) {
 			String tt = button.getTitle();
-			int idx = tt.lastIndexOf("**");
+			int idx = tt.lastIndexOf(NOTICE_POSTFIX);
 			if ( idx >= 0 ) {
-				String revised = tt.substring(idx+3);
+				String revised = tt.substring(idx+NOTICE_POSTFIX.length());
 				button.setTitle(revised);
 			}
 			button.setEnabled(true);
@@ -1431,10 +1474,13 @@ public class DatasetListPage extends CompositeWithUsername {
 
 	private static void disableButtons(Button[] disableSet, String msg) {
 		for (Button button : disableSet) {
-            if ( button.getTitle().indexOf("**") < 0 ) {
-    			button.setTitle(msg+button.getTitle());
-    			button.setEnabled(false);
+            String buttonTitle =  button.getTitle();
+            int idx = buttonTitle.lastIndexOf("**");
+            if ( idx > 0 ) {
+                buttonTitle = buttonTitle.substring(idx+3);
             }
+			button.setTitle(NOTICE_PREFIX+msg+NOTICE_POSTFIX+buttonTitle);
+			button.setEnabled(false);
 		}
 	}
 
