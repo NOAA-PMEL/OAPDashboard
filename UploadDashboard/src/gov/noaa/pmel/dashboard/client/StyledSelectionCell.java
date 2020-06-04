@@ -102,7 +102,7 @@ public class StyledSelectionCell extends AbstractInputCell<String, String> {
             viewData = null;
         }
 
-        GWT.log("render " + value + " with " + style);
+//        GWT.log("render " + value + " with " + style);
         int selectedIndex = getSelectedIndex(viewData == null ? value
                 : viewData);
         if (style != null && !"".equals(style)) {
