@@ -9,6 +9,7 @@ import java.io.FilenameFilter;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashSet;
@@ -215,7 +216,7 @@ public class DashboardServices extends RemoteServiceServlet implements Dashboard
             }
         }
         long modTime = warFile.lastModified();
-        String version =  TimeUtils.formatUTC(new Date(modTime), "yyyyMMdd.HHmm");
+        String version =  new SimpleDateFormat("yyyyMMdd.HHmm").format(new Date(modTime));
         return version;
     }
 
