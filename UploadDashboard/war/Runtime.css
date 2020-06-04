@@ -34,6 +34,9 @@
 }
 .oa_row {
 }
+.selected_row {
+	background-color: #fffed4;
+}
 .oa_row td {
 	border: 2px purple !important;
 }

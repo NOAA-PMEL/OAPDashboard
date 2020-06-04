@@ -260,16 +260,17 @@ public class DatasetListPage extends CompositeWithUsername {
 	private static final String CLEAR_SELECTION_OPTION = "None";
 
 	// Column header strings
+	private static final String RECORD_ID_COLUMN_NAME = "Record ID";
 	private static final String DATASET_ID_COLUMN_NAME = "Dataset ID";
-	private static final String FEATURE_TYPE_COLUMN_NAME = "Observation Type";
+	private static final String FEATURE_TYPE_COLUMN_NAME = "<div style=\"float:left;\"><div style=\"text-align:center;\">Observation<br />Type</div></div>";
 	private static final String TIMESTAMP_COLUMN_NAME = "Upload Date";
 	private static final String DATA_CHECK_COLUMN_NAME = "Data Status";
 	private static final String METADATA_COLUMN_NAME = "Metadata";
-	private static final String ADDL_DOCS_COLUMN_NAME = "Supplemental<br />Documents";
+	private static final String ADDL_DOCS_COLUMN_NAME = "<div style=\"float:left;\"><div style=\"text-align:center;\">Supplemental<br />Documents</div></div>";
 	private static final String VERSION_COLUMN_NAME = "Version";
 	private static final String SUBMITTED_COLUMN_NAME = "QC Status";
 	private static final String ARCHIVED_COLUMN_NAME = "Archival";
-	private static final String FILENAME_COLUMN_NAME = "File Name";
+	private static final String FILENAME_COLUMN_NAME = "Data File Name";
 	private static final String DATASET_NAME_COLUMN_NAME = "Dataset Name";
 	private static final String OWNER_COLUMN_NAME = "Owner";
 
@@ -1151,8 +1152,10 @@ public class DatasetListPage extends CompositeWithUsername {
 		TextColumn<DashboardDataset> ownerColumn = buildOwnerColumn();
 
 		// Add the columns, with headers, to the table
-		datasetsGrid.addColumn(rowNumColumn, selectHeader);
-		datasetsGrid.addColumn(selectedColumn, selectHeader);
+//		datasetsGrid.addColumn(rowNumColumn, selectHeader);
+		datasetsGrid.addColumn(selectedColumn, ""); // selectHeader);
+		datasetsGrid.addColumn(recordIdColumn, 
+				SafeHtmlUtils.fromSafeConstant(RECORD_ID_COLUMN_NAME));
 		datasetsGrid.addColumn(filenameColumn, 
 				SafeHtmlUtils.fromSafeConstant(FILENAME_COLUMN_NAME));
 		datasetsGrid.addColumn(featureTypeColumn, 
@@ -1171,8 +1174,6 @@ public class DatasetListPage extends CompositeWithUsername {
 //				SafeHtmlUtils.fromSafeConstant(SUBMITTED_COLUMN_NAME));
 		datasetsGrid.addColumn(archiveStatusColumn, 
 				SafeHtmlUtils.fromSafeConstant(ARCHIVED_COLUMN_NAME));
-		datasetsGrid.addColumn(recordIdColumn, 
-				SafeHtmlUtils.fromSafeConstant(DATASET_ID_COLUMN_NAME));
         if (showManagerColumns) {
     		datasetsGrid.addColumn(ownerColumn, 
     				SafeHtmlUtils.fromSafeConstant(OWNER_COLUMN_NAME));
@@ -1180,21 +1181,21 @@ public class DatasetListPage extends CompositeWithUsername {
 
 		// Set the minimum widths of the columns
 		double minTableWidth = 0.0;
-		datasetsGrid.setColumnWidth(rowNumColumn, 
-				UploadDashboard.CHECKBOX_COLUMN_WIDTH, Style.Unit.EM);
-		minTableWidth += UploadDashboard.CHECKBOX_COLUMN_WIDTH;
 		datasetsGrid.setColumnWidth(selectedColumn, 
 				UploadDashboard.SELECT_COLUMN_WIDTH, Style.Unit.EM);
-		minTableWidth += UploadDashboard.NARROW_COLUMN_WIDTH;
-		datasetsGrid.setColumnWidth(recordIdColumn, 
-				UploadDashboard.NORMAL_COLUMN_WIDTH, Style.Unit.EM);
-		minTableWidth += UploadDashboard.NORMAL_COLUMN_WIDTH;
+		minTableWidth += UploadDashboard.SELECT_COLUMN_WIDTH;
+        datasetsGrid.setColumnWidth(recordIdColumn, 
+                UploadDashboard.NARROWER_COLUMN_WIDTH, Style.Unit.EM);
+        minTableWidth += UploadDashboard.NARROWER_COLUMN_WIDTH;
+		datasetsGrid.setColumnWidth(filenameColumn, 
+				UploadDashboard.FILENAME_COLUMN_WIDTH, Style.Unit.EM);
+		minTableWidth += UploadDashboard.FILENAME_COLUMN_WIDTH;
 		datasetsGrid.setColumnWidth(featureTypeColumn, 
-				UploadDashboard.NORMAL_COLUMN_WIDTH, Style.Unit.EM);
-		minTableWidth += UploadDashboard.NORMAL_COLUMN_WIDTH;
+				UploadDashboard.NARROW_COLUMN_WIDTH, Style.Unit.EM);
+		minTableWidth += UploadDashboard.NARROW_COLUMN_WIDTH;
 		datasetsGrid.setColumnWidth(timestampColumn, 
-				UploadDashboard.NORMAL_COLUMN_WIDTH, Style.Unit.EM);
-		minTableWidth += UploadDashboard.NORMAL_COLUMN_WIDTH;
+				UploadDashboard.MIDDLING_COLUMN_WIDTH, Style.Unit.EM);
+		minTableWidth += UploadDashboard.MIDDLING_COLUMN_WIDTH;
 		datasetsGrid.setColumnWidth(dataCheckColumn, 
 				UploadDashboard.NORMAL_COLUMN_WIDTH, Style.Unit.EM);
 		minTableWidth += UploadDashboard.NORMAL_COLUMN_WIDTH;
@@ -1206,19 +1207,20 @@ public class DatasetListPage extends CompositeWithUsername {
 		minTableWidth += UploadDashboard.FILENAME_COLUMN_WIDTH;
 //		datasetsGrid.setColumnWidth(versionColumn,
 //				UploadDashboard.NARROW_COLUMN_WIDTH, Style.Unit.EM);
-		minTableWidth += UploadDashboard.NARROW_COLUMN_WIDTH;
+//		minTableWidth += UploadDashboard.NARROW_COLUMN_WIDTH;
 //		datasetsGrid.setColumnWidth(qcStatusColumn, 
 //				UploadDashboard.NORMAL_COLUMN_WIDTH, Style.Unit.EM);
 //		minTableWidth += UploadDashboard.NORMAL_COLUMN_WIDTH;
 		datasetsGrid.setColumnWidth(archiveStatusColumn, 
 				UploadDashboard.NORMAL_COLUMN_WIDTH, Style.Unit.EM);
 		minTableWidth += UploadDashboard.NORMAL_COLUMN_WIDTH;
-		datasetsGrid.setColumnWidth(filenameColumn, 
-				UploadDashboard.FILENAME_COLUMN_WIDTH, Style.Unit.EM);
-		minTableWidth += UploadDashboard.FILENAME_COLUMN_WIDTH;
-		datasetsGrid.setColumnWidth(ownerColumn, 
-				UploadDashboard.NORMAL_COLUMN_WIDTH, Style.Unit.EM);
-		minTableWidth += UploadDashboard.NORMAL_COLUMN_WIDTH;
+        if ( showManagerColumns ) {
+    		datasetsGrid.setColumnWidth(ownerColumn, 
+    				UploadDashboard.MIDDLING_COLUMN_WIDTH, Style.Unit.EM);
+    		minTableWidth += UploadDashboard.MIDDLING_COLUMN_WIDTH;
+        }
+        // Need more minWidth.  TODO: Should figure out why and how to calculate exactly how much...
+        minTableWidth += datasetsGrid.getColumnCount() * 1.7;
 
 		// Set the minimum width of the full table
 		datasetsGrid.setMinimumTableWidth(minTableWidth, Style.Unit.EM);
@@ -1302,7 +1304,7 @@ public class DatasetListPage extends CompositeWithUsername {
 													SafeHtmlBuilder sb) {
 				String msg = getValue(cruise);
 				sb.appendHtmlConstant("<div style=\"color: " + 
-						UploadDashboard.ROW_NUMBER_COLOR + ";\">");
+						UploadDashboard.ROW_NUMBER_COLOR + "; font-size:smaller; \">");
 				for (int k = msg.length(); k < 4; k++)
 					sb.appendHtmlConstant("&nbsp;");
 				sb.appendEscaped(msg);
@@ -1317,7 +1319,7 @@ public class DatasetListPage extends CompositeWithUsername {
 	 */
 	private Header<String> buildSelectionHeader() {
 		SelectionCell selectHeaderCell = new SelectionCell(Arrays.asList(
-				SELECTION_OPTION_LABEL, 
+				"√...", // SELECTION_OPTION_LABEL, 
 				ALL_SELECTION_OPTION, 
 //				EDITABLE_SELECTION_OPTION, 
 //				SUBMITTED_SELECTION_OPTION, 
@@ -1449,6 +1451,17 @@ public class DatasetListPage extends CompositeWithUsername {
 					expocode = NO_DATASET_ID_STRING;
 				return expocode;
 			}
+            @Override
+            public void render(Cell.Context ctx, DashboardDataset cruise, 
+                                                    SafeHtmlBuilder sb) {
+                String msg = getValue(cruise);
+                sb.appendHtmlConstant("<div style=\"color: " + 
+                        UploadDashboard.ROW_NUMBER_COLOR + "; font-size:smaller; \">");
+                for (int k = msg.length(); k < 4; k++)
+                    sb.appendHtmlConstant("&nbsp;");
+                sb.appendEscaped(msg);
+                sb.appendHtmlConstant("</div>");
+            }
 		};
 		return expocodeColumn;
 	}
