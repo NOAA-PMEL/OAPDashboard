@@ -44,6 +44,9 @@ public class DashboardServiceResponse<R> implements Serializable, IsSerializable
     public boolean wasSuccessful() {
         return _wasSuccessful;
     }
+    public void setSuccessful(boolean successful) {
+        _wasSuccessful = successful;
+    }
     
     private String _message;
     public String message() {
