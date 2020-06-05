@@ -847,7 +847,7 @@ public class DatasetListPage extends CompositeWithUsername {
 	}
 	void _archiveSubmitOnClick(DashboardDatasetList datasets) {
 		if ( checkDatasetsForSubmitting(datasets, SubmitFor.ARCHIVE)) {
-		    submitDatasets(selectedDatasets, SubmitFor.ARCHIVE);
+		    submitDatasets(datasets, SubmitFor.ARCHIVE);
 		}
 	}
 
