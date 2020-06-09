@@ -20,7 +20,7 @@ import java.util.Date;
 import java.util.Properties;
 
 import org.apache.log4j.Logger;
-import org.apache.tomcat.util.http.fileupload.FileItem;
+import org.apache.tomcat.util.http.fileupload.IOUtils;
 import org.tmatesoft.svn.core.SVNException;
 
 import gov.noaa.pmel.dashboard.oads.DashboardOADSMetadata;
@@ -82,7 +82,8 @@ public class MetadataFileHandler extends VersionedFileHandler {
 
 	/**
 	 * Generates the virtual file for a metadata document
-	 * from the dataset ID and the upload filename.
+	 * from the dataset ID and the upload filename. 
+	 * It also creates the necessary parent directories along the way.
 	 * 
 	 * @param datasetId
 	 * 		ID of the dataset associated with this metadata document
@@ -238,17 +239,9 @@ public class MetadataFileHandler extends VersionedFileHandler {
 	 */
 	public DashboardMetadata saveMetadataFileItem(String datasetId, 
 			String owner, String uploadTimestamp, String uploadFilename,
-			String version, FileItem uploadFileItem) throws IllegalArgumentException {
+			String version, InputStream uploadFileItem) throws IllegalArgumentException {
 		// Create the metadata filename
 		File metadataFile = getMetadataFile(datasetId, uploadFilename);
-
-		// Make sure the parent directory exists 
-		File parentDir = metadataFile.getParentFile();
-		if ( ! parentDir.exists() ) {
-			if ( ! parentDir.mkdirs() )
-				throw new IllegalArgumentException("Problems creating the parent directory for " + 
-						metadataFile.getPath());
-		}
 
 		// Check if this will overwrite existing metadata
 		boolean isUpdate;
@@ -261,8 +254,8 @@ public class MetadataFileHandler extends VersionedFileHandler {
 		}
 
 		// Copy the uploaded data to the metadata document
-		try {
-			uploadFileItem.write(metadataFile);
+		try ( FileOutputStream fos = new FileOutputStream(metadataFile); ) {
+            IOUtils.copy(uploadFileItem, fos);
 		} catch ( Exception ex ) {
 			throw new IllegalArgumentException("Problems creating/updating the metadata document " +
 					metadataFile.getPath() + ":\n    " + ex.getMessage());
@@ -745,24 +738,23 @@ public class MetadataFileHandler extends VersionedFileHandler {
 	 * 		name of the user wanting to remove the metadata document
 	 * @param datasetId
 	 * 		ID of the dataset associated with this metadata
-	 * @param metaname
+	 * @param metafileName
 	 * 		name of the metadata document
 	 * @throws IllegalArgumentException 
 	 * 		if the dataset ID or metaname is invalid, 
 	 * 		if the user is not permitted to delete the metadata document,
 	 * 		if there are problems deleting the document.
 	 */
-	public void deleteMetadata(String username, String datasetId,
-							String metaname) throws IllegalArgumentException {
-		File metadataFile = getMetadataFile(datasetId, metaname);
-        File metaDir = metadataFile.getParentFile();
+	public void deleteMetadataFile(String username, String datasetId,
+        						   String metafileName) throws IllegalArgumentException {
+		File metadataFile = getMetadataFile(datasetId, metafileName);
         File backupDir = getBackupDir(metadataFile);
 		File propsFile = new File(metadataFile.getPath() + INFOFILE_SUFFIX);
         File extractedInfoFile = getAutoExtractedMetadataFile(datasetId);
 		// Do not throw an error if the props file does not exist
 		if ( propsFile.exists() ) { 
 			// Throw an exception if not allowed to overwrite
-			verifyOkayToDelete(username, datasetId, metaname);
+			verifyOkayToDelete(username, datasetId, metafileName);
 			try {
                 backupFile(propsFile, backupDir, "."+TimeUtils.format_ISO_COMPRESSED(new Date())+"_bak");
 				deleteVersionedFile(propsFile, "Deleted metadata properties " + propsFile.getPath());
@@ -790,9 +782,16 @@ public class MetadataFileHandler extends VersionedFileHandler {
 						"Unable to delete metadata file " + metadataFile.getPath());
 			}
 		}
+	}
+
+	public void deleteAllMetadata(String username, String datasetId) throws IllegalArgumentException {
+        File metaFile = getMetadataFile(datasetId);
+        File metaDir = metaFile.getParentFile();
+        File backupDir = getBackupDir(metaFile);
         boolean deletedAllFiles = true;
         try {
             for (File f : metaDir.listFiles()) {
+                backupFile(f, backupDir, "."+TimeUtils.format_ISO_COMPRESSED(new Date()));
                 deletedAllFiles = f.delete() && deletedAllFiles;
             }
             if ( ! deletedAllFiles ) {
@@ -811,15 +810,19 @@ public class MetadataFileHandler extends VersionedFileHandler {
             }
         }
 	}
-
+    
 	/**
      * @param metadataFile
      * @return
      */
     private static File getBackupDir(File metadataFile) {
         File parent = metadataFile.getParentFile();
-        String backupDirName = parent.getName() + "_bak";
-        return new File(parent.getParentFile(), backupDirName);
+        File backupRoot = new File(parent.getParentFile(), parent.getName() + "_bak");
+        if ( ! backupRoot.exists()) {
+            backupRoot.mkdir();
+        }
+        String backupDirName = new SimpleDateFormat("yyyyMMddHHmmss").format(new Date());
+        return new File(backupRoot, backupDirName);
     }
 
     /**

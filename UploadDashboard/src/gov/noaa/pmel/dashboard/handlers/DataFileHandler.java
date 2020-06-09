@@ -1642,18 +1642,9 @@ public class DataFileHandler extends VersionedFileHandler {
 			// Delete the metadata and additional documents associated with this cruise
 			MetadataFileHandler metadataHandler = configStore.getMetadataFileHandler();
 			try {
-				// XXX TODO: OME_FILENAME check
-				metadataHandler.deleteMetadata(username, datasetId, DashboardUtils.metadataFilename(datasetId));
+				metadataHandler.deleteAllMetadata(username, datasetId);
 			} catch (Exception ex) {
 				// Ignore - may not exist
-			}
-			for ( String mdataTitle : dataset.getAddlDocs() ) {
-				String filename = DashboardMetadata.splitAddlDocsTitle(mdataTitle)[0];
-				try {
-					metadataHandler.deleteMetadata(username, datasetId, filename);
-				} catch (Exception ex) {
-					// Ignore
-				}
 			}
 		}
 	}
@@ -1894,7 +1885,7 @@ public class DataFileHandler extends VersionedFileHandler {
 			DashDataType<?> dataType = userTypes.getDataType(colTypeNames.get(k));
 			if ( dataType == null )
 				throw new IllegalArgumentException("unknown data type \"" + colTypeNames.get(k) + "\"");
-			DataColumnType dctype = dataType.duplicate();
+			DataColumnType dctype = dataType.dataColumnType();
 			if ( ! dctype.setSelectedUnit(colTypeUnits.get(k)) )
 				throw new IllegalArgumentException("unknown unit \"" + colTypeUnits.get(k) + 
 						"\" for data type \"" + dctype.getVarName() + "\"");
