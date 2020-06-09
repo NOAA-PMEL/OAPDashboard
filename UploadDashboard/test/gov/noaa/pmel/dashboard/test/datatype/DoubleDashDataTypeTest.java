@@ -384,7 +384,7 @@ public class DoubleDashDataTypeTest {
 	}
 
 	/**
-	 * Test method for {@link gov.noaa.pmel.dashboard.datatype.DashDataType#duplicate()} and
+	 * Test method for {@link gov.noaa.pmel.dashboard.datatype.DashDataType#dataColumnType()} and
 	 * {@link gov.noaa.pmel.dashboard.datatype.DoubleDashDataType#DoubleDashDataType(gov.noaa.pmel.dashboard.shared.DataColumnType,
 	 * java.lang.String, java.lang.String, java.lang.String, java.lang.String, java.lang.String, java.lang.String)}
 	 */
@@ -396,7 +396,7 @@ public class DoubleDashDataTypeTest {
 				BOUNDS[2].toString(), BOUNDS[3].toString());
 		DataColumnType colType = new DataColumnType(VAR_NAME, SORT_ORDER, 
 				DISPLAY_NAME, DESCRIPTION, true, UNITS);
-		assertEquals(colType, dtype.duplicate());
+		assertEquals(colType, dtype.dataColumnType());
 		DoubleDashDataType other = new DoubleDashDataType(colType, 
 				STANDARD_NAME, CATEGORY_NAME,
 				FILE_UNIT, BOUNDS[0].toString(), BOUNDS[1].toString(), 
@@ -429,7 +429,7 @@ public class DoubleDashDataTypeTest {
 		assertTrue( other.typeNameEquals(dtype) );
 		assertFalse( dtype.typeNameEquals((DashDataType<?>) null) );
 
-		assertTrue(dtype.typeNameEquals(other.duplicate()) );
+		assertTrue(dtype.typeNameEquals(other.dataColumnType()) );
 		assertFalse( dtype.typeNameEquals((DataColumnType) null) );
 	}
 

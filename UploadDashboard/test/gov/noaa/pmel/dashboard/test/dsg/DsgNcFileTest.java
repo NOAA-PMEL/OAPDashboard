@@ -110,22 +110,22 @@ public class DsgNcFileTest {
 		ArrayList<String> userColumnNames = new ArrayList<String>(Arrays.asList(
 				"depth,dataset,vessel,month,day,year,hour,minute,lat,lon,SST,sal,xCO2_SST,pCO2_Tequ,P_atm,speed".split(",")));
 		ArrayList<DataColumnType> testTypes = new ArrayList<DataColumnType>(Arrays.asList(
-				DashboardServerUtils.SAMPLE_DEPTH.duplicate(),
-				DashboardServerUtils.DATASET_NAME.duplicate(),
-				DashboardServerUtils.PLATFORM_NAME.duplicate(),
-				DashboardServerUtils.MONTH_OF_YEAR.duplicate(), 
-				DashboardServerUtils.DAY_OF_MONTH.duplicate(), 
-				DashboardServerUtils.YEAR.duplicate(), 
-				DashboardServerUtils.HOUR_OF_DAY.duplicate(), 
-				DashboardServerUtils.MINUTE_OF_HOUR.duplicate(), 
-				DashboardServerUtils.LATITUDE.duplicate(), 
-				DashboardServerUtils.LONGITUDE.duplicate(), 
-				SST.duplicate(),
-				SALINITY.duplicate(),
-				XCO2_WATER_SST_DRY.duplicate(),
-				PCO2_WATER_TEQU_WET.duplicate(),
-				PATM.duplicate(),
-				SHIP_SPEED.duplicate()));
+				DashboardServerUtils.SAMPLE_DEPTH.dataColumnType(),
+				DashboardServerUtils.DATASET_NAME.dataColumnType(),
+				DashboardServerUtils.PLATFORM_NAME.dataColumnType(),
+				DashboardServerUtils.MONTH_OF_YEAR.dataColumnType(), 
+				DashboardServerUtils.DAY_OF_MONTH.dataColumnType(), 
+				DashboardServerUtils.YEAR.dataColumnType(), 
+				DashboardServerUtils.HOUR_OF_DAY.dataColumnType(), 
+				DashboardServerUtils.MINUTE_OF_HOUR.dataColumnType(), 
+				DashboardServerUtils.LATITUDE.dataColumnType(), 
+				DashboardServerUtils.LONGITUDE.dataColumnType(), 
+				SST.dataColumnType(),
+				SALINITY.dataColumnType(),
+				XCO2_WATER_SST_DRY.dataColumnType(),
+				PCO2_WATER_TEQU_WET.dataColumnType(),
+				PATM.dataColumnType(),
+				SHIP_SPEED.dataColumnType()));
 		String[] dataValueStrings = {
 				"5,31B520060606,GM0606,6,10,2006,23,48,29.0514,-92.759,28.78,33.68,409.7,392.5,1009.281,0.3", 
 				"5,31B520060606,GM0606,6,10,2006,23,49,29.0513,-92.759,28.9,33.56,405.5,388.3,1009.298,0.3", 
@@ -207,22 +207,22 @@ public class DsgNcFileTest {
 		ArrayList<String> userColumnNames = new ArrayList<String>(Arrays.asList(
 				"depth,dataset,vessel,month,day,year,hour,minute,lat,lon,SST,sal,xCO2_SST,pCO2_Tequ,P_atm,speed".split(",")));
 		ArrayList<DataColumnType> testTypes = new ArrayList<DataColumnType>(Arrays.asList(
-				DashboardServerUtils.SAMPLE_DEPTH.duplicate(),
-				DashboardServerUtils.DATASET_NAME.duplicate(),
-				DashboardServerUtils.PLATFORM_NAME.duplicate(),
-				DashboardServerUtils.MONTH_OF_YEAR.duplicate(),
-				DashboardServerUtils.DAY_OF_MONTH.duplicate(),
-				DashboardServerUtils.YEAR.duplicate(),
-				DashboardServerUtils.HOUR_OF_DAY.duplicate(),
-				DashboardServerUtils.MINUTE_OF_HOUR.duplicate(),
-				DashboardServerUtils.LATITUDE.duplicate(),
-				DashboardServerUtils.LONGITUDE.duplicate(),
-				SST.duplicate(),
-				SALINITY.duplicate(),
-				XCO2_WATER_SST_DRY.duplicate(),
-				PCO2_WATER_TEQU_WET.duplicate(),
-				PATM.duplicate(),
-				SHIP_SPEED.duplicate()));
+				DashboardServerUtils.SAMPLE_DEPTH.dataColumnType(),
+				DashboardServerUtils.DATASET_NAME.dataColumnType(),
+				DashboardServerUtils.PLATFORM_NAME.dataColumnType(),
+				DashboardServerUtils.MONTH_OF_YEAR.dataColumnType(),
+				DashboardServerUtils.DAY_OF_MONTH.dataColumnType(),
+				DashboardServerUtils.YEAR.dataColumnType(),
+				DashboardServerUtils.HOUR_OF_DAY.dataColumnType(),
+				DashboardServerUtils.MINUTE_OF_HOUR.dataColumnType(),
+				DashboardServerUtils.LATITUDE.dataColumnType(),
+				DashboardServerUtils.LONGITUDE.dataColumnType(),
+				SST.dataColumnType(),
+				SALINITY.dataColumnType(),
+				XCO2_WATER_SST_DRY.dataColumnType(),
+				PCO2_WATER_TEQU_WET.dataColumnType(),
+				PATM.dataColumnType(),
+				SHIP_SPEED.dataColumnType()));
 		String[][] badTimeDataValueStringsSets = {
 				{
 					"5,11B520060606,GM0606,2,28,2006,23,48,29.0514,-92.759,28.78,33.68,409.7,392.5,1009.281,0.3", 

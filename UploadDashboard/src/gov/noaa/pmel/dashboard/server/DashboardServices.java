@@ -296,7 +296,7 @@ public class DashboardServices extends RemoteServiceServlet implements Dashboard
 			newUsername = newOwner;
 		}
 		else {
-			// actual name given?
+			// actual name given? // XXX This won't work.
 			try {
                 User newUser = Users.getUser(newOwner);
                 newUsername = newUser.username();
@@ -373,8 +373,7 @@ public class DashboardServices extends RemoteServiceServlet implements Dashboard
 				throw new IllegalArgumentException("Document " + deleteFilename + 
 						" is not associated with dataset " + datasetId);
 		}
-		// Delete this OME metadata or additional documents file on the server
-		mdataHandler.deleteMetadata(username, datasetId, deleteFilename);
+		mdataHandler.deleteMetadataFile(username, datasetId, deleteFilename);
 
 		logger.info("deleted metadata " + deleteFilename + 
 				" from " + datasetId + " for " + username);
@@ -409,7 +408,7 @@ public class DashboardServices extends RemoteServiceServlet implements Dashboard
 			throw new IllegalArgumentException("unexpected empty list of all known data column types");
 		ArrayList<DataColumnType> knownTypesList = new ArrayList<DataColumnType>(knownTypesSet.size());
 		for ( DashDataType<?> dtype : knownTypesSet )
-			knownTypesList.add(dtype.duplicate());
+			knownTypesList.add(dtype.dataColumnType());
 
         DataFileHandler dataFileHandler = configStore.getDataFileHandler();
 		// Get the cruise with the first maximum-needed number of rows
