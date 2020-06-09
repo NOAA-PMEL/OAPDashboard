@@ -215,7 +215,7 @@ public class DashboardUtils {
 	 */
 	public static final String OTHER_VARNAME = "other";
 	public static final DataColumnType OTHER = new DataColumnType(OTHER_VARNAME,
-			1.0, "other", "unused and unchecked supplementary data", false, NO_UNITS);
+			1.0, "IGNORED", "unused and unchecked supplementary data", false, NO_UNITS);
 
 	/**
 	 * User-provided name of the cruise/dataset

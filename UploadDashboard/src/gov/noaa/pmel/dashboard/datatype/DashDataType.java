@@ -517,13 +517,15 @@ public abstract class DashDataType<T extends Comparable<T>> implements Comparabl
 	@SuppressWarnings("unchecked")
 	@Override
 	public int compareTo(DashDataType<?> other) {
+		int result = 0;
 		if ( this == other ) {
 			return 0;
 		}
-		// This first check should be all that is needed
-		int result = sortOrder.compareTo(other.sortOrder);
-		if ( result != 0 )
-			return result;
+        if ( sortOrder < 100 || other.sortOrder < 100 ) {
+//		// This first check should be all that is needed // Not any more.
+    		result = sortOrder.compareTo(other.sortOrder);
+    		if ( result != 0 ) return result;
+        }
 
 		// But to be complete....
 		result = displayName.compareTo(other.displayName);
@@ -702,7 +704,7 @@ public abstract class DashDataType<T extends Comparable<T>> implements Comparabl
 	 * @return
 	 * 		a new DataColumnType constructed from the values in this DashDataType.
 	 */
-	public DataColumnType duplicate() {
+	public DataColumnType dataColumnType() {
 		return new DataColumnType(varName, sortOrder, displayName, description, isCritical, units);
 	}
 
