@@ -235,7 +235,7 @@ public class DataUploadService extends HttpServlet {
     }
 
     private static FeatureType getFeatureType(Map<String, List<FileItem>> paramMap) throws NoSuchFieldException {
-        String observationTypeName = getRequiredField("observationType", paramMap);
+        String observationTypeName = getUploadField("observationType", paramMap);
         FeatureType featureType = ObservationType.featureTypeOf(observationTypeName);
         return featureType;
     }
