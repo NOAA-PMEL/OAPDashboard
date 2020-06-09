@@ -285,7 +285,7 @@ public class Users {
     
     // Map of username to user info
 	private static Map<String,DashboardUserInfo> _userInfoMap;
-    private static Map<String, DashboardUserInfo> getUserMap() {
+    private synchronized static Map<String, DashboardUserInfo> getUserMap() {
 		// Read and assign the authorized users 
         if ( _userInfoMap == null ) {
     		_userInfoMap = new HashMap<String,DashboardUserInfo>();
@@ -298,39 +298,11 @@ public class Users {
                         userRoles += " " + role;
                     }
                     ui.addUserRoles(userRoles.trim());
+                    _userInfoMap.put(u.username(), ui);
                 }
             } catch (DashboardException dex) {
                 logger.warn(dex,dex);
             }
-        /*
-		for ( Entry<Object,Object> entry : _configProps.entrySet() ) {
-			if ( ! ((entry.getKey() instanceof String) && 
-					(entry.getValue() instanceof String)) )
-				continue;
-			String username = (String) entry.getKey();
-			if ( ! username.startsWith(USER_ROLE_NAME_TAG_PREFIX) )
-				continue;
-			username = username.substring(USER_ROLE_NAME_TAG_PREFIX.length());
-			username = DashboardUtils.cleanUsername(username);
-			DashboardUserInfo userInfo;
-			try {
-				userInfo = new DashboardUserInfo(username);
-			} catch ( IllegalArgumentException ex ) {
-				throw new IOException(ex.getMessage() + "\n" +
-						"for " + username + " specified in " + 
-						_configFile.getPath() + "\n" + CONFIG_FILE_INFO_MSG);
-			}
-			String rolesString = (String) entry.getValue();
-			try {
-				userInfo.addUserRoles(rolesString);
-			} catch ( IllegalArgumentException ex ) {
-				throw new IOException(ex.getMessage() + "\n" +
-						"for " + username + " specified in " + 
-						_configFile.getPath() + "\n" + CONFIG_FILE_INFO_MSG);
-			}
-			_userInfoMap.put(username, userInfo);
-		}
-        */
     		for ( DashboardUserInfo info : _userInfoMap.values() ) {
     			logger.info("    user info: " + info.toString());
     		}
@@ -349,7 +321,7 @@ public class Users {
 		if ( (username == null) || username.isEmpty() )
 			return false;
 		String name = DashboardUtils.cleanUsername(username);
-		DashboardUserInfo userInfo = _userInfoMap.get(name);
+		DashboardUserInfo userInfo = getUserMap().get(name);
 		if ( userInfo == null )
 			return false;
 		return true;
