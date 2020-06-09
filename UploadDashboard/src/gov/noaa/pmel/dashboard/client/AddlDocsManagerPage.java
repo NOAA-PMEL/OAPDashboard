@@ -200,6 +200,7 @@ public class AddlDocsManagerPage extends CompositeWithUsername {
 	static void showPage(DashboardDatasetList cruiseList) {
 		if ( singleton == null )
 			singleton = new AddlDocsManagerPage();
+        singleton.uploadForm.reset();
 		singleton.updateAddlDocs(cruiseList);
 		UploadDashboard.updateCurrentPage(singleton, UploadDashboard.DO_PING);
 	}
