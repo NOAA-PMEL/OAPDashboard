@@ -750,7 +750,7 @@ public class MetadataFileHandler extends VersionedFileHandler {
 		File metadataFile = getMetadataFile(datasetId, metafileName);
         File backupDir = getBackupDir(metadataFile);
 		File propsFile = new File(metadataFile.getPath() + INFOFILE_SUFFIX);
-        File extractedInfoFile = getAutoExtractedMetadataFile(datasetId);
+//        File extractedInfoFile = getAutoExtractedMetadataFile(datasetId);
 		// Do not throw an error if the props file does not exist
 		if ( propsFile.exists() ) { 
 			// Throw an exception if not allowed to overwrite
@@ -774,14 +774,14 @@ public class MetadataFileHandler extends VersionedFileHandler {
 						"Unable to delete metadata file " + metadataFile.getPath());
 			}
 		}
-		if ( extractedInfoFile.exists() ) { 
-			try {
-                extractedInfoFile.delete();
-			} catch ( Exception ex ) {
-				throw new IllegalArgumentException(
-						"Unable to delete metadata file " + metadataFile.getPath());
-			}
-		}
+//		if ( extractedInfoFile.exists() ) { 
+//			try {
+//                extractedInfoFile.delete();
+//			} catch ( Exception ex ) {
+//				throw new IllegalArgumentException(
+//						"Unable to delete metadata file " + metadataFile.getPath());
+//			}
+//		}
 	}
 
 	public void deleteAllMetadata(String username, String datasetId) throws IllegalArgumentException {
