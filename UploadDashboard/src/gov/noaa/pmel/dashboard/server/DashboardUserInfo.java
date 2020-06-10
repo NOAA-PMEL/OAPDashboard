@@ -4,8 +4,10 @@
 package gov.noaa.pmel.dashboard.server;
 
 import java.util.HashSet;
+import java.util.Set;
 
 import gov.noaa.pmel.dashboard.shared.DashboardUtils;
+import gov.noaa.pmel.tws.util.StringUtils;
 
 /**
  * User authentication and privileges
@@ -14,15 +16,9 @@ import gov.noaa.pmel.dashboard.shared.DashboardUtils;
  */
 public class DashboardUserInfo {
 
-	private static final String MEMBER_NAME_TAG = "MemberOf";
-	private static final String MANAGER_NAME_TAG = "ManagerOf";
-	private static final String ADMIN_NAME_TAG = "Admin";
-
 	private String username;
-	// List of group numbers this user belongs to
-	private HashSet<Integer> memberNums;
-	// List of group numbers this user manages
-	private HashSet<Integer> managerNums;
+    private Set<String> userRoles;
+    
 	// Is this user an admin?
 	private boolean admin;
 
@@ -39,8 +35,7 @@ public class DashboardUserInfo {
 		if ( (username == null) || (username.trim().length() < 4) )
 			throw new IllegalArgumentException("User name too short");
 		this.username = DashboardUtils.cleanUsername(username);
-		memberNums = new HashSet<Integer>();
-		managerNums = new HashSet<Integer>();
+        userRoles = new HashSet<>();
 		admin = false;
 	}
 
@@ -52,51 +47,28 @@ public class DashboardUserInfo {
 	 * 		if a role cannot be interpreted
 	 */
 	public void addUserRoles(String rolesString) throws IllegalArgumentException {
+        if ( StringUtils.emptyOrNull(rolesString)) { 
+            throw new IllegalArgumentException("Empty or null roles string.");
+        }
 		String[] roles = rolesString.split("[,;\\s]+", -1);
-		for (int k = 0; k < roles.length; k++) {
-			if ( (roles[k]).startsWith(MEMBER_NAME_TAG) ) {
-				int groupNum;
-				try {
-					groupNum = Integer.parseInt(
-						roles[k].substring(MEMBER_NAME_TAG.length()) );
-					if ( groupNum <= 0 )
-						throw new NumberFormatException();
-				} catch ( NumberFormatException ex ) {
-					throw new IllegalArgumentException("Invalid " + 
-							MEMBER_NAME_TAG + " number in " + roles[k]);
-				}
-				memberNums.add(groupNum);
-			}
-			else if ( (roles[k]).startsWith(MANAGER_NAME_TAG) ) {
-				int groupNum;
-				try {
-					groupNum = Integer.parseInt(
-						roles[k].substring(MANAGER_NAME_TAG.length()) );
-					if ( groupNum <= 0 )
-						throw new NumberFormatException();
-				} catch ( NumberFormatException ex ) {
-					throw new IllegalArgumentException("Invalid " + 
-							MANAGER_NAME_TAG + " number in " + roles[k]);
-				}
-				memberNums.add(groupNum);
-				managerNums.add(groupNum);
-			}
-			else if ( (roles[k]).equals(ADMIN_NAME_TAG) ) {
-				admin = true;
-			}
-			else if ( ! (roles[k]).isEmpty() ) {
-				throw new IllegalArgumentException("Unknown role " + roles[k]);
-			}
-		}
+        for (String role : roles) {
+            role = role.trim();
+            // in case there are eg commas and spaces.
+            if ( ! StringUtils.emptyOrNull(role)) {
+                userRoles.add(role);
+            }
+        }
+        admin = userRoles.contains("dashboardadmin");
 	}
 
 	/**
 	 * @return
+     * Currently not supporting groups.
 	 * 		true is this user is an admin or a manager of a group
 	 * 		(regardless of whether there is anyone else in the group)
 	 */
 	public boolean isManager() {
-		if ( admin || (managerNums.size() > 0) )
+		if ( admin ) // || (managerNums.size() > 0) )
 			return true;
 		return false;
 	}
@@ -130,10 +102,7 @@ public class DashboardUserInfo {
 		// User manages over himself
 		if ( username.equals(other.username) )
 			return true;
-		// Check groups this user manages
-		for ( Integer groupNum : managerNums )
-			if ( other.memberNums.contains(groupNum) )
-				return true;
+		// Check groups this user manages  // XXX Currently not supporting groups
 		// Not a manager over other
 		return false;
 	}
@@ -143,8 +112,6 @@ public class DashboardUserInfo {
 		final int prime = 37;
 		int result = Boolean.valueOf(admin).hashCode();
 		result = result * prime + username.hashCode();
-		result = result * prime + memberNums.hashCode();
-		result = result * prime + managerNums.hashCode();
 		return result;
 	}
 
@@ -163,10 +130,6 @@ public class DashboardUserInfo {
 			return false;
 		if ( ! username.equals(other.username) )
 			return false;
-		if ( ! managerNums.equals(other.managerNums) )
-			return false;
-		if ( ! memberNums.equals(other.memberNums) )
-			return false;
 
 		return true;
 	}
@@ -175,8 +138,6 @@ public class DashboardUserInfo {
 	public String toString() {
 		return "DashboardUserInfo" +
 				"[ username=" + username + 
-				", memberNums=" + memberNums.toString() + 
-				", managerNums=" + managerNums.toString() +
 				", admin=" + Boolean.toString(admin) + 
 				"]";
 	}
