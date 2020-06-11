@@ -166,7 +166,7 @@ public class DashboardUtils {
 
 	/** Formats for time-of-day */
 	public static final ArrayList<String> TIME_OF_DAY_UNITS = 
-			new ArrayList<String>(Arrays.asList("hh:mm:ss","hh:mm"));
+			new ArrayList<String>(Arrays.asList("hh:mm:ss")); // ,"hh:mm"));
 
 	/** Units for day-of-year (value of the first day of the year) */
 	public static final ArrayList<String> DAY_OF_YEAR_UNITS = 
@@ -318,7 +318,7 @@ public class DashboardUtils {
 
 	public static final String TIME_OF_DAY_VARNAME = "time_of_day";
 	public static final DataColumnType TIME_OF_DAY = new DataColumnType(TIME_OF_DAY_VARNAME,
-			315.0, "time of day", "sample time of day", false, TIME_OF_DAY_UNITS);
+			315.0, "time of day", "sample time of day", false, NO_UNITS); // TIME_OF_DAY_UNITS);
 
 	public static final String HOUR_OF_DAY_VARNAME = "hour";
 	public static final DataColumnType HOUR_OF_DAY = new DataColumnType(HOUR_OF_DAY_VARNAME,
