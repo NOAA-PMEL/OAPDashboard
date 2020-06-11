@@ -188,6 +188,9 @@ public class StringDashDataType extends DashDataType<String> {
 	@Override
 	public ValueConverter<String> getStandardizer(String inputUnit, String missingValue, 
 			StdUserDataArray stdArray) throws IllegalArgumentException, IllegalStateException {
+        if ( "time_of_day".equals(varName)) {  // XXX TODO: Special case should be removed.
+            return new TimestampConverter("", "hh:mm:ss", "");
+        }
 		String outputUnit = units.get(0);
 		if ( DashboardUtils.STRING_MISSING_VALUE.equals(outputUnit) )
 			outputUnit = null;

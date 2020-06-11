@@ -1886,9 +1886,13 @@ public class DataFileHandler extends VersionedFileHandler {
 			if ( dataType == null )
 				throw new IllegalArgumentException("unknown data type \"" + colTypeNames.get(k) + "\"");
 			DataColumnType dctype = dataType.dataColumnType();
-			if ( ! dctype.setSelectedUnit(colTypeUnits.get(k)) )
-				throw new IllegalArgumentException("unknown unit \"" + colTypeUnits.get(k) + 
-						"\" for data type \"" + dctype.getVarName() + "\"");
+			if ( ! dctype.setSelectedUnit(colTypeUnits.get(k)) ) {
+                String msg = "unknown unit \"" + colTypeUnits.get(k) + 
+						"\" for data type \"" + dctype.getVarName() + "\"";
+                logger.info(dataset.getRecordId() + ": Failed to set unit of " + colTypeUnits.get(k) + " to " + dctype );
+                if ( !"time_of_day".equals(dataType.getVarName())) // XXX temporary until we're sure..
+                    throw new IllegalArgumentException(msg);
+			}
 			dctype.setSelectedMissingValue(colMissValues.get(k));
 			dataColTypes.add(dctype);
 		}

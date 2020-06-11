@@ -18,6 +18,9 @@ import java.util.Map.Entry;
 import java.util.Properties;
 import java.util.TreeSet;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
 import gov.noaa.pmel.dashboard.datatype.DashDataType;
 import gov.noaa.pmel.dashboard.datatype.KnownDataTypes;
 import gov.noaa.pmel.dashboard.server.DashboardConfigStore;
@@ -36,6 +39,8 @@ import gov.noaa.pmel.tws.util.StringUtils;
  */
 public class UserFileHandler extends VersionedFileHandler {
 
+    private static Logger logger = LogManager.getLogger(UserFileHandler.class);
+    
 	private static final String USER_CRUISE_LIST_NAME_EXTENSION = 
 			"_cruise_list.txt";
 	private static final String USER_DATA_COLUMNS_NAME_EXTENSION =
@@ -114,9 +119,13 @@ public class UserFileHandler extends VersionedFileHandler {
 				throw new IllegalArgumentException("Unknown data type \"" + 
 						vals[0] + "\" for tag \"" + colName + "\"");
 			DataColumnType dctype = dtype.dataColumnType();
-			if ( ! dctype.setSelectedUnit(vals[1]) )
-				throw new IllegalArgumentException("Unknown data unit \"" + vals[1] + 
-						"\" for data type \"" + vals[0] + "\"");
+			if ( ! dctype.setSelectedUnit(vals[1]) ) {
+                String msg = "Unknown data unit \"" + vals[1] + 
+						"\" for data type \"" + vals[0] + "\"";
+                logger.info(msg);
+                if ( ! "time_of_day".equals(dtype.getVarName())) // XXX temporary until we're sure.
+                    throw new IllegalArgumentException(msg);
+			}
 			dctype.setSelectedMissingValue(vals[2]);
 			dataColNamesToTypes.put(colName, dctype);
 		}
