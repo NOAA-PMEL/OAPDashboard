@@ -70,8 +70,6 @@ import gov.noaa.pmel.dashboard.shared.FileType;
  */
 public class DatasetListPage extends CompositeWithUsername {
 
-    private static Logger logger = Logger.getLogger(DatasetListPage.class.getName());
-    
 	private static enum SubmitFor {
 		QC,
 		ARCHIVE
@@ -287,7 +285,7 @@ public class DatasetListPage extends CompositeWithUsername {
 	private static final String NO_DATA_CHECK_STATUS_STRING = "Not checked";
 	private static final String NO_METADATA_STATUS_STRING = "(no metadata)";
 	private static final String NO_QC_STATUS_STRING = "Private";
-	private static final String NO_ARCHIVE_STATUS_STRING = "Not specified";
+	private static final String NO_ARCHIVE_STATUS_STRING = "Not archived";
 	private static final String NO_UPLOAD_FILENAME_STRING = "(unknown)";
 	private static final String NO_ADDL_DOCS_STATUS_STRING = "(no documents)";
 	private static final String NO_OWNER_STRING = "(unknown)";
@@ -352,6 +350,7 @@ public class DatasetListPage extends CompositeWithUsername {
 	private class SelectionHandler implements CellPreviewEvent.Handler<DashboardDataset> {
         @Override
         public void onCellPreview(CellPreviewEvent<DashboardDataset> event) {
+//            GWT.log("preview: " + event.getNativeEvent().getType());
             clickRowIdx = event.getIndex();
             clickedDataset = event.getValue();
         }
@@ -359,10 +358,10 @@ public class DatasetListPage extends CompositeWithUsername {
     private SelectionHandler selectionHandler = new SelectionHandler();
     
     private void setSelection(DoubleClickEvent event) {
-        GWT.log(event.getNativeEvent().getType());
+//        GWT.log("setSelection: " + event.getNativeEvent().getType());
         if ( clickRowIdx >= 0 && clickRowIdx < 50 
              && clickedDataset != null ) {
-            GWT.log(String.valueOf(clickedDataset));
+            GWT.log("setSelection: " + String.valueOf(clickedDataset));
             clickedDataset.setSelected(! clickedDataset.isSelected());
             datasetsGrid.redrawRow(clickRowIdx);
             updateAvailableButtons();
@@ -1934,7 +1933,6 @@ public class DatasetListPage extends CompositeWithUsername {
 	 * be continued.  If the answer is yes, or if there were no serious data 
 	 * issues, continues submitting for QC by calling 
 	 * {@link SubmitForQCPage#showPage(java.util.HashSet)}.
-	 */
 	private boolean checkDatasetsForSubmitting(SubmitFor to) {
 		if ( ! getSelectedDatasets(Boolean.FALSE) ) {
 			UploadDashboard.showMessage(
@@ -1948,13 +1946,15 @@ public class DatasetListPage extends CompositeWithUsername {
 		}
         return checkDatasetsForSubmitting(selectedDatasets, to);
 	}
+	 */
 	private boolean checkDatasetsForSubmitting(DashboardDataset dataset, SubmitFor to) {
 	    DashboardDatasetList checkSet = new DashboardDatasetList(getUsername());
 	    checkSet.put(dataset.getDatasetId(), dataset);
         return checkDatasetsForSubmitting(checkSet, to);
 	}
-    static boolean doItLater = true;
+    static boolean moveAhead = true;
 	private static boolean checkDatasetsForSubmitting(DashboardDatasetList checkSet, final SubmitFor to) {
+        if ( moveAhead ) { return true; }
         boolean okToSubmit = true;
         StringBuilder errorMsgBldr = new StringBuilder("The following problems were found:");
         errorMsgBldr.append("<ul>");
@@ -1995,7 +1995,6 @@ public class DatasetListPage extends CompositeWithUsername {
         errorMsgBldr.append("</ul>");
         
         if ( !okToSubmit ) {
-            boolean finalAnswer;
             errorMsgBldr.append("<br/><br/>Do you still wish to submit to the archive?");
             UploadDashboard.ask(errorMsgBldr.toString(), "Yes", "No", QuestionType.WARNING, 
                                 new AsyncCallback<Boolean>() {
@@ -2068,96 +2067,96 @@ public class DatasetListPage extends CompositeWithUsername {
         }
     }
 
-    private void old_checkDatasetsForSubmitting(DashboardDatasetList checkSet, final SubmitFor to) {
-        for ( DashboardDataset dataset : selectedDatasets.values()) {
-            if ( !hasNoUnknownColumns(dataset)) {
-                UploadDashboard.showMessage("Dataset " + dataset.getDatasetId() + " has \"Unknown\" columns."
-                        + "<br/>All dataset columns must be defined or excluded by being labelled as \"Other.\"");
-            }
-        }
-
-		// Check if the cruises have metadata documents
-		String errMsg = NO_METADATA_HTML_PROLOGUE;
-		boolean cannotSubmit = false;
-		for ( DashboardDataset cruise : checkSet.values() ) {
-			// At this time, just check that some metadata file exists
-			// and do not worry about the contents
-			if ( to.equals(SubmitFor.ARCHIVE) &&
-			        cruise.getMdTimestamp().isEmpty() &&
-					cruise.getAddlDocs().isEmpty() ) {
-				errMsg += "<li>" + 
-						SafeHtmlUtils.htmlEscape(cruise.getDatasetId()) + "</li>";
-				cannotSubmit = true;
-			}
-		}
-
-		// If no metadata documents, cannot submit
-		if ( cannotSubmit ) {
-			errMsg += NO_METADATA_HTML_EPILOGUE;
-			UploadDashboard.showMessage(errMsg);
-			return;
-		}
-
-		// Check that the cruise data is checked and reasonable
-		errMsg = CANNOT_SUBMIT_HTML_PROLOGUE;
-		String warnMsg = DATA_AUTOFAIL_HTML_PROLOGUE;
-		boolean willAutofail = false;
-		for ( DashboardDataset cruise : checkSet.values() ) {
-			String status = cruise.getDataCheckStatus();
-			if ( ! cruise.getFeatureType().equals(FeatureType.OTHER) &&
-			     ( status.equals(DashboardUtils.CHECK_STATUS_NOT_CHECKED) ||
-				   status.equals(DashboardUtils.CHECK_STATUS_UNACCEPTABLE) ||
-				   status.contains(DashboardUtils.GEOPOSITION_ERRORS_MSG) )) {
-				errMsg += "<li>" + 
-						 SafeHtmlUtils.htmlEscape(cruise.getDatasetId()) + "</li>";
-				cannotSubmit = true;
-			}
-			else if ( cruise.getFeatureType().equals(FeatureType.OTHER) ||
-			          status.equals(DashboardUtils.CHECK_STATUS_ACCEPTABLE) ||
-					  status.startsWith(DashboardUtils.CHECK_STATUS_WARNINGS_PREFIX) ||
-					  ( status.startsWith(DashboardUtils.CHECK_STATUS_ERRORS_PREFIX) &&
-						(cruise.getNumErrorRows() <= DashboardUtils.MAX_ACCEPTABLE_ERRORS) ) ) {
-				// Acceptable
-			}
-			else {
-				warnMsg += "<li>" + 
-					 SafeHtmlUtils.htmlEscape(cruise.getDatasetId()) + "</li>";
-				willAutofail = true;
-			}
-		}
-
-		// If unchecked or very serious data issues, put up error message and stop
-		if ( cannotSubmit ) {
-			errMsg += CANNOT_SUBMIT_HTML_EPILOGUE;
-			UploadDashboard.showMessage(errMsg);
-			return;
-		}
-
-		// If unreasonable data, ask to continue
-		if ( willAutofail ) {
-			warnMsg += AUTOFAIL_HTML_EPILOGUE;
-			if ( askDataAutofailPopup == null ) {
-				askDataAutofailPopup = new DashboardAskPopup(AUTOFAIL_YES_TEXT,
-						AUTOFAIL_NO_TEXT, new AsyncCallback<Boolean>() {
-					@Override
-					public void onSuccess(Boolean okay) {
-						// Only proceed if yes; ignore if no or null
-						if ( okay )
-							submitDatasets(checkSet, to);
-//							SubmitForQCPage.showPage(checkSet);
-					}
-					@Override
-					public void onFailure(Throwable ex) {
-						// Never called
-					}
-				});
-			}
-			askDataAutofailPopup.askQuestion(warnMsg);
-			return;
-		}
-		// No problems; continue on
-		submitDatasets(checkSet, to);
-	}
+//    private void old_checkDatasetsForSubmitting(DashboardDatasetList checkSet, final SubmitFor to) {
+//        for ( DashboardDataset dataset : selectedDatasets.values()) {
+//            if ( !hasNoUnknownColumns(dataset)) {
+//                UploadDashboard.showMessage("Dataset " + dataset.getDatasetId() + " has \"Unknown\" columns."
+//                        + "<br/>All dataset columns must be defined or excluded by being labelled as \"Other.\"");
+//            }
+//        }
+//
+//		// Check if the cruises have metadata documents
+//		String errMsg = NO_METADATA_HTML_PROLOGUE;
+//		boolean cannotSubmit = false;
+//		for ( DashboardDataset cruise : checkSet.values() ) {
+//			// At this time, just check that some metadata file exists
+//			// and do not worry about the contents
+//			if ( to.equals(SubmitFor.ARCHIVE) &&
+//			        cruise.getMdTimestamp().isEmpty() &&
+//					cruise.getAddlDocs().isEmpty() ) {
+//				errMsg += "<li>" + 
+//						SafeHtmlUtils.htmlEscape(cruise.getDatasetId()) + "</li>";
+//				cannotSubmit = true;
+//			}
+//		}
+//
+//		// If no metadata documents, cannot submit
+//		if ( cannotSubmit ) {
+//			errMsg += NO_METADATA_HTML_EPILOGUE;
+//			UploadDashboard.showMessage(errMsg);
+//			return;
+//		}
+//
+//		// Check that the cruise data is checked and reasonable
+//		errMsg = CANNOT_SUBMIT_HTML_PROLOGUE;
+//		String warnMsg = DATA_AUTOFAIL_HTML_PROLOGUE;
+//		boolean willAutofail = false;
+//		for ( DashboardDataset cruise : checkSet.values() ) {
+//			String status = cruise.getDataCheckStatus();
+//			if ( ! cruise.getFeatureType().equals(FeatureType.OTHER) &&
+//			     ( status.equals(DashboardUtils.CHECK_STATUS_NOT_CHECKED) ||
+//				   status.equals(DashboardUtils.CHECK_STATUS_UNACCEPTABLE) ||
+//				   status.contains(DashboardUtils.GEOPOSITION_ERRORS_MSG) )) {
+//				errMsg += "<li>" + 
+//						 SafeHtmlUtils.htmlEscape(cruise.getDatasetId()) + "</li>";
+//				cannotSubmit = true;
+//			}
+//			else if ( cruise.getFeatureType().equals(FeatureType.OTHER) ||
+//			          status.equals(DashboardUtils.CHECK_STATUS_ACCEPTABLE) ||
+//					  status.startsWith(DashboardUtils.CHECK_STATUS_WARNINGS_PREFIX) ||
+//					  ( status.startsWith(DashboardUtils.CHECK_STATUS_ERRORS_PREFIX) &&
+//						(cruise.getNumErrorRows() <= DashboardUtils.MAX_ACCEPTABLE_ERRORS) ) ) {
+//				// Acceptable
+//			}
+//			else {
+//				warnMsg += "<li>" + 
+//					 SafeHtmlUtils.htmlEscape(cruise.getDatasetId()) + "</li>";
+//				willAutofail = true;
+//			}
+//		}
+//
+//		// If unchecked or very serious data issues, put up error message and stop
+//		if ( cannotSubmit ) {
+//			errMsg += CANNOT_SUBMIT_HTML_EPILOGUE;
+//			UploadDashboard.showMessage(errMsg);
+//			return;
+//		}
+//
+//		// If unreasonable data, ask to continue
+//		if ( willAutofail ) {
+//			warnMsg += AUTOFAIL_HTML_EPILOGUE;
+//			if ( askDataAutofailPopup == null ) {
+//				askDataAutofailPopup = new DashboardAskPopup(AUTOFAIL_YES_TEXT,
+//						AUTOFAIL_NO_TEXT, new AsyncCallback<Boolean>() {
+//					@Override
+//					public void onSuccess(Boolean okay) {
+//						// Only proceed if yes; ignore if no or null
+//						if ( okay )
+//							submitDatasets(checkSet, to);
+////							SubmitForQCPage.showPage(checkSet);
+//					}
+//					@Override
+//					public void onFailure(Throwable ex) {
+//						// Never called
+//					}
+//				});
+//			}
+//			askDataAutofailPopup.askQuestion(warnMsg);
+//			return;
+//		}
+//		// No problems; continue on
+//		submitDatasets(checkSet, to);
+//	}
 
 	private static void submitDatasets(DashboardDatasetList submitSet, SubmitFor to) {
 		switch (to) {

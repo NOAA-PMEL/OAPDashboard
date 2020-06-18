@@ -505,7 +505,7 @@ public class DataColumnSpecsPage extends CompositeWithUsername {
         List<String>datasetIds = new ArrayList<>(datasets.size());
         List<String>names = new ArrayList<>(datasets.size());
         for (DashboardDataset dd : datasets) {
-            datasetIds.add(dd.getDatasetId());
+            datasetIds.add(dd.getRecordId());
             names.add(dd.getUserDatasetName());
         }
 		expocodes.addAll(datasetIds);
@@ -639,8 +639,11 @@ public class DataColumnSpecsPage extends CompositeWithUsername {
 			saveButton.setTitle(DISABLED_SUBMIT_HOVER_HELP);
 		}
 
+        String recordId = cruiseSpecs.getRecordId();
+        
 		// Clear the dataset in case the data provider gets called while clearing
-		cruise.setDatasetId(null);
+        cruiseSpecs.setRecordId(null);
+		cruise.setRecordId(null);
 
 		// Delete any existing columns and headers
 		int k = dataGrid.getColumnCount();
@@ -651,6 +654,10 @@ public class DataColumnSpecsPage extends CompositeWithUsername {
 		// Clear the list of DatasetDataColumns
 		cruiseDataCols.clear();
 
+        cruise = cruiseSpecs;
+        
+        // --- from here
+        /*
 		// Assign the new cruise information needed by this page
 		cruise.setNumDataRows(cruiseSpecs.getNumDataRows());
 		cruise.setUserColNames(cruiseSpecs.getUserColNames());
@@ -669,6 +676,8 @@ public class DataColumnSpecsPage extends CompositeWithUsername {
 		cruise.setSubmitStatus(cruiseSpecs.getSubmitStatus());
 		cruise.setArchiveStatus(cruiseSpecs.getArchiveStatus());
 		cruise.setDatasetId(cruiseSpecs.getDatasetId());
+        */
+        cruiseSpecs.setRecordId(recordId);
 
 //		introHtml.setHTML(INTRO_HTML_PROLOGUE +  
 //				SafeHtmlUtils.htmlEscape(cruise.getDatasetId()) + 
@@ -869,7 +878,7 @@ public class DataColumnSpecsPage extends CompositeWithUsername {
 
 	@UiHandler("messagesButton") 
 	void showMessagesOnClick(ClickEvent event) {
-		DataMessagesPage.showPage(getUsername(), cruise.getDatasetId());
+		DataMessagesPage.showPage(getUsername(), cruise.getRecordId(), cruise.getUserDatasetName());
 	}
 
 	@UiHandler("submitButton")
@@ -1129,7 +1138,7 @@ public class DataColumnSpecsPage extends CompositeWithUsername {
                                 @Override
                                 public void onSuccess(Boolean showErrors) {
                                     if ( showErrors.booleanValue()) {
-                                        DataMessagesPage.showPage(getUsername(), cruise.getDatasetId());
+                                        DataMessagesPage.showPage(getUsername(), cruise.getRecordId(), cruise.getUserDatasetName());
                                     }
                                 }
                         });
@@ -1145,7 +1154,7 @@ public class DataColumnSpecsPage extends CompositeWithUsername {
                                 @Override
                                 public void onSuccess(Boolean showErrors) {
                                     if ( showErrors.booleanValue()) {
-                                        DataMessagesPage.showPage(getUsername(), cruise.getDatasetId());
+                                        DataMessagesPage.showPage(getUsername(), cruise.getRecordId(), cruise.getUserDatasetName());
                                     }
                                 }
                         });
