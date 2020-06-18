@@ -270,12 +270,12 @@ public class SubmitForQCPage extends CompositeWithUsername implements DataSubmis
 
 			// Add this cruise to the intro list
 			String submitStatus = cruise.getSubmitStatus();
-			String cdiacDate = cruise.getArchiveDate();
-			if ( submitStatus.isEmpty() && cdiacDate.isEmpty() ) {
+			Date cdiacDate = cruise.getArchiveDate();
+			if ( submitStatus.isEmpty() && cdiacDate == null ) {
 				cruiseIntros.add("<li>" + SafeHtmlUtils.htmlEscape(expo) + 
 						"</li>");				
 			}
-			else if ( cdiacDate.isEmpty() ) {
+			else if ( cdiacDate == null ) {
 				cruiseIntros.add("<li>" + SafeHtmlUtils.htmlEscape(expo) + 
 						CRUISE_INFO_PROLOGUE + QC_STATUS_INTRO +
 						submitStatus + CRUISE_INFO_EPILOGUE + "</li>");								

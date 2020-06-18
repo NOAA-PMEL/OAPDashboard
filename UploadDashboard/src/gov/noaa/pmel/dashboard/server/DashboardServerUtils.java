@@ -3,6 +3,7 @@
  */
 package gov.noaa.pmel.dashboard.server;
 
+import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -16,6 +17,7 @@ import gov.noaa.pmel.dashboard.datatype.IntDashDataType;
 import gov.noaa.pmel.dashboard.datatype.StringDashDataType;
 import gov.noaa.pmel.dashboard.handlers.ArchiveFilesBundler;
 import gov.noaa.pmel.dashboard.shared.DashboardUtils;
+import gov.noaa.pmel.tws.util.StringUtils;
 
 /**
  * @author Karl Smith
@@ -400,26 +402,50 @@ public class DashboardServerUtils {
 		return distanceBase;
 	}
 
-	public static final String FORMAT_TIME_DEFAULT = "yyyy-MM-dd hh:mm:ss z";
-	public static final String EXPO_DATE = "yyyymmdd";
-
-	public static String formatTime(Date date) {
-	    return formatTime(date, FORMAT_TIME_DEFAULT);
-	}
-	
+	public static final String FORMAT_TIME_DEFAULT = DashboardUtils.DATE_ARCHIVE_FORMAT;
+    
 	public static String formatTime(Date date, String format) {
 		SimpleDateFormat sdf = new SimpleDateFormat(format);
+        if ( isUTCformat(format)) {
+    		sdf.setTimeZone(TimeZone.getTimeZone("UTC"));
+        }
 		return sdf.format(date);
 	}
-	    
+	/**
+     * @param format
+     * @return
+     */
+    private static boolean isUTCformat(String format) {
+        return format.endsWith("Z");
+    }
+
+    public static String formatUTC(Date date) {
+		return formatUTC(date, FORMAT_TIME_DEFAULT);
+	}
+ 
 	public static String formatUTC(Date date, String format) {
+        if ( date == null ) { return ""; }
 		SimpleDateFormat sdf = new SimpleDateFormat(format);
 		sdf.setTimeZone(TimeZone.getTimeZone("UTC"));
 		return sdf.format(date);
 	}
 		
-	public static String formatUTC(Date date) {
-		return formatUTC(date, FORMAT_TIME_DEFAULT);
-	}
-
+    /**
+     * @param dateString
+     * @param format
+     * @return java.util.Date
+     * @throws ParseException if the dateString cannot be parsed into a date
+     *         using the given format;
+     */
+    public static Date getDate(String dateString) throws ParseException {
+        return getDate(dateString, FORMAT_TIME_DEFAULT);
+    }
+    public static Date getDate(String dateString, String format) throws ParseException {
+        if ( StringUtils.emptyOrNull(dateString)) {
+            return null;
+        }
+		SimpleDateFormat sdf = new SimpleDateFormat(format);
+		sdf.setTimeZone(TimeZone.getTimeZone("UTC"));
+		return sdf.parse(dateString);
+    }
 }

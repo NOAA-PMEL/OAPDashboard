@@ -74,6 +74,19 @@
     border-width: 2px;
 	border-color: red;
 }
+.blocking {
+    color: red;
+	font-size: larger;
+}
+.red {
+    color: red;
+}
+.gray {
+	color: gray;
+}
+.larger-font {
+	font-size: larger;
+}
 .popupPreviewImage {
 	width: 99%;
 	border: 1px solid #ccc;

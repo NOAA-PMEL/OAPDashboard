@@ -8,13 +8,18 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Date;
 import java.util.TreeSet;
 
 import org.junit.Test;
 
+import gov.noaa.pmel.dashboard.handlers.DataFileHandler;
+import gov.noaa.pmel.dashboard.server.DashboardConfigStore;
+import gov.noaa.pmel.dashboard.server.DashboardServerUtils;
 import gov.noaa.pmel.dashboard.shared.DashboardDataset;
 import gov.noaa.pmel.dashboard.shared.DashboardUtils;
 import gov.noaa.pmel.dashboard.shared.DataColumnType;
@@ -498,32 +503,44 @@ public class DashboardDatasetTest {
 	 */
 	@Test
 	public void testSetGetArchiveDate() {
-		String myArchiveDate = "15-JAN-2016 13:30-5:00";
-		DashboardDataset cruise = new DashboardDataset();
-		assertEquals(DashboardUtils.STRING_MISSING_VALUE, cruise.getArchiveDate());
-		cruise.setArchiveDate(myArchiveDate);
-		assertEquals(myArchiveDate, cruise.getArchiveDate());
-		assertEquals(DashboardUtils.STRING_MISSING_VALUE, cruise.getDoi());
-		assertEquals(DashboardUtils.STRING_MISSING_VALUE, cruise.getUploadTimestamp());
-		assertEquals(0, cruise.getUserFlags().size());
-		assertEquals(0, cruise.getCheckerFlags().size());
-		assertEquals(0, cruise.getNumWarnRows());
-		assertEquals(0, cruise.getNumErrorRows());
-		assertEquals(0, cruise.getUserColNames().size());
-		assertEquals(0, cruise.getDataColTypes().size());
-		assertEquals(0, cruise.getNumDataRows());
-		assertEquals(DashboardUtils.STRING_MISSING_VALUE, cruise.getUploadFilename());
-		assertEquals(DashboardUtils.ARCHIVE_STATUS_NOT_SUBMITTED, cruise.getArchiveStatus());
-		assertEquals(DashboardUtils.STATUS_NOT_SUBMITTED, cruise.getSubmitStatus());
-		assertEquals(0, cruise.getAddlDocs().size());
-		assertEquals(DashboardUtils.STRING_MISSING_VALUE, cruise.getMdTimestamp());
-		assertEquals(DashboardUtils.STRING_MISSING_VALUE, cruise.getDataCheckStatus());
-		assertEquals(DashboardUtils.STRING_MISSING_VALUE, cruise.getDatasetId() );
-		assertEquals(DashboardUtils.STRING_MISSING_VALUE, cruise.getOwner());
-		assertEquals(DashboardUtils.STRING_MISSING_VALUE, cruise.getVersion());
-		assertFalse( cruise.isSelected() );
-		cruise.setArchiveDate(null);
-		assertEquals(DashboardUtils.STRING_MISSING_VALUE, cruise.getArchiveDate());
+        try {
+            Date archiveDate = new Date();
+    		String myArchiveDate = DashboardServerUtils.formatUTC(archiveDate, DashboardUtils.DATE_ARCHIVE_FORMAT);
+    		DashboardDataset cruise = new DashboardDataset();
+    		assertNull(cruise.getArchiveDate());
+    		cruise.setArchiveDate(archiveDate);
+            cruise.setRecordId("TESTRECORD");
+    		assertEquals(archiveDate, cruise.getArchiveDate());
+    		assertEquals(DashboardUtils.STRING_MISSING_VALUE, cruise.getDoi());
+    		assertEquals(DashboardUtils.STRING_MISSING_VALUE, cruise.getUploadTimestamp());
+    		assertEquals(0, cruise.getUserFlags().size());
+    		assertEquals(0, cruise.getCheckerFlags().size());
+    		assertEquals(0, cruise.getNumWarnRows());
+    		assertEquals(0, cruise.getNumErrorRows());
+    		assertEquals(0, cruise.getUserColNames().size());
+    		assertEquals(0, cruise.getDataColTypes().size());
+    		assertEquals(0, cruise.getNumDataRows());
+    		assertEquals(DashboardUtils.STRING_MISSING_VALUE, cruise.getUploadFilename());
+    		assertEquals(DashboardUtils.ARCHIVE_STATUS_NOT_SUBMITTED, cruise.getArchiveStatus());
+    		assertEquals(DashboardUtils.STATUS_NOT_SUBMITTED, cruise.getSubmitStatus());
+    		assertEquals(0, cruise.getAddlDocs().size());
+    		assertEquals(DashboardUtils.STRING_MISSING_VALUE, cruise.getMdTimestamp());
+    		assertEquals(DashboardUtils.STRING_MISSING_VALUE, cruise.getDataCheckStatus());
+    		assertEquals(DashboardUtils.STRING_MISSING_VALUE, cruise.getDatasetId() );
+    		assertEquals(DashboardUtils.STRING_MISSING_VALUE, cruise.getOwner());
+    		assertEquals(DashboardUtils.STRING_MISSING_VALUE, cruise.getVersion());
+    		assertFalse( cruise.isSelected() );
+    		assertEquals(myArchiveDate, DashboardServerUtils.formatUTC(cruise.getArchiveDate(), 
+        		                                                       DashboardUtils.DATE_ARCHIVE_FORMAT));
+            DataFileHandler df = DashboardConfigStore.get(false).getDataFileHandler();
+            df.saveDatasetInfoToFile(cruise, "testing");
+    		cruise.setArchiveDate(null);
+    		assertEquals(DashboardUtils.STRING_MISSING_VALUE, 
+    		             DashboardServerUtils.formatUTC(cruise.getArchiveDate(), 
+        		                                        DashboardUtils.DATE_ARCHIVE_FORMAT));
+        } catch (Exception ex) {
+            fail(String.valueOf(ex));
+        }
 	}
 
 	/**
@@ -543,7 +560,7 @@ public class DashboardDatasetTest {
 				"ABCD20050728_3.pdf; 2014-02-21 9:25"));
 		String myQCStatus = "Submitted";
 		String myArchiveStatus = "Next SOCAT release";
-		String myArchiveDate = "15-JAN-2016 13:30-5:00";
+		Date myArchiveDate = new Date();
 		String myFilename = "myUploadFilename.tsv";
 		String myUploadTimestamp = "2015-10-20 13:14:15";
 		String myOrigDOI = "OrigDOI12345";

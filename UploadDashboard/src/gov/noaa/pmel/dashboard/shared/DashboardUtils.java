@@ -9,6 +9,8 @@ import java.util.Collection;
 import java.util.Date;
 import java.util.TreeSet;
 
+import com.google.gwt.i18n.client.DateTimeFormat;
+
 import gov.noaa.pmel.dashboard.shared.QCFlag.Severity;
 
 /**
@@ -819,4 +821,35 @@ public class DashboardUtils {
 		return "extracted_"+metadataFilename(datasetId);
 	}
 
+	public static final String DATE_ARCHIVE_FORMAT = "yyyy-MM-dd HH:mm:ss 'Z'";
+	public static final String DATE_FORMAT_TO_MINUTES_NO_TZ = "yyyy-MM-dd HH:mm";
+	public static final String DATE_FORMAT_TO_SECONDS_NO_TZ = "yyyy-MM-dd HH:mm:ss";
+	public static final String LOCALIZED_DATE_FORMAT_TO_MINUTES = "yyyy-MM-dd HH:mm z";
+	public static final String LOCALIZED_DATE_FORMAT_TO_SECONDS = "yyyy-MM-dd HH:mm:ss z";
+    
+//    public static String formatClientSideDate(Date date, String format) {
+//        if ( date == null ) {
+//            return STRING_MISSING_VALUE;
+//        }
+//        return DateTimeFormat.getFormat(format).format(date);
+//    }
+//    
+//    /**
+//     * 
+//     * @param dateString
+//     * @param format
+//     * @return java.util.Date
+//     * @throws IllegalArgumentException if the entire dateString cannot be parsed into a date
+//     *         using the given format;
+//     */
+//    public static Date getClientSideDate(String dateString, String format) {
+//        if ( emptyOrNull(dateString)) {
+//            return null;
+//        }
+//        return DateTimeFormat.getFormat(format).parse(dateString);
+//    }
+//    
+//    public static boolean emptyOrNull(String str) {
+//        return str == null || str.trim().length() == 0;
+//    }
 }

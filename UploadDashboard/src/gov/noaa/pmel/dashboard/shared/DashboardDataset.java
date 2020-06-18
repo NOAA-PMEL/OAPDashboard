@@ -7,9 +7,11 @@ import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Comparator;
+import java.util.Date;
 import java.util.Iterator;
 import java.util.TreeSet;
 
+import com.google.gwt.i18n.client.DateTimeFormat;
 import com.google.gwt.user.client.rpc.IsSerializable;
 
 import gov.noaa.pmel.dashboard.shared.QCFlag.Severity;
@@ -39,7 +41,7 @@ public class DashboardDataset implements Serializable, IsSerializable {
 	protected String submitStatus;
 	protected String archiveStatus;
 	protected String archiveSubmissionMessage;
-	protected String archiveDate;
+	protected Date archiveDate;
     protected boolean archiveDOIrequested;
 	protected String uploadFilename;
 	protected String uploadTimestamp;
@@ -72,7 +74,7 @@ public class DashboardDataset implements Serializable, IsSerializable {
 		submitStatus = DashboardUtils.STATUS_NOT_SUBMITTED;
 		archiveStatus = DashboardUtils.ARCHIVE_STATUS_NOT_SUBMITTED;
         archiveSubmissionMessage = DashboardUtils.STRING_MISSING_VALUE;
-		archiveDate = DashboardUtils.STRING_MISSING_VALUE;
+		archiveDate = null;
 		uploadFilename = DashboardUtils.STRING_MISSING_VALUE;
 		uploadTimestamp = DashboardUtils.STRING_MISSING_VALUE;
 		uploadedFile = DashboardUtils.STRING_MISSING_VALUE;
@@ -377,25 +379,26 @@ public class DashboardDataset implements Serializable, IsSerializable {
         archiveDOIrequested = doiRequested;
     }
     
-	/**
-	 * @return 
-	 * 		the archive submission date; 
-	 * 		never null but may be {@link DashboardUtils#STRING_MISSING_VALUE}
-	 */
-	public String getArchiveDate() {
-		return archiveDate;
+	public Date getArchiveDate() {
+        return archiveDate;
 	}
-
-	/**
-	 * @param archiveDate 
-	 * 		the archive submission date (after trimming) to set;
-	 * 		if null, sets to {@link DashboardUtils#STRING_MISSING_VALUE}
-	 */
-	public void setArchiveDate(String archiveDate) {
-		if ( archiveDate == null )
-			this.archiveDate = DashboardUtils.STRING_MISSING_VALUE;
-		else
-			this.archiveDate = archiveDate.trim();
+    private transient String formattedDate = null;
+    private transient String dateFormat = null;
+	public String getArchiveDateAsString(String format) {
+        if ( archiveDate == null ) {
+            return DashboardUtils.STRING_MISSING_VALUE;
+        }
+        synchronized (archiveDate) {
+            if ( format.equals(dateFormat) && formattedDate != null )  {
+                return formattedDate;
+            }
+            formattedDate = DateTimeFormat.getFormat(format).format(archiveDate);
+            dateFormat = format;
+            return formattedDate;
+        }
+	}
+	public void setArchiveDate(Date archiveDate) {
+		this.archiveDate = archiveDate;
 	}
 
 	/**
@@ -655,7 +658,7 @@ XXX This allows the possibility that numDataRows != the actual number of data ro
 		result = result * prime + addlDocs.hashCode();
 		result = result * prime + submitStatus.hashCode();
 		result = result * prime + archiveStatus.hashCode();
-		result = result * prime + archiveDate.hashCode();
+        if ( archiveDate != null ) result = result * prime + archiveDate.hashCode();
 		result = result * prime + uploadFilename.hashCode();
 		result = result * prime + uploadTimestamp.hashCode();
 		result = result * prime + doi.hashCode();
@@ -698,7 +701,10 @@ XXX This allows the possibility that numDataRows != the actual number of data ro
 			return false;
 		if ( ! archiveStatus.equals(other.archiveStatus) )
 			return false;
-		if ( ! archiveDate.equals(other.archiveDate) )
+		if ( archiveDate == null ) {
+		    if ( other.archiveDate != null ) 
+    			return false;
+		} else if ( ! archiveDate.equals(other.archiveDate) )
 			return false;
 		if ( ! uploadFilename.equals(other.uploadFilename) )
 			return false;
