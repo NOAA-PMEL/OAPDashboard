@@ -542,7 +542,7 @@ public class StdDataArray {
 		return sampleDepthIndex;
 	}
 
-    private Double[] _sampleTimes = null;
+    protected Double[] _sampleTimes = null;
 	/**
 	 * Computes the fully-specified time, in units of "seconds since 1970-01-01T00:00:00Z" 
 	 * from the standardized date and time data values that can be found in the data.
@@ -1033,7 +1033,7 @@ public class StdDataArray {
 	}
 
     public String getDatasetId(int row) {
-        if (hasDatasetIdColumn()) {
+        if (hasDatasetIdColumn() && row >= 0 ) {
             return String.valueOf(getStdVal(row, getDatasetIdIndex()));
         } else {
             return getDatasetName();

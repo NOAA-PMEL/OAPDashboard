@@ -143,7 +143,7 @@ public class MetadataUploadService extends HttpServlet {
             uploadFile = getUploadedFile(metadataItem);
 			for (String datasetId : idList) {
                 try ( InputStream is = new FileInputStream(uploadFile);) {
-    				String filename = isSupplemental ? uploadFilename : DashboardUtils.metadataFilename(datasetId); 
+    				String filename = isSupplemental ? uploadFilename : MetadataFileHandler.metadataFilename(datasetId); 
     				MetadataFileHandler metadataHandler = configStore.getMetadataFileHandler();
     				// TODO: backup existing ?
                     

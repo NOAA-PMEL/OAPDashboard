@@ -7,7 +7,6 @@ import java.io.BufferedOutputStream;
 import java.io.File;
 import java.io.FileFilter;
 import java.io.FileInputStream;
-import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.FileWriter;
 import java.io.IOException;
@@ -23,6 +22,9 @@ import java.security.NoSuchAlgorithmException;
 import java.text.SimpleDateFormat;
 import java.util.Arrays;
 import java.util.Date;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Map.Entry;
 import java.util.TimeZone;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
@@ -54,12 +56,9 @@ import gov.loc.repository.bagit.exceptions.VerificationException;
 import gov.loc.repository.bagit.hash.StandardSupportedAlgorithms;
 import gov.loc.repository.bagit.verify.BagVerifier;
 import gov.loc.repository.bagit.writer.BagWriter;
-import gov.noaa.pmel.dashboard.dsg.StdUserDataArray;
+
 import gov.noaa.pmel.dashboard.server.DashboardConfigStore;
 import gov.noaa.pmel.dashboard.server.submission.status.SubmissionRecord;
-import gov.noaa.pmel.dashboard.shared.DashboardDataset;
-import gov.noaa.pmel.dashboard.shared.DashboardDatasetData;
-import gov.noaa.pmel.dashboard.shared.FeatureType;
 import gov.noaa.pmel.tws.util.ApplicationConfiguration;
 import gov.noaa.pmel.tws.util.FileUtils;
 import gov.noaa.pmel.tws.util.StringUtils;
@@ -76,19 +75,21 @@ public class Bagger implements ArchiveBundler {
     private String _datasetId;
     private boolean _includeHiddenFiles = false;
     private File _contentRoot;
+    private Map<String, String> _submitProps;
     private SimpleDateFormat _tsFormatter;
     private DashboardConfigStore _store;
 
     public static File Bag(SubmissionRecord submitRecord, String datasetId) throws Exception {
-        return Bag(submitRecord, datasetId, "");
+        return Bag(submitRecord, datasetId, null, "");
     }
     
-    public static File Bag(SubmissionRecord submitRecord, String datasetId, String submitMsg) throws Exception {
+    public static File Bag(SubmissionRecord submitRecord, String datasetId, 
+                           Map<String, String> submitProperties, String submitMsg) throws Exception {
         DashboardConfigStore store = DashboardConfigStore.get();
         Bagger bagger = null;
         Path staged = null;
         try {
-            bagger = new Bagger(submitRecord, datasetId, false, store);
+            bagger = new Bagger(submitRecord, datasetId, submitProperties, false, store);
             staged = bagger.stuffit();
             Bag bag = bagger.bagit(staged);
             bagger.addSubmissionComment(staged, submitMsg);
@@ -118,14 +119,16 @@ public class Bagger implements ArchiveBundler {
      * 
      */
     public Bagger(SubmissionRecord submitRecord, String datasetId, DashboardConfigStore store) {
-        this(submitRecord, datasetId, false, store);
+        this(submitRecord, datasetId, null, false, store);
     }
     
     public Bagger(SubmissionRecord submitRecord, String datasetId, 
+                  Map<String, String> submitProperties, 
                   boolean includeHiddenFiles, DashboardConfigStore store) {
         _submitRecord = submitRecord;
         _datasetId = datasetId.toUpperCase();
         _includeHiddenFiles = includeHiddenFiles;
+        _submitProps = submitProperties != null ? submitProperties : new HashMap<>();
         _store = store;
         _contentRoot = _store.getAppContentDir();
     }
@@ -177,8 +180,9 @@ public class Bagger implements ArchiveBundler {
             })) 
         {
            if (mfile.getName().startsWith("extracted_")) { continue; } // Ignore auto extracted metadata file
-           if (mfile.getAbsoluteFile().equals(metaFile.getAbsoluteFile())) {
-               writeFileTo(mfile, meta, "oap_metadata.xml"); // XXX this may change 
+           if (mfile.getName().equals("lonlat.tsv") // XXX TODO: Maybe we skip the whole "supplemental" files distinction
+               || mfile.getAbsoluteFile().equals(metaFile.getAbsoluteFile())) {
+               writeFileTo(mfile, meta); 
            } else {
                writeFileTo(mfile, supl);
            }
@@ -186,50 +190,10 @@ public class Bagger implements ArchiveBundler {
         if ( supl.list().length == 0 ) {
            supl.delete();
         }
-        if ( _store.getDataFileHandler().dataFileExists(_datasetId)) { // else can't read the data file
-            addLatLonFile(bagRoot);
-        }
         
         return bagPath;
     }
 
-    /**
-     * @param metaFile
-     * @param root
-     * @param root2 
-     * @throws FileNotFoundException 
-     */
-    private void addLatLonFile(File bagRoot) throws FileNotFoundException {
-        File lonLatFile = new File(bagRoot, "lonlat.tsv");
-        try ( PrintWriter lonLatFileWriter = new PrintWriter(lonLatFile); ) {
-            writeAll(lonLatFileWriter);
-        }
-    }
-
-    /**
-     * @param lonLatFile
-     * @param metaFile
-    private void writeBounds(PrintWriter lonLatFile, File metaFile) {
-        // Bounds tags in metadata file
-        // <westbd>-124.947</westbd>
-        // <eastbd>-124.947</eastbd>
-        // <northbd>47.964</northbd>
-        // <southbd>47.964</southbd>
-    }
-     */
-
-    /**
-     * @param lonLatFile
-     */
-    private void writeAll(PrintWriter lonLatFileWriter) {
-        DashboardDatasetData ddd = _store.getDataFileHandler().getDatasetDataFromFiles(_datasetId, 0, -1);
-        StdUserDataArray stda = new StdUserDataArray(ddd, _store.getKnownUserDataTypes());
-        Double[] lats = stda.getSampleLatitudes();
-        Double[] lons = stda.getSampleLongitudes();
-        for (int idx = 1; idx < stda.getNumSamples(); idx++) {
-            lonLatFileWriter.println(lons[idx] + "\t" + lats[idx]);
-        }
-    }
 
     /**
      * @throws IOException 
@@ -247,13 +211,28 @@ public class Bagger implements ArchiveBundler {
      * @throws IOException 
      */
     private void addSubmissionComment(Path staged, String submitMsg) throws IOException {
-        if ( StringUtils.emptyOrNull(submitMsg)) {
+        if ( _submitProps.isEmpty() && StringUtils.emptyOrNull(submitMsg)) {
             return;
         }
         File msgFile = new File(staged.toFile(), _submitRecord.submissionKey() + "_SubmissionInstructions.txt");
-        try (FileWriter fout = new FileWriter(msgFile)) {
-            fout.write(submitMsg);
+        try (PrintWriter fout = new PrintWriter(new FileWriter(msgFile))) {
+            for (Entry<String, String> prop : _submitProps.entrySet()) {
+                fout.println(prop);
+            }
+            if ( !StringUtils.emptyOrNull(submitMsg)) {
+                String userMsg = cleanupMessage(submitMsg);
+                fout.println("user_submit_message="+userMsg);
+            }
         }
+    }
+
+    /**
+     * @param submitMsg
+     * @return
+     */
+    private static String cleanupMessage(String submitMsg) {
+        String cleaned = "\""+ submitMsg.replaceAll("\\\n", " \\\\n ") + "\"";
+        return cleaned;
     }
 
     private static StandardSupportedAlgorithms getHashAlgorithm() {

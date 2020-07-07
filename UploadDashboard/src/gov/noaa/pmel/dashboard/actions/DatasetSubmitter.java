@@ -9,8 +9,10 @@ import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -36,13 +38,12 @@ import gov.noaa.pmel.dashboard.server.submission.status.StatusRecord;
 import gov.noaa.pmel.dashboard.server.submission.status.StatusState;
 import gov.noaa.pmel.dashboard.server.submission.status.SubmissionRecord;
 import gov.noaa.pmel.dashboard.server.util.OapMailSender;
-import gov.noaa.pmel.dashboard.server.util.UIDGen;
 import gov.noaa.pmel.dashboard.shared.DashboardDataset;
 import gov.noaa.pmel.dashboard.shared.DashboardDatasetData;
 import gov.noaa.pmel.dashboard.shared.DashboardMetadata;
 import gov.noaa.pmel.dashboard.shared.DashboardUtils;
+import gov.noaa.pmel.dashboard.shared.FileType;
 import gov.noaa.pmel.tws.util.ApplicationConfiguration;
-import gov.noaa.pmel.tws.util.StringUtils;
 import gov.noaa.pmel.tws.util.TimeUtils;
 
 /**
@@ -55,9 +56,8 @@ public class DatasetSubmitter {
 
 	static Logger logger = LogManager.getLogger(DatasetSubmitter.class);
     
-    static final String USER_COMMENT_HEADER = "==== User Submission Comments ====\n";
+//    public static final String USER_COMMENT_HEADER = "==== User Submission Comments ====";
 
-    DashboardConfigStore configStore;
 	DataFileHandler dataHandler;
 	MetadataFileHandler metadataHandler;
 //	DatasetChecker datasetChecker;
@@ -72,7 +72,6 @@ public class DatasetSubmitter {
 	 * 		create with the file handlers and data checker in this data store.
 	 */
 	public DatasetSubmitter(DashboardConfigStore configStore) {
-        this.configStore = configStore;
 		dataHandler = configStore.getDataFileHandler();
 		metadataHandler = configStore.getMetadataFileHandler();
 //		datasetChecker = configStore.getDashboardDatasetChecker();
@@ -131,7 +130,7 @@ public class DatasetSubmitter {
 					// Get the metadata for this dataset
 					// XXX TODO: OME_FILENAME check
 				    // XXX TODO: log submission
-					DashboardMetadata mdata = metadataHandler.getMetadataInfo(datasetId, DashboardUtils.metadataFilename(datasetId));
+					DashboardMetadata mdata = metadataHandler.getMetadataInfo(datasetId, DashboardServerUtils.metadataFilename(datasetId));
 					if ( mdata != null && ! version.equals(mdata.getVersion()) ) {
 						mdata.setVersion(version);
 						metadataHandler.saveMetadataInfo(mdata, "Update metadata version number to " + 
@@ -145,7 +144,7 @@ public class DatasetSubmitter {
 
 					// Standardize the data
 					// TODO: update the metadata with data-derived values
-            		DatasetChecker datasetChecker = configStore.getDashboardDatasetChecker(dataset.getFeatureType());
+            		DatasetChecker datasetChecker = _configStore.getDashboardDatasetChecker(dataset.getFeatureType());
 					StdUserDataArray standardized = datasetChecker.standardizeDataset(dataset, null);
 					if ( DashboardUtils.CHECK_STATUS_UNACCEPTABLE.equals(dataset.getDataCheckStatus()) ) {
 						errorMsgs.add(datasetId + ": unacceptable; check data check error messages " +
@@ -262,8 +261,9 @@ public class DatasetSubmitter {
 				String commitMsg = "Immediate archival of dataset " + datasetId + " requested by " + 
 						userRealName + " (" + userEmail + ") at " + timestamp;
 				try {
+                    DashboardDataset dataset = _configStore.getDataFileHandler().getDatasetFromInfoFile(datasetId);
                     SubmissionRecord sRecord = getSubmissionRecord(datasetId, submitMsg, timestamp, submitter);
-                    File archiveBundle = getArchiveBundle(sRecord, datasetId, columnsList, submitMsg, generateDOI);
+                    File archiveBundle = getArchiveBundle(sRecord, datasetId, dataset, columnsList, submitMsg, generateDOI);
                     sRecord.archiveBag(archiveBundle.getPath());
                     insertNewSubmissionRecord(sRecord);
                     doSubmitAchiveBundleFile(sRecord, datasetId, archiveBundle, userRealName, userEmail);
@@ -452,6 +452,9 @@ public class DatasetSubmitter {
                 case EMAIL:
                     filesBundler.sendArchiveBundle(submission, archiveBundle, userRealName, userEmail);
                     break;
+                case NONE:
+                    logger.warn("Archive mode set to NONE.  Archive bundle NOT SENT. " + archiveBundle.getPath());
+                    break;
             }
 //        } catch (Exception ex) {
 //            ex.printStackTrace();
@@ -466,17 +469,46 @@ public class DatasetSubmitter {
 	 * @throws Exception
      */
     private static File getArchiveBundle(SubmissionRecord submitRecord, String datasetId, 
+                                         DashboardDataset dataset,
                                          List<String> columnsList, String submitMsg, 
                                          boolean generateDOI) throws Exception {
         File archiveBundle = null;
-//        if ( ApplicationConfiguration.getProperty("oap.archive.use_bagit", true)) {
-            String submitComment = "generate_doi: " + String.valueOf(generateDOI) + "\n";
-            submitComment += "submission_record_id:" + submitRecord.submissionKey() + "\n";
-            submitComment += "user_dataset_id:" + datasetId + "\n";
-            if ( ! StringUtils.emptyOrNull(submitMsg)) {
-                submitComment += USER_COMMENT_HEADER + submitMsg;
+        String dataChkMsg = dataset.getDataCheckStatus();
+        String locChkMsg = "";
+        if ( ! dataset.getFeatureType().isDSG()) {
+            dataChkMsg = "CANNOT_CHECK:OBSERVATION_TYPE";
+            locChkMsg = "LOCATIONS_UNAVAILABLE";
+        } else if ( ! dataset.getFileType().equals(FileType.DELIMITED)) {
+            dataChkMsg = "CANNOT_CHECK:FILE_TYPE";
+            locChkMsg = "LOCATIONS_UNAVAILABLE";
+        } else if ( dataChkMsg == "" ) {
+            dataChkMsg = "DATA_CHECK_NOT_PERFORMED";
+            locChkMsg = "LOCATIONS_UNAVAILABLE";
+        } else {
+            try {
+                if ( DashboardConfigStore.get(false).getMetadataFileHandler().getMetadataFile(datasetId, "lonlat.tsv").exists()) {
+                    locChkMsg = "LOCATION_FILE_AVAILABLE";
+                }
+            } catch (Exception ex) {
+                logger.warn(ex,ex);
+                locChkMsg = "LOCATIONS_UNAVAILABLE";
             }
-            archiveBundle = Bagger.Bag(submitRecord, datasetId, submitComment);
+        }
+                    
+////        if ( ApplicationConfiguration.getProperty("oap.archive.use_bagit", true)) {
+        Map<String, String> submissionProps = new HashMap<>();
+        submissionProps.put("generate_doi", String.valueOf(generateDOI));
+        submissionProps.put("submission_record_id", submitRecord.submissionKey());
+//        submissionProps.put("user_dataset_id", datasetId);
+        submissionProps.put("user_datafile_name", dataset.getUploadFilename());
+//      "# user-specified observation type.\n";
+        submissionProps.put("user_observation_type", dataset.getUserObservationType());
+//      "# status of automatic data checking\n";
+        submissionProps.put("data_check_status", dataChkMsg);
+//      "# status of location checks and extraction\n";
+        submissionProps.put("location_status", locChkMsg);
+
+        archiveBundle = Bagger.Bag(submitRecord, datasetId, submissionProps, submitMsg);
 //        } else {
 //            archiveBundle = filesBundler.createArchiveDataFile(datasetId, columnsList);
 //        }
