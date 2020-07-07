@@ -23,7 +23,7 @@ public interface RecordOrientedFileReader extends Iterable<String[]> {
                              || fileType.contains("csv")))) {
             throw new IllegalStateException("Unknown file type:"+ fileType);
         }
-        return new CSVFileReader(inputStream);
+        return new CSVFileReader(inputStream, fileType);
     }
     
     String getDelimiter();

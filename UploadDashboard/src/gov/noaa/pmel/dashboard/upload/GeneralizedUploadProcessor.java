@@ -43,7 +43,7 @@ public class GeneralizedUploadProcessor extends FileUploadProcessor {
             
             try ( InputStream inStream = new FileInputStream(_uploadedFile); ) {
                 RecordOrientedFileReader recordReader = 
-                        UploadProcessor.getFileReader(_uploadFields.checkedFileType(), inStream);
+                        RecordOrientedFileReader.getFileReader(_uploadFields.checkedFileType(), inStream);
                 datasetsMap = DataFileHandler.createDatasetsFromInput(recordReader, dataFormat, 
                                                                       username, filename, timestamp, 
                                                                       submissionRecordId,
@@ -154,10 +154,10 @@ public class GeneralizedUploadProcessor extends FileUploadProcessor {
                         _configStore.getMetadataFileHandler().getMetadataFiles(datasetId);
                 TreeSet<String> addlDocs = new TreeSet<String>();
                 for ( DashboardMetadata mdata : mdataList ) {
-                    if ( DashboardUtils.autoExtractedMdFilename(datasetId).equals(mdata.getFilename())) {
+                    if ( MetadataFileHandler.autoExtractedMdFilename(datasetId).equals(mdata.getFilename())) {
                         // Ignore the auto-extracted XML stub file
                     }
-                    else if ( DashboardUtils.metadataFilename(datasetId).equals(mdata.getFilename())) {
+                    else if ( MetadataFileHandler.metadataFilename(datasetId).equals(mdata.getFilename())) {
                         datasetData.setMdTimestamp(mdata.getUploadTimestamp());                 
                     }
                     else {
