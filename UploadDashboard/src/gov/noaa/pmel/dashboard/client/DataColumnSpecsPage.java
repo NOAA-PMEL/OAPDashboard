@@ -45,6 +45,7 @@ import com.google.gwt.view.client.ProvidesKey;
 import com.google.gwt.view.client.Range;
 import com.google.gwt.view.client.SingleSelectionModel;
 
+import gov.noaa.pmel.dashboard.client.DashboardAskPopup.QuestionType;
 import gov.noaa.pmel.dashboard.client.UploadDashboard.PagesEnum;
 import gov.noaa.pmel.dashboard.shared.ADCMessage;
 import gov.noaa.pmel.dashboard.shared.ADCMessageList;
@@ -1116,7 +1117,21 @@ public class DataColumnSpecsPage extends CompositeWithUsername {
 				if ( status.equals(DashboardUtils.CHECK_STATUS_NOT_CHECKED) ||
 					 status.equals(DashboardUtils.CHECK_STATUS_UNACCEPTABLE) ) {
 					// the sanity checker had serious problems
-					UploadDashboard.showMessage(buildFailureMessage(SANITY_CHECK_FAIL_MSG, ddd));
+					UploadDashboard.theresAproblem(QuestionType.CRITICAL, 
+					                               buildFailureMessage(SANITY_CHECK_FAIL_MSG, ddd), 
+					                               "Show Errors / Warnings", "Dismiss", 
+					                               new AsyncCallback<Boolean>() {
+                        @Override
+                        public void onFailure(Throwable arg0) {
+                            ; // Doesn't happen
+                        }
+                        @Override
+                        public void onSuccess(Boolean showErrors) {
+                            if ( showErrors.booleanValue()) {
+                                DataMessagesPage.showPage(getUsername(), cruise.getDatasetId());
+                            }
+                        }
+                    });
 				}
 				else if ( status.startsWith(DashboardUtils.CHECK_STATUS_ERRORS_PREFIX) ) {
 					// errors issued
