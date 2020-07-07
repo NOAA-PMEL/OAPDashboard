@@ -285,8 +285,8 @@ public class ProfileDsgFile extends DsgNcFile {
 		addProfileIdVariable(ncfile, _profileDimList);
 //		addProfileVariable(ncfile, _profileDimList);
 		addProfileTimeVariable(ncfile, _profileDimList);
-		addLatitudeVariable(ncfile, PROFILE_LAT_VARNAME, "Cast Latitude", _profileDimList);
-		addLongitudeVariable(ncfile, PROFILE_LON_VARNAME , "Cast Longitude", _profileDimList);
+		addLatitudeVariable(ncfile, PROFILE_LAT_VARNAME, "Cast Latitude", _profileDimList, false);
+		addLongitudeVariable(ncfile, PROFILE_LON_VARNAME , "Cast Longitude", _profileDimList, false);
 			
 		Variable var = ncfile.addVariable(null, SAMPLES_PER_CAST_NAME, DataType.INT, _profileDimList);
 		ncfile.addVariableAttribute(var, new Attribute("sample_dimension", "obs"));
@@ -302,11 +302,11 @@ public class ProfileDsgFile extends DsgNcFile {
 //		ArrayChar.D2 aProf = new ArrayChar.D2(nCasts, _maxStrLen);
 		Variable vRowCount = getVariable(ncfile, SAMPLES_PER_CAST_NAME);
 		ArrayInt.D1 aRowCount = new ArrayInt.D1(nCasts);
-		Variable vProfTime = getVariable(ncfile, "time");
+		Variable vProfTime = getVariable(ncfile, PROFILE_TIME_VARNAME);
 		ArrayDouble.D1 aProfTime = new ArrayDouble.D1(nCasts);
-		Variable vProfLat = getVariable(ncfile, "lat");
+		Variable vProfLat = getVariable(ncfile, PROFILE_LAT_VARNAME);
 		ArrayDouble.D1 aProfLat = new ArrayDouble.D1(nCasts);
-		Variable vProfLon = getVariable(ncfile, "lon");
+		Variable vProfLon = getVariable(ncfile, PROFILE_LON_VARNAME);
 		ArrayDouble.D1 aProfLon = new ArrayDouble.D1(nCasts);
 		
 		int castNum = 0;
@@ -335,6 +335,7 @@ public class ProfileDsgFile extends DsgNcFile {
 	
 	private void addObservationVariables(NetcdfFileWriter ncfile) {
 		addSampleIdVariable(ncfile, _dataDims.strings());
+        addSampleDepthVariable(ncfile, _dataDimList);
 		addSampleTimeVariable(ncfile, _dataDimList);
 		addSampleLocationVariables(ncfile, _dataDimList);
 		Collection<DashDataType<?>> dsgVariableTypes = getDataVariablesToWriteToDsgFile();
@@ -400,12 +401,14 @@ public class ProfileDsgFile extends DsgNcFile {
 		     dtype.typeNameLike("comment") ||
 		     dtype.typeNameLike("time") ||
 		     dtype.typeNameEquals("latitude") || dtype.typeNameEquals("longitude") ||
+             dtype.typeNameLike("depth") ||
 		     dtype.typeNameEquals(SAMPLE_ID_VARNAME)) 
 		    return true;
 		return false;
 	}
 	private void writeObservationVariables(NetcdfFileWriter ncfile) throws Exception {
 	    writeSampleId(ncfile);
+        writeSampleDepths(ncfile);
 		writeSampleTime(ncfile);
 		writeSampleLocations(ncfile);
 		Collection<DashDataType<?>> dsgVariableTypes = getDataVariablesToWriteToDsgFile();
@@ -520,6 +523,19 @@ public class ProfileDsgFile extends DsgNcFile {
 		}
 		ncfile.write(vSampleTime, dvar);
 	}
+	private void writeSampleDepths(NetcdfFileWriter ncfile) throws Exception {
+		int numSamples = _stdUser.getNumSamples();
+		Double[] sampleDepths = _stdUser.getSampleDepths();
+		Variable vSampleDepth = ncfile.findVariable(SAMPLE_DEPTH_VARNAME);
+		ArrayDouble.D1 dvar = new ArrayDouble.D1(numSamples);
+		for (int j = 0; j < numSamples; j++) {
+			Double dvalue = sampleDepths[j];
+			if ( (dvalue == null) || dvalue.isNaN() || dvalue.isInfinite() )
+				dvalue = DashboardUtils.FP_MISSING_VALUE;
+			dvar.set(j, dvalue.doubleValue());
+		}
+		ncfile.write(vSampleDepth, dvar);
+	}
 	private void writeSampleLocations(NetcdfFileWriter ncfile) throws Exception {
 		int numSamples = _stdUser.getNumSamples();
 		Double[] sampleLats = _stdUser.getSampleLatitudes();
@@ -550,18 +566,20 @@ public class ProfileDsgFile extends DsgNcFile {
 			throw new IllegalArgumentException("no latitude data column");
 		if ( ! ( stddata.hasSampleDepth() || stddata.hasSamplePressure() ))
 			throw new IllegalArgumentException("no sample depth data column");
-		if ( ! stddata.hasYear() )
-			throw new IllegalArgumentException("no year data column");
-		if ( ! stddata.hasMonthOfYear() )
-			throw new IllegalArgumentException("no month of year data column");
-		if ( ! stddata.hasDayOfMonth() )
-			throw new IllegalArgumentException("no day of month data column");
-		if ( ! stddata.hasHourOfDay() )
-			throw new IllegalArgumentException("no hour of day data column");
-		if ( ! stddata.hasMinuteOfHour() )
-			throw new IllegalArgumentException("no minute of hour data column");
-		if ( ! stddata.hasSecondOfMinute() )
-			throw new IllegalArgumentException("no second of minute data column");
+        if ( ! stddata.hasSampleTime()) 
+			throw new IllegalArgumentException("no sample time found");
+//		if ( ! stddata.hasYear() )
+//			throw new IllegalArgumentException("no year data column");
+//		if ( ! stddata.hasMonthOfYear() )
+//			throw new IllegalArgumentException("no month of year data column");
+//		if ( ! stddata.hasDayOfMonth() )
+//			throw new IllegalArgumentException("no day of month data column");
+//		if ( ! stddata.hasHourOfDay() )
+//			throw new IllegalArgumentException("no hour of day data column");
+//		if ( ! stddata.hasMinuteOfHour() )
+//			throw new IllegalArgumentException("no minute of hour data column");
+//		if ( ! stddata.hasSecondOfMinute() )
+//			throw new IllegalArgumentException("no second of minute data column");
 	}
 	@Override
 	public void create(DsgMetadata metaData, StdDataArray fileData) 
@@ -591,7 +609,7 @@ public class ProfileDsgFile extends DsgNcFile {
 			
 			addAttributes(ncfile);
 			
-			addMetadataVariables(ncfile);
+//			addMetadataVariables(ncfile);
 			addProfileVariables(ncfile);
 			addObservationVariables(ncfile);
 			addQcFlagVariables(ncfile, dataTypes);
@@ -600,7 +618,7 @@ public class ProfileDsgFile extends DsgNcFile {
 
 			// The header has been created.  Now let's fill it up.
 			
-			writeMetadataVariables(ncfile);
+//			writeMetadataVariables(ncfile);
 			writeProfileVariables(ncfile);
 			writeObservationVariables(ncfile);
 		}
@@ -626,14 +644,14 @@ public class ProfileDsgFile extends DsgNcFile {
 		return sdf;
 	}
 	private void addProfileTimeVariable(NetcdfFileWriter ncfile, List<Dimension> dims) {
-		addTimeVariable(PROFILE_TIME_VARNAME, "Time", ncfile, dims);
+		addTimeVariable(PROFILE_TIME_VARNAME, "Time", ncfile, dims, false);
 	}
-	private static final String PROFILE_LAT_VARNAME = "lat";
-	private static final String PROFILE_LON_VARNAME = "lon";
-	private static final String PROFILE_TIME_VARNAME = "time";
+	private static final String PROFILE_LAT_VARNAME = "profile_longitude";
+	private static final String PROFILE_LON_VARNAME = "profile_latitude";
+	private static final String PROFILE_TIME_VARNAME = "profile_time";
 	private static final String SAMPLE_ID_VARNAME = "sample_id";
-//	private static final String SAMPLE_DEPTH_VARNAME = "sample_depth";
-//	private static final String SAMPLE_PRESSURE_VARNAME = "sample_pressure";
+	private static final String SAMPLE_DEPTH_VARNAME = "sample_depth";
+	private static final String SAMPLE_PRESSURE_VARNAME = "sample_pressure";
 	private static final String SAMPLE_TIME_VARNAME = "sample_time";
 	private static final String SAMPLE_LAT_VARNAME = "sample_latitude";
 	private static final String SAMPLE_LON_VARNAME = "sample_longitude";
@@ -645,42 +663,64 @@ public class ProfileDsgFile extends DsgNcFile {
 		ncfile.addVariableAttribute(var, new Attribute("long_name", "Unique identifier for each feature instance."));
 		ncfile.addVariableAttribute(var, new Attribute("cf_role", "profile_id"));
 	}
-	private void addProfileVariable(NetcdfFileWriter ncfile, List<Dimension> dims) {
-		Variable var = ncfile.addVariable(null, PROFILE_VARNAME, DataType.CHAR, _profileDims.strings());
-		ncfile.addVariableAttribute(var, new Attribute("long_name", "Unique identifier for each feature instance."));
-		ncfile.addVariableAttribute(var, new Attribute("cf_role", "profile_id"));
-	}
-	private void addLatitudeVariable(NetcdfFileWriter ncfile, String varname, String longName, List<Dimension> dims) {
+//	private void addProfileVariable(NetcdfFileWriter ncfile, List<Dimension> dims) {
+//		Variable var = ncfile.addVariable(null, PROFILE_VARNAME, DataType.CHAR, _profileDims.strings());
+//		ncfile.addVariableAttribute(var, new Attribute("long_name", "Unique identifier for each feature instance."));
+//		ncfile.addVariableAttribute(var, new Attribute("cf_role", "profile_id"));
+//	}
+	private void addLatitudeVariable(NetcdfFileWriter ncfile, String varname, String longName, 
+	                                 List<Dimension> dims, boolean isDsgAxis) {
 		Variable var = ncfile.addVariable(null, varname, DataType.DOUBLE, dims);
 		addAttributes(ncfile, var, DashboardUtils.FP_MISSING_VALUE, longName, "latitude", "Location", "degrees_north");
 		ncfile.addVariableAttribute(var, new Attribute("_CoordinateAxisType", "Lat"));
-		ncfile.addVariableAttribute(var, new Attribute("axis", "Y"));
+        if ( isDsgAxis ) {
+    		ncfile.addVariableAttribute(var, new Attribute("axis", "Y"));
+        }
 	}
-	private Variable addLongitudeVariable(NetcdfFileWriter ncfile, String varname, String longName, List<Dimension> dims) {
+	private Variable addLongitudeVariable(NetcdfFileWriter ncfile, String varname, String longName, 
+	                                      List<Dimension> dims, boolean isDsgAxis) {
 		Variable var = ncfile.addVariable(null, varname, DataType.DOUBLE, dims);
 		addAttributes(ncfile, var, DashboardUtils.FP_MISSING_VALUE, longName, "longitude", "Location", "degrees_east");
 		ncfile.addVariableAttribute(var, new Attribute("_CoordinateAxisType", "Lon"));
-		ncfile.addVariableAttribute(var, new Attribute("axis", "X"));
+        if ( isDsgAxis ) {
+    		ncfile.addVariableAttribute(var, new Attribute("axis", "X"));
+        }
+		return var;
+	}
+	private Variable addDepthVariable(NetcdfFileWriter ncfile, String varname, String longName, 
+	                                  List<Dimension> dims, boolean isDsgAxis) {
+		Variable var = ncfile.addVariable(null, varname, DataType.DOUBLE, dims);
+		addAttributes(ncfile, var, DashboardUtils.FP_MISSING_VALUE, longName, "depth", "Location", "meters_down");
+		ncfile.addVariableAttribute(var, new Attribute("_CoordinateAxisType", "Depth"));
+        if ( isDsgAxis ) {
+    		ncfile.addVariableAttribute(var, new Attribute("axis", "Z"));
+        }
 		return var;
 	}
 	private Variable addSampleIdVariable(NetcdfFileWriter ncfile, List<Dimension> dims) {
 		Variable var = ncfile.addVariable(null, SAMPLE_ID_VARNAME, DataType.CHAR, dims);
 		ncfile.addVariableAttribute(var, new Attribute("long_name", "Unique identifier for each sample."));
-		ncfile.addVariableAttribute(var, new Attribute("cf_role", "sample_id"));
+//		ncfile.addVariableAttribute(var, new Attribute("cf_role", "sample_id"));
 		return var;
 	}
 	private Variable addSampleTimeVariable(NetcdfFileWriter ncfile, List<Dimension> dims) {
-		return addTimeVariable(SAMPLE_TIME_VARNAME, "Sample Time", ncfile, dims);
+		return addTimeVariable(SAMPLE_TIME_VARNAME, "Sample Time", ncfile, dims, true);
 	}
 	private Variable addSampleLocationVariables(NetcdfFileWriter ncfile, List<Dimension> dims) {
-		addLatitudeVariable(ncfile, SAMPLE_LAT_VARNAME, "Sample Latitude", dims);
-		return addLongitudeVariable(ncfile, SAMPLE_LON_VARNAME, "Sample Longitude", dims);
+		addLatitudeVariable(ncfile, SAMPLE_LAT_VARNAME, "Sample Latitude", dims, true);
+		return addLongitudeVariable(ncfile, SAMPLE_LON_VARNAME, "Sample Longitude", dims, true);
 	}
-	private Variable addTimeVariable(String stdName, String longName, NetcdfFileWriter ncfile, List<Dimension> dims) {
+	private Variable addSampleDepthVariable(NetcdfFileWriter ncfile, List<Dimension> dims) {
+        return addDepthVariable(ncfile, SAMPLE_DEPTH_VARNAME, "Sample Depth", dims, true);
+	}
+	private Variable addTimeVariable(String stdName, String longName, NetcdfFileWriter ncfile, 
+	                                 List<Dimension> dims, boolean isDsgAxis) {
 		Variable var = ncfile.addVariable(null, stdName, DataType.DOUBLE, dims);
 		addAttributes(ncfile, var, Double.NaN, longName, stdName, "Time", "seconds since 1970-01-01T00:00:00Z");
+        if ( isDsgAxis ) {
+    		ncfile.addVariableAttribute(var, new Attribute("axis", "T"));
+        }
 		ncfile.addVariableAttribute(var, new Attribute("_CoordinateAxisType", "Time"));
-		ncfile.addVariableAttribute(var, new Attribute("axis", "T"));
 		ncfile.addVariableAttribute(var, new Attribute("time_origin", "1970-01-01T00:00:00Z"));
 		return var;
 	}
