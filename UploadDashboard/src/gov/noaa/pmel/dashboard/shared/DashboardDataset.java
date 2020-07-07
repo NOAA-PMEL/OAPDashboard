@@ -576,6 +576,20 @@ XXX This allows the possibility that numDataRows != the actual number of data ro
 			this.userColNames.addAll(userColNames);
 	}
 
+    public boolean hasColumn(String columnName) {
+        for (DataColumnType col : dataColTypes) {
+            if ( col.typeNameEquals(columnName)) { return true; }
+        }
+        return false;
+    }
+    
+    public boolean hasColumn(DataColumnType columnType) {
+        for (DataColumnType col : dataColTypes) {
+            if ( col.equals(columnType)) { return true; }
+        }
+        return false;
+    }
+    
 	/**
 	 * @return 
 	 * 		the list of data column types for this dataset; may be empty 
