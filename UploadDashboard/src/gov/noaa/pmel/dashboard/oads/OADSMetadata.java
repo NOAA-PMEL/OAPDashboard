@@ -89,15 +89,15 @@ public class OADSMetadata {
 		Double[] lons = stdArray.getSampleLongitudes();
 		Double[] times = stdArray.getSampleTimes();
 		for (int i=0; i<stdArray.getNumSamples(); i++) {
-			double lat = lats[i].doubleValue();
-			double lon = lons[i].doubleValue();
-			double time = times[i].doubleValue();
-			if ( lat > maxLat ) { maxLat = lat; }
-			if ( lat < minLat ) { minLat = lat; }
-			if ( lon > maxLon ) { maxLon = lon; }
-			if ( lon < minLon ) { minLon = lon; }
-			if ( time > maxTime ) { maxTime = time; }
-			if ( time < minTime ) { minTime = time; }
+			double lat = DashboardServerUtils.doubleValue(lats[i], Double.NaN); 
+			double lon = DashboardServerUtils.doubleValue(lons[i], Double.NaN);
+			double time = DashboardServerUtils.doubleValue(times[i], Double.NaN);
+			if ( ! Double.isNaN(lat) && lat > maxLat ) { maxLat = lat; }
+			if ( ! Double.isNaN(lat) && lat < minLat ) { minLat = lat; }
+			if ( ! Double.isNaN(lon) && lon > maxLon ) { maxLon = lon; }
+			if ( ! Double.isNaN(lon) && lon < minLon ) { minLon = lon; }
+			if ( ! Double.isNaN(time) && time > maxTime ) { maxTime = time; }
+			if ( ! Double.isNaN(time) && time < minTime ) { minTime = time; }
 		}
 		GeoTemporalExtents extents = new GeoTemporalExtents(new Extents(maxLat, minLat), 
 		                                                    new Extents(maxLon, minLon), 
@@ -253,7 +253,7 @@ public class OADSMetadata {
 	public static File getExtractedMetadataFile(String datasetId) throws IOException {
 		// Check and standardize the dataset
 		String stdId = DashboardServerUtils.checkDatasetID(datasetId);
-		String extractedFile =  DashboardUtils.autoExtractedMdFilename(stdId);
+		String extractedFile =  MetadataFileHandler.autoExtractedMdFilename(stdId);
 		DashboardConfigStore configStore = DashboardConfigStore.get(false);
 		File parentDir = configStore.getMetadataFileHandler().getMetadataFile(stdId, extractedFile).getParentFile();
 		File metadataFile = new File(parentDir, extractedFile);
@@ -285,7 +285,7 @@ public class OADSMetadata {
 	}
 
 	public static DashboardOADSMetadata getCurrentDatasetMetadata(String datasetId, MetadataFileHandler mdHandler) throws Exception {
-	    DashboardMetadata mdata = mdHandler.getMetadataInfo(datasetId, DashboardUtils.metadataFilename(datasetId)); 
+	    DashboardMetadata mdata = mdHandler.getMetadataInfo(datasetId, MetadataFileHandler.metadataFilename(datasetId)); 
 	    return getCurrentDatasetMetadata(mdata, mdHandler);
     }
 	

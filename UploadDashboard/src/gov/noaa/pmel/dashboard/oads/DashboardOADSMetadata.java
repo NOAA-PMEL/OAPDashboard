@@ -22,6 +22,7 @@ import com.fasterxml.jackson.annotation.JsonRootName;
 import com.google.gwt.user.client.rpc.IsSerializable;
 
 import gov.noaa.pmel.dashboard.dsg.DsgMetadata;
+import gov.noaa.pmel.dashboard.handlers.MetadataFileHandler;
 import gov.noaa.pmel.dashboard.server.DashboardConfigStore;
 import gov.noaa.pmel.dashboard.shared.DashboardMetadata;
 import gov.noaa.pmel.dashboard.shared.DashboardUtils;
@@ -94,7 +95,7 @@ public @Data class DashboardOADSMetadata extends DashboardMetadata  implements S
 	
 	public DashboardOADSMetadata(String datasetId) {
 		super(datasetId);
-		super.setFilename(DashboardUtils.metadataFilename(datasetId));
+		super.setFilename(MetadataFileHandler.metadataFilename(datasetId));
 		initCollections();
 	}
 	

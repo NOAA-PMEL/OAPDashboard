@@ -130,7 +130,7 @@ public class DatasetSubmitter {
 					// Get the metadata for this dataset
 					// XXX TODO: OME_FILENAME check
 				    // XXX TODO: log submission
-					DashboardMetadata mdata = metadataHandler.getMetadataInfo(datasetId, DashboardServerUtils.metadataFilename(datasetId));
+					DashboardMetadata mdata = metadataHandler.getMetadataInfo(datasetId, MetadataFileHandler.metadataFilename(datasetId));
 					if ( mdata != null && ! version.equals(mdata.getVersion()) ) {
 						mdata.setVersion(version);
 						metadataHandler.saveMetadataInfo(mdata, "Update metadata version number to " + 

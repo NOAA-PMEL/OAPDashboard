@@ -804,19 +804,4 @@ public class DashboardUtils {
 	public static boolean isNullOrNull(Object value) {
 		return value == null || "null".equalsIgnoreCase(String.valueOf(value));
 	}
-
-	public static String metadataFilename(String datasetId) {
-		return metadataFilename(datasetId, ".xml");
-	}
-
-	public static String metadataFilename(String datasetId, String extension) {
-		if ( isEmptyNullOrNull(datasetId))
-			throw new IllegalArgumentException("Empty or null dataset ID");
-		return datasetId + "_OADS" + extension;
-	}
-
-	public static String autoExtractedMdFilename(String datasetId) {
-		return "extracted_"+metadataFilename(datasetId);
-	}
-
 }
