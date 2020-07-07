@@ -12,7 +12,7 @@ import org.apache.logging.log4j.Logger;
 
 public class Task {
 
-	private static Logger log = LogManager.getLogger(Task.class.getName());
+	private static Logger logger = LogManager.getLogger(Task.class.getName());
 
 	/** An array of strings that indicate there is an error in command output */
 	protected String[] ERROR_INDICATOR;
@@ -192,7 +192,9 @@ public class Task {
 					try {
 						if (outstream.ready()) {
 							int charsRead = outstream.read(buffer);
-							output.append(buffer, 0, charsRead);
+                            String read = new String(buffer, 0, charsRead);
+                            logger.debug(read);
+							output.append(read);
 						}
 					} catch (IOException ioe) {
                         // ignore
@@ -200,7 +202,9 @@ public class Task {
 					try {
 						if (errstream.ready()) {
 							int charsRead = errstream.read(buffer);
-							stderr.append(buffer, 0, charsRead);
+                            String read = new String(buffer, 0, charsRead);
+                            logger.debug(read);
+							stderr.append(read);
 						}
 					} catch (IOException ioe) {
                         // ignore
@@ -215,7 +219,7 @@ public class Task {
 
 					// check if the request was canceled
 					if (cancel != null && cancel.exists()) {
-						log.debug("Backend request canceled: "+cmdString);
+						logger.debug("Backend request canceled: "+cmdString);
 						process.destroy();
 						cancel.delete();
 						throw new Exception("Process canceled.");
@@ -227,7 +231,9 @@ public class Task {
 			try {
 				while (outstream.ready()) {
 					int charsRead = outstream.read(buffer);
-					output.append(buffer, 0, charsRead);
+                    String read = new String(buffer, 0, charsRead);
+                    logger.debug(read);
+					output.append(read);
 				}
 			} catch (IOException ioe) {
                 // ignore
@@ -235,7 +241,9 @@ public class Task {
 			try {
 				while (errstream.ready()) {
 					int charsRead = errstream.read(buffer);
-					stderr.append(buffer, 0, charsRead);
+                    String read = new String(buffer, 0, charsRead);
+                    logger.debug(read);
+					stderr.append(read);
 				}
 			} catch (IOException ioe) {
                 // ignore
