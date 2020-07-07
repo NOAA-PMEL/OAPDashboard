@@ -1432,9 +1432,9 @@ public class DataFileHandler extends VersionedFileHandler {
 		else {
 			String uploadFilename = addlDoc.getFilename();
 			// XXX TODO: OME_FILENAME check
-			if ( DashboardUtils.metadataFilename(datasetId).equals(uploadFilename) )
+			if ( MetadataFileHandler.metadataFilename(datasetId).equals(uploadFilename) )
 				throw new IllegalArgumentException("Supplemental documents cannot " +
-						"have the upload filename of " + DashboardUtils.metadataFilename(datasetId));
+						"have the upload filename of " + MetadataFileHandler.metadataFilename(datasetId));
 //			if ( DashboardUtils.PI_OME_FILENAME.equals(uploadFilename) )
 //				throw new IllegalArgumentException("Supplemental documents cannot " +
 //						"have the upload filename of " + DashboardUtils.PI_OME_FILENAME);

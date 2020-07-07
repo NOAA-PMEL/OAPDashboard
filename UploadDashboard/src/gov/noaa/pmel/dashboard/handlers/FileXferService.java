@@ -26,6 +26,7 @@ public class FileXferService {
     private FileTransferOp _transferOp;
     
     public static enum XFER_PROTOCOL {
+        NONE, // do not send bundle
         EMAIL,
         SFTP,
         SCP,

@@ -89,7 +89,7 @@ public class StdUserDataArray extends StdDataArray {
 	 */
 	public StdUserDataArray(DashboardDatasetData dataset, 
 							KnownDataTypes knownTypes) throws IllegalArgumentException {
-		super(dataset.getDatasetId(), dataset.getDataColTypes(), knownTypes);
+		super(dataset.getRecordId(), dataset.getDataColTypes(), knownTypes);
 		
 		// Add the user's units, missing values, and user column names
 		userUnits = new String[numDataCols];
@@ -225,7 +225,7 @@ public class StdUserDataArray extends StdDataArray {
                                     if ( stdVal == null && StringUtils.emptyOrNull(origVal) && 
                                          stdizer instanceof TimestampConverter ) {
     									ADCMessage msg = new ADCMessage();
-    									msg.setSeverity(Severity.ERROR);
+    									msg.setSeverity(Severity.CRITICAL);
     									msg.setRowIndex(row);
     									msg.setColIndex(col);
     									msg.setColName(userColNames[col]);
@@ -465,6 +465,8 @@ public class StdUserDataArray extends StdDataArray {
 		}
 		// Update the array of array of objects to the new ordering
 		stdObjects = orderedRows;
+        // force refetch of sample times
+        _sampleTimes = null;
 	}
 
 	/**
@@ -1053,6 +1055,35 @@ public class StdUserDataArray extends StdDataArray {
 			stdMsgList.add(msg);
 		}
         return isOk;
+    }
+
+    /**
+     * @return
+     */
+    public boolean hasMissingTimeOrLocation() {
+        if ( ! hasSampleTime()) { return true; }
+        Double[] times = getSampleTimes();
+        if ( times == null || times.length == 0 ) { return true; }
+        for (Double d : times) {
+            if ( d == null ) { // || d.equals(DashboardUtils.FP_MISSING_VALUE)) { // ??? XXX TODO: What about missing values?
+                return true;
+            }
+        }
+        if ( ! hasLatitude()) { return true; }
+        Double[] lats = getSampleLatitudes();
+        for (Double d : lats) {
+            if ( d == null ) { // || d.equals(DashboardUtils.FP_MISSING_VALUE)) { // ??? XXX TODO: What about missing values?
+                return true;
+            }
+        }
+        if ( ! hasLongitude()) { return true; }
+        Double[] lons = getSampleLongitudes();
+        for (Double d : lons) {
+            if ( d == null ) { // || d.equals(DashboardUtils.FP_MISSING_VALUE)) { // ??? XXX TODO: What about missing values?
+                return true;
+            }
+        }
+        return false;
     }
 	
 }

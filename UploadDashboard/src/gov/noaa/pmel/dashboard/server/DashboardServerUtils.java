@@ -422,4 +422,13 @@ public class DashboardServerUtils {
 		return formatUTC(date, FORMAT_TIME_DEFAULT);
 	}
 
+    /**
+     * @param doubleObject The Double object to dereference.
+     * @param defaultValue The value to return if the Double object was null.
+     * @return
+     */
+    public static double doubleValue(Double doubleObject, double defaultValue) {
+        return doubleObject != null ? doubleObject.doubleValue() : defaultValue;
+    }
+
 }

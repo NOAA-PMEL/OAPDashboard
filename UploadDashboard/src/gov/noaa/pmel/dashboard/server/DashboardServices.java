@@ -348,7 +348,7 @@ public class DashboardServices extends RemoteServiceServlet implements Dashboard
 		// Get the current metadata documents for the cruise
 		MetadataFileHandler mdataHandler = configStore.getMetadataFileHandler();
 		// XXX TODO: OME_FILENAME check
-		if ( DashboardUtils.metadataFilename(datasetId).equals(deleteFilename) ) {
+		if ( MetadataFileHandler.metadataFilename(datasetId).equals(deleteFilename) ) {
 			// Remove the OME XML stub file
 			if ( ! Boolean.TRUE.equals(dataset.isEditable()) ) 
 				throw new IllegalArgumentException("Cannot delete the metadata for a submitted dataset");
@@ -546,13 +546,23 @@ public class DashboardServices extends RemoteServiceServlet implements Dashboard
 		configStore.getUserFileHandler().updateUserDataColumnTypes(dataset, username);
 		
         if ( stdArray.hasDate() && stdArray.hasLatitude() && stdArray.hasLongitude() &&
-              ! stdArray.hasCriticalError()) {
+                ! stdArray.hasMissingTimeOrLocation()) { 
+//              ! stdArray.hasCriticalError()) {
 			DashboardOADSMetadata mdata = OADSMetadata.extractOADSMetadata(stdArray);
-			configStore.getMetadataFileHandler().saveAsOadsXmlDoc(mdata, 
-			                                                      DashboardUtils.autoExtractedMdFilename(datasetId), 
-			                                                      "Initial Auto-extraction");
+            MetadataFileHandler metafiles = configStore.getMetadataFileHandler();
+            try {
+    			metafiles.saveAsOadsXmlDoc(mdata, MetadataFileHandler.autoExtractedMdFilename(datasetId), 
+                                           "Initial Auto-extraction");
+            } catch (Exception ex) {
+                logger.warn("Exception extracting metadata:"+ex, ex);
+            }
+            try {
+                metafiles.saveLocationsFile(stdArray);
+            } catch (Exception ex) {
+                logger.warn("Exception saving latlon file:"+ex, ex);
+            }
 		} else {
-		    logger.info("Dataset " + dataset.getDatasetId() + " has critical error.  Unable to extract metadata.");
+		    logger.info("Dataset " + dataset.getRecordId() + " has critical error.  Unable to extract metadata.");
 		}
 		
 		// ??? Is this possible at this point for a user to be editing another user's dataset ?
@@ -734,64 +744,6 @@ public class DashboardServices extends RemoteServiceServlet implements Dashboard
              
         String text = new String(byteArray, StandardCharsets.UTF_8);
         return text;
-    }
-
-    // request URL is in the form: http://matisse:8080/OAPUploadDashboard/OAPUploadDashboard/DashboardServices
-    // or http://dunkel.pmel.noaa.gov:5680/oa/Dashboard/OAPUploadDashboard/DashboardServices
-	// And notification URL should be http://dunkel.pmel.noaa.gov:5680/oa/Dashboard/DashboardUpdateService/notify/<datasetId>
-    private static String getNotificationUrl(String requestUrl, String datasetId) {
-        System.out.println("get notify URL request: " + requestUrl);
-        String notifyUrl = null;
-        if ( requestUrl.indexOf("pmel") > 0 ) {
-            notifyUrl = "https://www.pmel.noaa.gov/sdig" + requestUrl.substring(requestUrl.indexOf("/oa"));
-            System.out.println("n1: " + notifyUrl);
-            notifyUrl = notifyUrl.substring(0, notifyUrl.indexOf("OAPUploadDashboard"));
-            System.out.println("n2: " + notifyUrl);
-            notifyUrl = notifyUrl + "DashboardUpdateService/notify/"+datasetId;
-        } else {
-            notifyUrl = requestUrl.substring(0, requestUrl.lastIndexOf("OAPUploadDashboard"));
-            notifyUrl = notifyUrl + "DashboardUpdateService/notify/"+datasetId;
-        }
-        System.out.println("nofity url: " + notifyUrl);
-        return notifyUrl;
-    }
-
-    // inside url typically looks like <host>//<root context>/Dashboard
-    private static String getMetadataEditorPage(HttpServletRequest request, String docId) throws Exception {
-        String requestUrl = request.getRequestURL().toString();
-        System.out.println("get ME page request: " + requestUrl);
-        String context = request.getContextPath();
-        System.out.println("get ME context: " + context);
-        String meUrlProp = ApplicationConfiguration.getProperty(DashboardConfigStore.METADATA_EDITOR_URL);
-        String url;
-        if ( meUrlProp.toLowerCase().startsWith("http")) {
-            url = meUrlProp;
-        } else {
-            String requestBase = requestUrl.substring(0, requestUrl.indexOf(context));
-            url = requestBase + meUrlProp;
-        }
-        url = url + "?id="+docId;
-        System.out.println("Editor page: " + url);
-        return url;
-    }
-    
-    private static String getMetadataPostPoint(HttpServletRequest request, String datasetId) throws Exception {
-        String requestUrl = request.getRequestURL().toString();
-        System.out.println("get ME post point request: " + requestUrl);
-        String context = request.getContextPath();
-        System.out.println("get ME post point context: " + context);
-        String meUrlProp = ApplicationConfiguration.getProperty(DashboardConfigStore.METADATA_EDITOR_POST_ENDPOINT);
-        String url;
-        if ( meUrlProp.toLowerCase().startsWith("http")) {
-            url = meUrlProp;
-        } else {
-            String requestBase = requestUrl.substring(0, requestUrl.indexOf(context));
-            url = requestBase + meUrlProp;
-        }
-        String slash = url.endsWith("/") ? "" : "/";
-        url = url + slash + datasetId;
-        System.out.println("Post point: " + url);
-        return url;
     }
 
     @Override
