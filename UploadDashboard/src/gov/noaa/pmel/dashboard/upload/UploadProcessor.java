@@ -124,23 +124,4 @@ public class UploadProcessor {
         return _processor.getSuccesses();
     }
     
-    /**
-     * @param tikaType
-     * @return
-     * @throws IOException 
-     * @throws java.io.IOException 
-     */
-    public static RecordOrientedFileReader getFileReader(String itemType, InputStream dataFileStream) throws IOException {
-        if ( itemType.contains("excel")
-             || itemType.contains("spreadsheet")
-             || itemType.contains("ooxml")) {
-            return ExcelFileReader.newInstance(dataFileStream);
-        } else if ( ! ( itemType.contains("text") 
-                        && ( itemType.contains("delimited")
-                             || itemType.contains("separated")
-                             || itemType.contains("csv")))) {
-            throw new IllegalStateException("Unknown file type:"+ itemType);
-        }
-        return new CSVFileReader(dataFileStream);
-    }
 }
