@@ -1923,32 +1923,6 @@ public class DatasetListPage extends CompositeWithUsername {
 	 	return myOwnerColumn;
 	 }
 
-	/**
-	 * Checks the cruises given in checkSet in this instance for metadata 
-	 * compatibility for submitting for QC.  At this time this only checks 
-	 * that an metadata document is associated with each cruise.
-	 * 
-	 * Then checks the cruises given in checkSet in this instance for data 
-	 * compatibility for submitting for QC.  If the data has not been checked 
-	 * or is unacceptable, this method presents an error message and returns.  
-	 * If the data has many serious issues, asks the user if the submit should 
-	 * be continued.  If the answer is yes, or if there were no serious data 
-	 * issues, continues submitting for QC by calling 
-	 * {@link SubmitForQCPage#showPage(java.util.HashSet)}.
-	 */
-	private boolean checkDatasetsForSubmitting(SubmitFor to) {
-		if ( ! getSelectedDatasets(Boolean.FALSE) ) {
-			UploadDashboard.showMessage(
-					ARCHIVED_DATASETS_SELECTED_ERR_START + FOR_QC_SUBMIT_ERR_END);
-			return false;
-		}
-		if ( selectedDatasets.size() == 0 ) {
-			UploadDashboard.showMessage(
-					NO_DATASET_SELECTED_ERR_START + FOR_QC_SUBMIT_ERR_END);
-			return false;
-		}
-        return checkDatasetsForSubmitting(selectedDatasets, to);
-	}
 	private boolean checkDatasetsForSubmitting(DashboardDataset dataset, SubmitFor to) {
 	    DashboardDatasetList checkSet = new DashboardDatasetList(getUsername());
 	    checkSet.put(dataset.getDatasetId(), dataset);
@@ -1963,7 +1937,7 @@ public class DatasetListPage extends CompositeWithUsername {
 		for ( DashboardDataset dataset : checkSet.values() ) {
             boolean thisOneIsOk = true;
             String[] errorMessages;
-            errorMsgBldr.append("<li>").append(dataset.getDatasetId())
+            errorMsgBldr.append("<li>").append(dataset.getUserDatasetName())
                         .append("<ul>");
             errorMessages = checkMetadata(dataset);
             if ( errorMessages.length > 0 ) {
@@ -1984,6 +1958,11 @@ public class DatasetListPage extends CompositeWithUsername {
             if ( errorMessages.length > 0 ) {
                 addErrorMessages(errorMsgBldr, errorMessages);
                 thisOneIsOk = false;
+            }
+            if ( dataset.hasCriticalError()) {
+                errorMsgBldr.append("</ul>");
+                UploadDashboard.showMessage(errorMsgBldr.toString());
+                return false;
             }
             errorMessages = columnCheck(dataset);
             if ( errorMessages.length > 0 ) {
@@ -2046,6 +2025,9 @@ public class DatasetListPage extends CompositeWithUsername {
         }
         if ( status.contains("error")) {
             return new String[] { "Dataset has data validation errors." };
+        }
+        if ( status.equals("unacceptable")) {
+            return new String[] { "Dataset has critical errors." };
         }
         return EMPTY_MESSAGES;
     }
