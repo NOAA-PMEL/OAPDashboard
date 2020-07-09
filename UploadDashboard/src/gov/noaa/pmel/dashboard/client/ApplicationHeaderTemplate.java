@@ -40,6 +40,7 @@ public class ApplicationHeaderTemplate extends Composite {
     @UiField Label userInfoLabel;
     @UiField MenuBar menuBar;
     @UiField MenuItem sendFeedbackBtn;
+    @UiField MyMenuBar changePasswordMenuBar;
     @UiField MenuItem changePasswordBtn;
     @UiField MenuItem logoutSeparator;
     @UiField MenuItem logoutBtn;
@@ -54,6 +55,8 @@ public class ApplicationHeaderTemplate extends Composite {
     public ApplicationHeaderTemplate() {
         initWidget(uiBinder.createAndBindUi(this));
         menuBar.setAutoOpen(true);
+        changePasswordBtn.getElement().setId("changePasswordBtn");
+        changePasswordMenuBar.setParentMenu(menuBar);
 		logoutBtn.setText(LOGOUT_TEXT);
 		logoutBtn.setTitle(LOGOUT_TEXT);
         logoutBtn.setScheduledCommand(new Scheduler.ScheduledCommand() {

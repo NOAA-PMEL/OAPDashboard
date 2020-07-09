@@ -21,10 +21,11 @@
                             <g:MenuItem addStyleNames="{style.normalText}" ui:field="sendFeedbackBtn" >Send Feedback</g:MenuItem>
                             <g:MenuItemSeparator/>
                             <g:MenuItem addStyleNames="{style.normalText}" >Preferences
-                                <g:MenuBar vertical="true">
+                                <!-- <g:MenuBar vertical="true" ui:field="changePasswordMenuBar"> -->
+                                <oa:MyMenuBar ui:field="changePasswordMenuBar"> <!-- vertical="true"  -->
                                     <!-- <g:MenuItem ui:field="userInfoBtn">User Profile</g:MenuItem> -->
                                     <g:MenuItem ui:field="changePasswordBtn">Change Password</g:MenuItem>
-                                </g:MenuBar>
+                                </oa:MyMenuBar>
                             </g:MenuItem>
                             <g:MenuItemSeparator/>
                             <g:MenuItem addStyleNames="{style.headerMenuSeparator}"  ui:field="logoutSeparator" > </g:MenuItem>
