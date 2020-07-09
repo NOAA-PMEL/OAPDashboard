@@ -16,15 +16,16 @@
                     <g:FlowPanel ui:field="headerRightPanel" addStyleNames="{style.titleRightGroup}">
                         <g:Label ui:field="userInfoLabel" addStyleNames="{style.headeruserlabel}">Not Logged In</g:Label>
                         <g:Label addStyleNames="{style.titlereset}" />
+                        <!--  oa:MyMenuBar addStyleNames="{style.headerMenuBar}" ui:field="menuBar" >-->
                         <g:MenuBar addStyleNames="{style.headerMenuBar}" ui:field="menuBar" >
+                            <g:MenuItem addStyleNames="{style.normalText}" ui:field="sendFeedbackBtn" >Send Feedback</g:MenuItem>
+                            <g:MenuItemSeparator/>
                             <g:MenuItem addStyleNames="{style.normalText}" >Preferences
                                 <g:MenuBar vertical="true">
                                     <!-- <g:MenuItem ui:field="userInfoBtn">User Profile</g:MenuItem> -->
                                     <g:MenuItem ui:field="changePasswordBtn">Change Password</g:MenuItem>
                                 </g:MenuBar>
                             </g:MenuItem>
-                            <g:MenuItemSeparator/>
-                            <g:MenuItem addStyleNames="{style.normalText}" ui:field="sendFeedbackBtn" >Send Feedback</g:MenuItem>
                             <g:MenuItemSeparator/>
                             <g:MenuItem addStyleNames="{style.headerMenuSeparator}"  ui:field="logoutSeparator" > </g:MenuItem>
                             <g:MenuItemSeparator/>
