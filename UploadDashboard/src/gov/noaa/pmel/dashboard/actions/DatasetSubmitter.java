@@ -455,6 +455,10 @@ public class DatasetSubmitter {
                 case EMAIL:
                     filesBundler.sendArchiveBundle(submission, archiveBundle, userRealName, userEmail);
                     break;
+                case NONE:
+                    logger.warn("Archive Protocol set to NONE.  Package not sent to archive.");
+                    submission.pkgLocation("Archive Protocol set to NONE.  Package not staged.");
+                    break;
             }
 //        } catch (Exception ex) {
 //            ex.printStackTrace();
