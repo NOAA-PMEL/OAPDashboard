@@ -444,8 +444,28 @@ public class DashboardServerUtils {
         if ( StringUtils.emptyOrNull(dateString)) {
             return null;
         }
-		SimpleDateFormat sdf = new SimpleDateFormat(format);
-		sdf.setTimeZone(TimeZone.getTimeZone("UTC"));
-		return sdf.parse(dateString);
+        Date date = null;
+        try {
+    		SimpleDateFormat sdf = new SimpleDateFormat(format);
+    		sdf.setTimeZone(TimeZone.getTimeZone("UTC"));
+            date =  sdf.parse(dateString);
+        } catch (ParseException pex) {
+            System.out.println(pex + ":"+dateString+" w/ " + format);
+    		SimpleDateFormat sdf = new SimpleDateFormat("yyyy-mm-dd HH:MM z");
+            try {
+        		date = sdf.parse(dateString);
+            } catch (ParseException p2) {
+                System.out.println("FAILED to parse date string:"+dateString);
+            }
+        }
+		return date;
+    }
+    public static void main(String[] args) {
+        try {
+            Date d = getDate("2020-06-17 10:02 -0700");
+        } catch (ParseException ex) {
+            // TODO Auto-generated catch block
+            ex.printStackTrace();
+        }
     }
 }
