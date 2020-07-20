@@ -43,6 +43,9 @@ oap.archive.sftp.destination=ncei_sftp/data/oap
 # oap.archive.sftp.username=sftp1
 # oap.archive.sftp.destination=upload
 
+oap.CLEANUP=true
+oap.archive.bundle.cleanup={CLEANUP}
+
 oap.archive.scp.username=kamb
 oap.archive.scp.hostname=dunkel
 oap.archive.scp.destination=scratch
