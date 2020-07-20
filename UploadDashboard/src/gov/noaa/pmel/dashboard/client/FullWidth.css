@@ -30,7 +30,7 @@ html, body {
 	margin-left: 3em;
 }
 .archiveFileListPanel {
-    padding: 3em 2em;
+    padding: 1.2em 2em .5em;
 }
 .archiveFileListLabel {
     display:inline-block;
@@ -45,6 +45,9 @@ html, body {
 }
 .archiveStatusLabel {
     margin-top: 2em;
+}
+.archiveStatusLabel h3 {
+    margin-block-end: .5em !important;
 }
 .archiveStatusSubmitTime {
 	padding-left: 1em;
