@@ -1573,9 +1573,9 @@ public class DatasetListPage extends CompositeWithUsername {
 				new Column<DashboardDataset,String> (new ClickableTextCell()) {
 			@Override
 			public String getValue(DashboardDataset cruise) { 
-//                if ( FeatureType.OTHER == cruise.getFeatureType() ) {
-//                    return STATUS_CANNOT_CHECK_STRING + ":<br/>Obs Type";
-//                }
+                if ( FeatureType.OTHER == cruise.getFeatureType() ) {
+                    return STATUS_CANNOT_CHECK_STRING + ":<br/>Observation Type";
+                }
                 if ( FileType.OTHER == cruise.getFileType()) {
                     return STATUS_CANNOT_CHECK_STRING + ":<br/>File Format";
                 }
@@ -1600,7 +1600,8 @@ public class DatasetListPage extends CompositeWithUsername {
 													SafeHtmlBuilder sb) {
                 
 				String msg = getValue(cruise);
-                if ( FileType.OTHER == cruise.getFileType() ) {
+                if ( FileType.OTHER == cruise.getFileType() ||
+                     FeatureType.OTHER == cruise.getFeatureType()) {
 					sb.appendHtmlConstant("<div >"); // style=\"background-color:" + UploadDashboard.CHECKER_WARNING_COLOR + ";\">");
 					sb.appendHtmlConstant(msg);
 					sb.appendHtmlConstant("</div>");
