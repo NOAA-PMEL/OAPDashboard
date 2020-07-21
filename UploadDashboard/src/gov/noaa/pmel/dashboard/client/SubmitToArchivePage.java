@@ -13,15 +13,21 @@ import java.util.Map;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
+import com.google.gwt.event.logical.shared.ValueChangeEvent;
+import com.google.gwt.event.logical.shared.ValueChangeHandler;
 import com.google.gwt.i18n.client.DateTimeFormat;
 import com.google.gwt.safehtml.shared.SafeHtmlUtils;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.uibinder.client.UiHandler;
+import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.rpc.AsyncCallback;
+import com.google.gwt.user.client.ui.Anchor;
 import com.google.gwt.user.client.ui.Button;
 import com.google.gwt.user.client.ui.CheckBox;
+import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.HTML;
+import com.google.gwt.user.client.ui.HorizontalPanel;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.TextArea;
 import com.google.gwt.user.client.ui.Widget;
@@ -33,7 +39,10 @@ import gov.noaa.pmel.dashboard.shared.DashboardServicesInterface;
 import gov.noaa.pmel.dashboard.shared.DashboardServicesInterfaceAsync;
 import gov.noaa.pmel.dashboard.shared.DashboardUtils;
 import gov.noaa.pmel.dashboard.shared.DataColumnType;
+import gov.noaa.pmel.dashboard.shared.FeatureType;
 import gov.noaa.pmel.dashboard.shared.FileType;
+import gov.noaa.pmel.dashboard.shared.QCFlag;
+import gov.noaa.pmel.dashboard.shared.QCFlag.Severity;
 
 /**
  * @author kamb
@@ -63,7 +72,31 @@ public class SubmitToArchivePage extends CompositeWithUsername implements DataSu
 //	@UiField HTML introHtml;
 //	@UiField Panel columnsPanel;
 //	@UiField DataGrid<DataColumnType> columnsGrid;
-    @UiField CheckBox generateDOIchkBx;
+    @UiField HTML ackChecksHr;
+    @UiField FlowPanel messagesPanel;
+    @UiField Label messagesText;
+    @UiField HorizontalPanel versionSubmitPanel;
+    @UiField CheckBox versionSubmitChkBx;
+    @UiField Label versionSubmitText;
+    boolean versionCheck;
+    @UiField HorizontalPanel dataIssuesPanel;
+    @UiField CheckBox dataIssuesChkBx;
+    @UiField Label dataIssuesText;
+    boolean dataIssuesCheck;
+    @UiField HorizontalPanel metadataIssuesPanel;
+    @UiField CheckBox metadataIssuesChkBx;
+    @UiField Label metadataIssuesText;
+    boolean metadataIssuesCheck;
+    @UiField HorizontalPanel genDoiPanel;
+    @UiField CheckBox genDoiChkBx;
+    @UiField Label genDoiText;
+    @UiField HorizontalPanel policyAgreementPanel;
+    @UiField CheckBox policyAgreementChkBx;
+    @UiField Label policyAgreementText;
+    @UiField Anchor showPolicyAgreement;
+    
+    boolean blocked = false; // Cannot submit.
+    
 	@UiField Button cancelButton;
 	@UiField Button submitButton;
 	
@@ -76,16 +109,15 @@ public class SubmitToArchivePage extends CompositeWithUsername implements DataSu
     
 	@UiField ApplicationHeaderTemplate header;
 	
-	private String _datasetId;
+	private String _datasetRecordId;
 	private DashboardDataset _dataset;
 	private List<String> _submitIdsList;
 	private List<String> _submitColsList;
 
-	private List<CheckBox> _allCBoxes;
+	private List<CheckBox> _allColumnChkBoxes;
 	private ArrayList<String> _userColNames;
 	private ArrayList<DataColumnType> _colTypes;
 	private Map<String, CheckBox> _columnBoxMap;
-	private DashboardDatasetList _datasets;
 	
 	interface SubmitToArchivePageUiBinder extends UiBinder<Widget, SubmitToArchivePage> {
 	}
@@ -104,6 +136,23 @@ public class SubmitToArchivePage extends CompositeWithUsername implements DataSu
         + "<div id='submitCommentLabelLine3'>Its use is solely to communicate special information or archiving considerations to the archive staff.</div>"
         + "</div>";
     
+    private ValueChangeHandler<Boolean> agreementHandler = new ValueChangeHandler<Boolean>() {
+        @Override
+        public void onValueChange(ValueChangeEvent<Boolean> event) {
+            submitButton.setEnabled(event.getValue().booleanValue());
+        }
+    };
+    private ValueChangeHandler<Boolean> noticesHandler = new ValueChangeHandler<Boolean>() {
+        @Override
+        public void onValueChange(ValueChangeEvent<Boolean> event) {
+            GWT.log(event.getSource() + " changed to " + event.getValue());
+            boolean enablePolicy = 
+                 ( ! versionCheck || versionSubmitChkBx.getValue().booleanValue()) &&
+                 ( ! dataIssuesCheck || dataIssuesChkBx.getValue().booleanValue()) &&
+                 ( ! metadataIssuesCheck || metadataIssuesChkBx.getValue().booleanValue());
+            enablePolicyAgreement(enablePolicy);
+        }
+    };
 	public SubmitToArchivePage() {
         super(PagesEnum.SUBMIT_TO_ARCHIVE.name());
 		initWidget(uiBinder.createAndBindUi(this));
@@ -114,14 +163,30 @@ public class SubmitToArchivePage extends CompositeWithUsername implements DataSu
         fileListLabel.setText("The following files will be archived at NCEI:");
         submitCommentLabel.setHTML(submitCommentHtml);
         
+        messagesPanel.setVisible(false);
+        versionSubmitPanel.setVisible(false);
+        dataIssuesPanel.setVisible(false);
+        metadataIssuesPanel.setVisible(false);
+        
+        showPolicyAgreement.addClickHandler(new ClickHandler() {
+            @Override
+            public void onClick(ClickEvent event) {
+                event.preventDefault();
+                Window.alert("Placeholder: Show submission policy agreement.");
+            }
+        });
+        
 		cancelButton.setText("Cancel");
 		cancelButton.setTitle("Cancel");
 		submitButton.setText("Submit");
 		submitButton.setTitle("Submit");
 		
-//		introHtml.setHTML("Select Columns to Submit to Archive: <br/>");
+        versionSubmitChkBx.addValueChangeHandler(noticesHandler);
+        dataIssuesChkBx.addValueChangeHandler(noticesHandler);
+        metadataIssuesChkBx.addValueChangeHandler(noticesHandler);
+        policyAgreementChkBx.addValueChangeHandler(agreementHandler);
 		
-		_allCBoxes = new ArrayList<>();
+		_allColumnChkBoxes = new ArrayList<>();
 		_columnBoxMap = new HashMap<>();
 		_submitIdsList = new ArrayList<>();
 		_submitColsList = new ArrayList<>();
@@ -234,13 +299,13 @@ public class SubmitToArchivePage extends CompositeWithUsername implements DataSu
 	}
 	
 	private void clearSelections() {
-		for (CheckBox box : _allCBoxes) {
+		for (CheckBox box : _allColumnChkBoxes) {
 			box.setValue(Boolean.FALSE);
 		}
 	}
 	
 	private void setAll() {
-		for (CheckBox box : _allCBoxes) {
+		for (CheckBox box : _allColumnChkBoxes) {
 			box.setValue(Boolean.TRUE);
 		}
 	}
@@ -265,18 +330,267 @@ public class SubmitToArchivePage extends CompositeWithUsername implements DataSu
     }
 
 	static void showPage(DashboardDatasetList datasets) {
+        if ( datasets == null ) { throw new IllegalArgumentException("Null dataset to submit to archive."); }
 		if ( singleton == null ) {
 			singleton = new SubmitToArchivePage();
 		}
-		singleton._datasets = datasets;
-        singleton.header.addDatasetIds(datasets);
+        DashboardDataset dataset = datasets.values().iterator().next();
+        singleton.reset();
         singleton.setUsername(datasets.getUsername());
-		singleton.updateDatasetColumns(datasets);
-        singleton.submitButton.setEnabled(true);
-        singleton.cancelButton.setText("Cancel");
+        singleton.setDatasetInfo(dataset);
+        boolean hasMessages = false;
+        if ( alreadySubmitted(dataset)) {
+            if ( newerVersion(dataset)) {
+                singleton.showNewVersionSubmitConfirmation(dataset);
+            } else {
+                singleton.showVersionReSubmitConfirmation(dataset);
+            }
+            hasMessages = true;
+        }
+        if ( isCheckable(dataset)) {
+            if ( notChecked(dataset)) {
+                singleton.showNotCheckedConfirmation(dataset);
+                hasMessages = true;
+            } else if ( dataIssues(dataset) ) {
+                singleton.showDataIssuesConfirmation(dataset);
+                hasMessages = true;
+            } else if ( hasUnknownColumns(dataset)) {
+                singleton.showUnknownColumnsConfirmation(dataset);
+                hasMessages = true;
+            }
+        }
+        if ( metadataIssues(dataset)) {
+            singleton.showBlockingMessage("The metadata is incomplete. You must provide minimal metadata to submit to the archive.");
+            singleton.blocked = true;
+        }
+        if ( singleton.blocked ) {
+            singleton.enableChecks(false);
+        }
+        singleton.ackChecksHr.setVisible(hasMessages);
+        singleton.enablePolicyAgreement(!(hasMessages || singleton.blocked));
         getStatus(singleton);
 		UploadDashboard.updateCurrentPage(singleton, UploadDashboard.DO_PING);
 	}
+    
+    /**
+     * @param dataset
+     */
+    private void setDatasetInfo(DashboardDataset dataset) {
+		_dataset = dataset;
+        _datasetRecordId = dataset.getRecordId();
+		_submitIdsList.add(dataset.getRecordId());
+        header.setDatasetIds(dataset.getUserDatasetName());
+        // to allow only archiving of specified columns. Maybe if/for archiving the ncDSG 
+//		singleton.updateDatasetColumns(dataset); 
+        submitCommentTextArea.setText(dataset.getArchiveSubmissionMessage());
+        genDoiChkBx.setValue(dataset.getArchiveDOIrequested());
+        
+    }
+
+    /**
+     * 
+     */
+    private void reset() {
+        submitButton.setEnabled(false);
+        cancelButton.setText("Cancel");
+        _submitIdsList.clear();
+        // flags
+        blocked = false;
+        versionCheck = false;
+        dataIssuesCheck = false;
+        metadataIssuesCheck = false;
+        // uncheck
+        dataIssuesChkBx.setValue(Boolean.FALSE);
+        versionSubmitChkBx.setValue(Boolean.FALSE);
+        metadataIssuesChkBx.setValue(Boolean.FALSE);
+        policyAgreementChkBx.setValue(Boolean.FALSE);
+        // reset UI to base.
+        messagesText.removeStyleName("blocking");
+        ackChecksHr.setVisible(Boolean.FALSE);
+        messagesPanel.setVisible(false);
+        versionSubmitPanel.setVisible(false);
+        dataIssuesPanel.setVisible(false);
+        metadataIssuesPanel.setVisible(false);
+        enableChecks(true);
+        enablePolicyAgreement(true);
+    }
+
+    /**
+     * 
+     */
+    private void enableChecks(boolean enable) {
+        genDoiChkBx.setEnabled(enable);
+        versionSubmitChkBx.setEnabled(enable);
+        dataIssuesChkBx.setEnabled(enable);
+        metadataIssuesChkBx.setEnabled(enable);
+        if ( enable ) {
+            genDoiText.removeStyleName("gray");
+            versionSubmitText.removeStyleName("gray");
+            dataIssuesText.removeStyleName("gray");
+            metadataIssuesText.removeStyleName("gray");
+        } else {
+            genDoiText.addStyleName("gray");
+            versionSubmitText.addStyleName("gray");
+            dataIssuesText.addStyleName("gray");
+            metadataIssuesText.addStyleName("gray");
+        }
+    }
+
+    /**
+     * @param string
+     */
+    private void showBlockingMessage(String msgText) {
+        showMessage(msgText);
+        messagesText.setStyleName("blocking", true);
+    }
+    private void showMessage(String msgText) {
+        messagesText.setText(msgText);
+        messagesPanel.setVisible(true);
+    }
+
+    /**
+     * @param datasets
+     * @return
+     */
+    private static boolean alreadySubmitted(DashboardDataset dataset) {
+        Date archiveDate = dataset.getArchiveDate();
+        return archiveDate != null;
+    }
+    private static boolean newerVersion(DashboardDataset dataset) {
+        Date archiveDate = dataset.getArchiveDate();
+        if ( archiveDate != null ) {
+            String uploadTimestamp = dataset.getUploadTimestamp();
+            Date uploadDate = DateTimeFormat.getFormat("yyyy-MM-dd hh:mm Z").parse(uploadTimestamp);
+            return uploadDate.after(archiveDate);
+        }
+        return false;
+    }
+
+    /**
+     * @param datasets
+     */
+    private void showNewVersionSubmitConfirmation(DashboardDataset dataset) {
+        versionSubmitText.setText("Check to confirm submission of newer dataset file.");
+        versionSubmitPanel.setVisible(true);
+        versionCheck = true;
+        enablePolicyAndSubmit(false);
+    }
+
+    private void showVersionReSubmitConfirmation(DashboardDataset dataset) {
+        versionSubmitText.setText("Dataset has already been submitted. Check to confirm resubmission.");
+        versionSubmitPanel.setVisible(true);
+        versionCheck = true;
+        enablePolicyAndSubmit(false);
+    }
+
+    private void enablePolicyAndSubmit(boolean enable) {
+        enablePolicyAgreement(enable);
+        enableSubmit(enable);
+    }
+    private void enablePolicyAgreement(boolean enable) {
+        policyAgreementChkBx.setEnabled(enable);
+        showPolicyAgreement.setEnabled(enable);
+        if ( enable ) {
+            policyAgreementText.removeStyleName("gray");
+        } else {
+            policyAgreementText.addStyleName("gray");
+        }
+        enableSubmit(enable && policyAgreementChkBx.getValue().booleanValue());
+    }
+    private void enableSubmit(boolean enable) {
+        submitButton.setEnabled(enable);
+    }
+    
+    private static boolean isCheckable(DashboardDataset dataset) {
+        return isDsg(dataset.getFeatureType())
+                && FileType.DELIMITED.equals(dataset.getFileType());
+    }
+    private static boolean isDsg(FeatureType type) {
+        return type != null &&
+                ! ( FeatureType.UNSPECIFIED.equals(type) || FeatureType.OTHER.equals(type));
+    }
+    private static boolean notChecked(DashboardDataset dataset) {
+        return DashboardUtils.STRING_MISSING_VALUE.equals(dataset.getDataCheckStatus());
+    }
+    /**
+     * @param datasets
+     * @return
+     */
+    private static boolean dataIssues(DashboardDataset dataset) {
+        int nErrRows = dataset.getNumErrorRows();
+        int nWarnRows = dataset.getNumWarnRows();
+        int nChkWarn = 0;
+        int nChkErr = 0;
+        int nChkCrit = 0;
+        for (QCFlag f : dataset.getCheckerFlags()) {
+            Severity s = f.getSeverity();
+            switch (s) {
+                case CRITICAL:
+                    nChkCrit += 1;
+                    break;
+                case ERROR:
+                    nChkErr += 1;
+                    break;
+                case WARNING:
+                    nChkWarn += 1;
+                    break;
+                default:
+            }
+        }
+        GWT.log("nErr:"+nErrRows+",nWarn:"+nWarnRows+",chkCrit:"+nChkCrit+",chkErr:"+nChkErr+",chkWarn:"+nChkWarn);
+        if ( nErrRows > 0 ) {
+            return true;
+        }
+        return false;
+    }
+    private static boolean hasUnknownColumns(DashboardDataset dataset) {
+        for (QCFlag f : dataset.getCheckerFlags()) {
+            if ( f.getSeverity().equals(Severity.WARNING)
+                    && f.getComment().contains("unknown type")) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /**
+     * @param datasets
+     */
+    private void showDataIssuesConfirmation(DashboardDataset dataset) {
+        dataIssuesText.setText("The data check found data errors. Check to confirm submission with errors.");
+        dataIssuesPanel.setVisible(true);
+        dataIssuesCheck = true;
+    }
+
+    private void showNotCheckedConfirmation(DashboardDataset dataset) {
+        dataIssuesText.setText("The dataset has not been checked for errors. Check to confirm submission without checking.");
+        dataIssuesPanel.setVisible(true);
+        dataIssuesCheck = true;
+    }
+
+    private void showUnknownColumnsConfirmation(DashboardDataset dataset) {
+        dataIssuesText.setText("The dataset has unknown data columns. Check to confirm submission with unknown data columns.");
+        dataIssuesPanel.setVisible(true);
+        dataIssuesCheck = true;
+    }
+
+    /**
+     * @param datasets
+     * @return
+     */
+    private static boolean metadataIssues(DashboardDataset dataset) {
+        return ( checkMetadata(dataset).length > 0 );
+    }
+
+    /**
+     * @param datasets
+     */
+    private void showMetadataIssuesConfirmation(DashboardDatasetList datasets) {
+        metadataIssuesText.setText("The dataset has metadata issues. Check to confirm submit with errors.");
+        metadataIssuesPanel.setVisible(true);
+        metadataIssuesCheck = true;
+    }
+    
     // COPIED from DatasetListPage, where it's not currently being used...
     private static final String[] EMPTY_MESSAGES = new String[0];
 	private static boolean checkDatasetsForSubmitting(DashboardDatasetList checkSet) {
@@ -292,6 +606,7 @@ public class SubmitToArchivePage extends CompositeWithUsername implements DataSu
             errorMessages = checkMetadata(dataset);
             if ( errorMessages.length > 0 ) {
                 addErrorMessages(errorMsgBldr, errorMessages);
+//                addMetadataCheck();
                 thisOneIsOk = false;
             }
             errorMessages = dataCheck(dataset);
@@ -319,7 +634,10 @@ public class SubmitToArchivePage extends CompositeWithUsername implements DataSu
      */
     private static String[] checkMetadata(DashboardDataset dataset) {
         String[] messages = EMPTY_MESSAGES;
-        if ( dataset.getMdTimestamp().isEmpty()) {
+        String status = dataset.getMdStatus();
+        if ( dataset.getMdTimestamp().isEmpty() ||
+             status.isEmpty() || 
+             status.contains("incomplete")) {
             messages = new String[] { "Missing or incomplete metadata." };
         }
         return messages;
@@ -381,7 +699,7 @@ public class SubmitToArchivePage extends CompositeWithUsername implements DataSu
 
     private static void getSubmitStatus(SubmitToArchivePage page) {
         page.submissionTime.setText("Package submitted.");
-        service.getPackageArchiveStatus(page.getUsername(), page._datasetId, 
+        service.getPackageArchiveStatus(page.getUsername(), page._datasetRecordId, 
 			new AsyncCallback<String>() {
 				@Override
 				public void onSuccess(String htmlList) {
@@ -402,16 +720,17 @@ public class SubmitToArchivePage extends CompositeWithUsername implements DataSu
         });
     }
     private static void getStatus(SubmitToArchivePage page) {
-        UploadDashboard.logToConsole("getStatus for " + page._datasetId);
-        page.statusLabel.setHTML("<h3>Submission status for " + page._datasetId + "</h3>");
+        UploadDashboard.logToConsole("getStatus for " + page._datasetRecordId);
+        page.statusLabel.setHTML("<h3>Submission status for " + page._datasetRecordId + "</h3>");
         DashboardDataset dd = page._dataset;
-        String archiveDate = dd.getArchiveDate();
-        if ( archiveDate == null || archiveDate.trim().length() == 0 ) {
+        Date archiveDate = dd.getArchiveDate();
+        if ( archiveDate == null ) {
             page.submissionTime.setText("Package not yet submitted.");
             page.statusListPanel.setHTML("");
         } else {
-            page.submissionTime.setText("Package submitted on " + archiveDate.substring(0, archiveDate.lastIndexOf(' ')));
-            service.getPackageArchiveStatus(page.getUsername(), page._datasetId, 
+            String dateStr = dd.getArchiveDateAsString(DashboardUtils.LOCALIZED_DATE_FORMAT_TO_MINUTES);
+            page.submissionTime.setText("Package submitted on " + dateStr.substring(0, dateStr.lastIndexOf(' ')));
+            service.getPackageArchiveStatus(page.getUsername(), page._datasetRecordId, 
     			new AsyncCallback<String>() {
     				@Override
     				public void onSuccess(String htmlList) {
@@ -427,33 +746,32 @@ public class SubmitToArchivePage extends CompositeWithUsername implements DataSu
         }
     }
     
-	protected void updateDatasetColumns(DashboardDatasetList datasets) {
+	protected void updateDatasetColumns(DashboardDataset dataset) {
 	    _submitIdsList.clear();
 //	    select_none.setValue(false);
 //	    select_std.setValue(false);
 //	    select_all.setValue(false);
 	    clearSelections();
-	    if ( ! okToArchive(datasets)) {
-	        UploadDashboard.showMessage("All datasets selected for archival must have the same set of columns.");
-	        return;
-	    }
-		for (DashboardDataset dd : datasets.values()) {
+//	    if ( ! okToArchive(datasets)) {
+//	        UploadDashboard.showMessage("All datasets selected for archival must have the same set of columns.");
+//	        return;
+//	    }
+        
+//		for (DashboardDataset dd : datasets.values()) {
 //			if ( okToArchive(dd)) {
-				_submitIdsList.add(dd.getDatasetId());
+				_submitIdsList.add(dataset.getRecordId());
 //			} else {
 //				_skipList.add(dd);
 //			}
-		}
+//		}
 		
-		_dataset = datasets.values().iterator().next();
-	    if ( _dataset.getDatasetId().equals(_datasetId)) {
+		_dataset = dataset; // s.values().iterator().next();
+	    if ( _dataset.getDatasetId().equals(_datasetRecordId)) {
 	        return;
 	    }
-		_datasetId = _dataset.getDatasetId();
+		_datasetRecordId = _dataset.getDatasetId();
 		header.userInfoLabel.setText(WELCOME_INTRO + getUsername());
 		
-        submitCommentTextArea.setText(_dataset.getArchiveSubmissionMessage());
-        generateDOIchkBx.setValue(_dataset.getArchiveDOIrequested());
 //		columnsPanel.clear();
         
         setFilesToBeArchived(_dataset);
@@ -501,7 +819,7 @@ public class SubmitToArchivePage extends CompositeWithUsername implements DataSu
      * @param dataset
      */
     private void setDataColumns(DashboardDataset dataset) {
-		_allCBoxes.clear();
+		_allColumnChkBoxes.clear();
 		_columnBoxMap.clear();
 		_userColNames = dataset.getUserColNames(); 
 		_colTypes = dataset.getDataColTypes();
@@ -513,7 +831,7 @@ public class SubmitToArchivePage extends CompositeWithUsername implements DataSu
 			String varName = colType.getVarName();
 			GWT.log(userColName + " : " + varName);
 			cb.setName(userColName);
-			_allCBoxes.add(cb);
+			_allColumnChkBoxes.add(cb);
 			_columnBoxMap.put(varName, cb);
 //			columnsPanel.add(cb);
 		}
@@ -604,13 +922,13 @@ public class SubmitToArchivePage extends CompositeWithUsername implements DataSu
 //		}
 
 		boolean repeatSend = true; // XXX
-        boolean requestDOI = generateDOIchkBx.getValue().booleanValue();
+        boolean requestDOI = genDoiChkBx.getValue().booleanValue();
 		// Submit the dataset
 		UploadDashboard.showWaitCursor();
         UploadDashboard.showWaitCursor(submitButton);
         UploadDashboard.showWaitCursor(cancelButton);
 		service.submitDatasetsToArchive(getUsername(), _submitIdsList, _submitColsList, 
-		                                archiveStatus, localTimestamp, repeatSend, 
+		                                archiveStatus, repeatSend, 
                                         submitCommentTextArea.getText(), requestDOI,
 			new AsyncCallback<Void>() {
 				@Override
@@ -638,12 +956,12 @@ public class SubmitToArchivePage extends CompositeWithUsername implements DataSu
 	}
 
 	private void buildSubmitColumnList() {
-		for (CheckBox cbox : _allCBoxes) {
-		    GWT.log(cbox.getName() + ": " + cbox.isChecked() + " : " + cbox.getValue());
+		for (CheckBox cbox : _allColumnChkBoxes) {
 			if ( cbox.getValue().booleanValue()) {
 				String columnName = cbox.getName();
 				_submitColsList.add(columnName);
 			}
 		}
 	}
+
 }

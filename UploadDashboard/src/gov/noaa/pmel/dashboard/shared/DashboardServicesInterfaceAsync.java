@@ -343,7 +343,7 @@ public interface DashboardServicesInterfaceAsync {
 			AsyncCallback<Void> callback);
 
 	void submitDatasetsToArchive(String username, List<String> submitDatasetIds, List<String> submitColumnList, 
-	                             String archiveStatus, String localTimestamp, boolean repeatSend, 
+	                             String archiveStatus, boolean repeatSend, 
 	                             String submitComment, boolean requestDOI,
 	                             AsyncCallback<Void> asyncCallback);
     

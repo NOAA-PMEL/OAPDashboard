@@ -10,6 +10,7 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -198,7 +199,7 @@ public class DataUploadService extends HttpServlet {
                     .datasetIdColumnName(getUploadField("datasetIdColumn", paramMap))
                     .dataAction(getRequiredField("dataaction", paramMap))
                     .fileDataEncoding(getUploadField("dataencoding", paramMap))
-                    .timestamp(getUploadField("timestamp", paramMap))
+                    .timestamp(DashboardServerUtils.formatUTC(new Date()))
                     .observationType(getUploadField("observationType", paramMap))
                     .featureType(getFeatureType(paramMap))
                     .fileType(getFileType(paramMap))

@@ -101,7 +101,8 @@ public class Bagger implements ArchiveBundler {
             logger.warn(ex, ex);
             throw ex;
         } finally {
-            if ( bagger != null ) {
+            if ( bagger != null &&
+                 ApplicationConfiguration.getProperty("oap.archive.bundle.cleanup", true)) {
                 cleanup(staged);
             }
         }
