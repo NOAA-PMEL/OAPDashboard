@@ -402,14 +402,14 @@ public class UploadDashboard implements EntryPoint, ValueChangeHandler<String> {
 	 * Return the cursor to the automatically assigned one
 	 */
 	public static void showAutoCursor() {
-		RootLayoutPanel.get().getElement().getStyle().setCursor(Style.Cursor.AUTO);
+		showAutoCursor(RootLayoutPanel.get());
 	}
 
 	/**
 	 * Displays the wait cursor over the entire page
 	 */
 	public static void showWaitCursor() {
-		RootLayoutPanel.get().getElement().getStyle().setCursor(Style.Cursor.WAIT);
+        showWaitCursor(RootLayoutPanel.get());
 	}
     
 	public static void showWaitCursor(UIObject element) {
