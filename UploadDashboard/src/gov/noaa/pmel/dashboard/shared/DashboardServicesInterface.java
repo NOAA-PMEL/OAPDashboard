@@ -332,7 +332,7 @@ public interface DashboardServicesInterface extends RemoteService {
 			throws IllegalArgumentException;
 
 	void submitDatasetsToArchive(String username, List<String> datasetIds, List<String> columnNames,
-								 String archiveStatus, String localTimestamp, boolean repeatSend,
+								 String archiveStatus, boolean repeatSend,
 								 String submitComment, boolean requestDOI)
 			throws IllegalArgumentException;
     

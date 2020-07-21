@@ -139,7 +139,7 @@ public class DataMessagesPage extends CompositeWithUsername {
 	 * @param datasetId
 	 * 		ID of the dataset to use
 	 */
-	static void showPage(String username, String datasetId) {
+	static void showPage(String username, String datasetId, String displayName) {
 		UploadDashboard.showWaitCursor();
 		service.getDataMessages(username, datasetId, new OAPAsyncCallback<ADCMessageList>() {
 			@Override
@@ -152,7 +152,7 @@ public class DataMessagesPage extends CompositeWithUsername {
 				if ( singleton == null )
 					singleton = new DataMessagesPage();
 				UploadDashboard.updateCurrentPage(singleton);
-				singleton.updateMessages(msgList);
+				singleton.updateMessages(msgList, displayName);
 				UploadDashboard.showAutoCursor();
 			}
 			@Override
@@ -199,11 +199,11 @@ public class DataMessagesPage extends CompositeWithUsername {
 	 * @param msgList
 	 * 		cruise dataset and set of messages to show 
 	 */
-	private void updateMessages(ADCMessageList msgs) {
+	private void updateMessages(ADCMessageList msgs, String displayName) {
 		// Assign the username and introduction message
 		setUsername(msgs.getUsername());
         header.userInfoLabel.setText(WELCOME_INTRO + getUsername());
-        header.setDatasetIds(msgs.getDatasetId());
+        header.setDatasetIds(displayName);
 		// Update the table by resetting the data in the data provider
 		List<ADCMessage> msgList = listProvider.getList();
 		msgList.clear();

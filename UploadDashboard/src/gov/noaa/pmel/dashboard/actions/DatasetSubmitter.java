@@ -44,7 +44,6 @@ import gov.noaa.pmel.dashboard.shared.DashboardMetadata;
 import gov.noaa.pmel.dashboard.shared.DashboardUtils;
 import gov.noaa.pmel.dashboard.shared.FileType;
 import gov.noaa.pmel.tws.util.ApplicationConfiguration;
-import gov.noaa.pmel.tws.util.TimeUtils;
 
 /**
  * Submits a dataset.  At this time this just means creating the 
@@ -235,7 +234,7 @@ public class DatasetSubmitter {
 //    }
     
 	public void archiveDatasets(List<String> datasetIds, List<String> columnsList, String submitMsg, 
-	                            boolean generateDOI, String archiveStatus, String timestamp, 
+	                            boolean generateDOI, String archiveStatus, 
 	                            boolean repeatSend, String submitter) {
 		ArrayList<String> errorMsgs = new ArrayList<String>();
 		
@@ -256,26 +255,27 @@ public class DatasetSubmitter {
 			if ( (userEmail == null) || userEmail.isEmpty() )
 				throw new IllegalArgumentException("No e-mail address for user " + submitter);
 
+            Date timestamp = new Date();
 			for ( String datasetId : datasetIds ) {
 			    String thisStatus = archiveStatus;
 				String commitMsg = "Immediate archival of dataset " + datasetId + " requested by " + 
 						userRealName + " (" + userEmail + ") at " + timestamp;
 				try {
                     DashboardDataset dataset = _configStore.getDataFileHandler().getDatasetFromInfoFile(datasetId);
-                    SubmissionRecord sRecord = getSubmissionRecord(datasetId, submitMsg, timestamp, submitter);
+                    SubmissionRecord sRecord = getSubmissionRecord(datasetId, submitMsg, submitter);
                     File archiveBundle = getArchiveBundle(sRecord, datasetId, dataset, columnsList, submitMsg, generateDOI);
                     sRecord.archiveBag(archiveBundle.getPath());
                     insertNewSubmissionRecord(sRecord);
                     doSubmitAchiveBundleFile(sRecord, datasetId, archiveBundle, userRealName, userEmail);
                     String stagedPkg = sRecord.pkgLocation();
                     String archiveStatusMsg = "Staged " + archiveBundle + " for " + userRealName + 
-                                               " at " + DashboardServerUtils.formatTime(new Date()) +
+                                               " at " + DashboardServerUtils.formatUTC(timestamp) +
                                                " to " + stagedPkg;
                     logger.info(archiveStatusMsg);
                     sRecord.pkgLocation(stagedPkg);
                     updateStatus(sRecord, StatusState.STAGED, "Submission package staged for pickup at:" + stagedPkg);
                     sendSubmitEmail(sRecord, archiveBundle, userRealName, userEmail);
-					thisStatus = "Submitted " + DashboardServerUtils.formatTime(new Date());
+					thisStatus = "Submitted " + DashboardServerUtils.formatUTC(timestamp);
 				} catch (Exception ex) {
 					ex.printStackTrace();
 					errorMsgs.add("Failed to submit request for immediate archival of " + 
@@ -291,6 +291,10 @@ public class DatasetSubmitter {
                 cruise.setArchiveDOIrequested(generateDOI);
 				dataHandler.saveDatasetInfoToFile(cruise, commitMsg);
 			}
+		} else {
+            String msg = "No dataset specified for archival.";
+		    logger.warn(msg);
+            errorMsgs.add(msg);
 		}
 		// If any dataset submit had errors, return the error messages
 		// TODO: do this in a return message, not an IllegalArgumentException
@@ -314,14 +318,14 @@ public class DatasetSubmitter {
 	 * @throws SQLException 
      */
     private static SubmissionRecord getSubmissionRecord(String datasetId, String submitMsg, 
-                                                        String timestamp, String submitter) 
+                                                        String submitter) 
             throws SQLException {
         SubmissionRecord sRecord = getLatestSubmissionRecord(datasetId);
         if ( sRecord != null ) {
             sRecord = sRecord.toBuilder().build().newVersion(submitMsg);
         } else {
             String archiveRefKey = createArchiveReferenceKey(datasetId, submitter);
-            sRecord = createInitialSubmitRecord(archiveRefKey, datasetId, submitMsg, timestamp, submitter);
+            sRecord = createInitialSubmitRecord(archiveRefKey, datasetId, submitMsg, submitter);
         }
         return sRecord;
     }
@@ -380,16 +384,18 @@ public class DatasetSubmitter {
         sdao.updateSubmissionStatus(status);
     }
     
-    private static SubmissionRecord createInitialSubmitRecord(String submitRefKey, String datasetId, String submitMsg, 
-                                                              String timestamp, String submitter) throws SQLException {
-            User user = DaoFactory.UsersDao().retrieveUser(submitter);
-            SubmissionRecord sub = SubmissionRecord.builder()
-                                .datasetId(datasetId)
-                                .submissionKey(submitRefKey)
-                                .submitMsg(submitMsg)
-                                .submitterId(user.dbId())
-                                .build();
-            return sub;
+    private static SubmissionRecord createInitialSubmitRecord(String submitRefKey, String datasetId, 
+                                                              String submitMsg, String submitter) 
+        throws SQLException 
+    {
+        User user = DaoFactory.UsersDao().retrieveUser(submitter);
+        SubmissionRecord sub = SubmissionRecord.builder()
+                            .datasetId(datasetId)
+                            .submissionKey(submitRefKey)
+                            .submitMsg(submitMsg)
+                            .submitterId(user.dbId())
+                            .build();
+        return sub;
     }
 
     /**
@@ -454,6 +460,7 @@ public class DatasetSubmitter {
                     break;
                 case NONE:
                     logger.warn("Archive mode set to NONE.  Archive bundle NOT SENT. " + archiveBundle.getPath());
+                    submission.pkgLocation("Archive mode set to NONE.  Package not staged.");
                     break;
             }
 //        } catch (Exception ex) {
@@ -522,11 +529,9 @@ public class DatasetSubmitter {
             String submitMsg = "test submit message";
             boolean generateDOI = true;
             String archiveStatus = "archive status";
-            String timestamp = TimeUtils.formatUTC(new Date(), "yyyy-MM-dd HH:mm Z");
             boolean repeatSend = true;
             String submitter = "lkamb";
-            ds.archiveDatasets(ids, new ArrayList<>(), submitMsg, generateDOI, archiveStatus, timestamp, repeatSend, submitter);
-//            ds.submitDatasetsForQC(ids, null, new Date().toString(), false, "lkamb");
+            ds.archiveDatasets(ids, new ArrayList<>(), submitMsg, generateDOI, archiveStatus, repeatSend, submitter);
         } catch (Exception ex) {
             ex.printStackTrace();
             // TODO: handle exception

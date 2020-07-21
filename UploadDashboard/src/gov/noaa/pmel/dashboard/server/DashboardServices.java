@@ -506,6 +506,7 @@ public class DashboardServices extends RemoteServiceServlet implements Dashboard
 	public TypesDatasetDataPair updateDataColumnSpecs(String pageUsername,
 			DashboardDataset newSpecs) throws IllegalArgumentException {
 		TypesDatasetDataPair tddp = new TypesDatasetDataPair();
+        try {
 		
 		// Get the dashboard data store and current username, and validate that username
 		if ( ! validateRequest(pageUsername) ) 
@@ -593,6 +594,9 @@ public class DashboardServices extends RemoteServiceServlet implements Dashboard
 		if ( msgs != null ) {
 			tddp.setMsgList(msgs);
 		}
+        } catch (Throwable t) {
+            t.printStackTrace();
+        }
 		return tddp;
 	}
 
@@ -815,7 +819,7 @@ public class DashboardServices extends RemoteServiceServlet implements Dashboard
 
 	@Override
 	public void submitDatasetsToArchive(String pageUsername, List<String> datasetIds, List<String> columnsList, 
-	                                    String archiveStatus, String timestamp, boolean repeatSend,
+	                                    String archiveStatus, boolean repeatSend,
 	                                    String submitMsg, boolean requestDOI) 
         throws IllegalArgumentException {
     	// Get the dashboard data store and current username, and validate that username
@@ -827,7 +831,7 @@ public class DashboardServices extends RemoteServiceServlet implements Dashboard
     	
     	// Submit the datasets to Archive
     	configStore.getDashboardDatasetSubmitter().archiveDatasets(datasetIds, columnsList, submitMsg,
-    															   requestDOI, archiveStatus, timestamp, 
+    															   requestDOI, archiveStatus, 
     															   repeatSend, username);
     }
 	
