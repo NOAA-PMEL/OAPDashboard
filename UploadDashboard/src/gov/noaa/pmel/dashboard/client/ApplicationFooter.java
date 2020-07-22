@@ -28,5 +28,10 @@ public class ApplicationFooter extends Composite {
     public ApplicationFooter() {
         initWidget(uiBinder.createAndBindUi(this));
     }
+    
+//    @UiField Label appBuildDisplay;
+//    public void setBuildVersion(String version) {
+//        appBuildDisplay.setText(version);
+//    }
 
 }

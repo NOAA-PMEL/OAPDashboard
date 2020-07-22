@@ -3,14 +3,50 @@
 
 <head>
 <meta http-equiv="content-type" content="text/html; charset=UTF-8" />
-<title>OAP Dashboard Login Error</title>
+<title>OAP Dashboard Login</title>
+<link rel="stylesheet" href="css/public.css" />
 </head>
+<body>
+<div class="pageheader" style="position: absolute; left: 0px; top: 0px; right: 0px; bottom: 0px;">
+    <img class="headerLogo" src="images/NOAA_logo.png"></img>
+    <div class="headerInfo">
+      <span class="headerpagelabel"></span>
+      <div class="headersoftwaretitle">OAP Scientific Data Integration System</div>
+      <div class="titlereset"></div>
+    </div>
+</div>
 
-<body style="background-color:#BBDDFF">
-	<p><b>OAP Dashboard username/password not recognized</b></p>
-	<p>Sorry, that OAP Dashboard username and password was not recognized.<br />
-		If you need assistance, please contact oap.support@noaa.gov</p>
-	<p><a href="OAPUploadDashboard.html">Return to login page</a></p>
+<form method="post" action="j_security_check">
+  <table class="login_table" style="width:564px;" border="0" cellspacing="5">
+    <tr>
+      <td style="text-align:center; padding-bottom: 1em; color:red; " colspan="2"><b>OAP Dashboard Login Credentials Not Recognized.</b></td>
+    </tr>
+    <tr>
+      <td>Username:</td>
+      <td><input type="text" name="j_username" autofocus /></td>
+    </tr>
+    <tr>
+      <td>Password:</td>
+      <td><input type="password" name="j_password" /></td>
+    </tr>
+    <tr>
+      <td style="text-align:center;" colspan="2"><input type="submit" value="Submit" /></td>
+    </tr>
+    <tr>
+      <td style="text-align:left;" colspan="2"><a style="font-size:smaller; text-decoration:none;" href="requestlogin.html">Request an account.</a></td>
+      <td style="text-align:right;" colspan="2"><a style="font-size:smaller; text-decoration:none;" href="passwordhelp.html">Forgot password?</a></td>
+    </tr>
+  </table>
+</form>
+<div class="pagefooter" >
+    <a href="http://www.noaa.gov" title="The National Oceanographic and Atmospheric Administration" target="_blank">NOAA</a>
+        &nbsp;|&nbsp; <a href="http://www.research.noaa.gov/"  target="_blank"
+          title="Department of Commerce > NOAA > Office of Oceanic and Atmospheric Research">OAR</a>
+        &nbsp;|&nbsp; <a href="http://www.pmel.noaa.gov" title="PMEL" target="_blank">PMEL</a>
+        &nbsp;|&nbsp; <a href="http://www.noaa.gov/privacy.html" target="_blank" title="">Privacy Policy</a>
+        &nbsp;|&nbsp; <a href="http://www.noaa.gov/disclaimer.html" target="_blank" title="">Disclaimer</a>
+        &nbsp;|&nbsp; <a href="http://www.noaa.gov/accessibility" target="_blank">Accessibility</a>
+  </div>
 </body>
 
 </html>

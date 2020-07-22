@@ -25,6 +25,11 @@ public class UIDGen {
     static char fix33[] = "AAAAAAAABBBBBCDDDDDDDDD0123456789".toCharArray();  
     static int charMapLength = 33;
       
+    
+    public static String genId() {
+        return idToShortURL(System.currentTimeMillis());
+    }
+    
     public static String idToShortURL(long n) {
         return idToShortURL(n, map33);
     }
@@ -33,16 +38,12 @@ public class UIDGen {
         StringBuffer shorturl = new StringBuffer();  
       
         int mapLen =  map.length;
-        System.out.println("==== " + mapLen);
         
-        String comma = "";
         // Convert given integer id to a base mapLen number  
         while (n > 0)  
         {  
             int mod = (int)(n % mapLen);
             char c = map[mod];
-            System.out.println(comma + " " + mod + ":" + c);
-//            comma = ",";
             shorturl.append(c); 
             n = n / mapLen;  
         }  

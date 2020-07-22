@@ -85,22 +85,22 @@ public class StdDataArrayTest {
 	));
 
 	static final ArrayList<DataColumnType> DATA_COLUMN_TYPES = new ArrayList<DataColumnType>(Arrays.asList(
-			DashboardServerUtils.SAMPLE_DEPTH.duplicate(),
-			DashboardServerUtils.DATASET_NAME.duplicate(),
-			DashboardServerUtils.PLATFORM_NAME.duplicate(),
-			DashboardServerUtils.MONTH_OF_YEAR.duplicate(), 
-			DashboardServerUtils.DAY_OF_MONTH.duplicate(), 
-			DashboardServerUtils.YEAR.duplicate(), 
-			DashboardServerUtils.HOUR_OF_DAY.duplicate(), 
-			DashboardServerUtils.MINUTE_OF_HOUR.duplicate(), 
-			DashboardServerUtils.LATITUDE.duplicate(), 
-			DashboardServerUtils.LONGITUDE.duplicate(), 
-			DsgNcFileTest.SST.duplicate(),
-			DsgNcFileTest.SALINITY.duplicate(),
-			DsgNcFileTest.XCO2_WATER_SST_DRY.duplicate(),
-			DsgNcFileTest.PCO2_WATER_TEQU_WET.duplicate(),
-			DsgNcFileTest.PATM.duplicate(),
-			DsgNcFileTest.SHIP_SPEED.duplicate()));
+			DashboardServerUtils.SAMPLE_DEPTH.dataColumnType(),
+			DashboardServerUtils.DATASET_NAME.dataColumnType(),
+			DashboardServerUtils.PLATFORM_NAME.dataColumnType(),
+			DashboardServerUtils.MONTH_OF_YEAR.dataColumnType(), 
+			DashboardServerUtils.DAY_OF_MONTH.dataColumnType(), 
+			DashboardServerUtils.YEAR.dataColumnType(), 
+			DashboardServerUtils.HOUR_OF_DAY.dataColumnType(), 
+			DashboardServerUtils.MINUTE_OF_HOUR.dataColumnType(), 
+			DashboardServerUtils.LATITUDE.dataColumnType(), 
+			DashboardServerUtils.LONGITUDE.dataColumnType(), 
+			DsgNcFileTest.SST.dataColumnType(),
+			DsgNcFileTest.SALINITY.dataColumnType(),
+			DsgNcFileTest.XCO2_WATER_SST_DRY.dataColumnType(),
+			DsgNcFileTest.PCO2_WATER_TEQU_WET.dataColumnType(),
+			DsgNcFileTest.PATM.dataColumnType(),
+			DsgNcFileTest.SHIP_SPEED.dataColumnType()));
 
 	static final ArrayList<String> USER_COLUMN_NAMES = new ArrayList<String>(
 			Arrays.asList("Depth,Expocode,Cruise,Month,Day,Year,Hour,Minute,Latitude,Longitude,SST,Salinity,xCO2_water_SST,pCO2_water_Teq,P_atm,Speed".split(","))

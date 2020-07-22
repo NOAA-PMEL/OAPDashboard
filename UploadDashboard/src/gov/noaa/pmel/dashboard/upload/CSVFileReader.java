@@ -26,7 +26,11 @@ public class CSVFileReader implements RecordOrientedFileReader {
     private static Logger logger = Logging.getLogger(CSVFileReader.class);
     
     private BufferedReader dataReader;
+    private String detectedFileType;
     private CsvParser dataParser;
+    private CsvFormat fileFormat;
+    private static final char[] commaSeparatedExpectation = new char[] {',', '\t', ';', '|'};
+    private static final char[] tabSeparatedExpectation = new char[] {'\t', ',', ';', '|'};
     
 //    public static CSVFileReader readerFor(File inputFile) {
 //        return new CSVFileReader(inputFile);
@@ -39,9 +43,11 @@ public class CSVFileReader implements RecordOrientedFileReader {
 ////        this.dataReader = new BufferedReader(new InputStreamReader(inputStream)); 
 //    }
     
-    public CSVFileReader(InputStream inputStream) {
+    public CSVFileReader(InputStream inputStream, String fileType) {
         this.dataReader = new BufferedReader(new InputStreamReader(inputStream)); 
+        this.detectedFileType = fileType;
     }
+    
     
     /* (non-Javadoc)
      * @see java.lang.Iterable#iterator()
@@ -50,7 +56,10 @@ public class CSVFileReader implements RecordOrientedFileReader {
     public Iterator<String[]> iterator() {
         CsvParserSettings settings = new CsvParserSettings();
         settings.detectFormatAutomatically();
-        settings.setDelimiterDetectionEnabled(true, '\t', ';', ',', '|');
+        char[] detectionChars = detectedFileType.contains("tab") ? 
+                                    tabSeparatedExpectation : 
+                                    commaSeparatedExpectation;
+        settings.setDelimiterDetectionEnabled(true, detectionChars);
         
         settings.setCommentCollectionEnabled(true);
         settings.setNullValue("");
@@ -59,8 +68,14 @@ public class CSVFileReader implements RecordOrientedFileReader {
         
         dataParser = new CsvParser(settings);
         dataParser.beginParsing(dataReader);
-        CsvFormat fileFormat = dataParser.getDetectedFormat();
+        fileFormat = dataParser.getDetectedFormat();
         logger.info("Detected file format: " + fileFormat);
         return dataParser.iterate(dataReader).iterator();
     }
+    
+    @Override
+    public String getDelimiter() {
+        return fileFormat.getDelimiterString();
+    }
+    
 }

@@ -1,0 +1,45 @@
+<!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
+<ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder" xmlns:g="urn:import:com.google.gwt.user.client.ui"
+  xmlns:oap="urn:import:gov.noaa.pmel.dashboard.client"
+>
+  <ui:style src="FixedWidth.css" />
+
+  <g:VerticalPanel addStyleNames="{style.infopanel}">
+    <g:HTML addStyleNames="{style.largerbold}" ui:field="title" />
+    <g:HTML addStyleNames="{style.introhtml}" ui:field="descriptionHtml" />
+    <g:HTML>
+      <hr />
+    </g:HTML>
+    <g:FormPanel ui:field="uploadForm">
+      <g:FlowPanel>
+        <g:FileUpload name="dataUpload" addStyleNames="{style.uploadfile}" ui:field="fileUpload" />
+        <g:Hidden name="timestamp" ui:field="timestampToken" />
+        <g:Hidden name="dataaction" ui:field="actionToken" />
+        <g:Hidden name="dataformat" ui:field="fileDataFormatToken" />
+        <g:Hidden name="dataencoding" ui:field="encodingToken" />
+        <g:Hidden name="featureType" ui:field="featureTypeToken" />
+        <g:Hidden name="observationType" ui:field="observationTypeToken"/>
+        <g:Hidden name="fileType" ui:field="fileTypeToken" />
+        <g:Hidden name="datasetId" ui:field="datasetIdToken" />
+        <g:Hidden name="datasetIdColumn" ui:field="datasetIdColumnToken" />
+        <g:Hidden name="previousFileName" ui:field="previousFileNameToken" />
+      </g:FlowPanel>
+    </g:FormPanel>
+    <g:FlowPanel addStyleNames="{style.horizontalpanel}">
+      <g:Button addStyleNames="{style.horizontalbutton}" ui:field="submitButton" />
+      <g:Button addStyleNames="{style.horizontalbutton}" ui:field="previewButton" />
+      <g:Button addStyleNames="{style.horizontalbutton}" ui:field="cancelButton" />
+    </g:FlowPanel>
+    <g:DisclosurePanel addStyleNames="{style.basicpanel}" ui:field="advancedPanel">
+      <g:header>Advanced Options</g:header>
+      <g:FlowPanel>
+        <g:HTML addStyleNames="{style.introhtml}" ui:field="advancedHtml" />
+        <g:FlowPanel addStyleNames="{style.labeledlistpanel}">
+          <g:Label addStyleNames="{style.labeledlistlabel}" ui:field="encodingLabel" />
+          <g:ListBox addStyleNames="{style.labeledlistbox}" ui:field="encodingListBox" />
+        </g:FlowPanel>
+      </g:FlowPanel>
+    </g:DisclosurePanel>
+  </g:VerticalPanel>
+
+</ui:UiBinder>

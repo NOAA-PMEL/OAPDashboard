@@ -3,6 +3,10 @@
  */
 package gov.noaa.pmel.dashboard.client;
 
+import com.google.gwt.core.client.GWT;
+import com.google.gwt.dom.client.Document;
+import com.google.gwt.dom.client.Element;
+import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.user.client.ui.Composite;
 
 /**
@@ -13,10 +17,13 @@ import com.google.gwt.user.client.ui.Composite;
 public class CompositeWithUsername extends Composite {
 
 	public static final String WELCOME_INTRO = "Logged in as ";
-	public static final String LOGOUT_TEXT = "Logout";
-	
+    
 	private String username = "";
+    private String pageName = "";
 
+    protected CompositeWithUsername(String pageHistoryName) {
+        pageName = pageHistoryName;
+    }
 	/**
 	 * @return 
 	 * 		the username; never null but may be empty
@@ -34,6 +41,19 @@ public class CompositeWithUsername extends Composite {
 			this.username = "";
 		else
 			this.username = username;
+	}
+    
+	public String pageName() { return pageName; }
+    
+//    @UiField protected ApplicationFooter footer;
+//	public ApplicationFooter getFooter() {
+	public void setBuildVersion(String version) {
+        Element build = Document.get().getElementById("appBuildDisplay");
+        if ( build != null ) {
+            build.setInnerHTML(version);
+        } else {
+            GWT.log("Did not find appBuildDisplay element");
+        }
 	}
 
 }

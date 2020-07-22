@@ -15,28 +15,36 @@
             font-size: large;
         }
         #submitCommentLabelExp {
-            padding: 1em 2em 0em 2.5em;
+            padding: .5em 2em 0em 2.5em;
             font-size: medium;
         }
         #submitCommentLabelLine2 {
 	       font-weight: bold;
            color: red;
         }
-        .genDOI_msg_panel {
+        .messages_panel {
+            padding: 0em 0em 1.5em 4.5em;
+        }
+        .notification_msg_panel {
             padding: 0em 0em 1em 2em;
         }
-        .generateDOIchkBx {
-            padding-left: 1.1em;
+        .notificationText {
 	        font-size: larger;
+        }
+        .notificationChkBx {
+            padding-left: 1.1em;
 	        font-weight: bold;
+        }
+        .policyAgreementPanel {
+            padding: 1em 0em 0em 2em;
         }
 	</ui:style>
 	
     <g:DockLayoutPanel unit="EM" addStyleNames="{style.fullpagecontainer} {style.letItOverFlow}" >
-        <g:north size="4.0" ><oap:ApplicationHeaderTemplate ui:field="header" /> </g:north>
+        <g:north size="4.2" ><oap:ApplicationHeaderTemplate ui:field="header" /> </g:north>
 		<g:south size="3">
             <g:FlowPanel>
-                <oap:ApplicationFooter/>
+                <oap:ApplicationFooter ui:field="footer"/>
             </g:FlowPanel>
 		</g:south>
         <g:center>
@@ -45,14 +53,37 @@
                     <g:HTML ui:field="fileListLabel" addStyleNames="{style.archiveFileListLabel}"/>
                     <g:HTML ui:field="fileListHtml" addStyleNames="{style.archiveFileList}"></g:HTML>
                 </g:FlowPanel>
+                <g:FlowPanel ui:field="messagesPanel" addStyleNames="{style.messages_panel}">
+                    <g:Label ui:field="messagesText">Placeholder: Messages.</g:Label>
+                </g:FlowPanel>
                 <g:FlowPanel addStyleNames="{style.submit_msg_panel}">
                     <g:HTML ui:field="submitCommentLabel" addStyleNames="{style.submit_msg_label_panel}"/>
                     <g:ScrollPanel addStyleNames="{style.submit_msg_scroll}">
                         <g:TextArea  ui:field="submitCommentTextArea" addStyleNames="{style.submit_msg_text}"/>
                     </g:ScrollPanel>
                 </g:FlowPanel>
-                <g:HorizontalPanel addStyleNames="{style.genDOI_msg_panel}">
-                    <g:CheckBox ui:field="generateDOIchkBx" addStyleNames="{style.generateDOIchkBx}">&nbsp;Have NCEI generate DOI for submitted dataset.</g:CheckBox>
+                <g:HorizontalPanel ui:field="genDoiPanel" addStyleNames="{style.notification_msg_panel}">
+                    <g:CheckBox ui:field="genDoiChkBx" addStyleNames="{style.notificationChkBx}"/>
+                    <g:Label ui:field="genDoiText" addStyleNames="{style.notificationText}">Have NCEI generate DOI for submitted dataset.</g:Label>
+                </g:HorizontalPanel>
+                <g:HTML><hr style="width:40%; margin:0 2em .5em;"/></g:HTML>
+                <g:HorizontalPanel ui:field="versionSubmitPanel" addStyleNames="{style.notification_msg_panel}">
+                    <g:CheckBox ui:field="versionSubmitChkBx" addStyleNames="{style.notificationChkBx}"/>
+                    <g:Label ui:field="versionSubmitText" addStyleNames="{style.notificationText}">Placeholder: Enable to resubmit.</g:Label>
+                </g:HorizontalPanel>
+                <g:HorizontalPanel ui:field="dataIssuesPanel" addStyleNames="{style.notification_msg_panel}">
+                    <g:CheckBox ui:field="dataIssuesChkBx" addStyleNames="{style.notificationChkBx}"/>
+                    <g:Label ui:field="dataIssuesText" addStyleNames="{style.notificationText}">Placeholder: Enable to submit with data issues.</g:Label>
+                </g:HorizontalPanel>
+                <g:HorizontalPanel ui:field="metadataIssuesPanel" addStyleNames="{style.notification_msg_panel}">
+                    <g:CheckBox ui:field="metadataIssuesChkBx" addStyleNames="{style.notificationChkBx}"/>
+                    <g:Label ui:field="metadataIssuesText" addStyleNames="{style.notificationText}">Placeholder: Enable to submit with metadata issues.</g:Label>
+                </g:HorizontalPanel>
+                <g:HTML ui:field="ackChecksHr"><hr visible="false" style="width:40%; margin:0 2em .5em;"/></g:HTML>
+                <g:HorizontalPanel ui:field="policyAgreementPanel" addStyleNames="{style.notification_msg_panel}">
+                    <g:CheckBox ui:field="policyAgreementChkBx" addStyleNames="{style.notificationChkBx}"/>
+                    <g:Label ui:field="policyAgreementText" addStyleNames="{style.notificationText}">I agree to the&nbsp;</g:Label>
+                    <g:Anchor ui:field="showPolicyAgreement" addStyleNames="{style.notificationText}">Publication Policy Agreement.</g:Anchor>
                 </g:HorizontalPanel>
     			<g:FlowPanel addStyleNames="{style.horizontalbuttonpanel}">
     				<g:Button addStyleNames="{style.horizontalbutton}"

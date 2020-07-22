@@ -5,15 +5,11 @@ package gov.noaa.pmel.dashboard.server;
 
 import java.io.ByteArrayOutputStream;
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.FilenameFilter;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.attribute.BasicFileAttributeView;
-import java.nio.file.attribute.BasicFileAttributes;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashSet;
@@ -22,20 +18,8 @@ import java.util.Set;
 import java.util.TreeSet;
 
 import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
 
-import org.apache.http.HttpEntity;
-import org.apache.http.HttpResponse;
-import org.apache.http.StatusLine;
-import org.apache.http.client.HttpClient;
-import org.apache.http.client.methods.HttpPost;
-import org.apache.http.conn.HttpHostConnectException;
-import org.apache.http.entity.ContentType;
-import org.apache.http.entity.mime.MultipartEntityBuilder;
-import org.apache.http.entity.mime.content.FileBody;
-import org.apache.http.entity.mime.content.StringBody;
-import org.apache.http.impl.client.HttpClients;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -189,17 +173,54 @@ public class DashboardServices extends RemoteServiceServlet implements Dashboard
 	}
 
 	@Override
-	public DashboardDatasetList getDatasetList(String pageUsername) throws IllegalArgumentException, SessionException {
+	public DashboardServiceResponse<DashboardDatasetList> getDatasetList(String pageUsername) throws IllegalArgumentException, SessionException {
 		// Get the dashboard data store and current username
         logger.debug(pageUsername);
 		if ( ! validateRequest(pageUsername) ) 
 			throw new IllegalArgumentException("Invalid user request");
 		DashboardDatasetList datasetList = configStore.getUserFileHandler().getDatasetListing(username);
 		logger.info("dataset list returned for " + username);
-		return datasetList;
+        String buildVersion = getBuildVersion();
+        DashboardServiceResponse<DashboardDatasetList> response = 
+                DashboardServiceResponse.<DashboardDatasetList>builder()
+                    .response(datasetList)
+                    .version(buildVersion)
+                    .build();
+		return response;
 	}
 
-	@Override
+	/**
+     * @return
+     */
+    private static String buildVersion = null;
+    private String getBuildVersion() {
+        if ( buildVersion == null ) {
+            buildVersion = "v_"+findBuildVersion();
+        }
+        return buildVersion;
+    }
+
+    /**
+     * @return
+     */
+    private String findBuildVersion() {
+		HttpServletRequest request = getThreadLocalRequest();
+        String cpath = request.getContextPath();
+        String wpath = "webapps/" + cpath.substring(1).replaceAll("/", "#") + ".war";
+        File warFile = new File(wpath);
+        if ( ! warFile.exists()) {
+            System.out.println(new File(".").getAbsolutePath());
+            warFile = new File("../oa#Dashboard.war");
+            if ( ! warFile.exists()) {
+                return "n/a";
+            }
+        }
+        long modTime = warFile.lastModified();
+        String version =  new SimpleDateFormat("yyyyMMdd.HHmm").format(new Date(modTime));
+        return version;
+    }
+
+    @Override
 	public DashboardDatasetList deleteDatasets(String pageUsername, TreeSet<String> idsSet, 
 			Boolean deleteMetadata) throws IllegalArgumentException {
 		// Get the dashboard data store and current username, and validate that username
@@ -270,19 +291,19 @@ public class DashboardServices extends RemoteServiceServlet implements Dashboard
 			throw new IllegalArgumentException("Invalid user request");
 		// Get the dashboard username of the new owner
 		String newUsername;
-		if ( configStore.validateUser(newOwner) ) {
+		if ( Users.validateUser(newOwner) ) {
 			// dashboard username was given
 			newUsername = newOwner;
 		}
 		else {
-			// actual name given?
+			// actual name given? // XXX This won't work.
 			try {
                 User newUser = Users.getUser(newOwner);
                 newUsername = newUser.username();
 			} catch (Exception ex) {
 				newUsername = null;
 			}
-			if ( (newUsername == null) || ! configStore.validateUser(newUsername) ) 
+			if ( (newUsername == null) || ! Users.validateUser(newUsername) ) 
 				throw new IllegalArgumentException("Unknown dashboard user " + newOwner);
 		}
 		// Change the owner of the datasets
@@ -306,7 +327,7 @@ public class DashboardServices extends RemoteServiceServlet implements Dashboard
 		// Create the set of updated dataset information to return
 		DataFileHandler dataHandler = configStore.getDataFileHandler();
 		DashboardDatasetList datasetList = new DashboardDatasetList(username);
-		datasetList.setManager(configStore.isManager(username));
+		datasetList.setManager(Users.isManager(username));
 		for ( String datasetId : idsSet ) {
 			datasetList.put(datasetId, dataHandler.getDatasetFromInfoFile(datasetId));
 		}
@@ -327,7 +348,7 @@ public class DashboardServices extends RemoteServiceServlet implements Dashboard
 		// Get the current metadata documents for the cruise
 		MetadataFileHandler mdataHandler = configStore.getMetadataFileHandler();
 		// XXX TODO: OME_FILENAME check
-		if ( DashboardUtils.metadataFilename(datasetId).equals(deleteFilename) ) {
+		if ( MetadataFileHandler.metadataFilename(datasetId).equals(deleteFilename) ) {
 			// Remove the OME XML stub file
 			if ( ! Boolean.TRUE.equals(dataset.isEditable()) ) 
 				throw new IllegalArgumentException("Cannot delete the metadata for a submitted dataset");
@@ -352,8 +373,7 @@ public class DashboardServices extends RemoteServiceServlet implements Dashboard
 				throw new IllegalArgumentException("Document " + deleteFilename + 
 						" is not associated with dataset " + datasetId);
 		}
-		// Delete this OME metadata or additional documents file on the server
-		mdataHandler.deleteMetadata(username, datasetId, deleteFilename);
+		mdataHandler.deleteMetadataFile(username, datasetId, deleteFilename);
 
 		logger.info("deleted metadata " + deleteFilename + 
 				" from " + datasetId + " for " + username);
@@ -364,7 +384,7 @@ public class DashboardServices extends RemoteServiceServlet implements Dashboard
 
 		// Create the set of updated dataset information to return
 		DashboardDatasetList datasetList = new DashboardDatasetList(username);
-		datasetList.setManager(configStore.isManager(username));
+		datasetList.setManager(Users.isManager(username));
 		for ( String id : allIds ) {
 			datasetList.put(id, dataHandler.getDatasetFromInfoFile(id));
 		}
@@ -388,10 +408,11 @@ public class DashboardServices extends RemoteServiceServlet implements Dashboard
 			throw new IllegalArgumentException("unexpected empty list of all known data column types");
 		ArrayList<DataColumnType> knownTypesList = new ArrayList<DataColumnType>(knownTypesSet.size());
 		for ( DashDataType<?> dtype : knownTypesSet )
-			knownTypesList.add(dtype.duplicate());
+			knownTypesList.add(dtype.dataColumnType());
 
+        DataFileHandler dataFileHandler = configStore.getDataFileHandler();
 		// Get the cruise with the first maximum-needed number of rows
-		DashboardDatasetData dataset = configStore.getDataFileHandler()
+        DashboardDatasetData dataset = dataFileHandler
 				.getDatasetDataFromFiles(datasetId, 0, DashboardUtils.MAX_ROWS_PER_GRID_PAGE);
 		if ( dataset == null )
 			throw new IllegalArgumentException(datasetId + " does not exist");
@@ -411,7 +432,7 @@ public class DashboardServices extends RemoteServiceServlet implements Dashboard
 		return typesAndDataset;
 	}
 
-	@Override
+    @Override
 	public ArrayList<ArrayList<String>> getDataWithRowNum(String pageUsername, 
 			String datasetId, int firstRow, int numRows) throws IllegalArgumentException {
 		// Get the dashboard data store and current username, and validate that username
@@ -437,7 +458,7 @@ public class DashboardServices extends RemoteServiceServlet implements Dashboard
 		int myLastRow = myFirstRow + dataWithRowNums.size() - 1;
 		logger.info(datasetId + " dataset data [" + Integer.toString(myFirstRow) + 
 				" - " + Integer.toString(myLastRow) + "] returned for " + username);
-		if ( logger.isDebugEnabled() ) {
+		if ( logger.isTraceEnabled()) {
 			for (k = 0; k < dataWithRowNums.size(); k++) {
 				logger.debug("  data[" + Integer.toString(k) + "]=" + dataWithRowNums.get(k).toString());
 			}
@@ -485,6 +506,7 @@ public class DashboardServices extends RemoteServiceServlet implements Dashboard
 	public TypesDatasetDataPair updateDataColumnSpecs(String pageUsername,
 			DashboardDataset newSpecs) throws IllegalArgumentException {
 		TypesDatasetDataPair tddp = new TypesDatasetDataPair();
+        try {
 		
 		// Get the dashboard data store and current username, and validate that username
 		if ( ! validateRequest(pageUsername) ) 
@@ -512,7 +534,7 @@ public class DashboardServices extends RemoteServiceServlet implements Dashboard
 		StdUserDataArray stdArray;
         try {
     		stdArray = checker.standardizeDataset(dataset, null);
-        } catch (Exception ex) {
+        } catch (Throwable ex) {
             logger.warn("Exception checking dataset:"+ ex, ex);
             throw new IllegalArgumentException("There was an error checking the dataset: " + ex.getMessage());
         }
@@ -524,14 +546,24 @@ public class DashboardServices extends RemoteServiceServlet implements Dashboard
 		// Update the user-specific data column names to types, units, and missing values 
 		configStore.getUserFileHandler().updateUserDataColumnTypes(dataset, username);
 		
-//		if ( ! stdArray.hasCriticalError()) {
-        if ( stdArray.hasDate() && stdArray.hasLatitude() && stdArray.hasLongitude()) {
+        if ( stdArray.hasDate() && stdArray.hasLatitude() && stdArray.hasLongitude() &&
+                ! stdArray.hasMissingTimeOrLocation()) { 
+//              ! stdArray.hasCriticalError()) {
 			DashboardOADSMetadata mdata = OADSMetadata.extractOADSMetadata(stdArray);
-			configStore.getMetadataFileHandler().saveAsOadsXmlDoc(mdata, 
-			                                                      DashboardUtils.autoExtractedMdFilename(datasetId), 
-			                                                      "Initial Auto-extraction");
+            MetadataFileHandler metafiles = configStore.getMetadataFileHandler();
+            try {
+    			metafiles.saveAsOadsXmlDoc(mdata, MetadataFileHandler.autoExtractedMdFilename(datasetId), 
+                                           "Initial Auto-extraction");
+            } catch (Exception ex) {
+                logger.warn("Exception extracting metadata:"+ex, ex);
+            }
+            try {
+                metafiles.saveLocationsFile(stdArray);
+            } catch (Exception ex) {
+                logger.warn("Exception saving latlon file:"+ex, ex);
+            }
 		} else {
-		    logger.info("Dataset " + dataset.getDatasetId() + " has critical error.  Unable to extract metadata.");
+		    logger.info("Dataset " + dataset.getRecordId() + " has critical error.  Unable to extract metadata.");
 		}
 		
 		// ??? Is this possible at this point for a user to be editing another user's dataset ?
@@ -562,6 +594,9 @@ public class DashboardServices extends RemoteServiceServlet implements Dashboard
 		if ( msgs != null ) {
 			tddp.setMsgList(msgs);
 		}
+        } catch (Throwable t) {
+            t.printStackTrace();
+        }
 		return tddp;
 	}
 
@@ -715,64 +750,6 @@ public class DashboardServices extends RemoteServiceServlet implements Dashboard
         return text;
     }
 
-    // request URL is in the form: http://matisse:8080/OAPUploadDashboard/OAPUploadDashboard/DashboardServices
-    // or http://dunkel.pmel.noaa.gov:5680/oa/Dashboard/OAPUploadDashboard/DashboardServices
-	// And notification URL should be http://dunkel.pmel.noaa.gov:5680/oa/Dashboard/DashboardUpdateService/notify/<datasetId>
-    private static String getNotificationUrl(String requestUrl, String datasetId) {
-        System.out.println("get notify URL request: " + requestUrl);
-        String notifyUrl = null;
-        if ( requestUrl.indexOf("pmel") > 0 ) {
-            notifyUrl = "https://www.pmel.noaa.gov/sdig" + requestUrl.substring(requestUrl.indexOf("/oa"));
-            System.out.println("n1: " + notifyUrl);
-            notifyUrl = notifyUrl.substring(0, notifyUrl.indexOf("OAPUploadDashboard"));
-            System.out.println("n2: " + notifyUrl);
-            notifyUrl = notifyUrl + "DashboardUpdateService/notify/"+datasetId;
-        } else {
-            notifyUrl = requestUrl.substring(0, requestUrl.lastIndexOf("OAPUploadDashboard"));
-            notifyUrl = notifyUrl + "DashboardUpdateService/notify/"+datasetId;
-        }
-        System.out.println("nofity url: " + notifyUrl);
-        return notifyUrl;
-    }
-
-    // inside url typically looks like <host>//<root context>/Dashboard
-    private static String getMetadataEditorPage(HttpServletRequest request, String docId) throws Exception {
-        String requestUrl = request.getRequestURL().toString();
-        System.out.println("get ME page request: " + requestUrl);
-        String context = request.getContextPath();
-        System.out.println("get ME context: " + context);
-        String meUrlProp = ApplicationConfiguration.getProperty(DashboardConfigStore.METADATA_EDITOR_URL);
-        String url;
-        if ( meUrlProp.toLowerCase().startsWith("http")) {
-            url = meUrlProp;
-        } else {
-            String requestBase = requestUrl.substring(0, requestUrl.indexOf(context));
-            url = requestBase + meUrlProp;
-        }
-        url = url + "?id="+docId;
-        System.out.println("Editor page: " + url);
-        return url;
-    }
-    
-    private static String getMetadataPostPoint(HttpServletRequest request, String datasetId) throws Exception {
-        String requestUrl = request.getRequestURL().toString();
-        System.out.println("get ME post point request: " + requestUrl);
-        String context = request.getContextPath();
-        System.out.println("get ME post point context: " + context);
-        String meUrlProp = ApplicationConfiguration.getProperty(DashboardConfigStore.METADATA_EDITOR_POST_ENDPOINT);
-        String url;
-        if ( meUrlProp.toLowerCase().startsWith("http")) {
-            url = meUrlProp;
-        } else {
-            String requestBase = requestUrl.substring(0, requestUrl.indexOf(context));
-            url = requestBase + meUrlProp;
-        }
-        String slash = url.endsWith("/") ? "" : "/";
-        url = url + slash + datasetId;
-        System.out.println("Post point: " + url);
-        return url;
-    }
-
     @Override
 	public PreviewPlotResponse buildPreviewImages(String pageUsername, String datasetId, 
 												  String timetag, boolean force) throws IllegalArgumentException {
@@ -817,7 +794,7 @@ public class DashboardServices extends RemoteServiceServlet implements Dashboard
 		if ( dataTime > plotsTime ) {
 			return true;
 		}
-		File dataInfoFile = configStore.getDataFileHandler().datasetInfoFile(datasetId);
+		File dataInfoFile = configStore.getDataFileHandler().datasetInfoFile(datasetId, true);
 		long infoTime = dataInfoFile.lastModified();
 		if ( infoTime > plotsTime ) {
 			return true;
@@ -842,7 +819,7 @@ public class DashboardServices extends RemoteServiceServlet implements Dashboard
 
 	@Override
 	public void submitDatasetsToArchive(String pageUsername, List<String> datasetIds, List<String> columnsList, 
-	                                    String archiveStatus, String timestamp, boolean repeatSend,
+	                                    String archiveStatus, boolean repeatSend,
 	                                    String submitMsg, boolean requestDOI) 
         throws IllegalArgumentException {
     	// Get the dashboard data store and current username, and validate that username
@@ -854,7 +831,7 @@ public class DashboardServices extends RemoteServiceServlet implements Dashboard
     	
     	// Submit the datasets to Archive
     	configStore.getDashboardDatasetSubmitter().archiveDatasets(datasetIds, columnsList, submitMsg,
-    															   requestDOI, archiveStatus, timestamp, 
+    															   requestDOI, archiveStatus, 
     															   repeatSend, username);
     }
 	

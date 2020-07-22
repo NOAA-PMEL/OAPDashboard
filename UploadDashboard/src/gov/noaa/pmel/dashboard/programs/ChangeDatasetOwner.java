@@ -11,6 +11,7 @@ import java.util.TreeMap;
 import gov.noaa.pmel.dashboard.actions.DatasetModifier;
 import gov.noaa.pmel.dashboard.server.DashboardConfigStore;
 import gov.noaa.pmel.dashboard.server.DashboardServerUtils;
+import gov.noaa.pmel.dashboard.server.Users;
 
 /**
  * Changes the owner of data and metadata files for datasets.
@@ -66,7 +67,7 @@ public class ChangeDatasetOwner {
 						System.err.println("Unable to get dataset ID and new owner from: " + dataline);
 						System.exit(1);
 					}
-					if ( ! configStore.validateUser(tokens[1]) ) {
+					if ( ! Users.validateUser(tokens[1]) ) {
 						System.err.println("Invalid dashboard username given in: " + dataline);
 						System.exit(1);
 					}

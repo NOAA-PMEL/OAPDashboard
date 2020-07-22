@@ -86,10 +86,16 @@ import gov.noaa.pmel.dashboard.shared.QCFlag.Severity;
 		return sb.toString();
 	}
 	
+    private static final String EMPTY_CELL = "---";
 	@Override
 	public String getValue(ArrayList<String> dataRow) {
-		if ( (dataRow != null) && (0 <= colNum) && (colNum < dataRow.size()) )
-			return dataRow.get(colNum);
+		if ( (dataRow != null) && (0 <= colNum) && (colNum < dataRow.size()) ) {
+            String cellValue = dataRow.get(colNum);
+            if ( cellValue == null || "".equals(cellValue)) {
+                cellValue = EMPTY_CELL;
+            }
+			return cellValue;
+		}
 		return "";
 	}
 	private void closeTitle(SafeHtmlBuilder sb) {
@@ -98,6 +104,8 @@ import gov.noaa.pmel.dashboard.shared.QCFlag.Severity;
 	@Override
 	public void render(Cell.Context ctx, ArrayList<String> obj, SafeHtmlBuilder sb) {
 		int rowIdx = ctx.getIndex();
+        String cellValue = getValue(obj);
+        String hideContents = EMPTY_CELL.equals(cellValue) ? " color: transparent; " : "";
 		ADCMessage msg = rowMsgMap.get(rowIdx);
 		boolean addedTitle = false;
 		String title = "[ " + (rowIdx+1) +" ]";
@@ -109,7 +117,7 @@ import gov.noaa.pmel.dashboard.shared.QCFlag.Severity;
 		if ( colNum == 0 ) {
 			sb.appendHtmlConstant("<div style=\"color:" + 
 					UploadDashboard.ROW_NUMBER_COLOR + ";text-align:right\">");
-			sb.appendEscaped(getValue(obj));
+			sb.appendEscaped(cellValue);
 			sb.appendHtmlConstant("</div>");
 			if ( addedTitle ) closeTitle(sb);
 			return;
@@ -117,47 +125,70 @@ import gov.noaa.pmel.dashboard.shared.QCFlag.Severity;
 		TreeSet<QCFlag> checkerFlags = cruise.getCheckerFlags();
 		QCFlag woceCell = new QCFlag(null, null, Severity.ERROR, colNum-1, rowIdx);
 		QCFlag woceRow = new QCFlag(null, null, Severity.ERROR, null, rowIdx);
-		QCFlag woceCol = new QCFlag(null, null, Severity.ERROR, colNum-1, null);
-		if ( checkerFlags.contains(woceCell) || 
+//		QCFlag woceCol = new QCFlag(null, null, Severity.ERROR, colNum-1, null);
+		if ( checkerFlags.contains(woceCell)) { // || 
 //			 checkerFlags.contains(woceRow) || 
-			 checkerFlags.contains(woceCol) ) {
+//			 checkerFlags.contains(woceCol) ) {
 			sb.appendHtmlConstant("<div style=\"background-color:" + 
-					UploadDashboard.CHECKER_ERROR_COLOR + ";font-weight:bold;\">");
-			sb.appendEscaped(getValue(obj));
+					UploadDashboard.CHECKER_ERROR_COLOR + ";font-weight:bold;" + hideContents + "\">");
+			sb.appendEscaped(cellValue);
 			sb.appendHtmlConstant("</div>");
 			if ( addedTitle ) closeTitle(sb);
 			return;
 		}
 		TreeSet<QCFlag> userFlags = cruise.getUserFlags();
-		if ( userFlags.contains(woceCell) || 
+		if ( userFlags.contains(woceCell)) { // || 
 //			 userFlags.contains(woceRow) || 
-			 userFlags.contains(woceCol) ) {
+//			 userFlags.contains(woceCol) ) {
 			sb.appendHtmlConstant("<div style=\"background-color:" + 
-					UploadDashboard.USER_ERROR_COLOR + ";\">");
-			sb.appendEscaped(getValue(obj));
+					UploadDashboard.USER_ERROR_COLOR + ";font-weight:bold;" + hideContents + "\">");
+			sb.appendEscaped(cellValue);
 			sb.appendHtmlConstant("</div>");
 			if ( addedTitle ) closeTitle(sb);
 			return;
 		}
 		woceCell.setSeverity(Severity.WARNING);
 		woceRow.setSeverity(Severity.WARNING);
-		woceCol.setSeverity(Severity.WARNING);
-		if ( checkerFlags.contains(woceCell) || 
+//		woceCol.setSeverity(Severity.WARNING);
+		if ( checkerFlags.contains(woceCell)) { // || 
 //			 checkerFlags.contains(woceRow) || 
-			 checkerFlags.contains(woceCol) ) {
+//			 checkerFlags.contains(woceCol) ) {
 			sb.appendHtmlConstant("<div style=\"background-color:" + 
-					UploadDashboard.CHECKER_WARNING_COLOR + ";font-weight:bold;\">");
-			sb.appendEscaped(getValue(obj));
+					UploadDashboard.CHECKER_WARNING_COLOR + ";font-weight:bold;" + hideContents + "\">");
+			sb.appendEscaped(cellValue);
 			sb.appendHtmlConstant("</div>");
 			if ( addedTitle ) closeTitle(sb);
 			return;
 		}
-		if ( userFlags.contains(woceCell) || 
+		if ( userFlags.contains(woceCell)) { // || 
 //			 userFlags.contains(woceRow) || 
-			 userFlags.contains(woceCol) ) {
+//			 userFlags.contains(woceCol) ) {
 			sb.appendHtmlConstant("<div style=\"background-color:" + 
-					UploadDashboard.USER_WARNING_COLOR + ";\">");
-			sb.appendEscaped(getValue(obj));
+					UploadDashboard.USER_WARNING_COLOR + ";font-weight:bold;" + hideContents + "\">");
+			sb.appendEscaped(cellValue);
+			sb.appendHtmlConstant("</div>");
+			if ( addedTitle ) closeTitle(sb);
+			return;
+		}
+		woceCell.setSeverity(Severity.CRITICAL);
+		woceRow.setSeverity(Severity.CRITICAL);
+//		woceCol.setSeverity(Severity.CRITICAL);
+		if ( checkerFlags.contains(woceCell)) { // || 
+//			 checkerFlags.contains(woceRow) || 
+//			 checkerFlags.contains(woceCol) ) {
+			sb.appendHtmlConstant("<div style=\"background-color:" + 
+					UploadDashboard.CHECKER_ERROR_COLOR + ";font-weight:bold;" + hideContents + "\">");
+			sb.appendEscaped(cellValue);
+			sb.appendHtmlConstant("</div>");
+			if ( addedTitle ) closeTitle(sb);
+			return;
+		}
+		if ( userFlags.contains(woceCell)) { // || 
+//			 userFlags.contains(woceRow) || 
+//			 userFlags.contains(woceCol) ) {
+			sb.appendHtmlConstant("<div style=\"background-color:" + 
+					UploadDashboard.USER_ERROR_COLOR + ";font-weight:bold;" + hideContents + "\">");
+			sb.appendEscaped(cellValue);
 			sb.appendHtmlConstant("</div>");
 			if ( addedTitle ) closeTitle(sb);
 			return;

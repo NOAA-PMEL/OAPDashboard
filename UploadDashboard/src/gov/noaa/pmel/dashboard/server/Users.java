@@ -7,6 +7,8 @@ import java.io.IOException;
 import java.security.GeneralSecurityException;
 import java.security.NoSuchAlgorithmException;
 import java.sql.SQLException;
+import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 
@@ -22,6 +24,7 @@ import gov.noaa.pmel.dashboard.server.db.dao.UsersDao;
 import gov.noaa.pmel.dashboard.server.model.InsertUser;
 import gov.noaa.pmel.dashboard.server.model.User;
 import gov.noaa.pmel.dashboard.server.util.Notifications;
+import gov.noaa.pmel.dashboard.shared.DashboardUtils;
 import gov.noaa.pmel.dashboard.util.PasswordCrypt;
 import gov.noaa.pmel.dashboard.util.PasswordUtils;
 import gov.noaa.pmel.tws.util.ApplicationConfiguration;
@@ -34,9 +37,9 @@ import gov.noaa.pmel.tws.util.StringUtils;
 public class Users {
 
     public enum UserRole {
-        Groupie("MemberOf1"),
-        Manager("ManagerOf1"),
-        Admin("Admin");
+        Groupie("oapdashboarduser"),
+        Manager("groupmanager"),
+        Admin("dashboardadmin");
         
         private String _key;
         private UserRole(String key) {
@@ -58,6 +61,7 @@ public class Users {
     }
     public static int addUser(User user, String plainTextPasswd, UserRole role) throws DashboardException {
         try {
+            validateUser(user);
             String cryptPasswd = PasswordCrypt.generateTomcatPasswd(plainTextPasswd);
             if ( ! PasswordCrypt.tomcatPasswdMatches(cryptPasswd, plainTextPasswd)) {
                 throw new GeneralSecurityException("Match Fail!");
@@ -68,21 +72,24 @@ public class Users {
             throw new DashboardException(ex);
         }
     }
+    /**
+     * @param user
+     */
+    private static void validateUser(User user) {
+        if ( StringUtils.emptyOrNull(user.username())) {
+            throw new IllegalStateException("Null username for user");
+        }
+    }
     private static int _addUser(User user, String cryptPasswd, UserRole role) throws DashboardException {
         UsersDao udao = DaoFactory.UsersDao();
         boolean dConfig = false;
         try {
             InsertUser inUser = user.asInsertUser().authString(cryptPasswd).build();
             int dbId = udao.addUser(inUser);
-            addUserToDashboardConfig(user, role);
             dConfig = true;
             return dbId;
         } catch (Exception ex) {
             logger.warn(ex,ex);
-            if ( dConfig ) {
-                try { removeDashboardConfigUser(user); }
-                catch ( Throwable t ) { System.err.println(t); }
-            }
             throw new DashboardException(ex);
         }
     }
@@ -132,18 +139,18 @@ public class Users {
         }
     }
         
-    private static void addUserToDashboardConfig(User user, UserRole role) throws Exception {
-        File configFile = DashboardConfigStore.getConfigFile();
-        try ( FileWriter cfgWriter = new FileWriter(configFile, true); ) {
-            String userCfgLine = "RoleFor_"+user.username() + "=" + role.roleKey() + "\n";
-            cfgWriter.write(userCfgLine);
-        }
-    }
-    
-    private static void removeDashboardConfigUser(User user) throws IOException {
-        DashboardConfigStore cfg = DashboardConfigStore.get(false);
-        cfg.removeUser(user.username());
-    }
+//    private static void addUserToDashboardConfig(User user, UserRole role) throws Exception {
+//        File configFile = DashboardConfigStore.getConfigFile();
+//        try ( FileWriter cfgWriter = new FileWriter(configFile, true); ) {
+//            String userCfgLine = "RoleFor_"+user.username() + "=" + role.roleKey() + "\n";
+//            cfgWriter.write(userCfgLine);
+//        }
+//    }
+//    
+//    private static void removeDashboardConfigUser(User user) throws IOException {
+//        DashboardConfigStore cfg = DashboardConfigStore.get(false);
+//        cfg.removeUser(user.username());
+//    }
     
     public static User getUser(String userid) throws DashboardException {
         UsersDao udao = DaoFactory.UsersDao();
@@ -154,6 +161,16 @@ public class Users {
             throw new DashboardException(ex);
         }
     }
+    public static List<User> getAllUsers() throws DashboardException {
+        UsersDao udao = DaoFactory.UsersDao();
+        try {
+            List<User> users = udao.retrieveAll();
+            return users;
+        } catch (SQLException ex) {
+            throw new DashboardException(ex);
+        }
+    }
+    
     
     public static void updateUser(User changedUser) throws DashboardException {
         UsersDao udao = DaoFactory.UsersDao();
@@ -266,4 +283,134 @@ public class Users {
         return sb.toString();
     }
     
+    // Map of username to user info
+	private static Map<String,DashboardUserInfo> _userInfoMap;
+    private synchronized static Map<String, DashboardUserInfo> getUserMap() {
+		// Read and assign the authorized users 
+        if ( _userInfoMap == null ) {
+    		_userInfoMap = new HashMap<String,DashboardUserInfo>();
+            try {
+                List<User> users = getAllUsers();
+                for (User u : users) {
+                    DashboardUserInfo ui = new DashboardUserInfo(u.username());
+                    String userRoles = "";
+                    for (String role: u.roles()) {
+                        userRoles += " " + role;
+                    }
+                    ui.addUserRoles(userRoles.trim());
+                    _userInfoMap.put(u.username(), ui);
+                }
+            } catch (DashboardException dex) {
+                logger.warn(dex,dex);
+            }
+    		for ( DashboardUserInfo info : _userInfoMap.values() ) {
+    			logger.info("    user info: " + info.toString());
+    		}
+        }
+        return _userInfoMap;
+    }
+	/**
+	 * Validate a username from the user info map
+	 *  
+	 * @param username
+	 * 		username
+	 * @return
+	 * 		true if successful
+	 */
+	public static boolean validateUser(String username) {
+		if ( (username == null) || username.isEmpty() )
+			return false;
+		String name = DashboardUtils.cleanUsername(username);
+		DashboardUserInfo userInfo = getUserMap().get(name);
+		if ( userInfo == null )
+			return false;
+		return true;
+	}
+
+
+	/**
+	 * Determines if username has manager privilege over othername. 
+	 * This can be from username being an administrator, a manager
+	 * of a group othername belongs to, having the same username,
+	 * or othername being invalid (most likely an unspecified user),
+	 * so long as username is an authorized user.
+	 * 
+	 * @param username
+	 * 		manager username to check; if not a valid user, returns false
+	 * @param othername
+	 * 		group member username to check; if not a valid user, 
+	 * 		returns true if username is a valid user
+	 * @return
+	 * 		true if username is an authorized user and has manager
+	 * 		privileges over othername
+	 */
+	public static boolean userManagesOver(String username, String othername) {
+        if ( username.equals(othername) || isManager(username)) { return true; } // XXX TODO: This isn't really right here.
+        else { return false; }
+//		DashboardUserInfo userInfo = getUserMap().get(DashboardUtils.cleanUsername(username));
+//		if ( userInfo == null ) { // XXX TODO: Should be an Exception!
+//		    logger.warn("No userInfo found for user : " + username);
+//			return false;
+//		}
+//		return userInfo.managesOver(_userInfoMap.get(DashboardUtils.cleanUsername(othername)));
+	}
+
+	/**
+	 * @param username
+	 * 		name of the user
+	 * @return
+	 * 		true is this user is an admin or a manager of a group
+	 * 		(regardless of whether there is anyone else in the group)
+	 */
+	public static boolean isManager(String username) {
+        if ( username.contains("linus") || username.contains("kamb") ) { return true; }
+        else { return false; }
+//		DashboardUserInfo userInfo = getUserMap().get(DashboardUtils.cleanUsername(username));
+//		if ( userInfo == null )
+//			return false;
+//		return userInfo.isManager();
+	}
+
+	/**
+	 * @param username
+	 * 		name of the user
+	 * @return
+	 * 		true is this user is an admin
+	 * @throws DashboardException 
+	 */
+	public static boolean isAdmin(String username) throws DashboardException {
+        User user = getUser(username);
+        if ( user == null ) { return false; }
+        return user.hasRole(UserRole.Admin.roleKey());
+//		DashboardUserInfo userInfo = getUserMap().get(DashboardUtils.cleanUsername(username));
+//		if ( userInfo == null )
+//			return false;
+//		return userInfo.isAdmin();
+	}
+
+    public static void main(String[] args) {
+        try {
+            
+            UsersDao udao = DaoFactory.UsersDao();
+//            deleteUser("jqpone");
+//            udao.insertUser(newUser);
+//            User newUser = User.builder()
+//                    .username("jqpone")
+//                    .firstName("Johnny")
+//                    .middle("Q")
+//                    .lastName("Pone")
+//                    .email("a@B.co")
+//                    .build();
+//            addUser(newUser, "foobar", UserRole.Groupie);
+            List<User> users = udao.retrieveAll();
+            System.out.println(users);
+            User u = udao.retrieveUser("linus");
+            System.out.println(u + " : " + u.hasRole(UserRole.Admin.roleKey()));
+            u = udao.retrieveUserByEmail("linus.kamb@noaa.gov");
+            System.out.println(u + " : " + u.hasRole(UserRole.Admin.roleKey()));
+        } catch (Exception ex) {
+            ex.printStackTrace();
+            // TODO: handle exception
+        }
+    }
 }

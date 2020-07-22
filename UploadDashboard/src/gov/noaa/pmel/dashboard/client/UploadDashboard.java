@@ -40,6 +40,7 @@ import com.google.gwt.user.client.ui.UIObject;
 import com.google.gwt.user.client.ui.VerticalPanel;
 
 import gov.noaa.pmel.dashboard.client.DashboardAskPopup.QuestionType;
+import gov.noaa.pmel.dashboard.shared.DashboardDataset;
 import gov.noaa.pmel.dashboard.shared.DashboardServiceResponse;
 import gov.noaa.pmel.dashboard.shared.DashboardServicesInterface;
 import gov.noaa.pmel.dashboard.shared.DashboardServicesInterfaceAsync;
@@ -86,14 +87,17 @@ public class UploadDashboard implements EntryPoint, ValueChangeHandler<String> {
 	}
 
 	// Column widths in em's
-	static final double CHECKBOX_COLUMN_WIDTH = 2.95;
-	static final double NARROW_COLUMN_WIDTH = 5.0;
+	static final double CHECKBOX_COLUMN_WIDTH = 2; //.95;
+	static final double NARROWER_COLUMN_WIDTH = 5;
+	static final double NARROW_COLUMN_WIDTH = 6.;
+	static final double MIDDLING_COLUMN_WIDTH = 7.6;
 	static final double SELECT_COLUMN_WIDTH = CHECKBOX_COLUMN_WIDTH; // 6.2;
 	static final double NORMAL_COLUMN_WIDTH = 9.0;
 	static final double FILENAME_COLUMN_WIDTH = 16.0;
 
 	// Data background colors
-	static final String CHECKER_WARNING_COLOR = "#FFCC33";
+	static final String CHECKER_LIGHT_WARNING_COLOR = "#FFFBD6";
+	static final String CHECKER_WARNING_COLOR = "#FFDD54"; // "#FFCC33";
 	static final String CHECKER_ERROR_COLOR = "#FF6666";
 	static final String USER_WARNING_COLOR = "#FFEE99";
 	static final String USER_ERROR_COLOR = "#FFCCCC";
@@ -125,9 +129,12 @@ public class UploadDashboard implements EntryPoint, ValueChangeHandler<String> {
     
 	private DashboardBlankPagePopup blankMsgPopup;
 	private FileDataPreviewPopup dataPreviewPopup;
+    private DataUpdatePopup dataUpdatePopup;
 
     private DashboardFeedbackPopup feedbackPopup;
     private ChangePasswordPopup changePasswordPopup;
+    
+    private static String buildVersion = "n/a";
     
 	/**
 	 * Create the manager for the UploadDashboard pages.
@@ -189,7 +196,10 @@ public class UploadDashboard implements EntryPoint, ValueChangeHandler<String> {
 	}
 
     public static void theresAproblem(String msg, String yesText, String noText, AsyncCallback<Boolean> callback) {
-        DashboardAskPopup dap = new DashboardAskPopup(yesText, noText, QuestionType.WARNING, callback);
+        theresAproblem(QuestionType.WARNING, msg, yesText, noText, callback);
+    }
+    public static void theresAproblem(QuestionType type, String msg, String yesText, String noText, AsyncCallback<Boolean> callback) {
+        DashboardAskPopup dap = new DashboardAskPopup(yesText, noText, type, callback);
         dap.askQuestion(msg);
     }
     
@@ -348,7 +358,13 @@ public class UploadDashboard implements EntryPoint, ValueChangeHandler<String> {
         }
         singleton.currentPage = newPage;
         if ( singleton.currentPage != null ) {
+            GWT.log("Setting page to " + newPage.pageName());
             RootLayoutPanel.get().add(singleton.currentPage);
+            newPage.setBuildVersion(buildVersion);
+    		History.newItem(newPage.pageName(), false);
+            Window.setTitle("SDIS " + newPage.pageName());
+        } else {
+            logToConsole("Null current page!");
         }
 	}
 	public static void updateCurrentPage(CompositeWithUsername newPage, boolean doPing) {
@@ -386,14 +402,14 @@ public class UploadDashboard implements EntryPoint, ValueChangeHandler<String> {
 	 * Return the cursor to the automatically assigned one
 	 */
 	public static void showAutoCursor() {
-		RootLayoutPanel.get().getElement().getStyle().setCursor(Style.Cursor.AUTO);
+		showAutoCursor(RootLayoutPanel.get());
 	}
 
 	/**
 	 * Displays the wait cursor over the entire page
 	 */
 	public static void showWaitCursor() {
-		RootLayoutPanel.get().getElement().getStyle().setCursor(Style.Cursor.WAIT);
+        showWaitCursor(RootLayoutPanel.get());
 	}
     
 	public static void showWaitCursor(UIObject element) {
@@ -419,43 +435,45 @@ public class UploadDashboard implements EntryPoint, ValueChangeHandler<String> {
 	@Override
 	public void onValueChange(ValueChangeEvent<String> event) {
 		String token = event.getValue();
-		if ( token != null )
-			token = token.trim();
 		if ( (token == null) || token.isEmpty() || (currentPage == null) ) {
 			// Initial history setup; show the cruise list page
+            GWT.log("Initial page load");
 			DatasetListPage.showPage();
-		}
-		else if ( token.equals(PagesEnum.SHOW_DATASETS.name()) ) {
-			// Dataset list page from history
-			DatasetListPage.redisplayPage(currentPage.getUsername());
-		}
-		else if ( token.equals(PagesEnum.UPLOAD_DATA.name()) ) {
-			// Dataset upload page from history
-			DataUploadPage.redisplayPage(currentPage.getUsername());
-		}
-		else if ( token.equals(PagesEnum.IDENTIFY_COLUMNS.name()) ) {
-			// Data column specs page from history
-			DataColumnSpecsPage.redisplayPage(currentPage.getUsername());
-		}
-		else if ( token.equals(PagesEnum.EDIT_METADATA.name()) ) {
-			// OME metadata manager page from history
-			MetadataManagerPage.redisplayPage(currentPage.getUsername());
-		}
-		else if ( token.equals(PagesEnum.MANAGE_DOCUMENTS.name()) ) {
-			// Additional data manager page from history
-			AddlDocsManagerPage.redisplayPage(currentPage.getUsername());
-		}
-		else if ( token.equals(PagesEnum.PREVIEW_DATASET.name()) ) {
-			// Preview cruise page from history
-			DatasetPreviewPage.redisplayPage(currentPage.getUsername());
-		}
-		else if ( token.equals(PagesEnum.SUBMIT_FOR_QC.name()) ) {
-			// Submit for QC page from history
-			SubmitForQCPage.redisplayPage(currentPage.getUsername());
-		}
-		else {
-			// Unknown page from the history; instead show the  cruise list page 
-			DatasetListPage.redisplayPage(currentPage.getUsername());
+		} else {
+            try {
+                PagesEnum page = PagesEnum.valueOf(token);
+                switch (page) {
+                    case UPLOAD_DATA:
+            			DataUploadPage.redisplayPage(currentPage.getUsername());
+                        break;
+                    case IDENTIFY_COLUMNS:
+            			DataColumnSpecsPage.redisplayPage(currentPage.getUsername());
+                        break; 
+                    case SHOW_DATA_MESSAGES:
+                        DataMessagesPage.redisplayPage(currentPage.getUsername());
+                        break;
+                    case EDIT_METADATA:
+            			MetadataManagerPage.redisplayPage(currentPage.getUsername());
+                        break;
+                    case MANAGE_DOCUMENTS:
+            			AddlDocsManagerPage.redisplayPage(currentPage.getUsername());
+                        break;
+                    case PREVIEW_DATASET:
+            			DatasetPreviewPage.redisplayPage(currentPage.getUsername());
+                        break;
+                    case SUBMIT_FOR_QC:
+            			SubmitForQCPage.redisplayPage(currentPage.getUsername());
+                        break;
+                    case SUBMIT_TO_ARCHIVE:
+            			SubmitToArchivePage.redisplayPage(currentPage.getUsername());
+                    case SHOW_DATASETS:
+                    default:
+            			DatasetListPage.showPage();
+                }
+            } catch (Exception ex) {
+                logToConsole("Page name error:" + token + ":" + String.valueOf(ex));
+    			DatasetListPage.showPage();
+            }
 		}
 	}
 
@@ -510,7 +528,8 @@ public class UploadDashboard implements EntryPoint, ValueChangeHandler<String> {
             "<td><input type=\"password\" name=\"j_password\" /></td>" +
           "</tr>" +
           "<tr>" +
-            "<td style=\"text-align:center;\" colspan=\"2\"><input type=\"submit\" onclick=\"completeRelogin()\" value=\"Submit\" /></td>" + // completeRelogin submitAndClosePopup onclick=\"completeRelogin()\" 
+            "<td style=\"text-align:center;\" colspan=\"2\"><input type=\"submit\" class=\"reloginSubmit\"" +
+                " onclick=\"completeRelogin()\" value=\"Submit\" /></td>" + 
           "</tr>" +
         "</table>" +
       "</form>" ;
@@ -706,5 +725,21 @@ public class UploadDashboard implements EntryPoint, ValueChangeHandler<String> {
         singleton.changePasswordPopup.reset();
 		singleton.changePasswordPopup.show(singleton.currentPage.getUsername());
     }
-
-}
+    
+    /**
+     * @param datasetId
+     */
+    public static void showUpdateSubmissionDialog(String username, DashboardDataset dataset) {
+        getSingleton();
+		if ( singleton.dataUpdatePopup == null ) {
+            singleton.dataUpdatePopup = new DataUpdatePopup(singleton.currentPage.getUsername());
+		}
+        singleton.dataUpdatePopup.showPage(dataset);
+    }
+    /**
+     * @param version
+     */
+    public static void setAppBuildVersion(String version) {
+        buildVersion = version;
+    }
+ }

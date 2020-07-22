@@ -44,7 +44,8 @@ public class DashboardAskPopup extends Composite {
     public static enum QuestionType {
         PLAIN("images/blank_1px.gif"),
         QUESTION("images/questionMark_64px.png"),
-        WARNING("images/warning_64px.png");
+        WARNING("images/warning_64px.png"),
+        CRITICAL("images/warning_64px-redblack.png");
         
         private String _iconSrc;
         

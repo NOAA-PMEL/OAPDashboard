@@ -36,7 +36,7 @@ public interface DashboardServicesInterfaceAsync {
 	 * @param callback
 	 * 		the callback to make with the cruise list.
 	 */
-	void getDatasetList(String username, AsyncCallback<DashboardDatasetList> callback);
+	void getDatasetList(String username, AsyncCallback<DashboardServiceResponse<DashboardDatasetList>> callback);
 
 	/**
 	 * Client side request to deletes all files for the indicated cruises.
@@ -343,7 +343,7 @@ public interface DashboardServicesInterfaceAsync {
 			AsyncCallback<Void> callback);
 
 	void submitDatasetsToArchive(String username, List<String> submitDatasetIds, List<String> submitColumnList, 
-	                             String archiveStatus, String localTimestamp, boolean repeatSend, 
+	                             String archiveStatus, boolean repeatSend, 
 	                             String submitComment, boolean requestDOI,
 	                             AsyncCallback<Void> asyncCallback);
     

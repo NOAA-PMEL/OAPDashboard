@@ -1,0 +1,424 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<oads_metadata xmlns="http://ncei.noaa.gov/oads/v_a0_2_2" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" version="a0.2.2" xsi:schemaLocation="http://ncei.noaa.gov/oads/v_a0_2_2 https://www.pmel.noaa.gov/sdig/oap/a0.2.2/oads_metadata_a0.2.2.xsd">
+    <investigators>
+        <investigator>
+            <name>
+                <first>Linus</first>
+                <last>Kamb</last>
+            </name>
+            <organization>alized</organization>
+            <contactInfo>
+                <address>
+                    <deliveryPoint index="1">17414 33rd Ave NE</deliveryPoint>
+                    <deliveryPoint index="2"/>
+                    <city>Lake Forest Park</city>
+                    <administrativeArea>Washington</administrativeArea>
+                    <postalCode>98155</postalCode>
+                    <country>US</country>
+                </address>
+                <email>linus.kamb@gmail.com</email>
+            </contactInfo>
+        </investigator>
+        <investigator>
+            <name>
+                <first>John</first>
+                <middle>R</middle>
+                <last>Boote</last>
+            </name>
+            <organization>ally</organization>
+            <contactInfo>
+                <address>
+                    <deliveryPoint index="1"/>
+                    <deliveryPoint index="2"/>
+                </address>
+                <email>b@oo.te</email>
+            </contactInfo>
+        </investigator>
+        <investigator>
+            <name>
+                <first>John</first>
+                <middle>P</middle>
+                <last>Smoote</last>
+            </name>
+            <contactInfo>
+                <address>
+                    <deliveryPoint index="1"/>
+                    <deliveryPoint index="2"/>
+                </address>
+            </contactInfo>
+        </investigator>
+    </investigators>
+    <temporalExtents>
+        <startDate>2008-02-04</startDate>
+        <endDate>2008-02-15</endDate>
+    </temporalExtents>
+    <spatialExtents>
+        <westernBounds>-124.306</westernBounds>
+        <easternBounds>-122.306</easternBounds>
+        <northernBounds>49.018</northernBounds>
+        <southernBounds>47.165</southernBounds>
+    </spatialExtents>
+    <expocodes>
+        <expocode>PRISM022008BADCASTS</expocode>
+    </expocodes>
+    <cruiseIds/>
+    <sections/>
+    <authors/>
+    <variables>
+        <variable name="DIC umol/kg">
+            <fullName>inorganic_carbon_in_water</fullName>
+            <datasetVarName>DIC umol/kg</datasetVarName>
+            <units>umol/kg</units>
+            <qcFlag/>
+            <researcher/>
+        </variable>
+        <variable name="TA umol/kg">
+            <fullName>total_alkalinity</fullName>
+            <datasetVarName>TA umol/kg</datasetVarName>
+            <units>umol/kg</units>
+            <qcFlag/>
+            <researcher/>
+        </variable>
+        <variable name="pH">
+            <fullName>pH_water</fullName>
+            <datasetVarName>pH</datasetVarName>
+            <qcFlag/>
+            <researcher/>
+        </variable>
+        <variable name="record no">
+            <fullName>other</fullName>
+            <datasetVarName>record no</datasetVarName>
+            <qcFlag/>
+            <researcher/>
+        </variable>
+        <variable name="cruise">
+            <fullName>cruise_name</fullName>
+            <datasetVarName>cruise</datasetVarName>
+            <qcFlag/>
+            <researcher/>
+        </variable>
+        <variable name="Date">
+            <fullName>date</fullName>
+            <datasetVarName>Date</datasetVarName>
+            <units>mm-dd-yy</units>
+            <qcFlag/>
+            <researcher/>
+        </variable>
+        <variable name="Time">
+            <fullName>time_of_day</fullName>
+            <datasetVarName>Time</datasetVarName>
+            <units>hh:mm:ss</units>
+            <qcFlag/>
+            <researcher/>
+        </variable>
+        <variable name="Matlab Datenum">
+            <fullName>other</fullName>
+            <datasetVarName>Matlab Datenum</datasetVarName>
+            <qcFlag/>
+            <researcher/>
+        </variable>
+        <variable name="Longitude">
+            <fullName>longitude</fullName>
+            <datasetVarName>Longitude</datasetVarName>
+            <units>deg E</units>
+            <qcFlag/>
+            <researcher/>
+        </variable>
+        <variable name="Latitude">
+            <fullName>latitude</fullName>
+            <datasetVarName>Latitude</datasetVarName>
+            <units>deg N</units>
+            <qcFlag/>
+            <researcher/>
+        </variable>
+        <variable name="STATION">
+            <fullName>station</fullName>
+            <datasetVarName>STATION</datasetVarName>
+            <qcFlag/>
+            <researcher/>
+        </variable>
+        <variable name="NISKIN">
+            <fullName>niskin</fullName>
+            <datasetVarName>NISKIN</datasetVarName>
+            <qcFlag/>
+            <researcher/>
+        </variable>
+        <variable name="stn_niskin">
+            <fullName>sample ID</fullName>
+            <datasetVarName>stn_niskin</datasetVarName>
+            <qcFlag/>
+            <researcher/>
+        </variable>
+        <variable name="PRESS (DB)">
+            <fullName>water_pressure</fullName>
+            <datasetVarName>PRESS (DB)</datasetVarName>
+            <units>decibars</units>
+            <qcFlag/>
+            <researcher/>
+        </variable>
+        <variable name="DEPTH (M)">
+            <fullName>sample_depth</fullName>
+            <datasetVarName>DEPTH (M)</datasetVarName>
+            <units>meters</units>
+            <qcFlag/>
+            <researcher/>
+        </variable>
+        <variable name="CTD TMP (deg C)">
+            <fullName>water_temperature</fullName>
+            <datasetVarName>CTD TMP (deg C)</datasetVarName>
+            <units>degrees C</units>
+            <qcFlag/>
+            <researcher/>
+        </variable>
+        <variable name="CTD SAL (psu, PSS-78)">
+            <fullName>water_salinity</fullName>
+            <datasetVarName>CTD SAL (psu, PSS-78)</datasetVarName>
+            <units>PSU</units>
+            <qcFlag/>
+            <researcher/>
+        </variable>
+        <variable name="CTD DEN (kg/m3)">
+            <fullName>water_density</fullName>
+            <datasetVarName>CTD DEN (kg/m3)</datasetVarName>
+            <units>kg/m3</units>
+            <qcFlag/>
+            <researcher/>
+        </variable>
+        <variable name="CTD OXY (ml/l)">
+            <fullName>other</fullName>
+            <datasetVarName>CTD OXY (ml/l)</datasetVarName>
+            <qcFlag/>
+            <researcher/>
+        </variable>
+        <variable name="CTD OXY (umol/kg)">
+            <fullName>other</fullName>
+            <datasetVarName>CTD OXY (umol/kg)</datasetVarName>
+            <qcFlag/>
+            <researcher/>
+        </variable>
+        <variable name="CTD OXY (mg/l)">
+            <fullName>oxygen_in_water</fullName>
+            <datasetVarName>CTD OXY (mg/l)</datasetVarName>
+            <units>mg/L</units>
+            <qcFlag/>
+            <researcher/>
+        </variable>
+        <variable name="CTD OXY flag">
+            <fullName>QC_flag</fullName>
+            <datasetVarName>CTD OXY flag</datasetVarName>
+            <qcFlag/>
+            <researcher/>
+        </variable>
+        <variable name="BOT OXY (umol/kg)">
+            <fullName>oxygen_in_water</fullName>
+            <datasetVarName>BOT OXY (umol/kg)</datasetVarName>
+            <units>umol/kg</units>
+            <qcFlag/>
+            <researcher/>
+        </variable>
+        <variable name="BOT OXY (mg/l)">
+            <fullName>other</fullName>
+            <datasetVarName>BOT OXY (mg/l)</datasetVarName>
+            <qcFlag/>
+            <researcher/>
+        </variable>
+        <variable name="BOT OXY flag">
+            <fullName>QC_flag</fullName>
+            <datasetVarName>BOT OXY flag</datasetVarName>
+            <qcFlag/>
+            <researcher/>
+        </variable>
+        <variable name="BOT OXY comment">
+            <fullName>other</fullName>
+            <datasetVarName>BOT OXY comment</datasetVarName>
+            <qcFlag/>
+            <researcher/>
+        </variable>
+        <variable name="CTD OXY (CORR TO BOT OXY) (umol/kg)">
+            <fullName>other</fullName>
+            <datasetVarName>CTD OXY (CORR TO BOT OXY) (umol/kg)</datasetVarName>
+            <qcFlag/>
+            <researcher/>
+        </variable>
+        <variable name="CTD OXY (CORR TO BOT OXY) (mg/l)">
+            <fullName>other</fullName>
+            <datasetVarName>CTD OXY (CORR TO BOT OXY) (mg/l)</datasetVarName>
+            <qcFlag/>
+            <researcher/>
+        </variable>
+        <variable name="NO3 (umol/kg)">
+            <fullName>nitrate_in_water</fullName>
+            <datasetVarName>NO3 (umol/kg)</datasetVarName>
+            <units>umol/kg</units>
+            <qcFlag/>
+            <researcher/>
+        </variable>
+        <variable name="NO2 (umol/kg)">
+            <fullName>nitrate_in_water</fullName>
+            <datasetVarName>NO2 (umol/kg)</datasetVarName>
+            <units>umol/kg</units>
+            <qcFlag/>
+            <researcher/>
+        </variable>
+        <variable name="NH4 (umol/kg)">
+            <fullName>ammonia_in_water</fullName>
+            <datasetVarName>NH4 (umol/kg)</datasetVarName>
+            <units>umol/kg</units>
+            <qcFlag/>
+            <researcher/>
+        </variable>
+        <variable name="PO4 (umol/kg)">
+            <fullName>phosphate_in_water</fullName>
+            <datasetVarName>PO4 (umol/kg)</datasetVarName>
+            <units>umol/kg</units>
+            <qcFlag/>
+            <researcher/>
+        </variable>
+        <variable name="Si(OH)4 (umol/kg)">
+            <fullName>silicate_in_water</fullName>
+            <datasetVarName>Si(OH)4 (umol/kg)</datasetVarName>
+            <units>umol/kg</units>
+            <qcFlag/>
+            <researcher/>
+        </variable>
+        <variable name="CTD FLU (mg/m3)">
+            <fullName>other</fullName>
+            <datasetVarName>CTD FLU (mg/m3)</datasetVarName>
+            <qcFlag/>
+            <researcher/>
+        </variable>
+        <variable name="CHLA (mg/l)">
+            <fullName>chlorophyll</fullName>
+            <datasetVarName>CHLA (mg/l)</datasetVarName>
+            <units>mg/m3</units>
+            <qcFlag/>
+            <researcher/>
+        </variable>
+        <variable name="PHAEO (mg/l)">
+            <fullName>other</fullName>
+            <datasetVarName>PHAEO (mg/l)</datasetVarName>
+            <qcFlag/>
+            <researcher/>
+        </variable>
+        <variable name="PO4 for calcs  (umol/kg)">
+            <fullName>other</fullName>
+            <datasetVarName>PO4 for calcs  (umol/kg)</datasetVarName>
+            <qcFlag/>
+            <researcher/>
+        </variable>
+        <variable name="Si(OH)4 for calcs (umol/kg)">
+            <fullName>other</fullName>
+            <datasetVarName>Si(OH)4 for calcs (umol/kg)</datasetVarName>
+            <qcFlag/>
+            <researcher/>
+        </variable>
+        <variable name="TA QC">
+            <fullName>QC_flag</fullName>
+            <datasetVarName>TA QC</datasetVarName>
+            <qcFlag/>
+            <researcher/>
+        </variable>
+        <variable name="DIC QC">
+            <fullName>QC_flag</fullName>
+            <datasetVarName>DIC QC</datasetVarName>
+            <qcFlag/>
+            <researcher/>
+        </variable>
+        <variable name="DIC/TA comments">
+            <fullName>other</fullName>
+            <datasetVarName>DIC/TA comments</datasetVarName>
+            <qcFlag/>
+            <researcher/>
+        </variable>
+        <variable name="pCO2 (uatm)">
+            <fullName>other</fullName>
+            <datasetVarName>pCO2 (uatm)</datasetVarName>
+            <qcFlag/>
+            <researcher/>
+        </variable>
+        <variable name="CO2 (umol/kg)">
+            <fullName>other</fullName>
+            <datasetVarName>CO2 (umol/kg)</datasetVarName>
+            <qcFlag/>
+            <researcher/>
+        </variable>
+        <variable name="HCO3- (umol/kg)">
+            <fullName>other</fullName>
+            <datasetVarName>HCO3- (umol/kg)</datasetVarName>
+            <qcFlag/>
+            <researcher/>
+        </variable>
+        <variable name="CO3-- (umol/kg)">
+            <fullName>other</fullName>
+            <datasetVarName>CO3-- (umol/kg)</datasetVarName>
+            <qcFlag/>
+            <researcher/>
+        </variable>
+        <variable name="Omega Ca">
+            <fullName>other</fullName>
+            <datasetVarName>Omega Ca</datasetVarName>
+            <qcFlag/>
+            <researcher/>
+        </variable>
+        <variable name="Omega Ar">
+            <fullName>other</fullName>
+            <datasetVarName>Omega Ar</datasetVarName>
+            <qcFlag/>
+            <researcher/>
+        </variable>
+        <variable name="Revelle factor">
+            <fullName>other</fullName>
+            <datasetVarName>Revelle factor</datasetVarName>
+            <qcFlag/>
+            <researcher/>
+        </variable>
+        <variable name="in-situ density of seawater (kg/m3)">
+            <fullName>other</fullName>
+            <datasetVarName>in-situ density of seawater (kg/m3)</datasetVarName>
+            <qcFlag/>
+            <researcher/>
+        </variable>
+        <variable name="comments">
+            <fullName>other</fullName>
+            <datasetVarName>comments</datasetVarName>
+            <qcFlag/>
+            <researcher/>
+        </variable>
+        <variable name="CTD Pot Temp (deg C)">
+            <fullName>other</fullName>
+            <datasetVarName>CTD Pot Temp (deg C)</datasetVarName>
+            <qcFlag/>
+            <researcher/>
+        </variable>
+        <variable name="CTD sigma-theta +1000 (kg/m3)">
+            <fullName>other</fullName>
+            <datasetVarName>CTD sigma-theta +1000 (kg/m3)</datasetVarName>
+            <qcFlag/>
+            <researcher/>
+        </variable>
+        <variable name="CTD in situ density (kg/m3)">
+            <fullName>other</fullName>
+            <datasetVarName>CTD in situ density (kg/m3)</datasetVarName>
+            <qcFlag/>
+            <researcher/>
+        </variable>
+        <variable name="OA sample bottle">
+            <fullName>other</fullName>
+            <datasetVarName>OA sample bottle</datasetVarName>
+            <qcFlag/>
+            <researcher/>
+        </variable>
+        <variable name="sample num">
+            <fullName>sample num</fullName>
+            <datasetVarName>sample num</datasetVarName>
+            <qcFlag/>
+            <researcher/>
+        </variable>
+        <variable name="WOCE autocheck">
+            <fullName>WOCE_flag</fullName>
+            <datasetVarName>WOCE autocheck</datasetVarName>
+            <qcFlag/>
+            <researcher/>
+        </variable>
+    </variables>
+</oads_metadata>

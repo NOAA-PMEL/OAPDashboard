@@ -18,17 +18,14 @@ import com.google.gwt.event.dom.client.DoubleClickHandler;
 import com.google.gwt.i18n.client.TimeZone;
 import com.google.gwt.i18n.shared.DateTimeFormat;
 import com.google.gwt.logging.client.ConsoleLogHandler;
-import com.google.gwt.safehtml.shared.SafeHtmlUtils;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.uibinder.client.UiHandler;
-import com.google.gwt.user.client.History;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.google.gwt.user.client.ui.Button;
 import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.HTML;
 import com.google.gwt.user.client.ui.Image;
-import com.google.gwt.user.client.ui.InlineLabel;
 import com.google.gwt.user.client.ui.TabLayoutPanel;
 import com.google.gwt.user.client.ui.Widget;
 
@@ -117,6 +114,7 @@ public class DatasetPreviewPage extends CompositeWithUsername {
 	private static DatasetPreviewPage singleton;
 
 	public DatasetPreviewPage() {
+        super(PagesEnum.PREVIEW_DATASET.name());
 		initWidget(uiBinder.createAndBindUi(this));
 		
 		logger.addHandler(new ConsoleLogHandler());
@@ -194,7 +192,6 @@ public class DatasetPreviewPage extends CompositeWithUsername {
 		singleton.updatePreviewPlots(dataset,
 									 cruiseList.getUsername(), false);
 		UploadDashboard.updateCurrentPage(singleton);
-		History.newItem(PagesEnum.PREVIEW_DATASET.name(), false);
 	}
 
 	/**

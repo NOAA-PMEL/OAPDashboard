@@ -129,7 +129,7 @@ public class TrajectoryDsgFile extends DsgNcFile {
 				DashDataType<?> dtype = entry.getKey();
 				varName = dtype.getVarName();
 				Object value = entry.getValue();
-				if ( DashboardUtils.isNullOrNull(value)) { 
+				if ( DashboardUtils.isEmptyNullOrNull(value)) { 
                     System.out.println("Null value for metadata type " + varName);
                     logger.info("Null value for metadata type " + varName);
 				    continue; 

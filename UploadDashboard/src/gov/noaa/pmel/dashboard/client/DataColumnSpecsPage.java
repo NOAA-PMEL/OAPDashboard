@@ -5,8 +5,10 @@ package gov.noaa.pmel.dashboard.client;
 
 import java.text.ParseException;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
@@ -31,7 +33,6 @@ import com.google.gwt.uibinder.client.UiHandler;
 import com.google.gwt.user.cellview.client.DataGrid;
 import com.google.gwt.user.cellview.client.RowStyles;
 import com.google.gwt.user.cellview.client.SimplePager;
-import com.google.gwt.user.client.History;
 import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.google.gwt.user.client.ui.Button;
@@ -44,16 +45,19 @@ import com.google.gwt.view.client.ProvidesKey;
 import com.google.gwt.view.client.Range;
 import com.google.gwt.view.client.SingleSelectionModel;
 
+import gov.noaa.pmel.dashboard.client.DashboardAskPopup.QuestionType;
 import gov.noaa.pmel.dashboard.client.UploadDashboard.PagesEnum;
 import gov.noaa.pmel.dashboard.shared.ADCMessage;
 import gov.noaa.pmel.dashboard.shared.ADCMessageList;
 import gov.noaa.pmel.dashboard.shared.DashboardDataset;
 import gov.noaa.pmel.dashboard.shared.DashboardDatasetData;
+import gov.noaa.pmel.dashboard.shared.DashboardDatasetList;
 import gov.noaa.pmel.dashboard.shared.DashboardServicesInterface;
 import gov.noaa.pmel.dashboard.shared.DashboardServicesInterfaceAsync;
 import gov.noaa.pmel.dashboard.shared.DashboardUtils;
 import gov.noaa.pmel.dashboard.shared.DataColumnType;
 import gov.noaa.pmel.dashboard.shared.QCFlag;
+import gov.noaa.pmel.dashboard.shared.QCFlag.Severity;
 import gov.noaa.pmel.dashboard.shared.TypesDatasetDataPair;
 
 /**
@@ -237,6 +241,7 @@ public class DataColumnSpecsPage extends CompositeWithUsername {
 	 * cruise when populated.
 	 */
 	DataColumnSpecsPage() {
+        super(PagesEnum.IDENTIFY_COLUMNS.name());
 		initWidget(uiBinder.createAndBindUi(this));
 		singleton = this;
         
@@ -320,7 +325,7 @@ public class DataColumnSpecsPage extends CompositeWithUsername {
 						if ( actualStart < 0 )
 							actualStart = range.getStart();
 						updateRowData(actualStart, newData);
-						updateScroll();
+						updateScroll(true);
 						UploadDashboard.showAutoCursor();
 					}
 					@Override
@@ -396,29 +401,40 @@ public class DataColumnSpecsPage extends CompositeWithUsername {
 	Integer scrollToRow = null;
 	Integer scrollToCol = null;
 	
-	private void updateScroll() {
+	private void updateScroll(boolean pageChanged) {
+        int rowAdjustment = pageChanged ? 4 : 0;
+        int colAdjustment = -2;
+        int rowIdx = 0;
+        int colIdx = 0;
 	    try {
 			if ( scrollToRow != null ) {
-				int rowIdx = scrollToRow != null ? scrollToRow.intValue() : 0;
-				int colIdx = scrollToCol != null ? scrollToCol.intValue() : 0;
+				rowIdx = scrollToRow != null ? scrollToRow.intValue() + rowAdjustment : 0;
+				colIdx = scrollToCol != null ? scrollToCol.intValue() : 0;
+                if ( colIdx >= 3 ) {
+                    colIdx += colAdjustment;
+                }
                 // TODO: Adjust row and column indexes to put row&cell +/- center
                 UploadDashboard.logToConsole("scrollRow:" + scrollToRow + ", scrollCol:"+ scrollToCol);
                 UploadDashboard.logToConsole("currentPage:"+ gridPager.getPage() + ", start: " + gridPager.getPageStart() + ", size: "+ gridPager.getPageSize());
                 Range range = dataGrid.getVisibleRange();
                 int start = range.getStart();
+                rowIdx = rowIdx - start;
                 UploadDashboard.logToConsole("Range start: "+ range.getStart() + ", length:" + range.getLength());
-//                List<E> visibleItems = dataGrid.getVisibleItemCount();
 				TableRowElement row;
-                int getRow = rowIdx-start;
-                UploadDashboard.logToConsole("getRow:"+getRow);
-                row = dataGrid.getRowElement(getRow);
+                row = dataGrid.getRowElement(rowIdx);
                 if ( row != null ) {
+                    colIdx = Math.min(colIdx, row.getCells().getLength()-1);
+                    UploadDashboard.logToConsole("getRow:col:"+rowIdx + ":"+ colIdx);
     				TableCellElement cell = row.getCells().getItem(colIdx);
     				cell.scrollIntoView();
                 } else {
-                    UploadDashboard.logToConsole("Failed to get row " + rowIdx + " as " + getRow);
+                    UploadDashboard.logToConsole("Failed to get row " + rowIdx );
                 }
 			}
+	    } catch (Exception ex) {
+            UploadDashboard.logToConsole(String.valueOf(ex));
+            String msg = "page:"+gridPager.getPage() + ", rowIdx:"+rowIdx + ", showRow:"+ scrollToRow + ", colIdx: " + colIdx + " : " + ex;
+            UploadDashboard.logToConsole(msg);
 	    } finally {
 			scrollToRow = null;
 			scrollToCol = null;
@@ -441,21 +457,26 @@ public class DataColumnSpecsPage extends CompositeWithUsername {
 	 * @param dataset
 	 * 		show the specifications for this cruise
 	 */
-	static void showPage(String username, ArrayList<String> expocodes) {
+	static void showPage(String username, DashboardDatasetList cruises) {
+        showPage(username, cruises.values());
+	}
+	static void showPage(String username, Collection<DashboardDataset> cruises) {
+        if ( cruises.size() < 1 ) {
+            throw new IllegalStateException("No datasets specified for Data Column Identification.");
+        }
 		if ( singleton == null )
 			singleton = new DataColumnSpecsPage();
 
 		singleton.setUsername(username);
-        singleton.setDatasetIds(expocodes);
+        singleton.setDatasetIds(cruises);
 		UploadDashboard.showWaitCursor();
-		service.getDataColumnSpecs(singleton.getUsername(), expocodes.get(0), 
+		service.getDataColumnSpecs(singleton.getUsername(), cruises.iterator().next().getDatasetId(), 
 								new OAPAsyncCallback<TypesDatasetDataPair>() {
 			@Override
 			public void onSuccess(TypesDatasetDataPair cruiseSpecs) {
 				if ( cruiseSpecs != null ) {
 					UploadDashboard.updateCurrentPage(singleton);
 					singleton.updateCruiseSpecs(cruiseSpecs);
-					History.newItem(PagesEnum.IDENTIFY_COLUMNS.name(), false);
 				}
 				else {
 					UploadDashboard.showMessage(GET_COLUMN_SPECS_FAIL_MSG + 
@@ -463,6 +484,7 @@ public class DataColumnSpecsPage extends CompositeWithUsername {
 				}
 				UploadDashboard.showAutoCursor();
 			}
+            
 			@Override
 			public void customFailure(Throwable ex) {
 				String exMsg = ex.getMessage();
@@ -479,10 +501,16 @@ public class DataColumnSpecsPage extends CompositeWithUsername {
 	/**
      * @param expocodes2
      */
-    private void setDatasetIds(ArrayList<String> datasetIds) {
+    private void setDatasetIds(Collection<DashboardDataset> datasets) {
 		expocodes.clear();
-		expocodes.addAll(expocodes);
-        header.addDatasetIds(datasetIds);
+        List<String>datasetIds = new ArrayList<>(datasets.size());
+        List<String>names = new ArrayList<>(datasets.size());
+        for (DashboardDataset dd : datasets) {
+            datasetIds.add(dd.getRecordId());
+            names.add(dd.getUserDatasetName());
+        }
+		expocodes.addAll(datasetIds);
+        header.addDatasetIds(names);
     }
 
     protected void updateCruiseSpecs(TypesDatasetDataPair cruiseSpecs) {
@@ -517,7 +545,6 @@ public class DataColumnSpecsPage extends CompositeWithUsername {
 		}
 		else {
 			UploadDashboard.updateCurrentPage(singleton);
-			History.newItem(PagesEnum.IDENTIFY_COLUMNS.name(), false);
 			singleton.setView(rowNumber, columnNumber);
 		}
 	}
@@ -528,8 +555,8 @@ public class DataColumnSpecsPage extends CompositeWithUsername {
 		int showRowIdx = rowNumber == null || rowNumber.equals(DashboardUtils.INT_MISSING_VALUE) ? 
 								0 : rowNumber.intValue() - 1;
         UploadDashboard.logToConsole("colIdx:"+showColumnIdx +", rowIdx:"+ showRowIdx);
-		int pageSize = gridPager.getPageSize();
 		int nPages = gridPager.getPageCount();
+		int pageSize = gridPager.getPageSize();
 		int showPage = showRowIdx / pageSize;
 		int pageRow = showRowIdx > pageSize ? showRowIdx % pageSize : showRowIdx;
 		int pageMaxIdx = pageSize - 1;
@@ -537,29 +564,24 @@ public class DataColumnSpecsPage extends CompositeWithUsername {
 			int totalRows = dataGrid.getRowCount();
 			pageMaxIdx = ( totalRows % pageSize ) - 1;
 		}
-//		if ( pageRow > 6 ) {
-//			pageRow = Math.min(pageRow+4, pageMaxIdx);
-//		}
+		pageRow = Math.min(pageRow, pageMaxIdx);
         pageRow = pageRow + ( pageSize * showPage );
-		if ( showColumnIdx > 5 ) {
-			showColumnIdx = showColumnIdx-2;
-		}
+//        int nCols = dataGrid.getRowElement(0).getCells().getLength();
 		scrollToRow = new Integer(pageRow);
 		scrollToCol = new Integer(showColumnIdx);
 		int cPage = gridPager.getPage();
 		if ( cPage != showPage ) {
             UploadDashboard.logToConsole("Set page from " + cPage + " to " + showPage);
-			gridPager.setPage(showPage);
-//            RangeChangeEvent.fire(dataGrid, dataGrid.getVisibleRange());
+			gridPager.setPage(showPage); // scroll will happen (if necessary) on page data load
 		} 
 		else {
-		try {
-			updateScroll();
-		} catch (Exception ex) {
-            UploadDashboard.logToConsole(String.valueOf(ex));
-            String msg = "page:"+gridPager.getPage() + ", rowIdx:"+showRowIdx + ", showRow:"+ pageRow + ", colIdx: " + showColumnIdx + " : " + ex;
-            UploadDashboard.logToConsole(msg);
-		}
+    		try {
+    			updateScroll(false);
+    		} catch (Exception ex) {
+                UploadDashboard.logToConsole(String.valueOf(ex));
+                String msg = "page:"+gridPager.getPage() + ", rowIdx:"+showRowIdx + ", showRow:"+ pageRow + ", colIdx: " + showColumnIdx + " : " + ex;
+                UploadDashboard.logToConsole(msg);
+    		}
 		}
 		
 		
@@ -583,8 +605,7 @@ public class DataColumnSpecsPage extends CompositeWithUsername {
 		header.userInfoLabel.setText(WELCOME_INTRO + getUsername());
 
 		String status = cruiseSpecs.getDataCheckStatus();
-		if ( status.equals(DashboardUtils.CHECK_STATUS_NOT_CHECKED) ||
-			 status.equals(DashboardUtils.CHECK_STATUS_UNACCEPTABLE) ) {
+		if ( status.equals(DashboardUtils.CHECK_STATUS_NOT_CHECKED)) {
 			cruiseNeverChecked = true;
 			messagesLabel.setText(NOT_CHECKED_MSG);
 		}
@@ -619,8 +640,11 @@ public class DataColumnSpecsPage extends CompositeWithUsername {
 			saveButton.setTitle(DISABLED_SUBMIT_HOVER_HELP);
 		}
 
+        String recordId = cruiseSpecs.getRecordId();
+        
 		// Clear the dataset in case the data provider gets called while clearing
-		cruise.setDatasetId(null);
+        cruiseSpecs.setRecordId(null);
+		cruise.setRecordId(null);
 
 		// Delete any existing columns and headers
 		int k = dataGrid.getColumnCount();
@@ -631,6 +655,10 @@ public class DataColumnSpecsPage extends CompositeWithUsername {
 		// Clear the list of DatasetDataColumns
 		cruiseDataCols.clear();
 
+        cruise = cruiseSpecs;
+        
+        // --- from here
+        /*
 		// Assign the new cruise information needed by this page
 		cruise.setNumDataRows(cruiseSpecs.getNumDataRows());
 		cruise.setUserColNames(cruiseSpecs.getUserColNames());
@@ -649,6 +677,8 @@ public class DataColumnSpecsPage extends CompositeWithUsername {
 		cruise.setSubmitStatus(cruiseSpecs.getSubmitStatus());
 		cruise.setArchiveStatus(cruiseSpecs.getArchiveStatus());
 		cruise.setDatasetId(cruiseSpecs.getDatasetId());
+        */
+        cruiseSpecs.setRecordId(recordId);
 
 //		introHtml.setHTML(INTRO_HTML_PROLOGUE +  
 //				SafeHtmlUtils.htmlEscape(cruise.getDatasetId()) + 
@@ -756,6 +786,14 @@ public class DataColumnSpecsPage extends CompositeWithUsername {
 
 	@UiHandler("doneButton")
 	void doneOnClick(ClickEvent event) {
+        UploadDashboard.pingService(new OAPAsyncCallback<Void>() {
+            @Override
+            public void onSuccess(Void nothing) {
+                _doneOnClick(event);
+            }
+        });
+	}
+	void _doneOnClick(ClickEvent event) {
 		// Check if any changes have been made
 		boolean hasChanged = false;
 		for ( DatasetDataColumn dataCol : cruiseDataCols ) {
@@ -841,7 +879,7 @@ public class DataColumnSpecsPage extends CompositeWithUsername {
 
 	@UiHandler("messagesButton") 
 	void showMessagesOnClick(ClickEvent event) {
-		DataMessagesPage.showPage(getUsername(), cruise.getDatasetId());
+		DataMessagesPage.showPage(getUsername(), cruise.getRecordId(), cruise.getUserDatasetName());
 	}
 
 	@UiHandler("submitButton")
@@ -851,6 +889,14 @@ public class DataColumnSpecsPage extends CompositeWithUsername {
 			UploadDashboard.showMessage(DISABLED_SUBMIT_HOVER_HELP);
 			return;
 		}
+        UploadDashboard.pingService(new OAPAsyncCallback<Void>() {
+            @Override
+            public void onSuccess(Void nothing) {
+                _submitOnClick(event);
+            }
+        });
+	}
+	void _submitOnClick(ClickEvent event) {
         
 		// longitude given?
 		boolean hasLongitude = false;
@@ -1016,7 +1062,7 @@ public class DataColumnSpecsPage extends CompositeWithUsername {
 //			errMsg += UNKNOWN_COLUMN_TYPE_EPILOGUE;
 //            UploadDashboard.showMessage(errMsg);
 //			return;
-			UploadDashboard.theresAproblem("There are data columns of unknown type. Continue anyways?", "Continue", "Cancel", new AsyncCallback<Boolean>() {
+			UploadDashboard.theresAproblem("There are data columns of unknown type. Continue anyway?", "Continue", "Cancel", new AsyncCallback<Boolean>() {
                 @Override
                 public void onFailure(Throwable arg0) {
                     // Doesn't happen
@@ -1065,7 +1111,7 @@ public class DataColumnSpecsPage extends CompositeWithUsername {
 			@Override
 			public void onSuccess(TypesDatasetDataPair tddp) {
 				if ( tddp == null ) {
-					UploadDashboard.showMessage(SUBMIT_FAIL_MSG + " (unexpected null cruise information returned)");
+					UploadDashboard.showMessage(SUBMIT_FAIL_MSG + " (unexpected null response returned)");
 					UploadDashboard.showAutoCursor();
 					return;
 				}
@@ -1080,7 +1126,21 @@ public class DataColumnSpecsPage extends CompositeWithUsername {
 				if ( status.equals(DashboardUtils.CHECK_STATUS_NOT_CHECKED) ||
 					 status.equals(DashboardUtils.CHECK_STATUS_UNACCEPTABLE) ) {
 					// the sanity checker had serious problems
-					UploadDashboard.showMessage(SANITY_CHECK_FAIL_MSG);
+					UploadDashboard.theresAproblem(QuestionType.CRITICAL, 
+					                               buildFailureMessage(SANITY_CHECK_FAIL_MSG, ddd), 
+					                               "Show Errors / Warnings", "Dismiss", 
+					                               new AsyncCallback<Boolean>() {
+                        @Override
+                        public void onFailure(Throwable arg0) {
+                            ; // Doesn't happen
+                        }
+                        @Override
+                        public void onSuccess(Boolean showErrors) {
+                            if ( showErrors.booleanValue()) {
+                                DataMessagesPage.showPage(getUsername(), cruise.getRecordId(), cruise.getUserDatasetName());
+                            }
+                        }
+                    });
 				}
 				else if ( status.startsWith(DashboardUtils.CHECK_STATUS_ERRORS_PREFIX) ) {
 					// errors issued
@@ -1093,7 +1153,7 @@ public class DataColumnSpecsPage extends CompositeWithUsername {
                                 @Override
                                 public void onSuccess(Boolean showErrors) {
                                     if ( showErrors.booleanValue()) {
-                                        DataMessagesPage.showPage(getUsername(), cruise.getDatasetId());
+                                        DataMessagesPage.showPage(getUsername(), cruise.getRecordId(), cruise.getUserDatasetName());
                                     }
                                 }
                         });
@@ -1109,7 +1169,7 @@ public class DataColumnSpecsPage extends CompositeWithUsername {
                                 @Override
                                 public void onSuccess(Boolean showErrors) {
                                     if ( showErrors.booleanValue()) {
-                                        DataMessagesPage.showPage(getUsername(), cruise.getDatasetId());
+                                        DataMessagesPage.showPage(getUsername(), cruise.getRecordId(), cruise.getUserDatasetName());
                                     }
                                 }
                         });
@@ -1123,7 +1183,7 @@ public class DataColumnSpecsPage extends CompositeWithUsername {
 				// Show the normal cursor
 				UploadDashboard.showAutoCursor();
 			}
-			@Override
+            @Override
 			public void customFailure(Throwable ex) {
 				UploadDashboard.showFailureMessage(SUBMIT_FAIL_MSG, ex);
 				// Show the normal cursor
@@ -1131,10 +1191,63 @@ public class DataColumnSpecsPage extends CompositeWithUsername {
 			}
 		});
 	}
-
-	@UiHandler("saveButton")
-	void saveOnClick(ClickEvent event) {
-		if ( ! Boolean.TRUE.equals(cruise.isEditable()) ) {
+    private static final int MAX_ERROR_LINES = 5;
+	private String buildFailureMessage(String sanityCheckFailMsg, DashboardDatasetData ddd) {
+        StringBuilder sb = new StringBuilder(sanityCheckFailMsg);
+        int maxLines = MAX_ERROR_LINES;
+        int more = 0;
+        sb.append("<ul>");
+        for (QCFlag qf : ddd.getCheckerFlags()) {
+            if ( qf.getSeverity() == Severity.CRITICAL ) {
+                if ( maxLines > 0 ) {
+                    addMessageLine(sb, qf);
+                    maxLines -= 1;
+                } else {
+                    more += 1;
+                }
+            }
+        }
+        if ( maxLines <= MAX_ERROR_LINES ) {
+            for (QCFlag qf : ddd.getCheckerFlags()) {
+                if ( qf.getSeverity() == Severity.ERROR ) {
+                    if ( maxLines > 0 ) {
+                        addMessageLine(sb, qf);
+                        maxLines -= 1;
+                    } else {
+                        more += 1;
+                    }
+                }
+            }
+        }
+        if ( more > 0 ) {
+            sb.append("<li>Plus ").append(more).append(" additional error")
+              .append(more > 1 ? "s" : "").append(".");
+        }
+        sb.append("</ul>");
+        return sb.toString();
+    }
+    private static void addMessageLine(StringBuilder sb, QCFlag qf) {
+        String comma = "";
+        sb.append("<li>").append(qf.getSeverity().name()).append(": ")
+          .append(qf.getComment());
+        Integer row = qf.getRowIndex() != null ? qf.getRowIndex() : DashboardUtils.INT_MISSING_VALUE;
+        Integer col = qf.getColumnIndex() != null ? qf.getColumnIndex() : DashboardUtils.INT_MISSING_VALUE;
+        if ( ! row.equals(DashboardUtils.INT_MISSING_VALUE) || 
+            ! col.equals(DashboardUtils.INT_MISSING_VALUE)) {
+           sb.append(" at ");
+           if ( ! row.equals(DashboardUtils.INT_MISSING_VALUE)) {
+               sb.append("row: ").append(row.intValue()+1);
+               comma = ", ";
+           }
+           if ( ! col.equals(DashboardUtils.INT_MISSING_VALUE)) {
+               sb.append(comma).append("col: ").append(col);
+           }
+        }
+    }
+    
+    @UiHandler("saveButton")
+    void saveOnClick(ClickEvent event) {
+    		if ( ! Boolean.TRUE.equals(cruise.isEditable()) ) {
 			// Should never get here, but just in case
 			UploadDashboard.showMessage(DISABLED_SUBMIT_HOVER_HELP);
 			return;
@@ -1147,7 +1260,12 @@ public class DataColumnSpecsPage extends CompositeWithUsername {
 			}
 		}
 		if ( hasChanged ) {
-			doSave();
+            UploadDashboard.pingService(new OAPAsyncCallback<Void>() {
+                @Override
+                public void onSuccess(Void nothing) {
+        			doSave();
+                }
+            });
 		} else {
 			UploadDashboard.showMessage("There have been no changes to data column definitions.");
 		}
@@ -1180,102 +1298,4 @@ public class DataColumnSpecsPage extends CompositeWithUsername {
 		});
 		
 	}
-
-//	/**
-//	 * TextColumn for displaying the value at a given index 
-//	 * of an ArrayList of Strings 
-//	 */
-//	private class ArrayListTextColumn extends TextColumn<ArrayList<String>> {
-//		private int colNum;
-//		/**
-//		 * Creates a TextColumn for an ArrayList of Strings that 
-//		 * displays the value at the given index in the ArrayList.
-//		 * @param colNum
-//		 * 		display data at this index of the ArrayList
-//		 */
-//		ArrayListTextColumn(int colNum) {
-//			super();
-//			this.colNum = colNum;
-//		}
-//		@Override
-//		public String getValue(ArrayList<String> dataRow) {
-//			if ( (dataRow != null) && (0 <= colNum) && (colNum < dataRow.size()) )
-//				return dataRow.get(colNum);
-//			return "";
-//		}
-//		private void closeTitle(SafeHtmlBuilder sb) {
-//			sb.appendHtmlConstant("</div>");
-//		}
-//		@Override
-//		public void render(Cell.Context ctx, ArrayList<String> obj, SafeHtmlBuilder sb) {
-//			Integer rowIdx = ctx.getIndex();
-//			ADCMessage msg = rowMsgMap.get(rowIdx);
-//			boolean addedTitle = false;
-//			if ( msg != null ) {
-//				sb.appendHtmlConstant("<div title=\"" + msg.getDetailedComment() + "\">");
-//				addedTitle = true;
-//			}
-//			if ( colNum == 0 ) {
-//				sb.appendHtmlConstant("<div style=\"color:" + 
-//						UploadDashboard.ROW_NUMBER_COLOR + ";text-align:right\">");
-//				sb.appendEscaped(getValue(obj));
-//				sb.appendHtmlConstant("</div>");
-//				if ( addedTitle ) closeTitle(sb);
-//				return;
-//			}
-//			TreeSet<QCFlag> checkerFlags = cruise.getCheckerFlags();
-//			QCFlag woceCell = new QCFlag(null, null, Severity.ERROR, colNum-1, rowIdx);
-//			QCFlag woceRow = new QCFlag(null, null, Severity.ERROR, null, rowIdx);
-//			QCFlag woceCol = new QCFlag(null, null, Severity.ERROR, colNum-1, null);
-//			if ( checkerFlags.contains(woceCell) || 
-//				 checkerFlags.contains(woceRow) || 
-//				 checkerFlags.contains(woceCol) ) {
-//				sb.appendHtmlConstant("<div style=\"background-color:" + 
-//						UploadDashboard.CHECKER_ERROR_COLOR + ";font-weight:bold;\">");
-//				sb.appendEscaped(getValue(obj));
-//				sb.appendHtmlConstant("</div>");
-//				if ( addedTitle ) closeTitle(sb);
-//				return;
-//			}
-//			TreeSet<QCFlag> userFlags = cruise.getUserFlags();
-//			if ( userFlags.contains(woceCell) || 
-//				 userFlags.contains(woceRow) || 
-//				 userFlags.contains(woceCol) ) {
-//				sb.appendHtmlConstant("<div style=\"background-color:" + 
-//						UploadDashboard.USER_ERROR_COLOR + ";\">");
-//				sb.appendEscaped(getValue(obj));
-//				sb.appendHtmlConstant("</div>");
-//				if ( addedTitle ) closeTitle(sb);
-//				return;
-//			}
-//			woceCell.setSeverity(Severity.WARNING);
-//			woceRow.setSeverity(Severity.WARNING);
-//			woceCol.setSeverity(Severity.WARNING);
-//			if ( checkerFlags.contains(woceCell) || 
-//				 checkerFlags.contains(woceRow) || 
-//				 checkerFlags.contains(woceCol) ) {
-//				sb.appendHtmlConstant("<div style=\"background-color:" + 
-//						UploadDashboard.CHECKER_WARNING_COLOR + ";font-weight:bold;\">");
-//				sb.appendEscaped(getValue(obj));
-//				sb.appendHtmlConstant("</div>");
-//				if ( addedTitle ) closeTitle(sb);
-//				return;
-//			}
-//			if ( userFlags.contains(woceCell) || 
-//				 userFlags.contains(woceRow) || 
-//				 userFlags.contains(woceCol) ) {
-//				sb.appendHtmlConstant("<div style=\"background-color:" + 
-//						UploadDashboard.USER_WARNING_COLOR + ";\">");
-//				sb.appendEscaped(getValue(obj));
-//				sb.appendHtmlConstant("</div>");
-//				if ( addedTitle ) closeTitle(sb);
-//				return;
-//			}
-//			// Render normally
-//			super.render(ctx, obj, sb);
-//			// Shouldn't happen, but ...
-//			if ( addedTitle ) closeTitle(sb);
-//		}
-//	}
-
 }

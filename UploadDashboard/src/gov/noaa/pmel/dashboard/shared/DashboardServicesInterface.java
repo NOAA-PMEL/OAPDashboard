@@ -3,7 +3,6 @@
  */
 package gov.noaa.pmel.dashboard.shared;
 
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -28,7 +27,7 @@ public interface DashboardServicesInterface extends RemoteService {
 	
     void submitFeedback(String username, String type, String message);
     
-    DashboardServiceResponse changePassword(String username, String currentpw, String newpw);
+    DashboardServiceResponse<Void> changePassword(String username, String currentpw, String newpw);
     
 	/**
 	 * Gets the current user's list of datasets.
@@ -39,7 +38,7 @@ public interface DashboardServicesInterface extends RemoteService {
 	 * 		if problems getting the cruise list
 	 * @throws SessionException 
 	 */
-	DashboardDatasetList getDatasetList(String username) throws IllegalArgumentException, SessionException;
+	DashboardServiceResponse<DashboardDatasetList> getDatasetList(String username) throws IllegalArgumentException, SessionException;
 
 	/**
 	 * Deletes all files for the indicated datasets.
@@ -333,7 +332,7 @@ public interface DashboardServicesInterface extends RemoteService {
 			throws IllegalArgumentException;
 
 	void submitDatasetsToArchive(String username, List<String> datasetIds, List<String> columnNames,
-								 String archiveStatus, String localTimestamp, boolean repeatSend,
+								 String archiveStatus, boolean repeatSend,
 								 String submitComment, boolean requestDOI)
 			throws IllegalArgumentException;
     

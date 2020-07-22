@@ -28,11 +28,15 @@ body {
 .floatRight {
 	float: right;
 }
+.basicpanel {
+	display: block;
+	margin: 1em;
+}
 .horizontalpanel {
     display: block;
 	margin-top: 0.5em;
 	margin-bottom: 1em;
-    align-content: center;
+    /* align-content: center; */
 }
 .adjustingbutton {
     display: inline-block;
@@ -50,7 +54,29 @@ body {
 	margin-left: 2.5em;
 	margin-right: 2.5em;
 }
-
+.labeledlistpanel {
+    display: block;
+    margin-top: 0.5em;
+    margin-bottom: 0.5em;
+}
+.labeledlistlabel {
+    display: inline;
+    font-size: 100%;
+    margin-left: 2em;
+    margin-right: 0.5em;
+}
+.labeledlistbox {
+    display: inline;
+    font-size: 100%;
+    margin-left: 0.5em;
+}
+.largerbold {
+	font-size: larger;
+	font-weight: bold;
+}
+.centertext {
+    text-align: center;
+}
 .introtitle {
 	display: block;
 	font-size: large;
@@ -71,7 +97,7 @@ body {
 }
 
 .blankPopupClose {
-	color: button;
+	color: buttontext;
 	background-color: white;
     padding: 2px 8px 3px;
     position:absolute;
@@ -81,7 +107,7 @@ body {
     border-radius: 5px;
 }
 .blankPopupPanel {
-	background-color: #BBDDFF;
+	background-color: #e4ffff; /*#BBDDFF;*/
     padding: 1em;
 /* 	width: 35em;
     height: 15em; */
@@ -119,7 +145,7 @@ pre {
 .infopanel {
 	background-color: #9eb9d7; /* #CCCCCC; */
     padding: 1em 2em;
-	width: 35em;
+ 	max-width: 50em; 
 }
 .infoPanelLeftLabel {
 	vertical-align: middle !important;

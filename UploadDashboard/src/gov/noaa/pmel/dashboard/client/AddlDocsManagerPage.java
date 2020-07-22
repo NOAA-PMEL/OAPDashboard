@@ -26,7 +26,6 @@ import com.google.gwt.user.cellview.client.ColumnSortEvent;
 import com.google.gwt.user.cellview.client.ColumnSortEvent.ListHandler;
 import com.google.gwt.user.cellview.client.DataGrid;
 import com.google.gwt.user.cellview.client.TextColumn;
-import com.google.gwt.user.client.History;
 import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.google.gwt.user.client.ui.Button;
@@ -154,6 +153,7 @@ public class AddlDocsManagerPage extends CompositeWithUsername {
 	 * a cruise. 
 	 */
 	AddlDocsManagerPage() {
+        super(PagesEnum.MANAGE_DOCUMENTS.name());
 		initWidget(uiBinder.createAndBindUi(this));
 		singleton = this;
 
@@ -200,9 +200,9 @@ public class AddlDocsManagerPage extends CompositeWithUsername {
 	static void showPage(DashboardDatasetList cruiseList) {
 		if ( singleton == null )
 			singleton = new AddlDocsManagerPage();
+        singleton.uploadForm.reset();
 		singleton.updateAddlDocs(cruiseList);
 		UploadDashboard.updateCurrentPage(singleton, UploadDashboard.DO_PING);
-		History.newItem(PagesEnum.MANAGE_DOCUMENTS.name(), false);
 	}
 
 	/**
@@ -241,8 +241,10 @@ public class AddlDocsManagerPage extends CompositeWithUsername {
 		// Update the HTML intro naming the cruises
 		StringBuilder sb = new StringBuilder();
 		sb.append(INTRO_HTML_PROLOGUE);
-		for ( String expo : datasetIds )
-			sb.append("<li>" + SafeHtmlUtils.htmlEscape(expo) + "</li>");
+		for ( DashboardDataset dataset : cruises.values()) {
+            String name = dataset.getUserDatasetName();
+			sb.append("<li>" + SafeHtmlUtils.htmlEscape(name) + "</li>");
+		}
 		sb.append(INTRO_HTML_EPILOGUE);
 		introHtml.setHTML(sb.toString());
 

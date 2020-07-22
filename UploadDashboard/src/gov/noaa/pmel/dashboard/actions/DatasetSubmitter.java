@@ -9,8 +9,10 @@ import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -36,14 +38,12 @@ import gov.noaa.pmel.dashboard.server.submission.status.StatusRecord;
 import gov.noaa.pmel.dashboard.server.submission.status.StatusState;
 import gov.noaa.pmel.dashboard.server.submission.status.SubmissionRecord;
 import gov.noaa.pmel.dashboard.server.util.OapMailSender;
-import gov.noaa.pmel.dashboard.server.util.UIDGen;
 import gov.noaa.pmel.dashboard.shared.DashboardDataset;
 import gov.noaa.pmel.dashboard.shared.DashboardDatasetData;
 import gov.noaa.pmel.dashboard.shared.DashboardMetadata;
 import gov.noaa.pmel.dashboard.shared.DashboardUtils;
+import gov.noaa.pmel.dashboard.shared.FileType;
 import gov.noaa.pmel.tws.util.ApplicationConfiguration;
-import gov.noaa.pmel.tws.util.StringUtils;
-import gov.noaa.pmel.tws.util.TimeUtils;
 
 /**
  * Submits a dataset.  At this time this just means creating the 
@@ -55,9 +55,8 @@ public class DatasetSubmitter {
 
 	static Logger logger = LogManager.getLogger(DatasetSubmitter.class);
     
-    static final String USER_COMMENT_HEADER = "==== User Submission Comments ====\n";
+//    public static final String USER_COMMENT_HEADER = "==== User Submission Comments ====";
 
-    DashboardConfigStore configStore;
 	DataFileHandler dataHandler;
 	MetadataFileHandler metadataHandler;
 //	DatasetChecker datasetChecker;
@@ -72,7 +71,6 @@ public class DatasetSubmitter {
 	 * 		create with the file handlers and data checker in this data store.
 	 */
 	public DatasetSubmitter(DashboardConfigStore configStore) {
-        this.configStore = configStore;
 		dataHandler = configStore.getDataFileHandler();
 		metadataHandler = configStore.getMetadataFileHandler();
 //		datasetChecker = configStore.getDashboardDatasetChecker();
@@ -131,7 +129,7 @@ public class DatasetSubmitter {
 					// Get the metadata for this dataset
 					// XXX TODO: OME_FILENAME check
 				    // XXX TODO: log submission
-					DashboardMetadata mdata = metadataHandler.getMetadataInfo(datasetId, DashboardUtils.metadataFilename(datasetId));
+					DashboardMetadata mdata = metadataHandler.getMetadataInfo(datasetId, MetadataFileHandler.metadataFilename(datasetId));
 					if ( mdata != null && ! version.equals(mdata.getVersion()) ) {
 						mdata.setVersion(version);
 						metadataHandler.saveMetadataInfo(mdata, "Update metadata version number to " + 
@@ -145,7 +143,7 @@ public class DatasetSubmitter {
 
 					// Standardize the data
 					// TODO: update the metadata with data-derived values
-            		DatasetChecker datasetChecker = configStore.getDashboardDatasetChecker(dataset.getFeatureType());
+            		DatasetChecker datasetChecker = _configStore.getDashboardDatasetChecker(dataset.getFeatureType());
 					StdUserDataArray standardized = datasetChecker.standardizeDataset(dataset, null);
 					if ( DashboardUtils.CHECK_STATUS_UNACCEPTABLE.equals(dataset.getDataCheckStatus()) ) {
 						errorMsgs.add(datasetId + ": unacceptable; check data check error messages " +
@@ -236,7 +234,7 @@ public class DatasetSubmitter {
 //    }
     
 	public void archiveDatasets(List<String> datasetIds, List<String> columnsList, String submitMsg, 
-	                            boolean generateDOI, String archiveStatus, String timestamp, 
+	                            boolean generateDOI, String archiveStatus, 
 	                            boolean repeatSend, String submitter) {
 		ArrayList<String> errorMsgs = new ArrayList<String>();
 		
@@ -257,31 +255,33 @@ public class DatasetSubmitter {
 			if ( (userEmail == null) || userEmail.isEmpty() )
 				throw new IllegalArgumentException("No e-mail address for user " + submitter);
 
+            Date timestamp = new Date();
 			for ( String datasetId : datasetIds ) {
 			    String thisStatus = archiveStatus;
 				String commitMsg = "Immediate archival of dataset " + datasetId + " requested by " + 
 						userRealName + " (" + userEmail + ") at " + timestamp;
 				try {
-                    SubmissionRecord sRecord = getSubmissionRecord(datasetId, submitMsg, timestamp, submitter);
-                    File archiveBundle = getArchiveBundle(sRecord, datasetId, columnsList, submitMsg, generateDOI);
+                    DashboardDataset dataset = _configStore.getDataFileHandler().getDatasetFromInfoFile(datasetId);
+                    SubmissionRecord sRecord = getSubmissionRecord(datasetId, submitMsg, submitter);
+                    File archiveBundle = getArchiveBundle(sRecord, datasetId, dataset, columnsList, submitMsg, generateDOI);
                     sRecord.archiveBag(archiveBundle.getPath());
                     insertNewSubmissionRecord(sRecord);
                     doSubmitAchiveBundleFile(sRecord, datasetId, archiveBundle, userRealName, userEmail);
                     String stagedPkg = sRecord.pkgLocation();
                     String archiveStatusMsg = "Staged " + archiveBundle + " for " + userRealName + 
-                                               " at " + DashboardServerUtils.formatTime(new Date()) +
+                                               " at " + DashboardServerUtils.formatUTC(timestamp) +
                                                " to " + stagedPkg;
                     logger.info(archiveStatusMsg);
                     sRecord.pkgLocation(stagedPkg);
                     updateStatus(sRecord, StatusState.STAGED, "Submission package staged for pickup at:" + stagedPkg);
                     sendSubmitEmail(sRecord, archiveBundle, userRealName, userEmail);
-					thisStatus = "Submitted " + DashboardServerUtils.formatTime(new Date());
+					thisStatus = "Submitted " + DashboardServerUtils.formatUTC(timestamp);
 				} catch (Exception ex) {
 					ex.printStackTrace();
 					errorMsgs.add("Failed to submit request for immediate archival of " + 
 							datasetId + ": " + ex.getMessage());
 					thisStatus = "Submission Failed";
-//					continue;
+					continue;
 				}
 				// When successful, update the archived timestamp
 				DashboardDataset cruise = dataHandler.getDatasetFromInfoFile(datasetId);
@@ -291,6 +291,10 @@ public class DatasetSubmitter {
                 cruise.setArchiveDOIrequested(generateDOI);
 				dataHandler.saveDatasetInfoToFile(cruise, commitMsg);
 			}
+		} else {
+            String msg = "No dataset specified for archival.";
+		    logger.warn(msg);
+            errorMsgs.add(msg);
 		}
 		// If any dataset submit had errors, return the error messages
 		// TODO: do this in a return message, not an IllegalArgumentException
@@ -314,14 +318,14 @@ public class DatasetSubmitter {
 	 * @throws SQLException 
      */
     private static SubmissionRecord getSubmissionRecord(String datasetId, String submitMsg, 
-                                                        String timestamp, String submitter) 
+                                                        String submitter) 
             throws SQLException {
         SubmissionRecord sRecord = getLatestSubmissionRecord(datasetId);
         if ( sRecord != null ) {
             sRecord = sRecord.toBuilder().build().newVersion(submitMsg);
         } else {
             String archiveRefKey = createArchiveReferenceKey(datasetId, submitter);
-            sRecord = createInitialSubmitRecord(archiveRefKey, datasetId, submitMsg, timestamp, submitter);
+            sRecord = createInitialSubmitRecord(archiveRefKey, datasetId, submitMsg, submitter);
         }
         return sRecord;
     }
@@ -333,7 +337,8 @@ public class DatasetSubmitter {
      */
     private static String createArchiveReferenceKey(String datasetId, String submitter) {
 //        return Generators.timeBasedGenerator().generate().toString();
-        return "SDIS_"+ UIDGen.idToShortURL(new Date().getTime());
+//        return "SDIS_"+ UIDGen.idToShortURL(new Date().getTime());
+        return datasetId;
     }
     
     /**
@@ -379,16 +384,18 @@ public class DatasetSubmitter {
         sdao.updateSubmissionStatus(status);
     }
     
-    private static SubmissionRecord createInitialSubmitRecord(String submitRefKey, String datasetId, String submitMsg, 
-                                                              String timestamp, String submitter) throws SQLException {
-            User user = DaoFactory.UsersDao().retrieveUser(submitter);
-            SubmissionRecord sub = SubmissionRecord.builder()
-                                .datasetId(datasetId)
-                                .submissionKey(submitRefKey)
-                                .submitMsg(submitMsg)
-                                .submitterId(user.dbId())
-                                .build();
-            return sub;
+    private static SubmissionRecord createInitialSubmitRecord(String submitRefKey, String datasetId, 
+                                                              String submitMsg, String submitter) 
+        throws SQLException 
+    {
+        User user = DaoFactory.UsersDao().retrieveUser(submitter);
+        SubmissionRecord sub = SubmissionRecord.builder()
+                            .datasetId(datasetId)
+                            .submissionKey(submitRefKey)
+                            .submitMsg(submitMsg)
+                            .submitterId(user.dbId())
+                            .build();
+        return sub;
     }
 
     /**
@@ -451,6 +458,10 @@ public class DatasetSubmitter {
                 case EMAIL:
                     filesBundler.sendArchiveBundle(submission, archiveBundle, userRealName, userEmail);
                     break;
+                case NONE:
+                    logger.warn("Archive mode set to NONE.  Archive bundle NOT SENT. " + archiveBundle.getPath());
+                    submission.pkgLocation("Archive mode set to NONE.  Package not staged.");
+                    break;
             }
 //        } catch (Exception ex) {
 //            ex.printStackTrace();
@@ -464,19 +475,50 @@ public class DatasetSubmitter {
      * @return
 	 * @throws Exception
      */
-    private File getArchiveBundle(SubmissionRecord submitRecord, String datasetId, List<String> columnsList, String submitMsg, boolean generateDOI) throws Exception {
+    private static File getArchiveBundle(SubmissionRecord submitRecord, String datasetId, 
+                                         DashboardDataset dataset,
+                                         List<String> columnsList, String submitMsg, 
+                                         boolean generateDOI) throws Exception {
         File archiveBundle = null;
-        if ( ApplicationConfiguration.getProperty("oap.archive.use_bagit", true)) {
-            String submitComment = "generate_doi: " + String.valueOf(generateDOI) + "\n";
-            submitComment += "submission_record_id:" + submitRecord.submissionKey() + "\n";
-            submitComment += "user_dataset_id:" + datasetId + "\n";
-            if ( ! StringUtils.emptyOrNull(submitMsg)) {
-                submitComment += USER_COMMENT_HEADER + submitMsg;
-            }
-            archiveBundle = Bagger.Bag(submitRecord, datasetId, submitComment);
+        String dataChkMsg = dataset.getDataCheckStatus();
+        String locChkMsg = "";
+        if ( ! dataset.getFeatureType().isDSG()) {
+            dataChkMsg = "CANNOT_CHECK:OBSERVATION_TYPE";
+            locChkMsg = "LOCATIONS_UNAVAILABLE";
+        } else if ( ! dataset.getFileType().equals(FileType.DELIMITED)) {
+            dataChkMsg = "CANNOT_CHECK:FILE_TYPE";
+            locChkMsg = "LOCATIONS_UNAVAILABLE";
+        } else if ( dataChkMsg == "" ) {
+            dataChkMsg = "DATA_CHECK_NOT_PERFORMED";
+            locChkMsg = "LOCATIONS_UNAVAILABLE";
         } else {
-            archiveBundle = filesBundler.createArchiveDataFile(datasetId, columnsList);
+            try {
+                if ( DashboardConfigStore.get(false).getMetadataFileHandler().getMetadataFile(datasetId, "lonlat.tsv").exists()) {
+                    locChkMsg = "LOCATION_FILE_AVAILABLE";
+                }
+            } catch (Exception ex) {
+                logger.warn(ex,ex);
+                locChkMsg = "LOCATIONS_UNAVAILABLE";
+            }
         }
+                    
+////        if ( ApplicationConfiguration.getProperty("oap.archive.use_bagit", true)) {
+        Map<String, String> submissionProps = new HashMap<>();
+        submissionProps.put("generate_doi", String.valueOf(generateDOI));
+        submissionProps.put("submission_record_id", submitRecord.submissionKey());
+//        submissionProps.put("user_dataset_id", datasetId);
+        submissionProps.put("user_datafile_name", dataset.getUploadFilename());
+//      "# user-specified observation type.\n";
+        submissionProps.put("user_observation_type", dataset.getUserObservationType());
+//      "# status of automatic data checking\n";
+        submissionProps.put("data_check_status", dataChkMsg);
+//      "# status of location checks and extraction\n";
+        submissionProps.put("location_status", locChkMsg);
+
+        archiveBundle = Bagger.Bag(submitRecord, datasetId, submissionProps, submitMsg);
+//        } else {
+//            archiveBundle = filesBundler.createArchiveDataFile(datasetId, columnsList);
+//        }
         return archiveBundle;
     }
 
@@ -487,11 +529,9 @@ public class DatasetSubmitter {
             String submitMsg = "test submit message";
             boolean generateDOI = true;
             String archiveStatus = "archive status";
-            String timestamp = TimeUtils.formatUTC(new Date(), "yyyy-MM-dd HH:mm Z");
             boolean repeatSend = true;
             String submitter = "lkamb";
-            ds.archiveDatasets(ids, new ArrayList<>(), submitMsg, generateDOI, archiveStatus, timestamp, repeatSend, submitter);
-//            ds.submitDatasetsForQC(ids, null, new Date().toString(), false, "lkamb");
+            ds.archiveDatasets(ids, new ArrayList<>(), submitMsg, generateDOI, archiveStatus, repeatSend, submitter);
         } catch (Exception ex) {
             ex.printStackTrace();
             // TODO: handle exception

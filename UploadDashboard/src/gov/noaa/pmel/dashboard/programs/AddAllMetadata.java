@@ -12,7 +12,6 @@ import gov.noaa.pmel.dashboard.handlers.MetadataFileHandler;
 import gov.noaa.pmel.dashboard.server.DashboardConfigStore;
 import gov.noaa.pmel.dashboard.shared.DashboardDataset;
 import gov.noaa.pmel.dashboard.shared.DashboardMetadata;
-import gov.noaa.pmel.dashboard.shared.DashboardUtils;
 
 /**
  * Updates the metadata and additional documents for datasets 
@@ -84,7 +83,7 @@ public class AddAllMetadata {
 					// Add all existing metadata documents for this dataset
 					for ( DashboardMetadata mdata : metaHandler.getMetadataFiles(datasetId) ) {
 						// XXX TODO: OME_FILENAME check
-						if ( mdata.getFilename().equals(DashboardUtils.metadataFilename(mdata.getDatasetId())) ) {
+						if ( mdata.getFilename().equals(MetadataFileHandler.metadataFilename(mdata.getDatasetId())) ) {
 //							// Ignore the OME.xml stub
 //							;
 //						}

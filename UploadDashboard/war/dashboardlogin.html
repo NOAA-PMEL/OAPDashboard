@@ -4,77 +4,15 @@
 <head>
 <meta http-equiv="content-type" content="text/html; charset=UTF-8" />
 <title>OAP Dashboard Login</title>
-<style type="text/css">
-    * {
-        font-family: Arial Unicode MS, Arial, sans-serif;
-        margin: 2px 0px;
-    }
-    html, body {
-        width: 100%;
-        height: 100%;
-        background-color: #BBDDFF;
-        font-size: 100%;
-        margin: 0;
-        padding: 0;
-    }
-    .pageheader {
-        display: table;
-/*         width: 100%; */
-        height: 4em;
-        padding-top: 0em;
-        padding-bottom: 0em;
-/*         padding-right: .5em; */
-        margin-right: 2px;
-        overflow: visible;
-        /* background-color: #55a3e8; */
-    }
-    .headerLogo {
-        margin: .5em 2.4em 0.3em;
-    }
-    .headerInfo {
-        display: table-cell;
-        width: 100%;
-        /* padding-bottom: .5em; */
-        margin-left: .5em;
-        background-color: #55a3e8;
-        vertical-align: bottom;
-    }
-    .headerpagelabel {
-        display: inline;
-        font-size: large;
-        font-weight: bold;
-        margin: 0.25em 1em 0.3em;
-        color: white;
-        float: left;
-    }
-    .headersoftwaretitle {
-        position: absolute;
-        font-size: x-large;
-        color: white;
-        left: 38%;
-        top: .25em;
-    }
-    .titlereset {
-        clear: both;
-    }
-    .login_table {
-        border: groove lightgray;
-        background: #e4ffff;
-        padding: 1.5em 1.75em 1.25em;
-        position: fixed;
-        left: 50%;
-        top: 50%;
-        transform: translate(-50%, -70%)
-    }
-</style>
+<link rel="stylesheet" href="css/public.css" />
 </head>
 <body>
 <div class="pageheader" style="position: absolute; left: 0px; top: 0px; right: 0px; bottom: 0px;">
-    <img class="headerLogo" src="images/noaa_logo_50x50.png"></img>
+    <img class="headerLogo" src="images/NOAA_logo.png"></img>
     <div class="headerInfo">
       <span class="headerpagelabel"></span>
       <div class="headersoftwaretitle">OAP Scientific Data Integration System</div>
-      <div class="titlereset"/>
+      <div class="titlereset"></div>
     </div>
 </div>
 
@@ -90,7 +28,7 @@
     </tr>
     <tr>
       <td>Username:</td>
-      <td><input type="text" name="j_username" /></td>
+      <td><input id="username_field" type="text" name="j_username" autofocus /></td>
     </tr>
     <tr>
       <td>Password:</td>
@@ -101,10 +39,19 @@
     </tr>
     <tr>
       <td style="text-align:left;" colspan="2"><a style="font-size:smaller; text-decoration:none;" href="requestlogin.html">Request an account.</a></td>
-      <td style="text-align:right;" colspan="2"><a style="font-size:smaller; text-decoration:none;" href="passwordhelp.html">Need help logging in?</a></td>
+      <td style="text-align:right;" colspan="2"><a style="font-size:smaller; text-decoration:none;" href="passwordhelp.html">Forgot password?</a></td>
     </tr>
   </table>
 </form>
+<div class="pagefooter" >
+    <a href="http://www.noaa.gov" title="The National Oceanographic and Atmospheric Administration" target="_blank">NOAA</a>
+        &nbsp;|&nbsp; <a href="http://www.research.noaa.gov/"  target="_blank"
+          title="Department of Commerce > NOAA > Office of Oceanic and Atmospheric Research">OAR</a>
+        &nbsp;|&nbsp; <a href="http://www.pmel.noaa.gov" title="PMEL" target="_blank">PMEL</a>
+        &nbsp;|&nbsp; <a href="http://www.noaa.gov/privacy.html" target="_blank" title="">Privacy Policy</a>
+        &nbsp;|&nbsp; <a href="http://www.noaa.gov/disclaimer.html" target="_blank" title="">Disclaimer</a>
+        &nbsp;|&nbsp; <a href="http://www.noaa.gov/accessibility" target="_blank">Accessibility</a>
+  </div>
 </body>
 
 </html>
