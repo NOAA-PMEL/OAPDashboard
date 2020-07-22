@@ -7,10 +7,10 @@
 	<ui:style src="FullWidth.css" />
 
 	<g:DockLayoutPanel unit="EM" addStyleNames="{style.fullpagecontainer} {style.letItOverFlow}" >
-        <g:north size="4.0" ><oap:ApplicationHeaderTemplate ui:field="header" /> </g:north>
+        <g:north size="4.2" ><oap:ApplicationHeaderTemplate ui:field="header" /> </g:north>
 		<g:west addStyleNames="{style.tightenTheMain}" size="8">
 			<g:FlowPanel addStyleNames="{style.cruisebuttonspanel}">
-				<g:Button addStyleNames="{style.cruisepanelmainbutton}" ui:field="uploadButton" />
+				<g:Button addStyleNames="{style.cruisepanelmainbutton}" ui:field="newSubmissionButton" />
 				<g:Label addStyleNames="{style.cruisebuttonpanelseparator}" />
 				<g:Button addStyleNames="{style.cruisepanelbutton}" ui:field="viewDataAndColumnsButton" />
 				<g:Button addStyleNames="{style.cruisepanelbutton}" ui:field="metadataButton" />
@@ -32,7 +32,7 @@
 				<cell:DataGrid addStyleNames="{style.cruiselistgrid}" ui:field="datasetsGrid" />
 			</g:ResizeLayoutPanel>
 		</g:center>
-        <g:south size="3"> <oap:ApplicationFooter/> </g:south>
+        <g:south size="3"> <oap:ApplicationFooter ui:field="footer"/> </g:south>
 	</g:DockLayoutPanel>
 
 </ui:UiBinder>

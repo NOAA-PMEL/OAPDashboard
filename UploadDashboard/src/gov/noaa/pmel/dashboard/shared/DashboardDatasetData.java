@@ -133,14 +133,13 @@ public class DashboardDatasetData extends DashboardDataset implements Serializab
 		return true;
 	}
 
-	@Override
-	public String toString() {
+	public String fullDetailString() {
 		String repr = 
 				"DashboardDatasetData[\n" +
 				"    selected=" + Boolean.toString(selected) + ";\n" + 
 				"    version = " + version + ";\n" + 
 				"    owner=" + owner +  ";\n" + 
-				"    datasetId=" + datasetId +  ";\n" + 
+				"    recordId=" + recordId +  ";\n" + 
 				"    dataCheckStatus=" + dataCheckStatus + ";\n" + 
 				"    omeTimestamp=" + mdTimestamp + ";\n" + 
 				"    addlDocs=" + addlDocs.toString() + ";\n" + 

@@ -7,10 +7,14 @@ import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Comparator;
+import java.util.Date;
 import java.util.Iterator;
 import java.util.TreeSet;
 
+import com.google.gwt.i18n.client.DateTimeFormat;
 import com.google.gwt.user.client.rpc.IsSerializable;
+
+import gov.noaa.pmel.dashboard.shared.QCFlag.Severity;
 
 /**
  * Represents an uploaded dataset and its current status.
@@ -22,11 +26,14 @@ public class DashboardDataset implements Serializable, IsSerializable {
 	private static final long serialVersionUID = 5005454171404329101L;
 
 	protected boolean selected;
+    protected String recordId;
+    protected String userDatasetName;
 	protected String version;
 	protected String owner;
     protected String featureType;
+    protected String userObservationType;
     protected String fileType;
-	protected String datasetId;
+//	protected String datasetId;
 	protected String dataCheckStatus;
 	protected String mdTimestamp;
 	protected String mdStatus;
@@ -34,7 +41,7 @@ public class DashboardDataset implements Serializable, IsSerializable {
 	protected String submitStatus;
 	protected String archiveStatus;
 	protected String archiveSubmissionMessage;
-	protected String archiveDate;
+	protected Date archiveDate;
     protected boolean archiveDOIrequested;
 	protected String uploadFilename;
 	protected String uploadTimestamp;
@@ -56,16 +63,18 @@ public class DashboardDataset implements Serializable, IsSerializable {
 	 */
 	public DashboardDataset() {
 		selected = false;
+        recordId = DashboardUtils.STRING_MISSING_VALUE;
+        userDatasetName = DashboardUtils.STRING_MISSING_VALUE;
 		version = DashboardUtils.STRING_MISSING_VALUE;
 		owner = DashboardUtils.STRING_MISSING_VALUE;
-		datasetId = DashboardUtils.STRING_MISSING_VALUE;
+//		datasetId = DashboardUtils.STRING_MISSING_VALUE;
 		dataCheckStatus = DashboardUtils.CHECK_STATUS_NOT_CHECKED;
 		mdTimestamp = DashboardUtils.STRING_MISSING_VALUE;
 		addlDocs = new TreeSet<String>();
 		submitStatus = DashboardUtils.STATUS_NOT_SUBMITTED;
 		archiveStatus = DashboardUtils.ARCHIVE_STATUS_NOT_SUBMITTED;
         archiveSubmissionMessage = DashboardUtils.STRING_MISSING_VALUE;
-		archiveDate = DashboardUtils.STRING_MISSING_VALUE;
+		archiveDate = null;
 		uploadFilename = DashboardUtils.STRING_MISSING_VALUE;
 		uploadTimestamp = DashboardUtils.STRING_MISSING_VALUE;
 		uploadedFile = DashboardUtils.STRING_MISSING_VALUE;
@@ -192,25 +201,37 @@ public class DashboardDataset implements Serializable, IsSerializable {
         this.fileType = fileType;
     }
 
+	public String getUserObservationType() {
+        return userObservationType;
+    }
+    
+    public void setUserObservationType(String userObservationType) {
+        this.userObservationType = userObservationType;
+    }
+
     /**
 	 * @return 
 	 * 		the dataset ID; 
 	 * 		never null but may be {@link DashboardUtils#STRING_MISSING_VALUE}
+     * @deprecated use {@link #getRecordId()}
 	 */
 	public String getDatasetId() {
-		return datasetId;
+        return recordId;
+//		return datasetId;
 	}
 
 	/**
 	 * @param datasetId 
 	 * 		the dataset ID to set;
 	 * 		if null, sets to {@link DashboardUtils#STRING_MISSING_VALUE}
+     * @deprecated use {@link #setRecordId(String)}
 	 */
 	public void setDatasetId(String datasetId) {
-		if ( datasetId == null )
-			this.datasetId = DashboardUtils.STRING_MISSING_VALUE;
-		else
-			this.datasetId = datasetId;
+        setRecordId(datasetId);
+//		if ( datasetId == null )
+//			this.datasetId = DashboardUtils.STRING_MISSING_VALUE;
+//		else
+//			this.datasetId = datasetId;
 	}
 
 	/**
@@ -358,25 +379,26 @@ public class DashboardDataset implements Serializable, IsSerializable {
         archiveDOIrequested = doiRequested;
     }
     
-	/**
-	 * @return 
-	 * 		the archive submission date; 
-	 * 		never null but may be {@link DashboardUtils#STRING_MISSING_VALUE}
-	 */
-	public String getArchiveDate() {
-		return archiveDate;
+	public Date getArchiveDate() {
+        return archiveDate;
 	}
-
-	/**
-	 * @param archiveDate 
-	 * 		the archive submission date (after trimming) to set;
-	 * 		if null, sets to {@link DashboardUtils#STRING_MISSING_VALUE}
-	 */
-	public void setArchiveDate(String archiveDate) {
-		if ( archiveDate == null )
-			this.archiveDate = DashboardUtils.STRING_MISSING_VALUE;
-		else
-			this.archiveDate = archiveDate.trim();
+    private transient String formattedDate = null;
+    private transient String dateFormat = null;
+	public String getArchiveDateAsString(String format) {
+        if ( archiveDate == null ) {
+            return DashboardUtils.STRING_MISSING_VALUE;
+        }
+        synchronized (archiveDate) {
+            if ( format.equals(dateFormat) && formattedDate != null )  {
+                return formattedDate;
+            }
+            formattedDate = DateTimeFormat.getFormat(format).format(archiveDate);
+            dateFormat = format;
+            return formattedDate;
+        }
+	}
+	public void setArchiveDate(Date archiveDate) {
+		this.archiveDate = archiveDate;
 	}
 
 	/**
@@ -442,7 +464,26 @@ public class DashboardDataset implements Serializable, IsSerializable {
 			this.uploadTimestamp = uploadTimestamp.trim();
 	}
 
-	/**
+	public String getRecordId() {
+        return recordId;
+    }
+
+    public void setRecordId(String recordId) {
+        this.recordId =  recordId != null ? recordId : DashboardUtils.STRING_MISSING_VALUE;
+    }
+
+	public String getUserDatasetName() {
+        if ( userDatasetName == null || userDatasetName.trim().equals("")) {
+            return uploadFilename;
+        }
+        return userDatasetName;
+    }
+
+    public void setUserDatasetName(String userDatasetName) {
+        this.userDatasetName = userDatasetName;
+    }
+
+    /**
 	 * @return 
 	 * 		the DOI of the original data document;
 	 * 		never null but may be {@link DashboardUtils#STRING_MISSING_VALUE}
@@ -538,6 +579,20 @@ XXX This allows the possibility that numDataRows != the actual number of data ro
 			this.userColNames.addAll(userColNames);
 	}
 
+    public boolean hasColumn(String columnName) {
+        for (DataColumnType col : dataColTypes) {
+            if ( col.typeNameEquals(columnName)) { return true; }
+        }
+        return false;
+    }
+    
+    public boolean hasColumn(DataColumnType columnType) {
+        for (DataColumnType col : dataColTypes) {
+            if ( col.equals(columnType)) { return true; }
+        }
+        return false;
+    }
+    
 	/**
 	 * @return 
 	 * 		the list of data column types for this dataset; may be empty 
@@ -610,13 +665,14 @@ XXX This allows the possibility that numDataRows != the actual number of data ro
 		int result = Boolean.valueOf(selected).hashCode();
 		result = result * prime + version.hashCode();
 		result = result * prime + owner.hashCode();
-		result = result * prime + datasetId.hashCode();
+		result = result * prime + recordId.hashCode();
+//		result = result * prime + datasetId.hashCode();
 		result = result * prime + dataCheckStatus.hashCode();
 		result = result * prime + mdTimestamp.hashCode();
 		result = result * prime + addlDocs.hashCode();
 		result = result * prime + submitStatus.hashCode();
 		result = result * prime + archiveStatus.hashCode();
-		result = result * prime + archiveDate.hashCode();
+        if ( archiveDate != null ) result = result * prime + archiveDate.hashCode();
 		result = result * prime + uploadFilename.hashCode();
 		result = result * prime + uploadTimestamp.hashCode();
 		result = result * prime + doi.hashCode();
@@ -647,7 +703,7 @@ XXX This allows the possibility that numDataRows != the actual number of data ro
 			return false;
 		if ( ! owner.equals(other.owner) )
 			return false;
-		if ( ! datasetId.equals(other.datasetId) )
+		if ( ! recordId.equals(other.recordId) )
 			return false;
 		if ( ! dataCheckStatus.equals(other.dataCheckStatus) )
 			return false;
@@ -659,7 +715,10 @@ XXX This allows the possibility that numDataRows != the actual number of data ro
 			return false;
 		if ( ! archiveStatus.equals(other.archiveStatus) )
 			return false;
-		if ( ! archiveDate.equals(other.archiveDate) )
+		if ( archiveDate == null ) {
+		    if ( other.archiveDate != null ) 
+    			return false;
+		} else if ( ! archiveDate.equals(other.archiveDate) )
 			return false;
 		if ( ! uploadFilename.equals(other.uploadFilename) )
 			return false;
@@ -684,12 +743,12 @@ XXX This allows the possibility that numDataRows != the actual number of data ro
 		return true;
 	}
 
-	public String fullDetaiString() {
+	public String detaiString() {
 		return "DashboardDataset" +
 				"[ selected=" + Boolean.toString(selected) + 
 				",\n    version = " + version +
 				",\n    owner=" + owner + 
-				",\n    datasetId=" + datasetId + 
+				",\n    recordId=" + recordId + 
 				",\n    dataCheckStatus=" + dataCheckStatus +
 				",\n    omeTimestamp=" + mdTimestamp + 
 				",\n    addlDocs=" + addlDocs.toString() +
@@ -711,7 +770,7 @@ XXX This allows the possibility that numDataRows != the actual number of data ro
 	
 	@Override
 	public String toString() {
-	    return "datasetId:"+datasetId;
+	    return "["+recordId+"]:"+uploadFilename;
 	}
 
 	/**
@@ -953,4 +1012,28 @@ XXX This allows the possibility that numDataRows != the actual number of data ro
 		}
 	};
 
+    /**
+     * @return
+    public String getDisplayName() {
+        return datasetId; // XXX TODO: Change
+    }
+     */
+
+    public boolean hasCriticalError() {
+        for (QCFlag msg : getCheckerFlags()) {
+            if (Severity.CRITICAL.equals(msg.getSeverity())) {
+                return true;
+            }
+        }
+        return false;
+    }
+    public boolean hasCriticalError(int colIdx) {
+        for (QCFlag msg : getCheckerFlags()) {
+            if (Severity.CRITICAL.equals(msg.getSeverity()) && 
+                msg.getColumnIndex().equals(colIdx)) {
+                return true;
+            }
+        }
+        return false;
+    }
 }

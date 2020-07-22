@@ -283,7 +283,7 @@ public class StringDashDataTypeTest {
 	}
 
 	/**
-	 * Test method for {@link gov.noaa.pmel.dashboard.datatype.DashDataType#duplicate()} and
+	 * Test method for {@link gov.noaa.pmel.dashboard.datatype.DashDataType#dataColumnType()} and
 	 * {@link gov.noaa.pmel.dashboard.datatype.StringDashDataType#StringDashDataType(gov.noaa.pmel.dashboard.shared.DataColumnType,
 	 * java.lang.String, java.lang.String, java.lang.String, java.lang.String, java.lang.String, java.lang.String)}
 	 */
@@ -294,7 +294,7 @@ public class StringDashDataTypeTest {
 				FILE_UNIT, null, null, null, null);
 		DataColumnType colType = new DataColumnType(VAR_NAME, SORT_ORDER, 
 				DISPLAY_NAME, DESCRIPTION, true, UNITS);
-		assertEquals(colType, dtype.duplicate());
+		assertEquals(colType, dtype.dataColumnType());
 		StringDashDataType other = new StringDashDataType(colType, 
 				STANDARD_NAME, CATEGORY_NAME,
 				FILE_UNIT, null, null, null, null);
@@ -325,7 +325,7 @@ public class StringDashDataTypeTest {
 		assertTrue( other.typeNameEquals(dtype) );
 		assertFalse( dtype.typeNameEquals((DashDataType<?>) null) );
 
-		assertTrue(dtype.typeNameEquals(other.duplicate()) );
+		assertTrue(dtype.typeNameEquals(other.dataColumnType()) );
 		assertFalse( dtype.typeNameEquals((DataColumnType) null) );
 	}
 

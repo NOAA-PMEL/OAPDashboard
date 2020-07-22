@@ -5,6 +5,10 @@ package gov.noaa.pmel.dashboard.upload;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.CopyOption;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.StandardCopyOption;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.TreeMap;
@@ -48,7 +52,7 @@ public abstract class FileUploadProcessor {
     protected StandardUploadFields _uploadFields;
     protected DashboardConfigStore _configStore;
     protected RawUploadFileHandler _rawFileHandler;
-    protected DataFileHandler _datasetHandler;
+    protected DataFileHandler _dataFileHandler;
     
     protected ArrayList<String> _messages = new ArrayList<String>();
     protected TreeSet<String> _successes = new TreeSet<String>();
@@ -63,12 +67,15 @@ public abstract class FileUploadProcessor {
     protected String specifiedDatasetId;
     protected String datasetIdColName;
     protected FileType fileType;
+    protected String submissionRecordId;
+    protected String observationType;
 
     protected File _uploadedFile;
     
     protected FileUploadProcessor(StandardUploadFields uploadFields) {
         this._uploadFields = uploadFields;
         this._featureType = uploadFields.featureType();
+        observationType = uploadFields.observationType();
         action = _uploadFields.dataAction();
         username = _uploadFields.username();
         timestamp = _uploadFields.timestamp();
@@ -79,16 +86,21 @@ public abstract class FileUploadProcessor {
         fileType = _uploadFields.fileType();
     }
     
-    public void processUpload(File uploadedFile) throws IOException, UploadProcessingException {
+    public void processUpload(String submissionId, boolean isUpdateRequest, File uploadedFile) throws IOException, UploadProcessingException {
         this._uploadedFile = uploadedFile;
+        this.submissionRecordId = submissionId;
+//        this.specifiedDatasetId = submissionId;
         _configStore = DashboardConfigStore.get(false);
-        _datasetHandler = _configStore.getDataFileHandler();
+        _dataFileHandler = _configStore.getDataFileHandler();
         
-        processUploadedFile();
+        processUploadedFile(isUpdateRequest);
     }
     
-    abstract void processUploadedFile() throws UploadProcessingException;
+    abstract void processUploadedFile(boolean isUpdateRequest) throws UploadProcessingException;
     
+    static Path copyFile(File sourceFile, File destFile, CopyOption... options) throws IOException {
+        return Files.copy(sourceFile.toPath(), destFile.toPath(), options);
+    }
     protected static void generateEmptyMetadataFile(String datasetId) throws IOException {
         MetadataFileHandler mdf = DashboardConfigStore.get().getMetadataFileHandler();
         mdf.createEmptyOADSMetadataFile(datasetId);
@@ -109,9 +121,10 @@ public abstract class FileUploadProcessor {
      */
 
     public static FileUploadProcessor getProcessor(File uploadFile, StandardUploadFields stdFields) {
-        return ( stdFields.fileType().equals(FileType.DELIMITED) ?
-                 new GeneralizedUploadProcessor(stdFields) :
-                 new OpaqueFileUploadProcessor(stdFields)
+        return ( ! stdFields.featureType().equals(FeatureType.OTHER) 
+                 && stdFields.fileType().equals(FileType.DELIMITED) ?
+                 new NewGeneralizedUploadProcessor(stdFields) :
+                 new NewOpaqueFileUploadProcessor(stdFields)
                );
     }
 

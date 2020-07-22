@@ -3,26 +3,31 @@
  */
 package gov.noaa.pmel.dashboard.server;
 
+import java.io.BufferedOutputStream;
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.TreeSet;
 
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.apache.tomcat.util.http.fileupload.FileItem;
+import org.apache.tomcat.util.http.fileupload.disk.DiskFileItem;
 import org.apache.tomcat.util.http.fileupload.disk.DiskFileItemFactory;
 import org.apache.tomcat.util.http.fileupload.servlet.ServletFileUpload;
 
-import gov.noaa.pmel.dashboard.actions.OmePdfGenerator;
 import gov.noaa.pmel.dashboard.handlers.DataFileHandler;
 import gov.noaa.pmel.dashboard.handlers.MetadataFileHandler;
-import gov.noaa.pmel.dashboard.handlers.UserFileHandler;
 import gov.noaa.pmel.dashboard.shared.DashboardDataset;
 import gov.noaa.pmel.dashboard.shared.DashboardMetadata;
 import gov.noaa.pmel.dashboard.shared.DashboardUtils;
@@ -36,6 +41,8 @@ public class MetadataUploadService extends HttpServlet {
 
 	private static final long serialVersionUID = -1458504704372812166L;
 
+    private static final Logger logger = LogManager.getLogger(MetadataUploadService.class);
+    
 	private ServletFileUpload metadataUpload;
 
 	public MetadataUploadService() {
@@ -79,6 +86,7 @@ public class MetadataUploadService extends HttpServlet {
 		String uploadTimestamp = null;
 		String isSupToken = null;
 		FileItem metadataItem = null;
+        File uploadFile = null;
 		try {
 			Map<String,List<FileItem>> paramMap = metadataUpload.parseParameterMap(request);
 			try {
@@ -117,7 +125,7 @@ public class MetadataUploadService extends HttpServlet {
 			// Verify page contents seem okay
 			DashboardConfigStore configStore = DashboardConfigStore.get(true);
 			if ( (username == null) || (datasetIds == null) || (uploadTimestamp == null) ||
-				 (metadataItem == null) || ! configStore.validateUser(username) ) {
+				 (metadataItem == null) || ! Users.validateUser(username) ) {
 				if ( metadataItem != null )
 					metadataItem.delete();
 				sendErrMsg(response, "Invalid request contents for this service.");
@@ -132,25 +140,34 @@ public class MetadataUploadService extends HttpServlet {
 			}
 			String version = configStore.getUploadVersion();
 			String uploadFilename = DashboardUtils.baseName(metadataItem.getName());
+            uploadFile = getUploadedFile(metadataItem);
 			for (String datasetId : idList) {
-				String filename = isSupplemental ? uploadFilename : DashboardUtils.metadataFilename(datasetId); 
-				MetadataFileHandler metadataHandler = configStore.getMetadataFileHandler();
-				// TODO: backup existing ?
-				DashboardMetadata metadata = metadataHandler.saveMetadataFileItem(datasetId, username, uploadTimestamp, 
-				                                                                  filename, version, metadataItem);
-				// TODO: validate metadata XML
-				// TODO: generate PDF
-				
-				if ( isSupplemental ) {
-					DataFileHandler cruiseHandler = configStore.getDataFileHandler();
-					cruiseHandler.addAddlDocTitleToDataset(datasetId, metadata);
-				} else {
-					DataFileHandler df = configStore.getDataFileHandler();
-					DashboardDataset dataset = df.getDatasetFromInfoFile(datasetId);
-					dataset.setMdTimestamp(uploadTimestamp);
-					df.saveDatasetInfoToFile(dataset, "Updating metadata timestamp on user upload metadata file.");
-				}
-			}
+                try ( InputStream is = new FileInputStream(uploadFile);) {
+    				String filename = isSupplemental ? uploadFilename : MetadataFileHandler.metadataFilename(datasetId); 
+    				MetadataFileHandler metadataHandler = configStore.getMetadataFileHandler();
+    				// TODO: backup existing ?
+                    
+                    DashboardMetadata metadata = 
+                                metadataHandler.saveMetadataFileItem(datasetId, username, uploadTimestamp, 
+    			                                                     filename, version, is);
+    				// TODO: validate metadata XML
+    				// TODO: generate PDF
+    				
+    				if ( isSupplemental ) {
+    					DataFileHandler cruiseHandler = configStore.getDataFileHandler();
+    					cruiseHandler.addAddlDocTitleToDataset(datasetId, metadata);
+    				} else {
+    					DataFileHandler df = configStore.getDataFileHandler();
+    					DashboardDataset dataset = df.getDatasetFromInfoFile(datasetId);
+    					dataset.setMdTimestamp(uploadTimestamp);
+    					df.saveDatasetInfoToFile(dataset, "Updating metadata timestamp on user upload metadata file.");
+    				}
+    			}
+            }
+            if ( uploadFile != null ) {
+                uploadFile.delete();
+                uploadFile = null;
+            }
 			
 			// Send the success response
 			response.setStatus(HttpServletResponse.SC_OK);
@@ -164,175 +181,30 @@ public class MetadataUploadService extends HttpServlet {
 			sendErrMsg(response, "Error processing the request\n" + ex.getMessage());
 			return;
 		} finally {
-			if ( metadataItem != null )
-				metadataItem.delete();
+            if ( uploadFile != null ) {
+                uploadFile.delete();
+            }
 		}
-
 	}
 	
-//	protected void _oldPost(HttpServletRequest request, HttpServletResponse response) throws IOException {
-//		// Verify the post has the correct encoding
-//		if ( ! ServletFileUpload.isMultipartContent(request) ) {
-//			sendErrMsg(response, "Invalid request contents format for this service.");
-//			return;
-//		}
-//
-//		// Get the contents from the post request
-//		String username = null;
-//		try {
-//			username = DashboardUtils.cleanUsername(request.getUserPrincipal().getName().trim());
-//		} catch (Exception ex) {
-//			; // leave username null for error message later
-//		}
-//
-//		// Get the contents from the post request
-//		String datasetIds = null;
-//		String uploadTimestamp = null;
-//		String omeIndicator = null;
-//		FileItem metadataItem = null;
-//		try {
-//			Map<String,List<FileItem>> paramMap = metadataUpload.parseParameterMap(request);
-//			try {
-//				List<FileItem> itemList;
-//
-//				itemList = paramMap.get("datasetids");
-//				if ( (itemList != null) && (itemList.size() == 1) ) {
-//					datasetIds = itemList.get(0).getString();
-//				}
-//	
-//				itemList = paramMap.get("timestamp");
-//				if ( (itemList != null) && (itemList.size() == 1) ) {
-//					uploadTimestamp = itemList.get(0).getString();
-//				}
-//	
-//				itemList = paramMap.get("ometoken");
-//				if ( (itemList != null) && (itemList.size() == 1) ) {
-//					omeIndicator = itemList.get(0).getString();
-//				}
-//	
-//				itemList = paramMap.get("metadataupload");
-//				if ( (itemList != null) && (itemList.size() == 1) ) {
-//					metadataItem = itemList.get(0);
-//				}
-//				
-//			} finally {
-//				// Delete everything except for the uploaded metadata file
-//				for ( List<FileItem> itemList : paramMap.values() ) {
-//					for ( FileItem item : itemList ) {
-//						if ( ! item.equals(metadataItem) ) {
-//							item.delete();
-//						}
-//					}
-//				}
-//			}
-//		} catch (Exception ex) {
-//			if ( metadataItem != null )
-//				metadataItem.delete();
-//			sendErrMsg(response, "Error processing the request\n" + ex.getMessage());
-//			return;
-//		}
-//
-//		// Verify page contents seem okay
-//		DashboardConfigStore configStore = DashboardConfigStore.get(true);
-//		if ( (username == null) || (datasetIds == null) || (uploadTimestamp == null) ||
-//			 (omeIndicator == null) || (metadataItem == null) || 
-//			 ( ! (omeIndicator.equals("false") || omeIndicator.equals("true")) ) || 
-//			 ! configStore.validateUser(username) ) {
-//			if ( metadataItem != null )
-//				metadataItem.delete();
-//			sendErrMsg(response, "Invalid request contents for this service.");
-//			return;
-//		}
-//		// Extract the set of dataset ID from the datasetIds String
-//		TreeSet<String> idSet = new TreeSet<String>(); 
-//		try {
-//			idSet.addAll(DashboardUtils.decodeStringArrayList(datasetIds));
-//			if ( idSet.size() < 1 )
-//				throw new IllegalArgumentException();
-//		} catch ( IllegalArgumentException ex ) {
-//			metadataItem.delete();
-//			sendErrMsg(response, "Invalid request contents for this service.");
-//			return;
-//		}
-//
-//		boolean isOme = omeIndicator.equals("true");
-//		String version = configStore.getUploadVersion();
-//
-//		MetadataFileHandler metadataHandler = configStore.getMetadataFileHandler();
-//		DataFileHandler cruiseHandler = configStore.getDataFileHandler();
-//		OmePdfGenerator omePdfGenerator = configStore.getOmePdfGenerator();
-//		String uploadFilename;
-//		// XXX TODO: OME_FILENAME check
-//		if ( isOme ) {
-//			// Save under the PI_OME_FILENAME at this time.
-//			uploadFilename = DashboardUtils.PI_OME_FILENAME;
-//		}
-//		else {
-//			uploadFilename = DashboardUtils.baseName(metadataItem.getName());
-//			if ( uploadFilename.equals(DashboardUtils.OME_FILENAME) ||
-//				 uploadFilename.equals(DashboardUtils.OME_PDF_FILENAME) ||
-//				 uploadFilename.equals(DashboardUtils.PI_OME_FILENAME) ||
-//				 uploadFilename.equals(DashboardUtils.PI_OME_PDF_FILENAME) ) {
-//				metadataItem.delete();
-//				sendErrMsg(response, "Name of the uploaded file cannot be " + 
-//						DashboardUtils.OME_FILENAME + 
-//						" nor " + DashboardUtils.OME_PDF_FILENAME + 
-//						" nor " + DashboardUtils.PI_OME_FILENAME + 
-//						" nor " + DashboardUtils.PI_OME_PDF_FILENAME + 
-//						"\nPlease rename the file and try again.");
-//			}
-//		}
-//
-//		DashboardMetadata metadata = null;
-//		for ( String id : idSet ) {
-//			try {
-//				// Save the metadata document for this cruise
-//				if ( metadata == null ) {
-//					metadata = metadataHandler.saveMetadataFileItem(id, 
-//							username, uploadTimestamp, uploadFilename, version, metadataItem);
-//				}
-//				else {
-//					metadata = metadataHandler.copyMetadataFile(id, metadata, true);
-//				}
-//				// Update the metadata documents associated with this cruise
-//				if ( isOme ) {
-//					// Make sure the contents are valid OME XML
-//					DashboardOmeMetadata omedata;
-//					try {
-//						omedata = new DashboardOmeMetadata(metadata, metadataHandler);
-//					} catch ( IllegalArgumentException ex ) {
-//						// Problems with the file - delete it
-//						metadataHandler.deleteMetadata(username, id, metadata.getFilename());
-//						throw new IllegalArgumentException("Invalid OME metadata file: " + ex.getMessage());
-//					}
-//					cruiseHandler.addAddlDocTitleToDataset(id, omedata);
-//					try {
-//						// This is using the PI OME XML file at this time
-//						omePdfGenerator.createPiOmePdf(id);
-//					} catch ( Exception ex ) {
-//						throw new IllegalArgumentException(
-//								"Unable to create the PDF from the OME XML: " + ex.getMessage());
-//					}
-//				}
-//				else {
-//					cruiseHandler.addAddlDocTitleToDataset(id, metadata);
-//				}
-//			} catch ( Exception ex ) {
-//				metadataItem.delete();
-//				sendErrMsg(response, ex.getMessage());
-//				return;
-//			}
-//		}
-//
-//		// Send the success response
-//		response.setStatus(HttpServletResponse.SC_OK);
-//		response.setContentType("text/html;charset=UTF-8");
-//		PrintWriter respWriter = response.getWriter();
-//		respWriter.println(DashboardUtils.SUCCESS_HEADER_TAG);
-//		response.flushBuffer();
-//	}
-
 	/**
+     * @param metadataItem
+     * @return
+     */
+    private static File getUploadedFile(FileItem metadataItem) throws Exception {
+        if ( metadataItem instanceof DiskFileItem &&
+             ! metadataItem.isInMemory() ) {
+            return ((DiskFileItem)metadataItem).getStoreLocation();
+        }
+        File tmpFile = File.createTempFile("oadb_upload_"+metadataItem.getName(), ".tmp");
+        try ( OutputStream os = new BufferedOutputStream(new FileOutputStream(tmpFile))) {
+            os.write(metadataItem.get());
+            metadataItem.delete();
+        }
+        return tmpFile;
+    }
+
+    /**
 	 * Returns an error message in the given Response object.  
 	 * The response number is still 200 (SC_OK) so the message 
 	 * goes through cleanly.

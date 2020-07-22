@@ -30,7 +30,7 @@ html, body {
 	margin-left: 3em;
 }
 .archiveFileListPanel {
-    padding: 3em 2em;
+    padding: 1.2em 2em .5em;
 }
 .archiveFileListLabel {
     display:inline-block;
@@ -45,6 +45,9 @@ html, body {
 }
 .archiveStatusLabel {
     margin-top: 2em;
+}
+.archiveStatusLabel h3 {
+    margin-block-end: .5em !important;
 }
 .archiveStatusSubmitTime {
 	padding-left: 1em;
@@ -99,8 +102,9 @@ html, body {
     margin-right: 0.5em;
 }
 .datagrid {
-	height: 27em;
-	margin: 1em;
+    margin-top: 1em;
+    margin-left: 1em;
+    margin-right: 0.5em;
 }
 .datagridscroll {
 	height: 27em;
@@ -216,6 +220,11 @@ hr .hline {
 .verticalSpace3em {
 	display: inline;
 	padding: 1.5em 0em !important;
+}
+.pullRight {
+	float: right;
+    margin-right:1em;
+    margin-bottom:1em;
 }
 .rightButton {
 	display: inline;
@@ -487,33 +496,31 @@ hr .hline {
     flex: 1;
 }
 .submit_msg_text {
-/*    display: inline-block;
-     width:98%; */
      width: 100%;
      height: 8.5em;
 }
 .titlepanel {
-/* 	display: block; */
-/* 	display: table-row; */
 	margin-top: 1em;
 	margin-bottom: 1.5em;
-/* 	height: 12em; */
 }
 .pagefooter {
     display: block;
-    width: 35em;
     font-size: 11px;
+}
+.footerLinkPanel {
+    width: 35em;
     margin: 1em auto;
 }
 .pageheader {
 	display: table;
     width: 100%;
-    height: 4em;
+    height: 4.2em;
 	padding-top: 0em;
 	padding-bottom: 0em;
     padding-right: .5em;
     overflow: visible;
-    /* background-color: #55a3e8; */
+    margin: 0px 2px;
+    background-color: #55a3e8;
 }
 .normalText {
     font-weight: normal !important;
@@ -528,13 +535,10 @@ hr .hline {
     border-color: rgb(204, 204, 204);
 }
 .headerLogo {
-/*     background-color: white; */
-    margin: .5em 2.4em 0.3em;
-/*     margin-left:1.25em;
-    margin-right:1.25em;
-    margin-top:.1em;
-    margin-bottom: .1em;
- */}
+	background-color: #55a3e8;
+    margin: .5em 2.2m 0.3em;
+    height: 50px;
+}
 .headerInfo {
     display: table-cell;
     width: 100%;
@@ -555,7 +559,7 @@ hr .hline {
 	font-weight: bold;
     margin: 0.25em 1em 0.3em;
     color: white;
-	float: left;
+/* 	float: left; */
 }
 .headerversionlabel {
 	position: absolute;

@@ -12,6 +12,7 @@ import java.io.FileWriter;
 import java.io.FilenameFilter;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.PrintWriter;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.text.SimpleDateFormat;
@@ -19,19 +20,19 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.Properties;
 
-import org.apache.tomcat.util.http.fileupload.FileItem;
-import org.jdom2.Document;
-import org.jdom2.output.Format;
-import org.jdom2.output.XMLOutputter;
+import org.apache.log4j.Logger;
+import org.apache.tomcat.util.http.fileupload.IOUtils;
 import org.tmatesoft.svn.core.SVNException;
 
+import gov.noaa.pmel.dashboard.dsg.StdUserDataArray;
 import gov.noaa.pmel.dashboard.oads.DashboardOADSMetadata;
 import gov.noaa.pmel.dashboard.oads.OADSMetadata;
-import gov.noaa.pmel.dashboard.server.DashboardConfigStore;
 import gov.noaa.pmel.dashboard.server.DashboardServerUtils;
+import gov.noaa.pmel.dashboard.server.Users;
 import gov.noaa.pmel.dashboard.shared.DashboardMetadata;
 import gov.noaa.pmel.dashboard.shared.DashboardUtils;
 import gov.noaa.pmel.tws.util.FileUtils;
+import gov.noaa.pmel.tws.util.Logging;
 import gov.noaa.pmel.tws.util.TimeUtils;
 
 /**
@@ -41,6 +42,8 @@ import gov.noaa.pmel.tws.util.TimeUtils;
  */
 public class MetadataFileHandler extends VersionedFileHandler {
 
+    private static Logger logger = Logging.getLogger(MetadataFileHandler.class);
+    
 	private static final String INFOFILE_SUFFIX = ".properties";
 	private static final String UPLOAD_TIMESTAMP_ID = "uploadtimestamp";
 	private static final String METADATA_OWNER_ID = "metadataowner";
@@ -50,10 +53,10 @@ public class MetadataFileHandler extends VersionedFileHandler {
 
     private static final String EMPTY_OADS_XML_METADATA_ELEMENT_OPENING = 
             "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n" + 
-            "<metadata>\n" + 
-                "<expocode>";
+            "<metadata>\n" ;
+//                + "<expocode>";
     private static final String EMPTY_OADS_XML_METADATA_ELEMENT_CLOSING = 
-                "</expocode>\n"+
+//                "</expocode>\n"+
             "</metadata>";
     
 	private static final SimpleDateFormat DATETIME_FORMATTER = new SimpleDateFormat("YYYY-MM-dd HH:mm");
@@ -81,7 +84,8 @@ public class MetadataFileHandler extends VersionedFileHandler {
 
 	/**
 	 * Generates the virtual file for a metadata document
-	 * from the dataset ID and the upload filename.
+	 * from the dataset ID and the upload filename. 
+	 * It also creates the necessary parent directories along the way.
 	 * 
 	 * @param datasetId
 	 * 		ID of the dataset associated with this metadata document
@@ -93,15 +97,19 @@ public class MetadataFileHandler extends VersionedFileHandler {
 	 * 		if uploadName is null or ends in a slash or backslash, or 
 	 * 		if the dataset ID is invalid
 	 */
-	public File getMetadataFile(String datasetId, String uploadName) 
-											throws IllegalArgumentException {
-		// Check and standardize the dataset
-		String stdId = DashboardServerUtils.checkDatasetID(datasetId);
+	public File getMetadataFile(String datasetId, String filename) 
+			throws IllegalArgumentException {
 		// Remove any path from uploadName
-		String basename = DashboardUtils.baseName(uploadName);
+		String basename = DashboardUtils.baseName(filename);
 		if ( basename.isEmpty() )
-			throw new IllegalArgumentException("Invalid metadate file name " + uploadName);
+			throw new IllegalArgumentException("Invalid metadate file name " + filename);
 		// Generate the full path filename for this metadata file
+		File metadataFile = new File(getMetadataDirectory(datasetId), basename);
+		return metadataFile;
+	}
+
+    public File getMetadataDirectory(String datasetId) {
+		String stdId = DashboardServerUtils.checkDatasetID(datasetId);
 		File grandParentDir = new File(filesDir, stdId.substring(0,4));
 		if ( !grandParentDir.exists()) {
 		    grandParentDir.mkdirs();
@@ -110,33 +118,17 @@ public class MetadataFileHandler extends VersionedFileHandler {
 		if ( !parentDir.exists()) {
 		    parentDir.mkdir();
 		}
-		File metadataFile = new File(parentDir, basename);
-		return metadataFile;
-	}
-
+        return parentDir;
+    }
 	public File getMetadataFile(String datasetId) {
-		String stdId = DashboardServerUtils.checkDatasetID(datasetId);
-		String stdName = DashboardUtils.metadataFilename(stdId);
-		File grandParentDir = new File(filesDir, stdId.substring(0,4));
-		File parentDir = new File(grandParentDir, stdId);
-        if ( !parentDir.exists()) {
-            parentDir.mkdirs();
-        }
-		File metadataFile = new File(parentDir, stdName);
-		return metadataFile;
+        return getMetadataFile(datasetId, MetadataFileHandler.metadataFilename(datasetId));
 	}
     
 	public File getAutoExtractedMetadataFile(String datasetId) {
 		String stdId = DashboardServerUtils.checkDatasetID(datasetId);
-		String stdName = DashboardUtils.autoExtractedMdFilename(stdId);
-		File grandParentDir = new File(filesDir, stdId.substring(0,4));
-		File parentDir = new File(grandParentDir, stdId);
-        if ( !parentDir.exists()) {
-            parentDir.mkdirs();
-        }
-		File metadataFile = new File(parentDir, stdName);
+		String stdName = MetadataFileHandler.autoExtractedMdFilename(stdId);
+		File metadataFile = new File(getMetadataDirectory(datasetId), stdName);
 		return metadataFile;
-	    
 	}
 	
 	/**
@@ -203,15 +195,8 @@ public class MetadataFileHandler extends VersionedFileHandler {
 		DashboardMetadata oldMetadata = getMetadataInfo(datasetId, metaname);
 		if ( oldMetadata == null )
 			return;
-		DashboardConfigStore configStore;
-		try {
-			configStore = DashboardConfigStore.get(false);
-		} catch (IOException ex) {
-			throw new IllegalArgumentException(
-					"Unexpected error obtaining the dashboard configuration");
-		}
 		String oldOwner = oldMetadata.getOwner();
-		if ( ! configStore.userManagesOver(username, oldOwner) )
+		if ( ! Users.userManagesOver(username, oldOwner) )
 			throw new IllegalArgumentException("Not permitted to update metadata document " + 
 					oldMetadata.getFilename() + " for dataset " + 
 					oldMetadata.getDatasetId() + " owned by " + oldOwner);
@@ -244,17 +229,9 @@ public class MetadataFileHandler extends VersionedFileHandler {
 	 */
 	public DashboardMetadata saveMetadataFileItem(String datasetId, 
 			String owner, String uploadTimestamp, String uploadFilename,
-			String version, FileItem uploadFileItem) throws IllegalArgumentException {
+			String version, InputStream uploadFileItem) throws IllegalArgumentException {
 		// Create the metadata filename
 		File metadataFile = getMetadataFile(datasetId, uploadFilename);
-
-		// Make sure the parent directory exists 
-		File parentDir = metadataFile.getParentFile();
-		if ( ! parentDir.exists() ) {
-			if ( ! parentDir.mkdirs() )
-				throw new IllegalArgumentException("Problems creating the parent directory for " + 
-						metadataFile.getPath());
-		}
 
 		// Check if this will overwrite existing metadata
 		boolean isUpdate;
@@ -267,8 +244,8 @@ public class MetadataFileHandler extends VersionedFileHandler {
 		}
 
 		// Copy the uploaded data to the metadata document
-		try {
-			uploadFileItem.write(metadataFile);
+		try ( FileOutputStream fos = new FileOutputStream(metadataFile); ) {
+            IOUtils.copy(uploadFileItem, fos);
 		} catch ( Exception ex ) {
 			throw new IllegalArgumentException("Problems creating/updating the metadata document " +
 					metadataFile.getPath() + ":\n    " + ex.getMessage());
@@ -751,24 +728,25 @@ public class MetadataFileHandler extends VersionedFileHandler {
 	 * 		name of the user wanting to remove the metadata document
 	 * @param datasetId
 	 * 		ID of the dataset associated with this metadata
-	 * @param metaname
+	 * @param metafileName
 	 * 		name of the metadata document
 	 * @throws IllegalArgumentException 
 	 * 		if the dataset ID or metaname is invalid, 
 	 * 		if the user is not permitted to delete the metadata document,
 	 * 		if there are problems deleting the document.
 	 */
-	public void deleteMetadata(String username, String datasetId,
-							String metaname) throws IllegalArgumentException {
-		File metadataFile = getMetadataFile(datasetId, metaname);
+	public void deleteMetadataFile(String username, String datasetId,
+        						   String metafileName) throws IllegalArgumentException {
+		File metadataFile = getMetadataFile(datasetId, metafileName);
+        File backupDir = getBackupDir(metadataFile);
 		File propsFile = new File(metadataFile.getPath() + INFOFILE_SUFFIX);
-        File extractedInfoFile = getAutoExtractedMetadataFile(datasetId);
+//        File extractedInfoFile = getAutoExtractedMetadataFile(datasetId);
 		// Do not throw an error if the props file does not exist
 		if ( propsFile.exists() ) { 
 			// Throw an exception if not allowed to overwrite
-			verifyOkayToDelete(username, datasetId, metaname);
+			verifyOkayToDelete(username, datasetId, metafileName);
 			try {
-                backupFile(propsFile, propsFile.getPath(), "."+TimeUtils.format_ISO_COMPRESSED(new Date())+"_bak");
+                backupFile(propsFile, backupDir, "."+TimeUtils.format_ISO_COMPRESSED(new Date())+"_bak");
 				deleteVersionedFile(propsFile, "Deleted metadata properties " + propsFile.getPath());
 			} catch ( Exception ex ) {
 				throw new IllegalArgumentException(
@@ -779,38 +757,84 @@ public class MetadataFileHandler extends VersionedFileHandler {
 		// If the props file does not exist, assume it is okay to delete the metadata file.
 		if ( metadataFile.exists() ) { 
 			try {
-                backupFile(metadataFile, metadataFile.getPath(), "."+TimeUtils.format_ISO_COMPRESSED(new Date())+"_bak");
+                backupFile(metadataFile, backupDir, "."+TimeUtils.format_ISO_COMPRESSED(new Date())+"_bak");
 				deleteVersionedFile(metadataFile, "Deleted metadata document " + metadataFile.getPath());
 			} catch ( Exception ex ) {
 				throw new IllegalArgumentException(
 						"Unable to delete metadata file " + metadataFile.getPath());
 			}
 		}
-		if ( extractedInfoFile.exists() ) { 
-			try {
-                extractedInfoFile.delete();
-//              backupFile(metadataFile, metadataFile.getPath(), "."+TimeUtils.format_ISO_COMPRESSED(new Date())+"_bak");
-//				deleteVersionedFile(metadataFile, "Deleted metadata document " + metadataFile.getPath());
-			} catch ( Exception ex ) {
-				throw new IllegalArgumentException(
-						"Unable to delete metadata file " + metadataFile.getPath());
-			}
-		}
+//		if ( extractedInfoFile.exists() ) { 
+//			try {
+//                extractedInfoFile.delete();
+//			} catch ( Exception ex ) {
+//				throw new IllegalArgumentException(
+//						"Unable to delete metadata file " + metadataFile.getPath());
+//			}
+//		}
 	}
 
+	public void deleteAllMetadata(String username, String datasetId) throws IllegalArgumentException {
+        File metaFile = getMetadataFile(datasetId);
+        File metaDir = metaFile.getParentFile();
+        File backupDir = getBackupDir(metaFile);
+        boolean deletedAllFiles = true;
+        try {
+            for (File f : metaDir.listFiles()) {
+                backupFile(f, backupDir, "."+TimeUtils.format_ISO_COMPRESSED(new Date()));
+                deletedAllFiles = f.delete() && deletedAllFiles;
+            }
+            if ( ! deletedAllFiles ) {
+                logger.warn("Failed to delete all files from " + metaDir.getPath());
+            }
+        } catch (Exception ex) {
+            logger.warn("Exception deleting files from " + metaDir.getPath());
+        }
+        if ( deletedAllFiles ) {
+            try {
+                if ( !metaDir.delete()) {
+                    logger.warn("Failed to delete metadata directory " + metaDir.getPath());
+                }
+            } catch (Exception ex) {
+                logger.warn("Exception deleting metadata directory " + metaDir.getPath());
+            }
+        }
+	}
+    
 	/**
+     * @param metadataFile
+     * @return
+     */
+    private static File getBackupDir(File metadataFile) {
+        File parent = metadataFile.getParentFile();
+        File backupRoot = new File(parent.getParentFile(), parent.getName() + "_bak");
+        if ( ! backupRoot.exists()) {
+            backupRoot.mkdir();
+        }
+        String backupDirName = new SimpleDateFormat("yyyyMMddHHmmss").format(new Date());
+        return new File(backupRoot, backupDirName);
+    }
+
+    /**
      * @param propsFile
      * @param path
      * @param string
 	 * @throws IOException 
      */
-    private static void backupFile(File file, String filePath, String backupExtension) throws IOException {
+    private static void backupFile(File file, File backupDir, String backupExtension) throws IOException {
         String dotExtension = backupExtension.startsWith(".") ? backupExtension : "." + backupExtension;
-        File outFile = new File(file.getParent(), file.getName()+dotExtension);
+        if ( ! backupDir.exists()) {
+            boolean created = backupDir.mkdirs();
+            if ( !created ) {
+                logger.warn("Failed to create backup dir: " + backupDir.getAbsolutePath());
+                return;
+            }
+        }
+        File outFile = new File(backupDir, file.getName()+dotExtension);
         FileUtils.copyFile(file, outFile);
     }
 
-    /**
+    /* *
 	 * Save the OME XML document created by {@link DashboardOmeMetadata#createOmeXmlDoc()} 
 	 * as the document file for this metadata.  The parent directory for this file is 
 	 * expected to exist and this method will overwrite any existing OME metadata file.
@@ -857,7 +881,7 @@ public class MetadataFileHandler extends VersionedFileHandler {
 	}
 	*/
 
-	public void saveAsOadsXmlDoc(DashboardOADSMetadata mdata, String fileName, String message) {
+	public void saveAsOadsXmlDoc(DashboardOADSMetadata mdata, String fileName, String message) throws Exception {
 		File mdataFile = getMetadataFile(mdata.getDatasetId(), fileName);
 		File parentDir = mdataFile.getParentFile();
 		if ( !parentDir.exists()) {
@@ -868,16 +892,16 @@ public class MetadataFileHandler extends VersionedFileHandler {
 		}
 
 		// Save the XML document to the metadata document file
-		try {
+//		try {
 			// Generate the OADS XML 
 			String xml = OADSMetadata.createOadsMetadataXml(mdata);
 			try ( FileOutputStream out = new FileOutputStream(mdataFile); ) {
 				out.write(xml.getBytes());
 //				(new XMLOutputter(Format.getPrettyFormat())).output(omeDoc, out);
 			}
-		} catch (Exception ex) {
-			throw new IllegalArgumentException( "Problems writing the metadata document: " + ex.getMessage());
-		}
+//		} catch (Exception ex) {
+//			throw new IllegalArgumentException( "Problems writing the metadata document: " + ex.getMessage());
+//		}
 
 		if ( (message == null) || message.trim().isEmpty() )
 			return;
@@ -906,11 +930,41 @@ public class MetadataFileHandler extends VersionedFileHandler {
 		}
         try ( FileWriter writer = new FileWriter(mdataFile); ) {
             writer.write(EMPTY_OADS_XML_METADATA_ELEMENT_OPENING);
-            writer.write(datasetId);
+//            writer.write(datasetId);
             writer.write(EMPTY_OADS_XML_METADATA_ELEMENT_CLOSING);
             writer.flush();
         }
         return mdataFile;
+    }
+
+    /**
+     * @param stdArray
+     * @throws IOException 
+     */
+    public void saveLocationsFile(StdUserDataArray stdArray) throws IOException {
+        File lonLatFile = new File(getMetadataDirectory(stdArray.getDatasetName()), "lonlat.tsv");
+        try ( PrintWriter lonLatFileWriter = new PrintWriter(new FileWriter(lonLatFile))) {
+            Double[] lats = stdArray.getSampleLatitudes();
+            Double[] lons = stdArray.getSampleLongitudes();
+            for (int idx = 1; idx < stdArray.getNumSamples(); idx++) {
+                lonLatFileWriter.println(lons[idx] + "\t" + lats[idx]);
+            }
+        }
+    }
+
+    public static String autoExtractedMdFilename(String datasetId) {
+    	return "extracted_"+metadataFilename(datasetId);
+    }
+
+    public static String metadataFilename(String datasetId, String extension) {
+    	if ( DashboardUtils.isEmptyNullOrNull(datasetId))
+    		throw new IllegalArgumentException("Empty or null dataset ID");
+    	String stdId = DashboardServerUtils.checkDatasetID(datasetId);
+    	return stdId + "_OADS" + extension;
+    }
+
+    public static String metadataFilename(String datasetId) {
+    	return MetadataFileHandler.metadataFilename(datasetId, ".xml");
     }
 
 }

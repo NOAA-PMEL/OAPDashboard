@@ -32,7 +32,6 @@ import gov.noaa.pmel.dashboard.server.DashboardServerUtils;
 import gov.noaa.pmel.dashboard.server.submission.status.SubmissionRecord;
 import gov.noaa.pmel.dashboard.shared.DashboardDatasetData;
 import gov.noaa.pmel.dashboard.shared.DashboardMetadata;
-import gov.noaa.pmel.dashboard.shared.DashboardUtils;
 
 /**
  * Bundles files for sending out to be archived.
@@ -214,7 +213,7 @@ public class ArchiveFilesBundler extends VersionedFileHandler {
 			// do include the (dataset)/PI_OME.xml 
 			String filename = mdata.getFilename();
 			// XXX TODO: OME_FILENAME check
-			if ( ! filename.equals(DashboardUtils.autoExtractedMdFilename(mdata.getDatasetId())) ) {
+			if ( ! filename.equals(MetadataFileHandler.autoExtractedMdFilename(mdata.getDatasetId())) ) {
 				addlDocs.add(metadataHandler.getMetadataFile(stdId, filename));
 			}
 		}
@@ -402,7 +401,7 @@ public class ArchiveFilesBundler extends VersionedFileHandler {
 		ArrayList<File> addlDocs = new ArrayList<File>();
 		for ( DashboardMetadata mdata : metadataHandler.getMetadataFiles(stdId) ) {
 			String filename = mdata.getFilename();
-			if ( ! filename.equals(DashboardUtils.autoExtractedMdFilename(mdata.getDatasetId())) ) {
+			if ( ! filename.equals(MetadataFileHandler.autoExtractedMdFilename(mdata.getDatasetId())) ) {
 				addlDocs.add(metadataHandler.getMetadataFile(stdId, filename));
 			}
 		}

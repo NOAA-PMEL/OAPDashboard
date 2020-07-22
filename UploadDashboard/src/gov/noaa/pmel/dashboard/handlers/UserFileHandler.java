@@ -18,10 +18,14 @@ import java.util.Map.Entry;
 import java.util.Properties;
 import java.util.TreeSet;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
 import gov.noaa.pmel.dashboard.datatype.DashDataType;
 import gov.noaa.pmel.dashboard.datatype.KnownDataTypes;
 import gov.noaa.pmel.dashboard.server.DashboardConfigStore;
 import gov.noaa.pmel.dashboard.server.DashboardServerUtils;
+import gov.noaa.pmel.dashboard.server.Users;
 import gov.noaa.pmel.dashboard.shared.DashboardDataset;
 import gov.noaa.pmel.dashboard.shared.DashboardDatasetList;
 import gov.noaa.pmel.dashboard.shared.DashboardUtils;
@@ -35,6 +39,8 @@ import gov.noaa.pmel.tws.util.StringUtils;
  */
 public class UserFileHandler extends VersionedFileHandler {
 
+    private static Logger logger = LogManager.getLogger(UserFileHandler.class);
+    
 	private static final String USER_CRUISE_LIST_NAME_EXTENSION = 
 			"_cruise_list.txt";
 	private static final String USER_DATA_COLUMNS_NAME_EXTENSION =
@@ -112,10 +118,14 @@ public class UserFileHandler extends VersionedFileHandler {
 			if ( dtype == null )
 				throw new IllegalArgumentException("Unknown data type \"" + 
 						vals[0] + "\" for tag \"" + colName + "\"");
-			DataColumnType dctype = dtype.duplicate();
-			if ( ! dctype.setSelectedUnit(vals[1]) )
-				throw new IllegalArgumentException("Unknown data unit \"" + vals[1] + 
-						"\" for data type \"" + vals[0] + "\"");
+			DataColumnType dctype = dtype.dataColumnType();
+			if ( ! dctype.setSelectedUnit(vals[1]) ) {
+                String msg = "Unknown data unit \"" + vals[1] + 
+						"\" for data type \"" + vals[0] + "\"";
+                logger.info(msg);
+                if ( ! "time_of_day".equals(dtype.getVarName())) // XXX temporary until we're sure.
+                    throw new IllegalArgumentException(msg);
+			}
 			dctype.setSelectedMissingValue(vals[2]);
 			dataColNamesToTypes.put(colName, dctype);
 		}
@@ -172,28 +182,34 @@ public class UserFileHandler extends VersionedFileHandler {
 		DashboardDatasetList datasetList = new DashboardDatasetList(cleanUsername);
 		for ( String datasetId : dataIdsSet ) {
 			// Create the DashboardDataset from the info file
-			DashboardDataset dataset = dataHandler.getDatasetFromInfoFile(datasetId);
-			if ( dataset == null ) {
+            if ( dataHandler.infoFileExists(datasetId)) {
+    			DashboardDataset dataset = dataHandler.getDatasetFromInfoFile(datasetId);
+    			if ( dataset == null ) {
+    				// Dataset no longer exists - remove this ID from the saved list
+    				needsCommit = true;
+    				commitMessage += "remove non-existant dataset " + datasetId + "; ";
+    			}
+    			else {
+    				String owner = dataset.getOwner();
+    				if ( ! Users.userManagesOver(cleanUsername, owner) ) {
+    					// No longer authorized to view - remove this ID from the saved list
+    					needsCommit = true;
+    					commitMessage += "remove unauthorized dataset " + datasetId + "; ";
+    				}
+    				else {
+    					datasetList.put(datasetId, dataset);
+    				}
+    			}
+            } else {
 				// Dataset no longer exists - remove this ID from the saved list
 				needsCommit = true;
 				commitMessage += "remove non-existant dataset " + datasetId + "; ";
-			}
-			else {
-				String owner = dataset.getOwner();
-				if ( ! configStore.userManagesOver(cleanUsername, owner) ) {
-					// No longer authorized to view - remove this ID from the saved list
-					needsCommit = true;
-					commitMessage += "remove unauthorized dataset " + datasetId + "; ";
-				}
-				else {
-					datasetList.put(datasetId, dataset);
-				}
-			}
+            }
 		}
 		if ( needsCommit )
 			saveDatasetListing(datasetList, commitMessage);
 		// Determine whether or not this user is a manager/admin 
-		datasetList.setManager(configStore.isManager(cleanUsername));
+		datasetList.setManager(Users.isManager(cleanUsername));
 		// Return the listing of cruises
 		return datasetList;
 	}
@@ -318,7 +334,7 @@ public class UserFileHandler extends VersionedFileHandler {
 			if ( dataset == null ) 
 				throw new IllegalArgumentException("Unexpected error: dataset " +
 						datasetId + " does not exist");
-			if ( configStore.userManagesOver(cleanUsername, dataset.getOwner()) ) {
+			if ( Users.userManagesOver(cleanUsername, dataset.getOwner()) ) {
 				// Add or replace this dataset entry in the dataset list
 				viewableFound = true;
 				if ( datasetList.put(datasetId, dataset) == null ) {
@@ -385,7 +401,7 @@ public class UserFileHandler extends VersionedFileHandler {
 			DashboardDataset dataset = dataHandler.getDatasetFromInfoFile(datasetId);
 			if ( dataset == null ) 
 				throw new IllegalArgumentException("Unexpected error: dataset " + datasetId + " does not exist");
-			if ( configStore.userManagesOver(cleanUsername, dataset.getOwner()) ) {
+			if ( Users.userManagesOver(cleanUsername, dataset.getOwner()) ) {
 				// Add or replace this dataset entry in the dataset list
 				viewableFound = true;
 				if ( datasetList.put(datasetId, dataset) == null ) {
@@ -481,7 +497,7 @@ public class UserFileHandler extends VersionedFileHandler {
 		ArrayList<String> userColNames = dataset.getUserColNames();
 		ArrayList<DataColumnType> colTypes = new ArrayList<DataColumnType>(userColNames.size());
 		String userDsIdColKey = "";
-		if ( !DashboardUtils.isEmptyNull(datasetIdColName)) {
+		if ( !DashboardUtils.isEmptyOrNull(datasetIdColName)) {
 			userDsIdColKey = DashboardServerUtils.getKeyForName(datasetIdColName);
 		}
 		// Go through the column names to assign these lists
@@ -489,21 +505,21 @@ public class UserFileHandler extends VersionedFileHandler {
 		for ( String colName : userColNames ) {
 			String key = DashboardServerUtils.getKeyForName(colName);
 			DataColumnType thisColType = null;
-			if ( DashboardUtils.isEmptyNull(datasetIdColName)) {
+			if ( DashboardUtils.isEmptyOrNull(datasetIdColName)) {
 				thisColType = userColNamesToTypes.get(key);
-                if ( thisColType != null && thisColType.typeNameEquals(DashboardUtils.DATASET_NAME)) {
+                if ( thisColType != null && thisColType.typeNameEquals(DashboardUtils.DATASET_IDENTIFIER)) {
                     foundDatasetIdCol = true;
                 }
 			} else {
 				if ( datasetIdColName.equalsIgnoreCase(colName) || 
 					 userDsIdColKey.equalsIgnoreCase(key)) {
-					thisColType = DashboardUtils.DATASET_NAME;
+					thisColType = DashboardUtils.DATASET_IDENTIFIER;
                     foundDatasetIdCol = true;
 				} else {
 					thisColType = userColNamesToTypes.get(key);
 					// If a datasetId column was specified (which it is on this branch), 
 					// don't accept the default ones.
-					if ( DashboardUtils.DATASET_NAME.typeNameEquals(thisColType)) {
+					if ( DashboardUtils.DATASET_IDENTIFIER.typeNameEquals(thisColType)) {
 						thisColType = null;
 					}
 				}
@@ -519,7 +535,7 @@ public class UserFileHandler extends VersionedFileHandler {
                 idx += 1;
     			String key = DashboardServerUtils.getKeyForName(colName);
                 DataColumnType defaultType = defaultColNamesToTypes.get(key);
-				if ( defaultType != null && DashboardUtils.DATASET_NAME.equals(defaultType)) {
+				if ( defaultType != null && DashboardUtils.DATASET_IDENTIFIER.equals(defaultType)) {
         			colTypes.set(idx, defaultType.duplicate());
 				}
     		}

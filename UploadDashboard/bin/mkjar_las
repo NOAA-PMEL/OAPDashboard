@@ -1,0 +1,47 @@
+#!/bin/bash
+
+THIS=$0
+PROG_PATH=${THIS%/*}
+DIR="$( cd "$( dirname "$0" )" && pwd )"
+
+DEST_DIR=las_jar
+SRC_DIR=src
+CLASS_DIR=war/WEB-INF/classes
+BASE_DIR=gov/noaa/pmel/dashboard
+
+COPY_DIRS=(actions datatype dsg ferret handlers server shared util)
+
+if [ -e ${DEST_DIR} ] ; then
+	echo Deleting ${DEST_DIR}
+	rm -Rf ${DEST_DIR}
+fi
+
+copyDir() {
+	DIR=$1
+	SRC_ROOT=$2
+	DEST_ROOT=$3
+#	echo DIR: $DIR
+#	echo SROOT: $SRC_ROOT
+#	echo DROOT: $DEST_ROOT
+	SRC=${SRC_ROOT}/${BASE_DIR}/${DIR} 
+	DEST=${DEST_ROOT}/${BASE_DIR}/${DIR}/
+	echo Copying $SRC to $DEST
+#	echo SRC: ${SRC}
+#	echo DEST: ${DEST}
+	if [ ! -e $DEST ] ; then
+		echo Creating target dir $DEST
+		mkdir -p $DEST
+	fi
+
+	cp -R ${SRC}/* $DEST
+}
+
+for dir in ${COPY_DIRS[*]} ; do
+	copyDir $dir ${SRC_DIR} ${DEST_DIR}
+	copyDir $dir ${CLASS_DIR} ${DEST_DIR}
+done
+
+echo DEST_DIR: ${DEST_DIR}
+
+jar cf oapdashboard.jar -C ${DEST_DIR} gov
+

@@ -5,8 +5,6 @@ package gov.noaa.pmel.dashboard.client;
 
 import java.util.ArrayList;
 import java.util.Date;
-import java.util.HashMap;
-import java.util.Map;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.Element;
@@ -19,14 +17,11 @@ import com.google.gwt.safehtml.shared.SafeHtmlUtils;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.uibinder.client.UiHandler;
-import com.google.gwt.user.client.History;
 import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.ui.Anchor;
 import com.google.gwt.user.client.ui.Button;
-import com.google.gwt.user.client.ui.CaptionPanel;
 import com.google.gwt.user.client.ui.DisclosurePanel;
 import com.google.gwt.user.client.ui.FileUpload;
-import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.FormPanel;
 import com.google.gwt.user.client.ui.FormPanel.SubmitCompleteEvent;
 import com.google.gwt.user.client.ui.FormPanel.SubmitEvent;
@@ -34,14 +29,12 @@ import com.google.gwt.user.client.ui.HTML;
 import com.google.gwt.user.client.ui.Hidden;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.ListBox;
-import com.google.gwt.user.client.ui.Panel;
-import com.google.gwt.user.client.ui.RadioButton;
 import com.google.gwt.user.client.ui.Widget;
 
 import gov.noaa.pmel.dashboard.client.UploadDashboard.PagesEnum;
 import gov.noaa.pmel.dashboard.shared.DashboardUtils;
-import gov.noaa.pmel.dashboard.shared.FeatureType;
 import gov.noaa.pmel.dashboard.shared.FileType;
+import gov.noaa.pmel.dashboard.shared.ObservationType;
 
 /**
  * Page for uploading new or updated cruise data files.
@@ -53,43 +46,16 @@ public class DataUploadPage extends CompositeWithUsername {
 	private static final String TITLE_TEXT = "Upload Data Files";
 	private static final String MORE_HELP_TEXT = "Example Data";
 
-	// private static final String UPLOAD_FILE_DESCRIPTION_HTML = 
 	private static final String UPLOAD_FILE_INTRO_HTML = 
             "<h3>Upload data files for data sanity checks, QC, and archiving.</h3>" 
             + "Any file can be uploaded for archival.  However, only ASCII-delimited (CSV, etc.) files and Excel spreadsheets can be sanity-checked and QC'd."
             + "<br style=\"padding-bottom: .5em;\"/>To be checked, a delimited file must include:"
-			+ "<ul style=\"list-style-type:none\">"
+			+ "<ul style=\"list-style-type:disk\">"
 			+ "  <li>a header line of data column names,</li>"
 			+ "  <li>an optional header line of data column units,</li>"
 			+ "  <li>followed by any number of lines of data values.</li>"
 			+ "</ul>"
-            + "Data files must be identified by a dataset ID.  This may be by including a column indicating the dataset ID, or by explicitly specifying the dataset ID."
-            + "<br/>By default, the service will attempt to automatically identify a dataset ID column by checking for columns named dataset or cruise id or name."
-            + "<br/>Alternatively, you may specify the dataset ID column name. "
-            + "<br/>In addition, there is a set of required columns that must be present. "
-            + "Minimally, these include columns indicating observation time and location, as well as others as dictated by the observation type.";
-	private static final String _UPLOAD_FILE_INTRO_HTML = 
-			"<p>A data file for upload has the general format: " +
-			"<ul style=\"list-style-type:none\">" +
-			"  <li>a header line of data column names,</li>" +
-			"  <li>an optional header line of data column units,</li>" +
-			"  <li>and for each sample, a line of data values.</li>" +
-			"</ul></p>" +
-			"<p>An appropriately-named column containing the dataset " +
-			"or cruise name must be given; acceptable column names include: " +
-			"<ul style=\"list-style-type:none\">" +
-			"  <li>cruise</li>" +
-			"  <li>cruise name</li>" +
-			"  <li>cruise id</li>" +
-			"  <li>dataset</li>" +
-			"  <li>dataset name</li>" +
-			"  <li>dataset id</li>" +
-			"</ul>" +
-			"The data of each a sample will be associated with the " +
-			"dataset ID created from the name given in this column " +
-			"(keeping only letters, which are capitalized, and numbers).</p>" + 
-			"<p>You may specify an alternate column name under Advanced Options.</p>";
-
+            ;
 	private static final String MORE_HELP_HTML = 
 			"<p>The first few lines of a comma-separated upload datafile " + 
 			"may look something like the follow.  (Note that the data " +
@@ -121,8 +87,8 @@ public class DataUploadPage extends CompositeWithUsername {
 	private static final String FEATURE_TYPE_HELP_ANCHOR_TEXT = "Help about observation types.";
 	private static final String FEATURE_TYPE_HELP_HTML = 
 	        "The Observation Types are from the CF (Climate and Forecast) Conventions' Discrete Sampling Geometries.<br/>"
-	        + "See <a href=\"http://cfconventions.org/Data/cf-conventions/cf-conventions-1.7/cf-conventions.html\" target=\"_blank\">CF Conventions</a> "
-	        + "and <a href=\"http://cfconventions.org/Data/cf-conventions/cf-conventions-1.7/cf-conventions.html#discrete-sampling-geometries\" target=\"_blank\">Discrete Sampling Geometries</a>. "
+	        + "See <a href=\"http://cfconventions.org/cf-conventions/cf-conventions.html\" target=\"_blank\">CF Conventions</a> "
+	        + "and <a href=\"http://cfconventions.org/cf-conventions/cf-conventions.html#discrete-sampling-geometries\" target=\"_blank\">Discrete Sampling Geometries</a>. "
 	        + "<br/>Example observations for each type include:"
 	        + "<ul style=\"list-style-type:none\">"
 	        + "<li>TimeSeries: Observations at a moored buoy.</li>"
@@ -131,15 +97,7 @@ public class DataUploadPage extends CompositeWithUsername {
 	        + "<li>TimeSeries Profile: A series of profiles at the same location over time.</li>"
 	        + "<li>Trajectory Profile: A series of profiles along a ship or vessel track.</li>"
 	        + "</ul>";
-	private static final String FILE_TYPE_HELP_ANCHOR_TEXT = "Help about file formats.";
-	private static final String FILE_TYPE_HELP_HTML = 
-            "Currently only ASCII-delimited files and Excel spreadsheets in known formats are supported for inspection and checking."
-            + " All other file types should be identified as 'OTHER'.";
-            
-			
 	
-	private static final String SETTINGS_CAPTION_TEXT = "Settings";
-
 	private static final String ADVANCED_HTML_MSG = 
 			"Select a character set encoding for this file." +
 			"<ul>" +
@@ -165,44 +123,29 @@ public class DataUploadPage extends CompositeWithUsername {
 	private static final String CREATE_HOVER_HELP = 
 			"the data uploaded must only create new datasets";
 
-	private static final String OVERWRITE_TEXT = "create new or replace existing dataset(s)";
-	private static final String OVERWRITE_HOVER_HELP = 
-			"the data uploaded will replace any existing dataset(s)";
-
-	private static final String APPEND_TEXT = "create new or append to existing dataset(s)";
-	private static final String APPEND_HOVER_HELP = 
-			"the data uploaded will be appended to any existing dataset(s)";
-
 	private static final String SUBMIT_TEXT = "Upload";
 	private static final String CANCEL_TEXT = "Cancel";
 
 	private static final String SELECT_FEATURE_TYPE_MSG = 
             "Please select observation type.";
-	private static final String SELECT_FILE_TYPE_MSG = 
-            "Please select file format.";
 	private static final String NO_FILE_ERROR_MSG = 
 			"Please select a data file to upload";
 	private static final String UNEXPLAINED_FAIL_MSG = 
 			"<h3>Upload failed.</h3>" + 
-			"<p>Unexpectedly, no explanation of the failure was given</p>";
+			"<p>Unexpected server error: no explanation of the failure was given.</p>";
 	private static final String FAIL_MSG_START = 
 			"<h3>";
 	private static final String EXPLAINED_FAIL_MSG_START =
-			"<br />Upload failed.</h3>" +
+			"<br /><font style=\"color:red;\">Upload failed.</font></h3>" +
 			"<p><pre>\n";
 	private static final String EXPLAINED_FAIL_MSG_END = 
 			"</pre></p>";
     private static final String UPLOAD_FAILED_SUGGESTIONS = 
-            "This may be due to failure to properly parse the file.<br/>"
-            + "Only ASCII delimited files and Excel spreadsheets are accepted.<br/>"
+            "This may be due to failure to properly parse the file<br/>"
+            + "or a file that does not conform to the format requirements.<br/>"
+            + "Only ASCII delimited files and Excel spreadsheets with a header row<br/>"
+            + "describing the column values can be parsed.<br/>"
             + "You can use the Preview function to check the file.";
-	private static final String NO_DATASET_NAME_FAIL_MSG = 
-			"<br />Dataset/Cruise name column not found.</h3>" +
-			"<p>The data file needs to contain a data column specifying " +
-			"the dataset or cruise name for each measurement.  Please " +
-			"verify that an appropriately-named column exists for the " +
-			"dataset or cruise name, and appropriate values are given for " +
-			"each sample.</p>";
 	private static final String DATASET_EXISTS_FAIL_MSG_START = 
 			"<br />A dataset exists with a given dataset ID.</h3>";
 	private static final String DATASET_EXISTS_FAIL_MSG_END = 
@@ -221,12 +164,8 @@ public class DataUploadPage extends CompositeWithUsername {
 			GWT.create(DashboardDatasetUploadPageUiBinder.class);
    
     @UiField ListBox featureTypeSelector;
-    @UiField Hidden featureTypeToken;
+    @UiField Hidden observationTypeToken;
     @UiField Anchor featureTypeHelpAnchor;
-    @UiField Panel featureTypeSpecificContentPanel;
-    @UiField ListBox fileTypeSelector;
-    @UiField Hidden fileTypeToken;
-    @UiField Anchor fileTypeHelpAnchor;
     
     @UiField ApplicationHeaderTemplate header;
 	@UiField HTML introHtml;
@@ -239,92 +178,59 @@ public class DataUploadPage extends CompositeWithUsername {
     @UiField Hidden fileDataFormatToken;
     @UiField Hidden datasetIdToken;
     @UiField Hidden datasetIdColumnToken;
-	@UiField CaptionPanel settingsCaption;
 	@UiField DisclosurePanel advancedPanel;
 	@UiField HTML advancedHtml;
 	@UiField Label encodingLabel;
 	@UiField ListBox encodingListBox;
 	@UiField Button previewButton;
-//	@UiField HTML previewHtml;
-	@UiField RadioButton createRadio;
-//	@UiField RadioButton appendRadio;
-	@UiField RadioButton overwriteRadio;
-    @UiField FlowPanel actionSettingsPanel;
 	@UiField Button submitButton;
 	@UiField Button cancelButton;
 
 	private DashboardInfoPopup moreHelpPopup;
     private DashboardInfoPopup featureTypeHelpPopup;
-    private DashboardInfoPopup fileTypeHelpPopup;
 	private Element uploadElement;
 
 	// Singleton instance of this page
 	private static DataUploadPage singleton = null;
-    private FeatureTypeFields _featureTypeFields = null;
-    private FeatureType selectedFeatureType = FeatureType.UNSPECIFIED;
+    private String observationType = null;
     private FileType selectedFileType = FileType.UNSPECIFIED;
     
-    private static Map<FeatureType, FeatureTypeFields> _featureSpecificPanels = new HashMap<FeatureType, FeatureTypeFields>();
-    private static Map<FileType, FeatureTypeFields> _fileSpecificPanels = new HashMap<FileType, FeatureTypeFields>();
-
 	/**
 	 * Creates an empty cruise upload page.  Do not call this 
 	 * constructor; instead use the showPage static method 
 	 * to show the singleton instance of this page. 
 	 */
 	DataUploadPage() {
+		super(PagesEnum.UPLOAD_DATA.name());
 		initWidget(uiBinder.createAndBindUi(this));
 		singleton = this;
 
 		setUsername(null);
 
         featureTypeSelector.addItem("-- Observation Type --");
-        featureTypeSelector.addItem("Timeseries", FeatureType.TIMESERIES.name());
-        featureTypeSelector.addItem("Trajectory", FeatureType.TRAJECTORY.name());
-        featureTypeSelector.addItem("Profile", FeatureType.PROFILE.name());
-        featureTypeSelector.addItem("Timeseries Profile", FeatureType.TIMESERIES_PROFILE.name());
-        featureTypeSelector.addItem("Trajectory Profile", FeatureType.TRAJECTORY_PROFILE.name());
-        featureTypeSelector.addItem("Other", FeatureType.OTHER.name());
+        for (String obs : ObservationType.types) {
+            featureTypeSelector.addItem(obs);
+        }
+//        featureTypeSelector.addItem("Timeseries", FeatureType.TIMESERIES.name());
+//        featureTypeSelector.addItem("Trajectory", FeatureType.TRAJECTORY.name());
+//        featureTypeSelector.addItem("Profile", FeatureType.PROFILE.name());
+//        featureTypeSelector.addItem("Timeseries Profile", FeatureType.TIMESERIES_PROFILE.name());
+//        featureTypeSelector.addItem("Trajectory Profile", FeatureType.TRAJECTORY_PROFILE.name());
+//        featureTypeSelector.addItem("Other", FeatureType.OTHER.name());
         featureTypeSelector.getElement().<SelectElement>cast().getOptions().getItem(0).setDisabled(true); // Please select...
-//        featureTypeSelector.getElement().<SelectElement>cast().getOptions().getItem(3).setDisabled(true); // make sure to disable the correct element, if you do
         featureTypeSelector.addChangeHandler(new ChangeHandler() {
           @Override
           public void onChange(ChangeEvent event) {
               if ( featureTypeSelector.getSelectedIndex() > 0 ) {
                   featureTypeSelector.removeStyleName("missingInfoItem");
               }
-              selectedFeatureType = FeatureType.valueOf(featureTypeSelector.getSelectedValue());
-              GWT.log("Selecting obs type " + selectedFeatureType.name());
+              observationType = featureTypeSelector.getSelectedValue();
+              GWT.log("Selecting obs type " + observationType);
           }
         });
         featureTypeHelpAnchor.setText(FEATURE_TYPE_HELP_ANCHOR_TEXT);
         featureTypeHelpPopup = null;
 
-        fileTypeHelpAnchor.setVisible(false);
-        fileTypeSelector.setVisible(false);
-        
-        fileTypeSelector.addItem("-- File Format --");
-        fileTypeSelector.getElement().<SelectElement>cast().getOptions().getItem(0).setDisabled(true); // Please select...
-        fileTypeSelector.addItem("ASCII Delimited", FileType.DELIMITED.name());
-//        fileTypeSelector.addItem("NetCDF", FileType.NETCDF.name());
-//        fileTypeSelector.addItem("DSG", FileType.NC_DSG.name());
-        fileTypeSelector.addItem("Other", FileType.OTHER.name());
-        fileTypeSelector.addChangeHandler(new ChangeHandler() {
-          @Override
-          public void onChange(ChangeEvent event) {
-              if ( fileTypeSelector.getSelectedIndex() > 0 ) {
-                  fileTypeSelector.removeStyleName("missingInfoItem");
-              }
-              selectedFileType = FileType.valueOf(fileTypeSelector.getSelectedValue());
-              GWT.log("Selecting file type " + selectedFileType.name());
-          }
-        });
-        fileTypeHelpAnchor.setText(FILE_TYPE_HELP_ANCHOR_TEXT);
-        fileTypeHelpPopup = null;
-        
-        _featureTypeFields = new CommonFeatureFields();
-        featureTypeSpecificContentPanel.add(_featureTypeFields);
-        
         header.setPageTitle(TITLE_TEXT);
 		introHtml.setHTML(UPLOAD_FILE_INTRO_HTML);
 		moreHelpAnchor.setText(MORE_HELP_TEXT);
@@ -360,19 +266,6 @@ public class DataUploadPage extends CompositeWithUsername {
 
 		clearTokens();
 
-		settingsCaption.setCaptionText(SETTINGS_CAPTION_TEXT);
-
-		createRadio.setText(CREATE_TEXT);
-		createRadio.setTitle(CREATE_HOVER_HELP);
-//		appendRadio.setText(APPEND_TEXT);
-//		appendRadio.setTitle(APPEND_HOVER_HELP);
-		overwriteRadio.setText(OVERWRITE_TEXT);
-		overwriteRadio.setTitle(OVERWRITE_HOVER_HELP);
-		createRadio.setValue(true, false);
-//		appendRadio.setValue(false, false);
-		overwriteRadio.setValue(false, false);
-        actionSettingsPanel.setVisible(false);
-
 		submitButton.setText(SUBMIT_TEXT);
         submitButton.setEnabled(false); // files and feature type must be selected.
         previewButton.setEnabled(false); // files and feature type must be selected.
@@ -385,54 +278,6 @@ public class DataUploadPage extends CompositeWithUsername {
 			encodingListBox.addItem(encoding);
 		previewButton.setText(PREVIEW_TEXT);
 	}
-
-    private static FeatureTypeFields getFileTypePanel(FileType selectedType) {
-        FeatureTypeFields fieldsPanel = null;
-        if ( _fileSpecificPanels.containsKey(selectedType)) {
-            fieldsPanel = _fileSpecificPanels.get(selectedType);
-        } else {
-            switch ( selectedType ) {
-              case OTHER:
-//              case NETCDF:
-//              case NC_DSG:
-                  fieldsPanel = new OpaqueUploadFeatureFields();
-                  break;
-              case DELIMITED:
-                  fieldsPanel = new CommonFeatureFields();
-                  break;
-              default: // just to shut-up the code checker
-            }
-            if ( fieldsPanel != null ) {
-                _fileSpecificPanels.put(selectedType, fieldsPanel);
-            }
-        }
-        return fieldsPanel;
-    }
-//    private static FeatureTypeFields getFeatureTypePanel(FeatureType selectedType) {
-//        FeatureTypeFields fieldsPanel = null;
-//        if ( _featureSpecificPanels.containsKey(selectedType)) {
-//            fieldsPanel = _featureSpecificPanels.get(selectedType);
-//        } else {
-//            switch ( selectedType ) {
-//              case OTHER:
-//                  fieldsPanel = new OpaqueUploadFeatureFields();
-//                  break;
-//              case PROFILE:
-//                  fieldsPanel = new ProfileFeatureFields(); // TODO: Right now, this is really only a container for CommonFields
-//                  break;
-//              case TIMESERIES:
-//              case TRAJECTORY:
-//              case TRAJECTORY_PROFILE:
-//                  fieldsPanel = new CommonFeatureFields();
-//                  break;
-//              default: // just to shut-up the code checker
-//            }
-//            if ( fieldsPanel != null ) {
-//                _featureSpecificPanels.put(selectedType, fieldsPanel);
-//            }
-//        }
-//        return fieldsPanel;
-//    }
     
 	/**
 	 * Display the cruise upload page in the RootLayoutPanel
@@ -444,23 +289,14 @@ public class DataUploadPage extends CompositeWithUsername {
 		if ( singleton == null )
 			singleton = new DataUploadPage();
 		singleton.setUsername(username);
-//		singleton.userInfoLabel.setText(WELCOME_INTRO + singleton.getUsername());
 		singleton.clearTokens();
         singleton.clearForm();
         singleton.featureTypeSelector.removeStyleName("missingInfoItem");
         singleton.featureTypeSelector.setSelectedIndex(0);
-        singleton.fileTypeSelector.removeStyleName("missingInfoItem");
-        singleton.fileTypeSelector.setSelectedIndex(0);
-//        if ( singleton._featureTypeFields != null ) {
-//            singleton.featureTypeSpecificContentPanel.remove(singleton._featureTypeFields);
-//            singleton._featureTypeFields = null;
-//        }
-//		singleton.previewHtml.setHTML(NO_PREVIEW_HTML_MSG);
 		singleton.encodingListBox.setSelectedIndex(2);
 		singleton.advancedPanel.setOpen(false);
         singleton.header.userInfoLabel.setText(WELCOME_INTRO + username);
 		UploadDashboard.updateCurrentPage(singleton, true);
-		History.newItem(PagesEnum.UPLOAD_DATA.name(), false);
 	}
 
 	/**
@@ -489,13 +325,7 @@ public class DataUploadPage extends CompositeWithUsername {
 		timestampToken.setValue(localTimestamp);
 		actionToken.setValue(requestAction);
 		encodingToken.setValue(encoding);
-        featureTypeToken.setValue(selectedFeatureType.name());
-        fileTypeToken.setValue(selectedFileType.name());
-        
-		if ( _featureTypeFields != null ) {
-		    _featureTypeFields.setFormFields(this);
-//		    _featureTypeFields.setFormFields((Panel)uploadForm.getWidget());
-		}
+        observationTypeToken.setValue(observationType);
 	}
 
 	/**
@@ -505,16 +335,11 @@ public class DataUploadPage extends CompositeWithUsername {
 		timestampToken.setValue("");
 		actionToken.setValue("");
 		encodingToken.setValue("");
-		if ( _featureTypeFields != null ) {
-		    _featureTypeFields.clearFormFields(this);
-//		    _featureTypeFields.clearFormFields((Panel)uploadForm.getWidget());
-		}
 	}
 
     void closePopups() {
         if ( moreHelpPopup != null ) moreHelpPopup.dismiss();
         if ( featureTypeHelpPopup != null ) featureTypeHelpPopup.dismiss();
-        if ( fileTypeHelpPopup != null ) fileTypeHelpPopup.dismiss();
     }
     
 	@UiHandler("moreHelpAnchor")
@@ -534,22 +359,6 @@ public class DataUploadPage extends CompositeWithUsername {
             featureTypeHelpPopup.setInfoMessage(FEATURE_TYPE_HELP_HTML);
         }
         featureTypeHelpPopup.showCentered();
-    }
-    @UiHandler("fileTypeHelpAnchor")
-    void fileTypeHelpOnClick(ClickEvent event) {
-        // Create the popup only when needed and if it does not exist
-        if ( fileTypeHelpPopup == null ) {
-            fileTypeHelpPopup = new DashboardInfoPopup();
-            fileTypeHelpPopup.setInfoMessage(FILE_TYPE_HELP_HTML);
-        }
-        fileTypeHelpPopup.showCentered();
-    }
-
-    @UiHandler("featureTypeSelector")
-    void dataTypeSelectorOnClick(ClickEvent event) {
-//        Window.alert(String.valueOf(event));
-//        ListBox selector = (ListBox)event.getSource();
-//        Window.alert(String.valueOf(selector));
     }
 
 	/**
@@ -609,24 +418,15 @@ public class DataUploadPage extends CompositeWithUsername {
             featureTypeSelector.addStyleName("missingInfoItem");
             errorMessage = SELECT_FEATURE_TYPE_MSG;
         }
-//        if ( fileTypeSelector.getSelectedIndex() <= 0 ) {
-//            fileTypeSelector.addStyleName("missingInfoItem");
-//            if ( errorMessage != null ) { 
-//                errorMessage += "<br/>";
-//                errorMessage += SELECT_FILE_TYPE_MSG;
-//            } else {
-//                errorMessage += SELECT_FILE_TYPE_MSG;
-//            }
-//        }
         if ( errorMessage != null ) {
 			UploadDashboard.showMessage(errorMessage);
             return;
         }
-		if ( overwriteRadio.getValue().booleanValue() )
-			assignTolkiens(DashboardUtils.OVERWRITE_DATASETS_REQUEST_TAG);
+//		if ( overwriteRadio.getValue().booleanValue() )
+//			assignTolkiens(DashboardUtils.OVERWRITE_DATASETS_REQUEST_TAG);
 //		else if ( appendRadio.getValue() )
 //			assignTokens(DashboardUtils.APPEND_DATASETS_REQUEST_TAG);
-		else 
+//		else 
 			assignTolkiens(DashboardUtils.NEW_DATASETS_REQUEST_TAG);
 		uploadForm.submit();
 	}
@@ -649,7 +449,6 @@ public class DataUploadPage extends CompositeWithUsername {
         uploadForm.reset();
         clearInputFileNames(uploadElement);
         featureTypeSelector.setSelectedIndex(0);
-        fileTypeSelector.setSelectedIndex(0);
         submitButton.setEnabled(false); 
         previewButton.setEnabled(false); 
         cancelButton.setText("Done");
@@ -698,8 +497,6 @@ public class DataUploadPage extends CompositeWithUsername {
 				}
 			}
 			previewMsg += "</pre>";
-//			advancedPanel.setOpen(true);
-//			previewHtml.setHTML(previewMsg);
             int wHeight = Window.getClientHeight();
             int cHeight = (int)(.6 * wHeight);
             int wWidth = Window.getClientWidth();
@@ -776,16 +573,8 @@ public class DataUploadPage extends CompositeWithUsername {
 
 		// Process any successes
 		if ( ! cruiseIDs.isEmpty() ) {
-//			for ( String expo : cruiseIDs )
-//				DatasetListPage.addSelectedDataset(expo);
 			DatasetListPage.resortTable();
             DatasetListPage.showPage();
-//            if ( ! ( // featureTypeSelector.getSelectedValue().equals(FeatureType.OTHER.name()) || 
-//                     fileTypeSelector.getSelectedValue().equals(FileType.OTHER.name()))) {
-//    			DataColumnSpecsPage.showPage(getUsername(), cruiseIDs);
-//            } else {
-//                UploadDashboard.showMessage("Upload Successful!");
-//            }
 		}
 		return wasCompleteSuccess;
 	}

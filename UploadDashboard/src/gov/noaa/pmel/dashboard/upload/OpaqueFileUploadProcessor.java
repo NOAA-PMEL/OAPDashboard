@@ -32,7 +32,7 @@ public class OpaqueFileUploadProcessor extends FileUploadProcessor {
     }
 
     @Override
-    public void processUploadedFile() throws UploadProcessingException {
+    public void processUploadedFile(boolean isUpdateRequest) throws UploadProcessingException {
         boolean multiFileUpload = false;
         String datasetId = FormUtils.getFormField("datasetId", _uploadFields.parameterMap());
         List<FileItem> datafiles = _uploadFields.dataFiles();
@@ -53,13 +53,13 @@ public class OpaqueFileUploadProcessor extends FileUploadProcessor {
 //            }
                 // Check if the dataset already exists
                 String itemDatasetId = pseudoDataset.getDatasetId();
-                boolean datasetExists = _datasetHandler.dataFileExists(itemDatasetId);
+                boolean datasetExists = _dataFileHandler.dataFileExists(itemDatasetId);
                 if ( datasetExists ) {
                     String owner = "";
                     String status = "";
                     try {
                         // Read the original dataset info to get the current owner and submit status
-                        DashboardDataset oldDataset = _datasetHandler.getDatasetFromInfoFile(itemDatasetId);
+                        DashboardDataset oldDataset = _dataFileHandler.getDatasetFromInfoFile(itemDatasetId);
                         owner = oldDataset.getOwner();
                         status = oldDataset.getSubmitStatus();
                     } catch ( Exception ex ) {
@@ -74,7 +74,7 @@ public class OpaqueFileUploadProcessor extends FileUploadProcessor {
                     }
                     // Make sure this user has permission to modify this dataset
                     try {
-                        _datasetHandler.verifyOkayToDeleteDataset(itemDatasetId, username);
+                        _dataFileHandler.verifyOkayToDeleteDataset(itemDatasetId, username);
                     } catch ( Exception ex ) {
                         _messages.add(DashboardUtils.DATASET_EXISTS_HEADER_TAG + " " + 
                                 filename + " ; " + itemDatasetId + " ; " + owner + " ; " + status);
@@ -82,10 +82,10 @@ public class OpaqueFileUploadProcessor extends FileUploadProcessor {
                     }
                 } 
                 try {
-                    File datasetDir = _datasetHandler.datasetDataFile(itemDatasetId).getParentFile();
+                    File datasetDir = _dataFileHandler.datasetDataFile(itemDatasetId).getParentFile();
                     File uploadedFile = saveOpaqueFileData(pseudoDataset, datasetDir);
                     pseudoDataset.setUploadedFile(uploadedFile.getPath());
-                    _datasetHandler.saveDatasetInfoToFile(pseudoDataset, "save opaque data info");
+                    _dataFileHandler.saveDatasetInfoToFile(pseudoDataset, "save opaque data info");
                     generateEmptyMetadataFile(itemDatasetId);
                     _successes.add(itemDatasetId);
                     // datasetHandler.saveDatasetDataToFile(pseudoDataset, "save opaque data data");
@@ -118,6 +118,7 @@ public class OpaqueFileUploadProcessor extends FileUploadProcessor {
         OpaqueDataset odd = new OpaqueDataset(itemId);
         odd.setUploadFilename(item.getName());
         odd.setUploadTimestamp(_uploadFields.timestamp());
+        odd.setRecordId(itemId);
         odd.setUploadedFile(_uploadedFile.getPath());
         odd.setOwner(_uploadFields.username());
         odd.setFileItem(item);

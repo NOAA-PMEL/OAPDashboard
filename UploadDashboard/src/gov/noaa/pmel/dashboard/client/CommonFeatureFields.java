@@ -109,8 +109,10 @@ public class CommonFeatureFields extends Composite implements FeatureTypeFields 
         flexTable.setWidget(1, 1, unspecDatasetIdBox);
         flexTable.setWidget(1, 2, unspecDatasetIdDesc);
         
-        unspecDatasetIdBox.getElement().setPropertyString("placeholder", "specify the dataset ID");
-//        unspecDatasetIdBox.setVisible(false);
+        unspecDatasetIdBox.getElement().setPropertyString("placeholder", "optional dataset name");
+        unspecDatasetIdBox.setVisible(false);
+        unspecDatasetIdLabel.setVisible(false);
+        unspecDatasetIdDesc.setVisible(false);
     }
 
     @Override
@@ -130,6 +132,8 @@ public class CommonFeatureFields extends Composite implements FeatureTypeFields 
     @Override
     public void clearFormFields(DataUploadPage page) {
         GWT.log("CommonFields clearFormFields() called");
+        unspecDatasetIdBox.setText(null);
+        datasetColName.setText(null);
 //        if ( formatToken != null ) {
 //            formatToken.setValue("");
 //            datasetIdColName.setValue("");

@@ -3,11 +3,9 @@
  */
 package gov.noaa.pmel.dashboard.dsg;
 
-import java.lang.reflect.Array;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
-import java.util.SortedSet;
 import java.util.TreeSet;
 
 import gov.noaa.pmel.dashboard.datatype.CharDashDataType;
@@ -16,6 +14,7 @@ import gov.noaa.pmel.dashboard.datatype.DoubleDashDataType;
 import gov.noaa.pmel.dashboard.datatype.IntDashDataType;
 import gov.noaa.pmel.dashboard.datatype.KnownDataTypes;
 import gov.noaa.pmel.dashboard.datatype.StringDashDataType;
+import gov.noaa.pmel.dashboard.datatype.TimestampConverter;
 import gov.noaa.pmel.dashboard.datatype.ValueConverter;
 import gov.noaa.pmel.dashboard.server.DashboardServerUtils;
 import gov.noaa.pmel.dashboard.shared.ADCMessage;
@@ -25,6 +24,7 @@ import gov.noaa.pmel.dashboard.shared.DataColumnType;
 import gov.noaa.pmel.dashboard.shared.DataLocation;
 import gov.noaa.pmel.dashboard.shared.QCFlag;
 import gov.noaa.pmel.dashboard.shared.QCFlag.Severity;
+import gov.noaa.pmel.oads.util.StringUtils;
 
 /**
  * A 2-D array of objects corresponding to the standardized values of string values 
@@ -38,8 +38,6 @@ public class StdUserDataArray extends StdDataArray {
 	public static final String INCONSISTENT_NUMBER_OF_DATA_VALUES_MSG = 
 			"inconstistent number of data values";
 
-	private String datasetId;
-	
 	private String[] userColNames;
 	private String[] userUnits;
 	private String[] userMissVals;
@@ -91,10 +89,8 @@ public class StdUserDataArray extends StdDataArray {
 	 */
 	public StdUserDataArray(DashboardDatasetData dataset, 
 							KnownDataTypes knownTypes) throws IllegalArgumentException {
-		super(dataset.getDataColTypes(), knownTypes);
+		super(dataset.getRecordId(), dataset.getDataColTypes(), knownTypes);
 		
-		datasetId = dataset.getDatasetId();
-
 		// Add the user's units, missing values, and user column names
 		userUnits = new String[numDataCols];
 		userMissVals = new String[numDataCols];
@@ -217,26 +213,56 @@ public class StdUserDataArray extends StdDataArray {
 				else {
 					try {
 						ValueConverter<?> stdizer = colType.getStandardizer(userUnits[col], userMissVals[col], this);
+                        boolean lastRowHadError = false;
+                        String lastVal = "";
+                        String origVal = "";
 						for (int row = 0; row < numSamples; row++) {
-//							if ( ! Boolean.TRUE.equals(standardized[col])) {
+							if ( ! Boolean.TRUE.equals(standardized[col])) {
 								try {
-									stdObjects[row][col] = stdizer.convertValueOf(strDataVals[row][col], row);
+                                    origVal = strDataVals[row][col];
+                                    Object stdVal = stdizer.convertValueOf(origVal, row);
+									stdObjects[row][col] = stdVal;
+                                    if ( stdVal == null && StringUtils.emptyOrNull(origVal) && 
+                                         stdizer instanceof TimestampConverter ) {
+    									ADCMessage msg = new ADCMessage();
+    									msg.setSeverity(Severity.CRITICAL);
+    									msg.setRowIndex(row);
+    									msg.setColIndex(col);
+    									msg.setColName(userColNames[col]);
+    									msg.setGeneralComment("Missing value");
+                                        msg.setDetailedComment("Missing date/time value.");
+    									stdMsgList.add(msg);
+                                    } else {
+                                        lastRowHadError = false;
+                                    }
 								} catch ( IllegalArgumentException ex ) {
+									ADCMessage msg = null;
+                                    if ( stdizer instanceof TimestampConverter) {
+                                        if ( lastRowHadError && lastVal.equals(origVal) ) {
+                                            continue;
+                                        }
+    									msg = new ADCMessage();
+                                        if (row != 0) { // && ! lastRowHadError ) {
+        									msg.setRowIndex(row);
+                                        }
+                                    } else {
+    									msg = new ADCMessage();
+    									msg.setRowIndex(row);
+                                    }
 									stdObjects[row][col] = null;
-									ADCMessage msg = new ADCMessage();
-									msg.setSeverity(Severity.CRITICAL);
-									msg.setRowIndex(row);
-									msg.setColIndex(col);
-									msg.setColName(userColNames[col]);
-									msg.setGeneralComment(ex.getMessage());
-									if ( strDataVals[row][col] == null )
-										msg.setDetailedComment(ex.getMessage());
-									else
-										msg.setDetailedComment(ex.getMessage() + ": \"" + strDataVals[row][col] + "\"");
-									stdMsgList.add(msg);
+                                    if ( msg != null ) {
+    									msg.setSeverity(Severity.CRITICAL);
+    									msg.setColIndex(col);
+    									msg.setColName(userColNames[col]);
+    									msg.setGeneralComment(ex.getMessage());
+   										msg.setDetailedComment(ex.getMessage());
+    									stdMsgList.add(msg);
+                                    }
+                                    lastRowHadError = true;
 								}
 							}
-//						}
+                            lastVal = origVal != null ? origVal : "";
+						}
 						standardized[col] = Boolean.TRUE;
 					} catch ( IllegalStateException ex ) {
 						standardized[col] = Boolean.FALSE;
@@ -349,13 +375,13 @@ public class StdUserDataArray extends StdDataArray {
 			for (int rowIdx = 0; rowIdx < numSamples; rowIdx++) {
 				if ( times[rowIdx] == null ) {
 					isOk = false;
-					ADCMessage msg = new ADCMessage();
-					msg.setSeverity(Severity.CRITICAL);
-					msg.setRowIndex(rowIdx);
-					String comment = "incomplete sample date/time specification";
-					msg.setGeneralComment(comment);
-					msg.setDetailedComment(comment);
-					stdMsgList.add(msg);
+//					ADCMessage msg = new ADCMessage();
+//					msg.setSeverity(Severity.CRITICAL);
+//					msg.setRowIndex(rowIdx);
+//					String comment = "incomplete sample date/time specification";
+//					msg.setGeneralComment("Bad date/time value");
+//					msg.setDetailedComment(comment);
+//					stdMsgList.add(msg);
 				}
 			}
 		} catch ( Exception ex ) {
@@ -365,7 +391,7 @@ public class StdUserDataArray extends StdDataArray {
 			msg.setSeverity(Severity.CRITICAL);
 			String comment = "incomplete columns specifying sample date/time";
 			msg.setGeneralComment(comment);
-			msg.setDetailedComment(comment);
+			msg.setDetailedComment(ex.getMessage());
 			stdMsgList.add(msg);
 		}
 
@@ -439,6 +465,8 @@ public class StdUserDataArray extends StdDataArray {
 		}
 		// Update the array of array of objects to the new ordering
 		stdObjects = orderedRows;
+        // force refetch of sample times
+        _sampleTimes = null;
 	}
 
 	/**
@@ -758,6 +786,15 @@ public class StdUserDataArray extends StdDataArray {
 		}
 		return false;
 	}
+//	public boolean hasCriticalError(int colIdx) {
+//		for (ADCMessage msg : stdMsgList) {
+//			if (Severity.CRITICAL.equals(msg.getSeverity()) && 
+//			    msg.getColNumber().equals((colIdx+1))) {
+//				return true;
+//			}
+//		}
+//		return false;
+//	}
 	/**
 	 * Set the WOCE_AUTOCHECK flag for a data sample (row).
 	 * 
@@ -845,11 +882,6 @@ public class StdUserDataArray extends StdDataArray {
 		int idx = superRepr.indexOf('\n');
 		repr += "," + superRepr.substring(idx);
 		return repr;
-	}
-
-
-	public String getDatasetId() {
-		return datasetId;
 	}
 
 //	public String getExpoCode() {
@@ -951,11 +983,44 @@ public class StdUserDataArray extends StdDataArray {
         return sampleNo -1;
     }
 
+    public ADCMessage messageFor(Severity severity, Integer row, Integer column, 
+                                 String generalComment, String detailedComment) {
+		ADCMessage msg = new ADCMessage();
+		msg.setSeverity(severity);
+        if ( row != null ) { msg.setRowIndex(row); }
+		if ( column != null ) { 
+		    msg.setColIndex(column); 
+    		msg.setColName(userColNames[column.intValue()]);
+		}
+		msg.setGeneralComment(generalComment);
+		msg.setDetailedComment(detailedComment);
+        addTimeAndLocation(msg, row);
+        return msg;
+    }
+	public void addTimeAndLocation(ADCMessage msg, Integer row) {
+        if ( row == null ) { return; }
+        int rowIdx = row.intValue();
+        if ( hasTimeOfDay()) {
+    		Date rowTime = getSampleTime(rowIdx);
+            if ( rowTime != null ) {
+        		msg.setTimestamp(DashboardServerUtils.formatUTC(rowTime));
+            }
+        }
+        if ( hasLatitude()) {
+            Double latitude = getSampleLatitude(rowIdx);
+            if ( latitude != null ) {
+        		msg.setLatitude(latitude);
+            }
+        }
+            
+        Double longitude = getSampleLongitude(rowIdx);
+		msg.setLongitude(getSampleLongitudes()[rowIdx]);
+	}
     /**
      * @param dataType
      * @return
      */
-    public boolean checkForMissingValues(DashDataType dataType) {
+    public boolean checkForMissingValues(DashDataType dataType, Severity severity) {
         if ( ! hasDataColumn(dataType.getStandardName())) {
             return false;
         }
@@ -970,7 +1035,7 @@ public class StdUserDataArray extends StdDataArray {
                      value.equals(dataType.missingValue())) {
 					isOk = false;
 					ADCMessage msg = new ADCMessage();
-					msg.setSeverity(Severity.CRITICAL);
+					msg.setSeverity(severity);
 					msg.setRowIndex(rowIdx);
 					msg.setColIndex(columnIdx);
 					msg.setColName(userColName);
@@ -990,6 +1055,35 @@ public class StdUserDataArray extends StdDataArray {
 			stdMsgList.add(msg);
 		}
         return isOk;
+    }
+
+    /**
+     * @return
+     */
+    public boolean hasMissingTimeOrLocation() {
+        if ( ! hasSampleTime()) { return true; }
+        Double[] times = getSampleTimes();
+        if ( times == null || times.length == 0 ) { return true; }
+        for (Double d : times) {
+            if ( d == null ) { // || d.equals(DashboardUtils.FP_MISSING_VALUE)) { // ??? XXX TODO: What about missing values?
+                return true;
+            }
+        }
+        if ( ! hasLatitude()) { return true; }
+        Double[] lats = getSampleLatitudes();
+        for (Double d : lats) {
+            if ( d == null ) { // || d.equals(DashboardUtils.FP_MISSING_VALUE)) { // ??? XXX TODO: What about missing values?
+                return true;
+            }
+        }
+        if ( ! hasLongitude()) { return true; }
+        Double[] lons = getSampleLongitudes();
+        for (Double d : lons) {
+            if ( d == null ) { // || d.equals(DashboardUtils.FP_MISSING_VALUE)) { // ??? XXX TODO: What about missing values?
+                return true;
+            }
+        }
+        return false;
     }
 	
 }

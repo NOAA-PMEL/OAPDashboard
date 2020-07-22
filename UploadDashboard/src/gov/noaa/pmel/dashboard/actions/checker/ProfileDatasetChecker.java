@@ -35,51 +35,6 @@ public class ProfileDatasetChecker extends BaseDatasetChecker implements Dataset
 
     private static Logger logger = LogManager.getLogger(ProfileDatasetChecker.class);
     
-	private class RowColumn {
-		int row;
-		int column;
-
-		public RowColumn(Integer rowIndex, Integer columnIndex) {
-			if ( rowIndex == null )
-				row = DashboardUtils.INT_MISSING_VALUE.intValue();
-			else
-				row = rowIndex.intValue();
-			if ( columnIndex == null )
-				column = DashboardUtils.INT_MISSING_VALUE.intValue();
-			else
-				column = columnIndex.intValue();
-		}
-
-		@Override
-		public int hashCode() {
-			return 37 * row + column;
-		}
-
-		@Override
-		public boolean equals(Object obj) {
-			if ( this == obj )
-				return true;
-			if ( obj == null )
-				return false;
-			if ( ! ( obj instanceof RowColumn ) )
-				return false;
-			RowColumn other = (RowColumn) obj;
-			if ( row != other.row )
-				return false;
-			if ( column != other.column )
-				return false;
-			return true;
-		}
-
-		@Override
-		public String toString() {
-			return "RowColumn[row=" + row + ", column=" + column + "]";
-		}
-	}
-
-	private CheckerMessageHandler msgHandler;
-	private KnownDataTypes knownUserDataTypes;
-
 	/**
 	 * @param userDataTypes
 	 * 		all known user data types
@@ -122,7 +77,7 @@ public class ProfileDatasetChecker extends BaseDatasetChecker implements Dataset
 	 * @param dataset
 	 * 		dataset data to check; various fields will be updated by this method
 	 * @param metadata
-	 * 		metadata to update; can be null 
+	 * 		metadata to update; MUST BE null ...
 	 * @return
 	 * 		standardized user data array of checked values
 	 * @throws IllegalArgumentException
@@ -130,6 +85,7 @@ public class ProfileDatasetChecker extends BaseDatasetChecker implements Dataset
 	 * 		if a data column description is not a known user data type,
 	 * 		if a required unit conversion is not supported, 
 	 * 		if a standardizer for a given data type is not known, 
+     *      if the DsgMetadata is not null
 	 * 		if ....
 	 */
 	public StdUserDataArray standardizeDataset(DashboardDatasetData dataset,
@@ -141,20 +97,37 @@ public class ProfileDatasetChecker extends BaseDatasetChecker implements Dataset
         
 		if ( ! hasRequiredColumns(stdUserData)) {
 			msgHandler.processCheckerMessages(dataset, stdUserData);
+            dataset.setDataCheckStatus(DashboardUtils.CHECK_STATUS_UNACCEPTABLE);
             return stdUserData;
 //			throw new IllegalStateException("Dataset is missing required columns. See messages for details.");
 		}
 		
 		// Check for missing lon/lat/time 
-		boolean timesAreOk = stdUserData.checkMissingLonLatTime();
-        boolean depthsOk = stdUserData.checkForMissingValues(DashboardServerUtils.SAMPLE_DEPTH) || 
-                           stdUserData.checkForMissingValues(DashboardServerUtils.CTD_PRESSURE);
+		boolean timesOk = stdUserData.checkMissingLonLatTime();
+        boolean depthsOk = checkForMissingPressureOrDepth(stdUserData);
 
 		// Bounds check the standardized data values
 		stdUserData.checkBounds();
 
 		// Perform any other data checks // TODO:
-		checkCastConsistency(stdUserData);
+        if ( timesOk && depthsOk ) {
+    		checkCastConsistency(stdUserData);
+        } else {
+            ADCMessage warn = new ADCMessage();
+            warn.setSeverity(Severity.WARNING);
+            warn.setGeneralComment("Failed to check cast data.");
+            StringBuilder sb = new StringBuilder("Unable to check cast data: There was a problem with ");
+            if ( !timesOk ) { 
+                sb.append("time and location ");
+                if ( !depthsOk ) { 
+                    sb.append("and depth data.");
+                }
+            } else {
+                sb.append("depth data.");
+            }
+            warn.setDetailedComment(sb.toString());
+            stdUserData.addStandardizationMessage(warn);
+        }
 
 		// Save the messages accumulated in stdUserData for this dataset.
 		// Assigns the sets of checker-generated QC flags and user-provided QC flags 
@@ -164,7 +137,7 @@ public class ProfileDatasetChecker extends BaseDatasetChecker implements Dataset
 		// INCLUDING processing the CheckerMessages (since that pulls in User QC flags.)
         // Question: might delaying mess up possible inter-cast checks? TODO: Check it out.
 		// Reorder the data as best possible
-		if ( timesAreOk ) {
+		if ( timesOk ) {
 			Double[] sampleTimes = stdUserData.getSampleTimes();
 			stdUserData.reorderData(sampleTimes);
 		}
@@ -213,7 +186,7 @@ public class ProfileDatasetChecker extends BaseDatasetChecker implements Dataset
 				Integer rowIdx = wtype.getRowIndex();
 				if ( ! ( userErrs.contains(rowCol) || 
 						 userWarns.contains(rowCol) || 
-						 errRows.contains(rowIdx) ) )
+                         ( ! DashboardUtils.INT_MISSING_VALUE.equals(rowIdx) && errRows.contains(rowIdx) )))
 					warnRows.add(rowIdx);
 			}
 		}
@@ -248,9 +221,41 @@ public class ProfileDatasetChecker extends BaseDatasetChecker implements Dataset
 		return stdUserData;
 	}
     
-   public boolean hasRequiredColumns(StdUserDataArray stdUserData) {
+   /**
+     * @return
+     */
+    private static boolean checkForMissingPressureOrDepth(StdUserDataArray stdUserData) {
+        boolean allGood = true;
+        Integer depthIdx = stdUserData.lookForDataColumnIndex(DashboardUtils.SAMPLE_DEPTH_VARNAME);
+        Integer pressureIdx = stdUserData.lookForDataColumnIndex(DashboardUtils.WATER_PRESSURE_VARNAME);
+        for (int row = 0; row < stdUserData.getNumSamples(); row++) {
+            Object depth = depthIdx != null ? stdUserData.getStdVal(row, depthIdx.intValue()) : null;
+            Object press = pressureIdx != null ? stdUserData.getStdVal(row, pressureIdx.intValue()) : null;
+            if (( depth == null || DashboardUtils.FP_MISSING_VALUE.equals(depth)) && 
+                ( press == null | DashboardUtils.FP_MISSING_VALUE.equals(press))) {
+                ADCMessage msg = stdUserData.messageFor(Severity.ERROR, new Integer(row), null, "Missing value", 
+                                                        "No pressure or depth value for row " + (row+1));
+                stdUserData.addStandardizationMessage(msg);
+                allGood = false;
+            } else if ( depthIdx != null && depth == null || DashboardUtils.FP_MISSING_VALUE.equals(depth)) {
+                // warn missing depth
+                ADCMessage msg = stdUserData.messageFor(Severity.WARNING, new Integer(row), depthIdx, "Missing value", 
+                                                        "No depth value for row " + (row+1));
+                stdUserData.addStandardizationMessage(msg);
+            } else if ( pressureIdx != null && press == null || DashboardUtils.FP_MISSING_VALUE.equals(press)) {
+                // warn missing pressure
+                ADCMessage msg = stdUserData.messageFor(Severity.WARNING, new Integer(row), pressureIdx, "Missing value", 
+                                                        "No pressure value for row " + (row+1));
+                stdUserData.addStandardizationMessage(msg);
+            }
+        }
+        return allGood;
+    }
+
+    public static boolean hasRequiredColumns(StdUserDataArray stdUserData) {
         boolean gotem = true;
         if ( ! stdUserData.hasDate()) {
+            logger.info("dataset " + stdUserData.getDatasetName() + " missing date.");
             gotem = false;
             ADCMessage msg = new ADCMessage();
             msg.setSeverity(Severity.CRITICAL);
@@ -259,6 +264,7 @@ public class ProfileDatasetChecker extends BaseDatasetChecker implements Dataset
             stdUserData.addStandardizationMessage(msg);
         }
         if ( ! stdUserData.hasSampleTime()) {
+            logger.info("dataset " + stdUserData.getDatasetName() + " missing sample time.");
             gotem = false;
             ADCMessage msg = new ADCMessage();
             msg.setSeverity(Severity.CRITICAL);
@@ -267,6 +273,7 @@ public class ProfileDatasetChecker extends BaseDatasetChecker implements Dataset
             stdUserData.addStandardizationMessage(msg);
         }
         if ( ! stdUserData.hasDataColumn(DashboardServerUtils.LATITUDE.getStandardName())) {
+            logger.info("dataset " + stdUserData.getDatasetName() + " missing sample latitude.");
             gotem = false;
             ADCMessage msg = new ADCMessage();
             msg.setSeverity(Severity.CRITICAL);
@@ -275,6 +282,7 @@ public class ProfileDatasetChecker extends BaseDatasetChecker implements Dataset
             stdUserData.addStandardizationMessage(msg);
         }
         if ( ! stdUserData.hasDataColumn(DashboardServerUtils.LONGITUDE.getStandardName())) {
+            logger.info("dataset " + stdUserData.getDatasetName() + " missing sample longitude.");
             gotem = false;
             ADCMessage msg = new ADCMessage();
             msg.setSeverity(Severity.CRITICAL);
@@ -283,7 +291,8 @@ public class ProfileDatasetChecker extends BaseDatasetChecker implements Dataset
             stdUserData.addStandardizationMessage(msg);
         }
         if ( ! ( stdUserData.hasDataColumn(DashboardServerUtils.SAMPLE_DEPTH.getStandardName()) || 
-                 stdUserData.hasDataColumn("water_pressure"))) {
+                 stdUserData.hasDataColumn(DashboardUtils.WATER_PRESSURE_VARNAME))) {
+            logger.info("dataset " + stdUserData.getDatasetName() + " missing sample depth and pressure.");
             gotem = false;
             ADCMessage msg = new ADCMessage();
             msg.setSeverity(Severity.CRITICAL);
@@ -307,9 +316,9 @@ public class ProfileDatasetChecker extends BaseDatasetChecker implements Dataset
 
 	private static void checkCastConsistency(StdUserDataArray stdData) {
 		if ( !stdData.hasCastIdColumn()) {
-            logger.info("No CastID column found for dataset " + stdData.getDatasetId());
+            logger.info("No CastID column found for dataset " + stdData.getDatasetName());
             if ( !stdData.hasStationIdColumn()) {
-                logger.warn("No CastID OR StationID found for dataset: " + stdData.getDatasetId());
+                logger.warn("No CastID OR StationID found for dataset: " + stdData.getDatasetName());
                 throw new IllegalStateException("No station or cast identifier found.");
             }
 		}

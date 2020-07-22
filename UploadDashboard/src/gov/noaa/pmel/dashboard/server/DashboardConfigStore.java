@@ -165,8 +165,6 @@ public class DashboardConfigStore {
     private static File _appContentDir;
     private static String _serverAppName;
 	private static Properties _configProps;
-    // Map of username to user info
-	private HashMap<String,DashboardUserInfo> _userInfoMap;
 	private HashSet<File> filesToWatch;
 	private Thread watcherThread;
 	private WatchService watcher;
@@ -649,38 +647,6 @@ public class DashboardConfigStore {
 		// The DatasetSubmitter uses the various handlers just created
 		datasetSubmitter = new DatasetSubmitter(this);
 
-		// Read and assign the authorized users 
-		_userInfoMap = new HashMap<String,DashboardUserInfo>();
-		for ( Entry<Object,Object> entry : _configProps.entrySet() ) {
-			if ( ! ((entry.getKey() instanceof String) && 
-					(entry.getValue() instanceof String)) )
-				continue;
-			String username = (String) entry.getKey();
-			if ( ! username.startsWith(USER_ROLE_NAME_TAG_PREFIX) )
-				continue;
-			username = username.substring(USER_ROLE_NAME_TAG_PREFIX.length());
-			username = DashboardUtils.cleanUsername(username);
-			DashboardUserInfo userInfo;
-			try {
-				userInfo = new DashboardUserInfo(username);
-			} catch ( IllegalArgumentException ex ) {
-				throw new IOException(ex.getMessage() + "\n" +
-						"for " + username + " specified in " + 
-						_configFile.getPath() + "\n" + CONFIG_FILE_INFO_MSG);
-			}
-			String rolesString = (String) entry.getValue();
-			try {
-				userInfo.addUserRoles(rolesString);
-			} catch ( IllegalArgumentException ex ) {
-				throw new IOException(ex.getMessage() + "\n" +
-						"for " + username + " specified in " + 
-						_configFile.getPath() + "\n" + CONFIG_FILE_INFO_MSG);
-			}
-			_userInfoMap.put(username, userInfo);
-		}
-		for ( DashboardUserInfo info : _userInfoMap.values() ) {
-			logger.info("    user info: " + info.toString());
-		}
 		logger.info("read configuration file " + _configFile.getPath());
 		watcher = null;
 		watcherThread = null;
@@ -1081,78 +1047,6 @@ public class DashboardConfigStore {
 	 */
 	public KnownDataTypes getKnownDataFileTypes() {
 		return this.knownDataFileTypes;
-	}
-
-	/**
-	 * Validate a username from the user info map
-	 *  
-	 * @param username
-	 * 		username
-	 * @return
-	 * 		true if successful
-	 */
-	public boolean validateUser(String username) {
-		if ( (username == null) || username.isEmpty() )
-			return false;
-		String name = DashboardUtils.cleanUsername(username);
-		DashboardUserInfo userInfo = _userInfoMap.get(name);
-		if ( userInfo == null )
-			return false;
-		return true;
-	}
-
-
-	/**
-	 * Determines if username has manager privilege over othername. 
-	 * This can be from username being an administrator, a manager
-	 * of a group othername belongs to, having the same username,
-	 * or othername being invalid (most likely an unspecified user),
-	 * so long as username is an authorized user.
-	 * 
-	 * @param username
-	 * 		manager username to check; if not a valid user, returns false
-	 * @param othername
-	 * 		group member username to check; if not a valid user, 
-	 * 		returns true if username is a valid user
-	 * @return
-	 * 		true if username is an authorized user and has manager
-	 * 		privileges over othername
-	 */
-	public boolean userManagesOver(String username, String othername) {
-        if ( username.equals(othername)) { return true; } // XXX TODO: This isn't really right here.
-		DashboardUserInfo userInfo = _userInfoMap.get(DashboardUtils.cleanUsername(username));
-		if ( userInfo == null ) {
-		    logger.warn("No userInfo found for user : " + username);
-			return false;
-		}
-		return userInfo.managesOver(_userInfoMap.get(DashboardUtils.cleanUsername(othername)));
-	}
-
-	/**
-	 * @param username
-	 * 		name of the user
-	 * @return
-	 * 		true is this user is an admin or a manager of a group
-	 * 		(regardless of whether there is anyone else in the group)
-	 */
-	public boolean isManager(String username) {
-		DashboardUserInfo userInfo = _userInfoMap.get(DashboardUtils.cleanUsername(username));
-		if ( userInfo == null )
-			return false;
-		return userInfo.isManager();
-	}
-
-	/**
-	 * @param username
-	 * 		name of the user
-	 * @return
-	 * 		true is this user is an admin
-	 */
-	public boolean isAdmin(String username) {
-		DashboardUserInfo userInfo = _userInfoMap.get(DashboardUtils.cleanUsername(username));
-		if ( userInfo == null )
-			return false;
-		return userInfo.isAdmin();
 	}
 
 	private static File tmpDir;

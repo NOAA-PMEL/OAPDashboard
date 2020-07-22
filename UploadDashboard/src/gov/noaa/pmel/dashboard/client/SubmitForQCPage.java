@@ -14,14 +14,9 @@ import com.google.gwt.safehtml.shared.SafeHtmlUtils;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.uibinder.client.UiHandler;
-import com.google.gwt.user.client.History;
-import com.google.gwt.user.client.rpc.AsyncCallback;
-import com.google.gwt.user.client.ui.Anchor;
 import com.google.gwt.user.client.ui.Button;
-import com.google.gwt.user.client.ui.CheckBox;
 import com.google.gwt.user.client.ui.HTML;
 import com.google.gwt.user.client.ui.InlineLabel;
-import com.google.gwt.user.client.ui.RadioButton;
 import com.google.gwt.user.client.ui.Widget;
 
 import gov.noaa.pmel.dashboard.client.UploadDashboard.PagesEnum;
@@ -174,6 +169,7 @@ public class SubmitForQCPage extends CompositeWithUsername implements DataSubmis
 	 * instead use the static showPage or redisplayPage method.
 	 */
 	SubmitForQCPage() {
+        super(PagesEnum.SUBMIT_FOR_QC.name());
 		initWidget(uiBinder.createAndBindUi(this));
 		singleton = this;
 
@@ -219,7 +215,6 @@ public class SubmitForQCPage extends CompositeWithUsername implements DataSubmis
 			singleton = new SubmitForQCPage();
 		UploadDashboard.updateCurrentPage(singleton);
 		singleton.updateDatasets(cruises);
-		History.newItem(PagesEnum.SUBMIT_FOR_QC.name(), false);
 	}
 
 	/**
@@ -275,12 +270,12 @@ public class SubmitForQCPage extends CompositeWithUsername implements DataSubmis
 
 			// Add this cruise to the intro list
 			String submitStatus = cruise.getSubmitStatus();
-			String cdiacDate = cruise.getArchiveDate();
-			if ( submitStatus.isEmpty() && cdiacDate.isEmpty() ) {
+			Date cdiacDate = cruise.getArchiveDate();
+			if ( submitStatus.isEmpty() && cdiacDate == null ) {
 				cruiseIntros.add("<li>" + SafeHtmlUtils.htmlEscape(expo) + 
 						"</li>");				
 			}
-			else if ( cdiacDate.isEmpty() ) {
+			else if ( cdiacDate == null ) {
 				cruiseIntros.add("<li>" + SafeHtmlUtils.htmlEscape(expo) + 
 						CRUISE_INFO_PROLOGUE + QC_STATUS_INTRO +
 						submitStatus + CRUISE_INFO_EPILOGUE + "</li>");								

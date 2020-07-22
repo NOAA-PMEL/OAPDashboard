@@ -160,7 +160,7 @@ public class DataTypeChecker {
     public static void check(String filePath, String fileFormat) {
         try ( BufferedReader profileReader = new BufferedReader(new FileReader(filePath));  ) {
             String filename = "upload.file";
-            TreeMap<String, DashboardDatasetData> dmap = dfh.createDatasetsFromInput(profileReader, fileFormat, "jkamb", 
+            TreeMap<String, DashboardDatasetData> dmap = dfh.createDatasetsFromInput(profileReader, fileFormat, "jkamb", filename,
                                                                                      filename, new Date().toString(), null, null);
             for (String datasetId : dmap.keySet()) {
                 DashboardDatasetData ddd = dmap.get(datasetId);

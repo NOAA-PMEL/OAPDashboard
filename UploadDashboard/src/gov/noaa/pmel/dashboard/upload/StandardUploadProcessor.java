@@ -49,7 +49,7 @@ public class StandardUploadProcessor extends FileUploadProcessor {
         return mt;
     }
     @Override
-    public void processUploadedFile() throws UploadProcessingException {
+    public void processUploadedFile(boolean isUpdateRequest) throws UploadProcessingException {
         List<FileItem> datafiles = _uploadFields.dataFiles();
 //        String action = _uploadFields.dataAction();
 //        String username = _uploadFields.username();
@@ -88,12 +88,12 @@ public class StandardUploadProcessor extends FileUploadProcessor {
                 System.out.println("item type: " + itemType + ", tika md stream type: " + tikaMdType + ", tika default stream type: " + tikaType + ", file type:"+fileType);
                 if ( baseType.equals("text")) {
                     datasetsMap = DataFileHandler.createDatasetsFromInput(bufStream, dataFormat, 
-                                                                         username, filename, timestamp, 
+                                                                         username, filename, timestamp, submissionRecordId,
                                                                          specifiedDatasetId, datasetIdColName);
                 } else if ( baseType.equals("application") && 
                             ( subType.contains("excel") || subType.contains("spreadsheet"))) {
                     datasetsMap = DataFileHandler.createDatasetsFromInput(ExcelFileReader.extractExcelRows(bufStream), dataFormat, 
-                                                                         username, filename, timestamp, 
+                                                                         username, filename, timestamp, submissionRecordId,
                                                                          specifiedDatasetId, datasetIdColName);
                 }
             } catch (IllegalStateException ex) {
@@ -156,48 +156,48 @@ public class StandardUploadProcessor extends FileUploadProcessor {
                                 filename + " ; " + datasetId + " ; " + owner + " ; " + status);
                         continue;
                     }
-                    if ( DashboardUtils.APPEND_DATASETS_REQUEST_TAG.equals(action) ) {
-                        // Get all the data from the existing dataset
-                        DashboardDatasetData oldDataset;
-                        try {
-                            oldDataset = datasetHandler.getDatasetDataFromFiles(datasetId, 0, -1);
-                        } catch ( Exception ex ) {
-                            _messages.add(DashboardUtils.UNEXPECTED_FAILURE_HEADER_TAG + " " + 
-                                    filename + " ; " + datasetId);
-                            _messages.add(ex.getMessage());
-                            _messages.add(DashboardUtils.END_OF_ERROR_MESSAGE_TAG);
-                            continue;
-                        }
-                        // If append to dataset, at this time insist on the column names being the same
-                        if ( ! datasetData.getUserColNames().equals(oldDataset.getUserColNames()) ) {
-                            _messages.add(DashboardUtils.INVALID_FILE_HEADER_TAG + " " + filename);
-                            _messages.add("Data column names for existing dataset " + datasetId);
-                            _messages.add("    " + oldDataset.getUserColNames().toString());
-                            _messages.add("do not match those in uploaded file " + filename);
-                            _messages.add("    " + datasetData.getUserColNames());
-                            _messages.add(DashboardUtils.END_OF_ERROR_MESSAGE_TAG);
-                            continue;
-                        }
-                        // Update information on the existing dataset to reflect updated data
-                        // leave the original owner and any archive date
-                        oldDataset.setDataCheckStatus(DashboardUtils.CHECK_STATUS_NOT_CHECKED);
-                        oldDataset.setSubmitStatus(DashboardUtils.STATUS_NOT_SUBMITTED);
-                        oldDataset.setArchiveStatus(DashboardUtils.ARCHIVE_STATUS_NOT_SUBMITTED);
-                        oldDataset.setUploadFilename(filename);
-                        oldDataset.setUploadTimestamp(timestamp);
-                        oldDataset.setVersion(_configStore.getUploadVersion());
-                        // Add the add to the dataset
-                        int rowNum = oldDataset.getNumDataRows();
-                        for ( ArrayList<String> datavals : datasetData.getDataValues() ) {
-                            rowNum++;
-                            oldDataset.getDataValues().add(datavals);
-                            oldDataset.getRowNums().add(rowNum);
-                        }
-                        oldDataset.setNumDataRows(rowNum);
-                        // Replace the reference to the uploaded dataset with this appended dataset
-                        datasetData = oldDataset;
-                        appended = true;
-                    }
+//                    if ( DashboardUtils.APPEND_DATASETS_REQUEST_TAG.equals(action) ) {
+//                        // Get all the data from the existing dataset
+//                        DashboardDatasetData oldDataset;
+//                        try {
+//                            oldDataset = datasetHandler.getDatasetDataFromFiles(datasetId, 0, -1);
+//                        } catch ( Exception ex ) {
+//                            _messages.add(DashboardUtils.UNEXPECTED_FAILURE_HEADER_TAG + " " + 
+//                                    filename + " ; " + datasetId);
+//                            _messages.add(ex.getMessage());
+//                            _messages.add(DashboardUtils.END_OF_ERROR_MESSAGE_TAG);
+//                            continue;
+//                        }
+//                        // If append to dataset, at this time insist on the column names being the same
+//                        if ( ! datasetData.getUserColNames().equals(oldDataset.getUserColNames()) ) {
+//                            _messages.add(DashboardUtils.INVALID_FILE_HEADER_TAG + " " + filename);
+//                            _messages.add("Data column names for existing dataset " + datasetId);
+//                            _messages.add("    " + oldDataset.getUserColNames().toString());
+//                            _messages.add("do not match those in uploaded file " + filename);
+//                            _messages.add("    " + datasetData.getUserColNames());
+//                            _messages.add(DashboardUtils.END_OF_ERROR_MESSAGE_TAG);
+//                            continue;
+//                        }
+//                        // Update information on the existing dataset to reflect updated data
+//                        // leave the original owner and any archive date
+//                        oldDataset.setDataCheckStatus(DashboardUtils.CHECK_STATUS_NOT_CHECKED);
+//                        oldDataset.setSubmitStatus(DashboardUtils.STATUS_NOT_SUBMITTED);
+//                        oldDataset.setArchiveStatus(DashboardUtils.ARCHIVE_STATUS_NOT_SUBMITTED);
+//                        oldDataset.setUploadFilename(filename);
+//                        oldDataset.setUploadTimestamp(timestamp);
+//                        oldDataset.setVersion(_configStore.getUploadVersion());
+//                        // Add the add to the dataset
+//                        int rowNum = oldDataset.getNumDataRows();
+//                        for ( ArrayList<String> datavals : datasetData.getDataValues() ) {
+//                            rowNum++;
+//                            oldDataset.getDataValues().add(datavals);
+//                            oldDataset.getRowNums().add(rowNum);
+//                        }
+//                        oldDataset.setNumDataRows(rowNum);
+//                        // Replace the reference to the uploaded dataset with this appended dataset
+//                        datasetData = oldDataset;
+//                        appended = true;
+//                    }
                 }
                 // At this point, datasetData is the dataset to save, regardless of new, overwrite, or append
     
@@ -213,10 +213,10 @@ public class StandardUploadProcessor extends FileUploadProcessor {
                         _configStore.getMetadataFileHandler().getMetadataFiles(datasetId);
                 TreeSet<String> addlDocs = new TreeSet<String>();
                 for ( DashboardMetadata mdata : mdataList ) {
-                    if ( DashboardUtils.autoExtractedMdFilename(datasetId).equals(mdata.getFilename())) {
+                    if ( MetadataFileHandler.autoExtractedMdFilename(datasetId).equals(mdata.getFilename())) {
                         // Ignore the auto-extracted XML stub file
                     }
-                    else if ( DashboardUtils.metadataFilename(datasetId).equals(mdata.getFilename())) {
+                    else if ( MetadataFileHandler.metadataFilename(datasetId).equals(mdata.getFilename())) {
                         datasetData.setMdTimestamp(mdata.getUploadTimestamp());                 
                     }
                     else {

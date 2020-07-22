@@ -23,11 +23,13 @@ import org.apache.http.client.methods.HttpGet;
 import org.apache.http.impl.client.HttpClients;
 import org.apache.log4j.Logger;
 
+import gov.noaa.ncei.oads.xml.v_a0_2_2.OadsMetadataDocumentType;
 import gov.noaa.pmel.dashboard.handlers.DataFileHandler;
 import gov.noaa.pmel.dashboard.handlers.MetadataFileHandler;
 import gov.noaa.pmel.dashboard.oads.OADSMetadata;
 import gov.noaa.pmel.dashboard.shared.DashboardDataset;
 import gov.noaa.pmel.oads.util.TimeUtils;
+import gov.noaa.pmel.oads.xml.a0_2_2.OadsXmlReader;
 import gov.noaa.pmel.tws.util.ApplicationConfiguration;
 import gov.noaa.pmel.tws.util.Logging;
 
@@ -94,28 +96,34 @@ public class NotificationService extends HttpServlet {
 
 	private static void saveXml(String datasetId, HttpServletRequest request) {
         try ( InputStream in = request.getInputStream(); ) {
-            saveXmlFromStream(datasetId, in);
-        } catch(Exception ex) {
-            logger.warn("Exception saving XML from MetadataEditor: " + ex, ex);
+            saveAndValidateMetadata(datasetId, in);
+        } catch (Exception ex) {
+            logger.warn(ex,ex);
         }
 	}
     
-	private static void saveXmlFromStream(String datasetId, InputStream in) throws IOException {
+	private static void saveAndValidateMetadata(String datasetId, InputStream in) throws Exception {
+            OadsMetadataDocumentType metadata = saveXmlFromStream(datasetId, in);
+            String validationMessage = ApplicationConfiguration.getProperty("oap.metadata.validate", true) ? 
+                                        OADSMetadata.validateMetadata(metadata) :
+                                        "Not checked.";
+    		String timestamp = TimeUtils.formatUTC(new Date(), "yyyy-MM-dd HH:mm Z");
+            DataFileHandler df = DashboardConfigStore.get().getDataFileHandler();
+            DashboardDataset dataset = df.getDatasetFromInfoFile(datasetId);
+            dataset.setMdTimestamp(timestamp);
+            dataset.setMdStatus(validationMessage);
+            String msg = new Date() + " Updating metadata timestamp on user upload metadata file.";
+            logger.info(msg);
+            df.saveDatasetInfoToFile(dataset, msg);
+	}
+	
+	private static OadsMetadataDocumentType saveXmlFromStream(String datasetId, InputStream in) throws Exception {
         MetadataFileHandler metaHandler = DashboardConfigStore.get().getMetadataFileHandler();
         File metaFile = metaHandler.getMetadataFile(datasetId);
         Path metaFilePath = metaFile.toPath();
         Files.copy(in, metaFilePath, StandardCopyOption.REPLACE_EXISTING);
-        String validationMessage = ApplicationConfiguration.getProperty("oap.metadata.validate", true) ? 
-                                    OADSMetadata.validateMetadata(metaFile) :
-                                    "Not checked.";
-		String timestamp = TimeUtils.formatUTC(new Date(), "yyyy-MM-dd HH:mm Z");
-        DataFileHandler df = DashboardConfigStore.get().getDataFileHandler();
-        DashboardDataset dataset = df.getDatasetFromInfoFile(datasetId);
-        dataset.setMdTimestamp(timestamp);
-        dataset.setMdStatus(validationMessage);
-        String msg = new Date() + " Updating metadata timestamp on user upload metadata file.";
-        logger.info(msg);
-        df.saveDatasetInfoToFile(dataset, msg);
+        OadsMetadataDocumentType xml = OadsXmlReader.read(metaFile);
+        return xml;
 	}
 	
     /**
@@ -124,7 +132,7 @@ public class NotificationService extends HttpServlet {
 	 * @throws  
      */
     @SuppressWarnings("resource")
-    private static void retrieveMetadataFile(String location, String datasetId) throws IOException {
+    private static void retrieveMetadataFile(String location, String datasetId) throws Exception {
         logger.info(new Date() + " Retrieving " + datasetId + " from " + location);
         HttpClient client = HttpClients.createDefault();
         HttpGet get = new HttpGet(location);
@@ -133,7 +141,7 @@ public class NotificationService extends HttpServlet {
             throw new IOException(response.getStatusLine().toString());
         }
         try ( InputStream is = response.getEntity().getContent(); ) {
-            saveXmlFromStream(datasetId, is);
+            saveAndValidateMetadata(datasetId, is);
         }
     }
     

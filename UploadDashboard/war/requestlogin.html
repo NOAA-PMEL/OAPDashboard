@@ -4,74 +4,13 @@
 <head>
 <meta http-equiv="content-type" content="text/html; charset=UTF-8" />
 <title>OAP Dashboard Login</title>
+<link rel="stylesheet" href="css/public.css" />
 <style type="text/css">
-    * {
-        font-family: Arial Unicode MS, Arial, sans-serif;
-        margin: 2px 0px;
-    }
-    boxy {
+boxy {
     -webkit-box-sizing: border-box;
     -moz-box-sizing: border-box;
     box-sizing: border-box;
-    }
-    html, body {
-        width: 100%;
-        height: 100%;
-        background-color: #BBDDFF;
-        font-size: 100%;
-        margin: 0;
-        padding: 0;
-    }
-    .pageheader {
-        display: table;
-/*         width: 100%; */
-        height: 4em;
-        padding-top: 0em;
-        padding-bottom: 0em;
-/*         padding-right: .5em; */
-        margin-right: 2px;
-        overflow: visible;
-        /* background-color: #55a3e8; */
-    }
-    .headerLogo {
-        margin: .5em 2.4em 0.3em;
-    }
-    .headerInfo {
-        display: table-cell;
-        width: 100%;
-        /* padding-bottom: .5em; */
-        margin-left: .5em;
-        background-color: #55a3e8;
-        vertical-align: bottom;
-    }
-    .headerpagelabel {
-        display: inline;
-        font-size: large;
-        font-weight: bold;
-        margin: 0.25em 1em 0.3em;
-        color: white;
-        float: left;
-    }
-    .headersoftwaretitle {
-        position: absolute;
-        font-size: x-large;
-        color: white;
-        left: 38%;
-        top: .25em;
-    }
-    .titlereset {
-        clear: both;
-    }
-    .login_table {
-        border: groove lightgray;
-        background: #e4ffff;
-        padding: 1.5em 1.75em 1.25em;
-        position: fixed;
-        left: 50%;
-        top: 50%;
-        transform: translate(-50%, -70%)
-    }
-
+}
 .login_form {
     border: groove lightgray;
     background: #e4ffff;
@@ -96,11 +35,19 @@
     display: flex;
     flex-direction: row;
 }
-.first {
-    flex: 0 0 6em;
+.field_label {
+    flex: 0 0 7em;
+    text-align: right;
+    margin-right: 1em;
+}
+.field_required {
+    margin-right: .4em;
+}
+.required {
+    margin-right: .25em;
 }
 .first_plus {
-    flex: 0 0 8em;
+    flex: 0 0 9em;
 }
 .indented {
     padding-left: 1em;
@@ -125,6 +72,16 @@
 } 
 .hidden {
     display: none;
+}
+.pagefooter {
+    position: absolute;
+    overflow: hidden;
+    bottom: 0em;
+    height: 3em;
+    width: 100%;
+    text-align: center;
+    font-size: 11px;
+    margin: 1em auto;
 }
 
 </style>
@@ -158,14 +115,14 @@ var row_id_num = 0;
       Window.close();
   }
   function addResIdRow() {
-	  var rrows = document.getElementById("resid_rows");
+	  let rrows = document.getElementById("resid_rows");
       console.log("rows:"+rrows);
-      var newRow = document.createElement("div");
-      var resid_row = getResidRow(row_id_num);
+      let newRow = document.createElement("div");
+      let resid_row = getResidRow(row_id_num);
       console.log(resid_row);
       newRow.innerHTML = resid_row;
       rrows.appendChild(newRow);
-      var selectorid = "rid_select_"+row_id_num;
+      let selectorid = "rid_select_"+row_id_num;
       document.getElementById(selectorid).focus();
 	  n_resid = rrows.childElementCount;
       console.log("n_resid:"+n_resid);
@@ -181,9 +138,9 @@ var row_id_num = 0;
 	  console.log("that's it for " + selector + ":" + show);
   }
   function removeResidRow(rowNum) {
-	  var rowid = "resid_row_"+rowNum;
-	  var row = document.getElementById(rowid);
-      var rowParent = row.parentElement;
+	  let rowid = "resid_row_"+rowNum;
+	  let row = document.getElementById(rowid);
+      let rowParent = row.parentElement;
 	  rowParent.remove();
 	  document.getElementById("add_resid_button").disabled = false;
       n_resid -= 1;
@@ -191,28 +148,133 @@ var row_id_num = 0;
   }
   function resetTabIndex(rows) {
       if ( rows == 0 ) { return; }
-      var tx = rows-1;
-	  var rrows = document.getElementById("resid_rows");
-      var row = rrows.childNodes[0].childNodes[0];
-      var rowid = row.id;     
-      var rownum = rowid.substr("resid_row_".length)
-      var selectid = "rid_select_"+rownum;
-      var selector = document.getElementById(selectid);
+      let tx = rows-1;
+	  let rrows = document.getElementById("resid_rows");
+      let row = rrows.childNodes[0].childNodes[0];
+      let rowid = row.id;     
+      let rownum = rowid.substr("resid_row_".length)
+      let selectid = "rid_select_"+rownum;
+      let selector = document.getElementById(selectid);
       selector.tabIndex=8+2*tx;
-      var inputid = "rid_input_"+rownum;
-      var input = document.getElementById(inputid);
+      let inputid = "rid_input_"+rownum;
+      let input = document.getElementById(inputid);
       input.tabIndex=9+2*tx;
   }
   function cancelRequest() {
       window.history.back();
   }
+  function doSubmit() {
+	  if ( !checkRequiredFields()) {
+		  highlightMissing();
+		  setMessage("Please fill in required fields.", "red");
+	  } else if ( !emailsMatch()) {
+          setBadEmail("Emails do not match.", "both");
+	  } else {
+		  clearHighlights();
+		  setMessage("* Required Field.", "initial");
+          submitForm();
+	  }
+  }
+  function submitForm() {
+      let form = document.getElementById("request_login_form");
+	  form.submit();
+      form.reset();
+  }
+  const required = ["firstName", "lastName", "email", "confEmail", "organization"];
+  function checkRequiredFields() {
+      let isGood = true;
+      required.forEach(element => isGood = isGood && elementHasContent(element+"Box"));
+	  return isGood;
+  }
+  function elementHasContent(element) {
+      let e = document.getElementById(element);
+      let v = e.value;
+      let hasContent = v != null && v.trim() != "";
+	  return hasContent;
+  }
+  function highlightMissing() {
+      required.forEach(checkRequiredElement);
+  }
+  function checkRequiredElement(element) {
+	  if ( !elementHasContent(element+"Box")) {
+		  highlight(element);
+	  } else {
+		  clearHighlight(element);
+	  }
+  }
+  function setHighlight(element, style) {
+      let e = document.getElementById(element + "Box");
+      e.style.borderColor = style;
+      e = document.getElementById(element + "Required");
+      e.style.color = style;
+  }
+  function highlight(element) {
+      setHighlight(element, "red");
+  }
+  function checkEmailFormat(value) {
+      const remail = /^(([^<>()\[\]\.,;:\s@\"]+(\.[^<>()\[\]\.,;:\s@\"]+)*)|(\".+\"))@(([^<>()[\]\.,;:\s@\"]+\.)+[^<>()[\]\.,;:\s@\"]{2,})$/i;
+      return value.match(remail);
+  }
+  function checkEmail(element, fieldName) {
+      if ( !checkEmailFormat(element.value)) {
+    	  setBadEmail("Invalid email address.", fieldName);
+      } else {
+    	  clearBadEmail();
+      }
+  }
+  function checkConfEmail(element) {
+      if ( !checkEmailFormat(element.value)) {
+    	  setBadEmail("Invalid email address.", "confEmail");
+      } else if ( ! emailsMatch()) {
+    	  setBadEmail("Emails do not match.", "both")
+      } else {
+    	  clearBadEmail();
+      }
+  }
+  function emailsMatch() {
+	  let v1 = document.getElementById("emailBox").value;
+	  let v2 = document.getElementById("confEmailBox").value;
+      return v1 == v2;
+  }
+  function clearBadEmail() {
+	  setHighlight("email", "initial");
+	  setHighlight("confEmail", "initial");
+	  setMessage("* Required Field.", "initial");
+  }
+  function setBadEmail(msg, element) {
+      if ( !msg ) msg = "Invalid email address.";
+      if ( !element ) element = "email";
+      if ( element == "both" ) {
+    	  setHighlight("email", "red");
+    	  setHighlight("confEmail", "red");
+      } else {
+    	  setHighlight(element, "red");
+      }
+	  setMessage(msg, "red");
+  }
+  function clearThisHighlight(element) {
+      let boxid = element.id;
+      let elemname = boxid.substring(0, boxid.indexOf("Box"));
+      setHighlight(elemname, "initial");
+  }
+  function clearHighlight(element) {
+      setHighlight(element, "initial");
+  }
+  function clearHighlights() {
+	  required.forEach(clearHighlight);
+  }
+  function setMessage(msg, styleClass) {
+      let msgDiv = document.getElementById("info_msg");
+	  msgDiv.innerHTML = msg;
+      msgDiv.style.color = styleClass;
+  }
 </script>
 <div class="pageheader" style="position: absolute; left: 0px; top: 0px; right: 0px; bottom: 0px;">
-    <img class="headerLogo" src="images/noaa_logo_50x50.png"></img>
+    <img class="headerLogo" src="images/NOAA_logo.png"></img>
     <div class="headerInfo">
       <span class="headerpagelabel"></span>
       <div class="headersoftwaretitle">OAP Scientific Data Integration System</div>
-      <div class="titlereset"/>
+      <div class="titlereset"></div>
     </div>
 </div>
 
@@ -220,26 +282,34 @@ var row_id_num = 0;
   <div class="login_form" >
     <div class="header_section"><b>Please enter the following information<br/>to request an OAP Dashboard user account:</b></div>
     <div class="name_block">
-        <div>Name:</div>
+        <!-- <div>Name:</div> -->
         <div class="row">
-            <div class="indented first">First:</div>
-            <input tabindex="1" class="autofocus remainder_width" type="text" name="fname" />
+            <div class="field_label field_required">First Name:</div>
+            <span id="firstNameRequired" class="required">*</span>
+            <input id="firstNameBox" tabindex="1" class="autofocus remainder_width" type="text" name="fname" onchange="clearThisHighlight(this)" />
         </div>
         <div class="row">
-            <div class="indented first">Middle:</div>
+            <div class="field_label">Middle:</div>
             <input tabindex="2" class="remainder_width" type="text" name="mname" />
         </div>
         <div class="row">
-            <div class="first indented">Last:</div>
-            <input tabindex="3" tabindex="1" class="remainder_width" type="text" name="lname" />
+            <div class="field_label field_required">Last Name:</div>
+            <span id="lastNameRequired" class="required">*</span>
+            <input id="lastNameBox" tabindex="3" tabindex="1" class="remainder_width" type="text" name="lname" onchange="clearThisHighlight(this)" />
         </div>
     </div>
     <div class="row">
-      <div class="first">Email:</div>
-      <input tabindex="4" class="remainder_width" type="text" name="email" />
+        <div class="field_label field_required">Email:</div>
+        <span id="emailRequired" class="required">*</span>
+        <input id="emailBox" tabindex="4" class="remainder_width" type="text" name="email" onchange="checkEmail(this,'email')" />
     </div>
     <div class="row">
-      <div class="first">Telephone:</div>
+        <div class="field_label field_required">Confirm Email:</div>
+        <span id="confEmailRequired" class="required">*</span>
+        <input id="confEmailBox" tabindex="4" class="remainder_width" type="text" name="email" onblur="checkConfEmail(this,'confEmail')" />
+    </div>
+    <div class="row">
+      <div class="field_label">Telephone:</div>
       <div class="remainder_width telephone_block">
           <input tabindex="5" class="remainder_width" type="text" name="teln" />
           <div style="padding-left:1.5em; padding-right:.5em;">Ext:</div>
@@ -257,15 +327,29 @@ var row_id_num = 0;
     </div>
  --> 
     <div class="row">
-      <div class="first_plus">Organization:</div>
-      <input tabindex="12" class="remainder_width" type="text" name="org" />
+      <div class="field_label field_required">Organization:</div>
+      <span id="organizationRequired" class="required">*</span>
+      <input id="organizationBox" tabindex="12" class="remainder_width" type="text" name="org" onchange="clearThisHighlight(this)" />
     </div>
-    <div>
-      <div style="text-align:right;"><input tabindex="14" type="button" value="Cancel" onclick="cancelRequest()" />&nbsp;<input tabindex="13" type="submit" value="Submit" /></div> <!-- onclick="dismissDialog(this)"  -->
+    <div style="padding-top:.5em;">
+      <div style="text-align:left; display:inline;" class="info_msg" id="info_msg">* Required Field.</div>
+      <div style="text-align:right; display:inline; float:right;">
+      <input tabindex="14" type="button" value="Cancel" onclick="cancelRequest()" />
+      &nbsp;
+      <input tabindex="13" type="button" onclick="doSubmit()" value="Submit" /></div> <!-- onclick="dismissDialog(this)"  -->
     </div>
     <div tabindex="15" onfocus="resetFocus()"></div>
   </div>
 </form>
+<div class="pagefooter" >
+    <a href="http://www.noaa.gov" title="The National Oceanographic and Atmospheric Administration" target="_blank">NOAA</a>
+        &nbsp;|&nbsp; <a href="http://www.research.noaa.gov/"  target="_blank"
+          title="Department of Commerce > NOAA > Office of Oceanic and Atmospheric Research">OAR</a>
+        &nbsp;|&nbsp; <a href="http://www.pmel.noaa.gov" title="PMEL" target="_blank">PMEL</a>
+        &nbsp;|&nbsp; <a href="http://www.noaa.gov/privacy.html" target="_blank" title="">Privacy Policy</a>
+        &nbsp;|&nbsp; <a href="http://www.noaa.gov/disclaimer.html" target="_blank" title="">Disclaimer</a>
+        &nbsp;|&nbsp; <a href="http://www.noaa.gov/accessibility" target="_blank">Accessibility</a>
+  </div>
 </body>
 
 </html>

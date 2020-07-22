@@ -20,11 +20,13 @@ import java.util.List;
 import java.util.Set;
 
 import javax.xml.bind.JAXBContext;
+import javax.xml.bind.JAXBException;
 import javax.xml.bind.Marshaller;
 import javax.xml.bind.Unmarshaller;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.xml.sax.SAXException;
 
 import gov.noaa.ncei.oads.xml.v_a0_2_2.BaseVariableType;
 import gov.noaa.ncei.oads.xml.v_a0_2_2.OadsMetadataDocumentType;
@@ -77,25 +79,25 @@ public class OADSMetadata {
 		}
 	}
 	static GeoTemporalExtents extractGeospatialTemporalExtents(StdUserDataArray stdArray) {
-		double maxLat = Double.MIN_VALUE;
-		double minLat = Double.MAX_VALUE;
+		double maxLat = Double.NEGATIVE_INFINITY;
+		double minLat = Double.POSITIVE_INFINITY;
 		double maxLon = Double.NEGATIVE_INFINITY;
 		double minLon = Double.POSITIVE_INFINITY;
-		double maxTime = Double.MIN_VALUE;
-		double minTime = Double.MAX_VALUE;
+		double maxTime = Double.NEGATIVE_INFINITY;
+		double minTime = Double.POSITIVE_INFINITY;
 		Double[] lats = stdArray.getSampleLatitudes();
 		Double[] lons = stdArray.getSampleLongitudes();
 		Double[] times = stdArray.getSampleTimes();
 		for (int i=0; i<stdArray.getNumSamples(); i++) {
-			double lat = lats[i].doubleValue();
-			double lon = lons[i].doubleValue();
-			double time = times[i].doubleValue();
-			if ( lat > maxLat ) { maxLat = lat; }
-			if ( lat < minLat ) { minLat = lat; }
-			if ( lon > maxLon ) { maxLon = lon; }
-			if ( lon < minLon ) { minLon = lon; }
-			if ( time > maxTime ) { maxTime = time; }
-			if ( time < minTime ) { minTime = time; }
+			double lat = DashboardServerUtils.doubleValue(lats[i], Double.NaN); 
+			double lon = DashboardServerUtils.doubleValue(lons[i], Double.NaN);
+			double time = DashboardServerUtils.doubleValue(times[i], Double.NaN);
+			if ( ! Double.isNaN(lat) && lat > maxLat ) { maxLat = lat; }
+			if ( ! Double.isNaN(lat) && lat < minLat ) { minLat = lat; }
+			if ( ! Double.isNaN(lon) && lon > maxLon ) { maxLon = lon; }
+			if ( ! Double.isNaN(lon) && lon < minLon ) { minLon = lon; }
+			if ( ! Double.isNaN(time) && time > maxTime ) { maxTime = time; }
+			if ( ! Double.isNaN(time) && time < minTime ) { minTime = time; }
 		}
 		GeoTemporalExtents extents = new GeoTemporalExtents(new Extents(maxLat, minLat), 
 		                                                    new Extents(maxLon, minLon), 
@@ -119,7 +121,7 @@ public class OADSMetadata {
 	};
 	
 	public static DashboardOADSMetadata extractOADSMetadata(StdUserDataArray stdArray) {
-		DashboardOADSMetadata oads = new DashboardOADSMetadata(stdArray.getDatasetId());
+		DashboardOADSMetadata oads = new DashboardOADSMetadata(stdArray.getDatasetName());
 		GeoTemporalExtents gtExtents = extractGeospatialTemporalExtents(stdArray);
 		oads.westernBound(gtExtents.lonExtents.minValue);
 		oads.easternBound(gtExtents.lonExtents.maxValue);
@@ -142,7 +144,7 @@ public class OADSMetadata {
 			String uunits = stdArray.getUserColumnUnits(i);
 			DashDataType<?> colType = stdArray.getDataTypes().get(i);
 			String stdName = colType.getStandardName();
-			String fullName = DashboardUtils.isEmptyNull(stdName) ? username : stdName;
+			String fullName = DashboardUtils.isEmptyOrNull(stdName) ? username : stdName;
 			if ( ! exclude(username, colType) &&
 				 ! addVars.contains(username)) {
 				oads.addVariable(new Variable().abbreviation(username).unit(uunits).fullName(fullName));
@@ -166,7 +168,7 @@ public class OADSMetadata {
 		DashDataType<?> dataCol = stdArray.findDataColumn(varname);
 		if ( dataCol != null) {
 			colIdx = stdArray.findDataColumnIndex(varname);
-			fullname = DashboardUtils.isEmptyNull(dataCol.getStandardName()) ?
+			fullname = DashboardUtils.isEmptyOrNull(dataCol.getStandardName()) ?
 												  dataCol.getDescription() : 
 												  dataCol.getStandardName();
 		} else {
@@ -251,7 +253,7 @@ public class OADSMetadata {
 	public static File getExtractedMetadataFile(String datasetId) throws IOException {
 		// Check and standardize the dataset
 		String stdId = DashboardServerUtils.checkDatasetID(datasetId);
-		String extractedFile =  DashboardUtils.autoExtractedMdFilename(stdId);
+		String extractedFile =  MetadataFileHandler.autoExtractedMdFilename(stdId);
 		DashboardConfigStore configStore = DashboardConfigStore.get(false);
 		File parentDir = configStore.getMetadataFileHandler().getMetadataFile(stdId, extractedFile).getParentFile();
 		File metadataFile = new File(parentDir, extractedFile);
@@ -283,7 +285,7 @@ public class OADSMetadata {
 	}
 
 	public static DashboardOADSMetadata getCurrentDatasetMetadata(String datasetId, MetadataFileHandler mdHandler) throws Exception {
-	    DashboardMetadata mdata = mdHandler.getMetadataInfo(datasetId, DashboardUtils.metadataFilename(datasetId)); 
+	    DashboardMetadata mdata = mdHandler.getMetadataInfo(datasetId, MetadataFileHandler.metadataFilename(datasetId)); 
 	    return getCurrentDatasetMetadata(mdata, mdHandler);
     }
 	
@@ -310,17 +312,26 @@ public class OADSMetadata {
     /**
      * @param metaFile
      * @return
+     * @throws Exception 
+     * @throws IOException 
+     * @throws SAXException 
+     * @throws JAXBException 
      */
-    public static String validateMetadata(File metaFile) {
+    public static String validateMetadata(File metaFile) throws JAXBException, SAXException, 
+                                                                IOException, Exception {
+        OadsMetadataDocumentType mdDoc = OadsXmlReader.read(metaFile);
+        return validateMetadata(mdDoc);
+    }
+                
+    public static String validateMetadata(OadsMetadataDocumentType metadata) {
         String validationMsg;
         try {
-            OadsMetadataDocumentType mdDoc = OadsXmlReader.read(metaFile);
-            checkSubmitter(mdDoc);
-            checkInvestigators(mdDoc);
-            checkCitationInfo(mdDoc);
-            checkSpatialExtents(mdDoc);
-            checkTemporalExtents(mdDoc);
-            checkVariables(mdDoc);
+            checkSubmitter(metadata);
+            checkInvestigators(metadata);
+            checkCitationInfo(metadata);
+            checkSpatialExtents(metadata);
+            checkTemporalExtents(metadata);
+            checkVariables(metadata);
             validationMsg = "Validated.";
 //        } catch (JAXBException ex) {
 //            validationMsg = "There was an error processing the metadata file.";
@@ -333,10 +344,10 @@ public class OADSMetadata {
 //            ex.printStackTrace();
         } catch (IllegalArgumentException iax) {
             validationMsg = "Metadata has invalid data";
-            logger.info(metaFile + " : " + validationMsg + ": " + iax);
+            logger.info(metadata + " : " + validationMsg + ": " + iax);
         } catch (IllegalStateException isx) {
             validationMsg = "Metadata is incomplete";
-            logger.info(metaFile + " : " + validationMsg + ": " + isx);
+            logger.info(metadata + " : " + validationMsg + ": " + isx);
         } catch (Exception ex) {
             validationMsg = "Processing Error";
             ex.printStackTrace();
@@ -464,6 +475,9 @@ public class OADSMetadata {
      */
     private static void checkVariables(OadsMetadataDocumentType mdDoc) {
         List<BaseVariableType> variables = mdDoc.getVariables();
+        if ( variables == null || variables.size() == 0 ) {
+            throw new IllegalStateException("Empty variables element.");
+        }
         StringBuilder errormsgs = new StringBuilder();
         for ( BaseVariableType var : variables ) {
             if ( StringUtils.emptyOrNull(var.getName()) || 

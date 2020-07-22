@@ -3,18 +3,18 @@
  */
 package gov.noaa.pmel.dashboard.server;
 
+import java.io.BufferedInputStream;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
-import java.util.TreeMap;
-import java.util.TreeSet;
 
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
@@ -27,11 +27,13 @@ import org.apache.tomcat.util.http.fileupload.FileUploadException;
 import org.apache.tomcat.util.http.fileupload.disk.DiskFileItemFactory;
 import org.apache.tomcat.util.http.fileupload.servlet.ServletFileUpload;
 
+import gov.noaa.pmel.dashboard.server.util.FileTypeTest;
+import gov.noaa.pmel.dashboard.server.util.UIDGen;
 import gov.noaa.pmel.dashboard.shared.DashboardUtils;
 import gov.noaa.pmel.dashboard.shared.FeatureType;
 import gov.noaa.pmel.dashboard.shared.FileType;
-import gov.noaa.pmel.dashboard.upload.FileUploadProcessor;
-import gov.noaa.pmel.dashboard.upload.FileUploadProcessorFactory;
+import gov.noaa.pmel.dashboard.shared.ObservationType;
+import gov.noaa.pmel.dashboard.upload.RecordOrientedFileReader;
 import gov.noaa.pmel.dashboard.upload.StandardUploadFields;
 import gov.noaa.pmel.dashboard.upload.UploadProcessor;
 import gov.noaa.pmel.dashboard.util.FormUtils;
@@ -116,8 +118,13 @@ public class DataUploadService extends HttpServlet {
                 return;
             }
             
+            String requestPathInfo = request.getPathInfo();
+            boolean isUpdateRequest = isUpdateRequest(requestPathInfo);
+            
+            String submissionRecordId = isUpdateRequest ? getUpdateRecordId(requestPathInfo) : UIDGen.genId();
+            
             UploadProcessor uploadProcessor = new UploadProcessor(stdFields);
-            uploadProcessor.processUpload();
+            uploadProcessor.processUpload(submissionRecordId, isUpdateRequest);
             List<String>messages = uploadProcessor.getMessages();
             Set<String>successes = uploadProcessor.getSuccesses();
             sendResponseMsg(response, successes, messages);
@@ -138,16 +145,45 @@ public class DataUploadService extends HttpServlet {
             sendErrMsg(response, iex);
         } catch (Throwable ex) {
             logger.warn(ex, ex);
-            sendErrMsg(response, "There was an error on the server.  Please try again later.");
+            StackTraceElement[] trace = ex.getStackTrace();
+            StackTraceElement spot = trace != null && trace.length > 0 ?
+                                        trace[0] :
+                                        null;    
+            StringBuilder msg = 
+                new StringBuilder("There was an error on the server.  Please try again later.")
+                    .append("\nError:")
+                    .append(ex.getClass().getName());
+            if ( spot != null ) {
+                msg.append(":")
+                   .append(spot.getFileName()).append(":").append(spot.getLineNumber());
+            }
+            sendErrMsg(response, msg.toString());
         } finally {
-			for ( Entry<String,List<FileItem>> paramEntry : paramMap.entrySet() ) {
-				for ( FileItem item : paramEntry.getValue() ) {
-					item.delete();
-				}
-			}
+            if ( paramMap != null ) {
+    			for ( Entry<String,List<FileItem>> paramEntry : paramMap.entrySet() ) {
+    				for ( FileItem item : paramEntry.getValue() ) {
+    					item.delete();
+    				}
+    			}
+            }
         }
 	}
     
+    /**
+     * @param pathInfo
+     * @return
+     */
+    private static boolean isUpdateRequest(String pathInfo) {
+        return !StringUtils.emptyOrNull(pathInfo) && pathInfo.contains("update");
+    }
+    
+    private static String getUpdateRecordId(String pathInfo) {
+        String checkString = pathInfo;
+        if ( checkString.endsWith("/")) { checkString = checkString.substring(0, checkString.length()-1); }
+        String recId = pathInfo.substring(pathInfo.lastIndexOf("/")+1);
+        return recId;
+    }
+
     private Map<String, List<FileItem>> extractParameterMap(HttpServletRequest request) throws FileUploadException {
         Map<String,List<FileItem>> paramMap = datafileUpload.parseParameterMap(request);
         return paramMap;
@@ -162,7 +198,8 @@ public class DataUploadService extends HttpServlet {
                     .datasetIdColumnName(getUploadField("datasetIdColumn", paramMap))
                     .dataAction(getRequiredField("dataaction", paramMap))
                     .fileDataEncoding(getUploadField("dataencoding", paramMap))
-                    .timestamp(getUploadField("timestamp", paramMap))
+                    .timestamp(getUploadField("timestamp", paramMap)) // DashboardServerUtils.formatUTC(new Date()))
+                    .observationType(getUploadField("observationType", paramMap))
                     .featureType(getFeatureType(paramMap))
                     .fileType(getFileType(paramMap))
                     .dataFiles(extractDataFiles(paramMap))
@@ -198,9 +235,8 @@ public class DataUploadService extends HttpServlet {
     }
 
     private static FeatureType getFeatureType(Map<String, List<FileItem>> paramMap) throws NoSuchFieldException {
-        FeatureType featureType;
-        String featureTypeName = getRequiredField("featureType", paramMap);
-        featureType = featureTypeName != null ? FeatureType.valueOf(featureTypeName) : FeatureType.UNSPECIFIED; // XXX The field is REQUIRED.  It won't be null.
+        String observationTypeName = getUploadField("observationType", paramMap);
+        FeatureType featureType = ObservationType.featureTypeOf(observationTypeName);
         return featureType;
     }
     
@@ -228,23 +264,32 @@ public class DataUploadService extends HttpServlet {
 		return DashboardUtils.PREVIEW_REQUEST_TAG.equals(action);
     }
 
-    private static void sendPreview(StandardUploadFields stdFields, HttpServletResponse response) throws IOException  {
+    private static void sendPreview(StandardUploadFields stdFields, HttpServletResponse response) throws Exception  {
         FileItem firstItem = stdFields.dataFiles().iterator().next();
         String filename = firstItem.getName();
         String encoding = stdFields.fileDataEncoding(); 
-		// if preview, just return up to 50 lines 
-		// of interpreted contents of the first uploaded file
 		ArrayList<String> contentsList = new ArrayList<String>(50);
-		BufferedReader cruiseReader = new BufferedReader(new InputStreamReader(firstItem.getInputStream(), encoding));
-		try {
-			for (int k = 0; k < 50; k++) {
-				String dataline = cruiseReader.readLine();
-				if ( dataline == null )
-					break;
-				contentsList.add(dataline);
+        try (BufferedInputStream inStream = new BufferedInputStream(firstItem.getInputStream()); ) {
+            String fileType = FileTypeTest.getFileType(inStream);
+            if ( FileTypeTest.fileIsDelimited(fileType)) {
+                RecordOrientedFileReader reader = RecordOrientedFileReader.getFileReader(fileType, inStream);
+                Iterator<String[]> iterator = reader.iterator();
+                
+    			for (int k = 0; k < 50 && iterator.hasNext(); k++) {
+    				String[] linedata = iterator.next();
+    				contentsList.add(reader.reconstitute(linedata));
+                }
+            } else {
+        		BufferedReader cruiseReader = new BufferedReader(new InputStreamReader(inStream, encoding));
+    			for (int k = 0; k < 50; k++) {
+    				String dataline = cruiseReader.readLine();
+    				if ( dataline == null )
+    					break;
+    				contentsList.add(dataline);
+    			}
 			}
 		} finally {
-			cruiseReader.close();
+		    firstItem.delete();
 		}
 
 		// Respond with some info and the interpreted contents
@@ -323,6 +368,7 @@ public class DataUploadService extends HttpServlet {
     		response.setStatus(HttpServletResponse.SC_OK);
     		response.setContentType("text/html;charset=UTF-8");
             try ( PrintWriter respWriter = response.getWriter(); ) {
+                respWriter.println("There was an error on the server:");
         		respWriter.println(ex.getMessage());
         		response.flushBuffer();
             }

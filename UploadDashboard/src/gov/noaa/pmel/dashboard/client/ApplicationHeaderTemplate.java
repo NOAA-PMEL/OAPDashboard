@@ -3,7 +3,9 @@
  */
 package gov.noaa.pmel.dashboard.client;
 
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.List;
 import java.util.logging.Logger;
 
 import com.google.gwt.core.client.GWT;
@@ -13,26 +15,32 @@ import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.user.client.Cookies;
 import com.google.gwt.user.client.Window;
+import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.MenuBar;
 import com.google.gwt.user.client.ui.MenuItem;
 import com.google.gwt.user.client.ui.Widget;
 
+import gov.noaa.pmel.dashboard.shared.DashboardDataset;
 import gov.noaa.pmel.dashboard.shared.DashboardDatasetList;
 
 /**
  * @author kamb
  *
  */
-public class ApplicationHeaderTemplate extends CompositeWithUsername {
+public class ApplicationHeaderTemplate extends Composite {
 
     private static Logger logger = Logger.getLogger(ApplicationHeaderTemplate.class.getName());
+    
+	public static final String LOGOUT_TEXT = "Logout";
+	
     @UiField Label titleLabel;
     @UiField FlowPanel headerRightPanel;
     @UiField Label userInfoLabel;
     @UiField MenuBar menuBar;
     @UiField MenuItem sendFeedbackBtn;
+    @UiField MyMenuBar changePasswordMenuBar;
     @UiField MenuItem changePasswordBtn;
     @UiField MenuItem logoutSeparator;
     @UiField MenuItem logoutBtn;
@@ -47,6 +55,8 @@ public class ApplicationHeaderTemplate extends CompositeWithUsername {
     public ApplicationHeaderTemplate() {
         initWidget(uiBinder.createAndBindUi(this));
         menuBar.setAutoOpen(true);
+        changePasswordBtn.getElement().setId("changePasswordBtn");
+        changePasswordMenuBar.setParentMenu(menuBar);
 		logoutBtn.setText(LOGOUT_TEXT);
 		logoutBtn.setTitle(LOGOUT_TEXT);
         logoutBtn.setScheduledCommand(new Scheduler.ScheduledCommand() {
@@ -80,25 +90,33 @@ public class ApplicationHeaderTemplate extends CompositeWithUsername {
     }
     
     void doLogout() {
-        GWT.log("GWT log Header logout: " + this);
         logger.info("Logger Header logout");
         UploadDashboard.closePopups();
+        try {
         UploadDashboard.getService().logoutUser(new OAPAsyncCallback<Void>() {
             @Override
             public void onSuccess(Void nada) {
+                UploadDashboard.logToConsole("Logout success");
                 Cookies.removeCookie("JSESSIONID");
                 UploadDashboard.stopHistoryHandling();
                 UploadDashboard.showAutoCursor();
+                Window.Location.assign("dashboardlogout.html");
             }
             @Override
             public void onFailure(Throwable ex) {
-                GWT.log("Logout error:" + ex.toString());
+                UploadDashboard.logToConsole("Logout error:" + ex.toString());
+//                Window.alert(String.valueOf(ex));
                 Cookies.removeCookie("JSESSIONID");
                 UploadDashboard.stopHistoryHandling();
                 UploadDashboard.showAutoCursor();
+                Window.Location.assign("dashboardlogout.html");
             }
         });
-        Window.Location.assign("dashboardlogout.html");
+        } catch (Throwable t) {
+            UploadDashboard.logToConsole("logout exception: "+ String.valueOf(t));
+//            Window.alert(String.valueOf(t));
+            Window.Location.assign("dashboardlogout.html");
+        }
     }
 
     static void doSendFeedback() {
@@ -125,7 +143,7 @@ public class ApplicationHeaderTemplate extends CompositeWithUsername {
      * @param cruises
      */
     public void addDatasetIds(DashboardDatasetList cruises) {
-        String cruiseIds = extractCruiseIds(cruises.keySet());
+        String cruiseIds = extractCruiseIds(cruises);
         setDatasetIds(cruiseIds);
     }
     
@@ -134,6 +152,14 @@ public class ApplicationHeaderTemplate extends CompositeWithUsername {
         setDatasetIds(datasetIds);
     }
 
+    private static String extractCruiseIds(DashboardDatasetList cruises) {
+        List<String> names = new ArrayList<>(cruises.values().size()); 
+        for (DashboardDataset dd : cruises.values()) {
+            names.add(dd.getUserDatasetName());
+        }
+        return extractCruiseIds(names);
+    }
+    
     /**
      * @param cruises
      * @return

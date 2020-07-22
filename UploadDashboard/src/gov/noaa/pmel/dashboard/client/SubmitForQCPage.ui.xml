@@ -51,7 +51,7 @@
 				<g:Button addStyleNames="{style.horizontalbutton}" ui:field="submitButton" />
 				<g:Button addStyleNames="{style.horizontalbutton}" ui:field="cancelButton" />
 			</g:FlowPanel>
-            <oap:ApplicationFooter/>
+            <oap:ApplicationFooter ui:field="footer"/>
 		</g:FlowPanel>
 	</g:ScrollPanel>
 

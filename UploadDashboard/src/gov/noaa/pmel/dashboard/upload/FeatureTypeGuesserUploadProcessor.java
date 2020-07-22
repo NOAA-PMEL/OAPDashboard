@@ -17,7 +17,7 @@ public class FeatureTypeGuesserUploadProcessor extends FileUploadProcessor {
     }
 
     @Override
-    public void processUploadedFile() {
+    public void processUploadedFile(boolean isUpdateRequest) {
         throw new NotImplementedException("Observation type guessing is not yet implemented.");
     }
 

@@ -1,6 +1,7 @@
 package gov.noaa.pmel.dashboard.server.db.myb.dao;
 
 import java.sql.SQLException;
+import java.util.List;
 
 import org.apache.ibatis.session.SqlSession;
 
@@ -65,6 +66,15 @@ public class MybUsersDao implements UsersDao {
         }
     }
         
+	@Override
+	public List<User> retrieveAll() throws SQLException {
+		try (SqlSession session = MybatisConnectionFactory.getDashboardDbSessionFactory().openSession();) {
+			UserMapper umapper = (UserMapper) session.getMapper(UserMapper.class);
+			List<User> users = umapper.retrieveAll();
+			return users;
+		}
+	}
+	
 	@Override
 	public User retrieveUser(String username) throws SQLException {
 		try (SqlSession session = MybatisConnectionFactory.getDashboardDbSessionFactory().openSession();) {

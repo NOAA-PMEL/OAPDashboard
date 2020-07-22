@@ -14,7 +14,6 @@ import gov.noaa.pmel.dashboard.actions.DatasetChecker;
 import gov.noaa.pmel.dashboard.data.sanity.CastChecker;
 import gov.noaa.pmel.dashboard.datatype.KnownDataTypes;
 import gov.noaa.pmel.dashboard.dsg.DsgMetadata;
-import gov.noaa.pmel.dashboard.dsg.StdDataArray;
 import gov.noaa.pmel.dashboard.dsg.StdUserDataArray;
 import gov.noaa.pmel.dashboard.handlers.CheckerMessageHandler;
 import gov.noaa.pmel.dashboard.handlers.DataFileHandler;
@@ -37,48 +36,6 @@ public class MinimalDatasetChecker extends BaseDatasetChecker implements Dataset
 
     private static Logger logger = LogManager.getLogger(MinimalDatasetChecker.class);
     
-	private class RowColumn {
-		int row;
-		int column;
-
-		public RowColumn(Integer rowIndex, Integer columnIndex) {
-			if ( rowIndex == null )
-				row = DashboardUtils.INT_MISSING_VALUE.intValue();
-			else
-				row = rowIndex.intValue();
-			if ( columnIndex == null )
-				column = DashboardUtils.INT_MISSING_VALUE.intValue();
-			else
-				column = columnIndex.intValue();
-		}
-
-		@Override
-		public int hashCode() {
-			return 47 * row + column;
-		}
-
-		@Override
-		public boolean equals(Object obj) {
-			if ( this == obj )
-				return true;
-			if ( obj == null )
-				return false;
-			if ( ! ( obj instanceof RowColumn ) )
-				return false;
-			RowColumn other = (RowColumn) obj;
-			if ( row != other.row )
-				return false;
-			if ( column != other.column )
-				return false;
-			return true;
-		}
-
-		@Override
-		public String toString() {
-			return "RowColumn[row=" + row + ", column=" + column + "]";
-		}
-	}
-
 	/**
 	 * @param userDataTypes
 	 * 		all known user data types
@@ -211,7 +168,7 @@ public class MinimalDatasetChecker extends BaseDatasetChecker implements Dataset
 				Integer rowIdx = wtype.getRowIndex();
 				if ( ! ( userErrs.contains(rowCol) || 
 						 userWarns.contains(rowCol) || 
-						 errRows.contains(rowIdx) ) )
+                         ( ! DashboardUtils.INT_MISSING_VALUE.equals(rowIdx) && errRows.contains(rowIdx) )))
 					warnRows.add(rowIdx);
 			}
 		}
@@ -305,9 +262,9 @@ public class MinimalDatasetChecker extends BaseDatasetChecker implements Dataset
 
 	private static void checkCastConsistency(StdUserDataArray stdData) {
 		if ( !stdData.hasCastIdColumn()) {
-            logger.info("No CastID column found for dataset " + stdData.getDatasetId());
+            logger.info("No CastID column found for dataset " + stdData.getDatasetName());
             if ( !stdData.hasStationIdColumn()) {
-                logger.warn("No CastID OR StationID found for dataset: " + stdData.getDatasetId());
+                logger.warn("No CastID OR StationID found for dataset: " + stdData.getDatasetName());
                 throw new IllegalStateException("No station or cast identifier found.");
             }
 		}

@@ -23,4 +23,17 @@ public enum FeatureType {
     }
     
     public String dsgTypeName() { return _dsgTypeName; }
+    
+    public boolean isDSG() {
+        return this != UNSPECIFIED && this != OTHER;
+    }
+    
+    public static boolean isDSG(String featureTypeName) {
+        try {
+            return FeatureType.valueOf(featureTypeName).isDSG();
+        } catch (Exception ex) {
+            System.err.println(ex);
+            return false;
+        }
+    }
 }
