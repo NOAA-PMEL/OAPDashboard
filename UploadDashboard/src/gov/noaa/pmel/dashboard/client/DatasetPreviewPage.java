@@ -227,6 +227,7 @@ public class DatasetPreviewPage extends CompositeWithUsername {
         if ( ! dsid.equals(datasetId)) { logger.warning("Changing dataset ID without changing feature type."); }
 		setUsername(username);
 		header.setDatasetIds(dsid);
+        header.userInfoLabel.setText(WELCOME_INTRO + getUsername()); // XXX TODO: This should be in setUsername...
 		
 //		introHtml.setHTML(INTRO_HTML_PROLOGUE + SafeHtmlUtils.htmlEscape(this.datasetId));
 //		if ( this.expocode.length() > 11 ) { // WTF?
