@@ -244,9 +244,13 @@ private ExcelFileReader(Workbook workbook) throws IOException {
 //        int rowCellCount = row.getLastCellNum(); // this can be a lie
         
         List<String> rowList = new ArrayList<>();
-        int cellIdx = 0;
-        for ( Cell cell : row ) {
+        // for ( Cell cell : row ) {   // cell iterator doesn't return empty cells
+        int definedCellCount = row.getPhysicalNumberOfCells();
+        int rowCellCount = row.getLastCellNum();
+        logger.debug("Row " + row.getRowNum() + " cell count: " + rowCellCount + ", defined:" + definedCellCount);
+        for ( int cellIdx = 0; cellIdx < rowCellCount; cellIdx ++ ) {
             String cellValue;
+            Cell cell = row.getCell(cellIdx, Row.MissingCellPolicy.CREATE_NULL_AS_BLANK);
             if ( cell.getCellType() == CellType.FORMULA ) {
                 switch (cell.getCachedFormulaResultType()) {
                     case BOOLEAN:
@@ -270,7 +274,6 @@ private ExcelFileReader(Workbook workbook) throws IOException {
                 cellValue = "";
             }
             rowList.add(cellValue != null ? cellValue : "");
-            cellIdx+=1;
         }
         // Remove trailing empty cells. Depending on how the excel file is set up, 
         // there are sometimes extraneous empty cells returned at the end of a row.
