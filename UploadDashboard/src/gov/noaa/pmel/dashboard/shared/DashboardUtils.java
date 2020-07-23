@@ -9,6 +9,8 @@ import java.util.Collection;
 import java.util.Date;
 import java.util.TreeSet;
 
+import com.google.gwt.core.client.GWT;
+import com.google.gwt.i18n.client.TimeZone;
 import com.google.gwt.i18n.shared.DateTimeFormat;
 
 import gov.noaa.pmel.dashboard.shared.QCFlag.Severity;
@@ -812,6 +814,12 @@ public class DashboardUtils {
 	public static final String DATE_FORMAT_TO_SECONDS_NO_TZ = "yyyy-MM-dd HH:mm:ss";
 	public static final String LOCALIZED_DATE_FORMAT_TO_MINUTES = "yyyy-MM-dd HH:mm Z";
 	public static final String LOCALIZED_DATE_FORMAT_TO_SECONDS = "yyyy-MM-dd HH:mm:ss Z";
+    private static String[] parseFormats = new String[] {
+            DATE_ARCHIVE_FORMAT,
+            DATE_ARCHIVE_FORMAT_NO_SEC,
+            LOCALIZED_DATE_FORMAT_TO_MINUTES,
+            LOCALIZED_DATE_FORMAT_TO_SECONDS
+    };
     
     public static String formatClientSideDate(Date date, String format) {
         if ( date == null ) {
@@ -830,15 +838,69 @@ public class DashboardUtils {
      */
     public static Date getClientSideDate(String dateString, String format) {
         if ( isEmptyOrNull(dateString)) {
-            return null;
+            return DATE_MISSING_VALUE;
         }
 //                uploadDate = DateTimeFormat.getFormat("yyyy-MM-dd hh:mm Z").parse(uploadTimestamp);
 //                uploadDate = DateTimeFormat.getFormat("yyyy-MM-dd hh:mm Z").parse(uploadTimestamp);
         return DateTimeFormat.getFormat(format).parse(dateString);
     }
     
-    public static Date parseDate(String dateString) {
-        return null;
+    public static Date parseDateOnClient(String dateString) {
+        Date parsedDate = null;
+        for (String format : parseFormats) {
+            DateTimeFormat dtf = DateTimeFormat.getFormat(format);
+            try {
+                parsedDate = dtf.parseStrict(dateString);
+                GWT.log("parsed " + dateString + " using " + format + " as " + parsedDate);
+                return parsedDate;
+            } catch (Exception ex) {
+                GWT.log("Cannot parse " + dateString + " using " + format);
+            }
+        }
+        return DATE_MISSING_VALUE;
+    }
+//    private static Date parseDateOnServer(String dateString) {
+//        Date parsedDate = null;
+//        for (String format : parseFormats) {
+//            SimpleDateFormat dtf = new SimpleDateFormat(format);
+//            try {
+//                if ( dateString.contains("Z")) {
+//                    dtf.setTimeZone(TimeZone.getTimeZone("UTC"));
+//                }
+//                parsedDate = dtf.parse(dateString);
+//                return parsedDate;
+//            } catch (Exception ex) {
+//                System.err.println(ex + " with " + format);
+//            }
+//        }
+//        return DATE_MISSING_VALUE;
+//    }
+    public static void main(String[] args) {
+        System.out.println("Missing: " + DATE_MISSING_VALUE);
+//        try {
+//            String s1 = "2020-07-22 17:46:29 Z";
+//            String s1b = "2020-07-22 17:46 Z";
+//            String s2 = "2020-06-17 13:24:42 -0700";
+//            String s3 = "2020-06-17 12:53 UTC";
+//            String s4 = "2020-06-11 10:08 -0000";
+//            String s5 = "2020-06-11 10:08 PST";
+//            Date d = parseDateOnServer(s1);
+//            System.out.println(s1 + " : " + d);
+//            d = parseDateOnServer(s1b);
+//            System.out.println(s1b + " : " + d);
+//            d = parseDateOnServer(s2);
+//            System.out.println(s2 + " : " + d);
+//            d = parseDateOnServer(s3);
+//            System.out.println(s3 + " : " + d);
+//            d = parseDateOnServer(s4);
+//            System.out.println(s4 + " : " + d);
+//            d = parseDateOnServer(s5);
+//            System.out.println(s5 + " : " + d);
+//
+//        } catch (Exception ex) {
+//            ex.printStackTrace();
+//            // TODO: handle exception
+//        }
     }
     
 }

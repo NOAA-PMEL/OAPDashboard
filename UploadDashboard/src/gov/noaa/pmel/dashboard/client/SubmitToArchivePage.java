@@ -487,7 +487,7 @@ public class SubmitToArchivePage extends CompositeWithUsername implements DataSu
             String uploadTimestamp = dataset.getUploadTimestamp();
             Date uploadDate = null;
             try {
-                uploadDate = DashboardUtils.parseDate(uploadTimestamp);
+                uploadDate = DashboardUtils.parseDateOnClient(uploadTimestamp);
             } catch (Exception ex) {
                 UploadDashboard.logToConsole("failed to parse date " + uploadTimestamp + " for " + dataset.getRecordId());
                 uploadDate = DashboardUtils.DATE_MISSING_VALUE;
