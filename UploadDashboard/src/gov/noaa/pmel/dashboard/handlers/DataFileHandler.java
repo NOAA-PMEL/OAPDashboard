@@ -549,6 +549,9 @@ public class DataFileHandler extends VersionedFileHandler {
 							if ( val.isEmpty() ) {
                                 if ( fieldNum == nColumns) { // last / extra column ignored
                                     hasTrailer = true;
+                                } else if ( fieldNum == 1 ) { // first column may be record num.
+                                    logger.debug("First header column empty.");
+                                    continue;
                                 } else {
     								isHeader = false;
     								break;
