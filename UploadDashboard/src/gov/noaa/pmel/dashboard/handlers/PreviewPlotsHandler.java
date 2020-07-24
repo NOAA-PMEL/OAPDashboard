@@ -376,7 +376,7 @@ public class PreviewPlotsHandler {
 		List<PreviewPlotImage> plotList = new ArrayList<>();
 		String plotName = plotName(datasetId,"map");
 		checkAddAndRemove(plotName, plotNameMap, plotList);
-		plotName = plotName(datasetId, "time", "show_time");
+		plotName = plotName(datasetId, "profile_time", "show_time");
 		checkAddAndRemove(plotName, plotNameMap, plotList);
 		plotName = plotName(datasetId, "ctd_pressure", "sample_depth");
 		checkAddAndRemove(plotName, plotNameMap, plotList);
