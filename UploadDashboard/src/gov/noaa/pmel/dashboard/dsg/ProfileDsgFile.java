@@ -646,8 +646,8 @@ public class ProfileDsgFile extends DsgNcFile {
 	private void addProfileTimeVariable(NetcdfFileWriter ncfile, List<Dimension> dims) {
 		addTimeVariable(PROFILE_TIME_VARNAME, "Time", ncfile, dims, false);
 	}
-	private static final String PROFILE_LAT_VARNAME = "profile_longitude";
-	private static final String PROFILE_LON_VARNAME = "profile_latitude";
+	private static final String PROFILE_LAT_VARNAME = "profile_latitude";
+	private static final String PROFILE_LON_VARNAME = "profile_longitude";
 	private static final String PROFILE_TIME_VARNAME = "profile_time";
 	private static final String SAMPLE_ID_VARNAME = "sample_id";
 	private static final String SAMPLE_DEPTH_VARNAME = "sample_depth";
