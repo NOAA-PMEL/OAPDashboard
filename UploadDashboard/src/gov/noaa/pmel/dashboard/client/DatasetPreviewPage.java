@@ -217,17 +217,17 @@ public class DatasetPreviewPage extends CompositeWithUsername {
 	 * 		user requesting these plots 
 	 */
 	private void updatePreviewPlots(DashboardDataset dataset, String username, boolean force) {
-        String dsid = dataset.getDatasetId();
-		this.datasetId = dsid;
+        String recordId = dataset.getRecordId();
+		if ( recordId == null ) { throw new IllegalArgumentException("Null dataset id"); }
+        if ( ! recordId.equals(datasetId)) { logger.warning("Changing dataset ID without changing feature type."); }
+		this.datasetId = recordId;
         obsType = dataset.getFeatureType();
-        this.updatePreviewPlots(dsid, username, force);
-	}
-	private void updatePreviewPlots(String dsid, String username, boolean force) {
-		if ( dsid == null ) { throw new IllegalArgumentException("Null dataset id"); }
-        if ( ! dsid.equals(datasetId)) { logger.warning("Changing dataset ID without changing feature type."); }
 		setUsername(username);
-		header.setDatasetIds(dsid);
+		header.setDatasetIds(dataset.getUserDatasetName());
         header.userInfoLabel.setText(WELCOME_INTRO + getUsername()); // XXX TODO: This should be in setUsername...
+        this.updatePreviewPlots(recordId, username, force);
+	}
+	private void updatePreviewPlots(String recordId, String username, boolean force) {
 		
 //		introHtml.setHTML(INTRO_HTML_PROLOGUE + SafeHtmlUtils.htmlEscape(this.datasetId));
 //		if ( this.expocode.length() > 11 ) { // WTF?
