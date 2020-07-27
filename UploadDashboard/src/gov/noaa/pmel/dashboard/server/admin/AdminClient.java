@@ -3,10 +3,12 @@
  */
 package gov.noaa.pmel.dashboard.server.admin;
 
+import java.io.Console;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.List;
 import java.util.Map;
+import java.util.Properties;
 
 import javax.security.auth.login.CredentialException;
 
@@ -15,6 +17,7 @@ import org.apache.logging.log4j.LogManager;
 
 import gov.noaa.pmel.dashboard.server.Users;
 import gov.noaa.pmel.dashboard.server.Users.UserRole;
+import gov.noaa.pmel.dashboard.server.db.myb.MybatisConnectionFactory;
 import gov.noaa.pmel.dashboard.server.model.User;
 import gov.noaa.pmel.dashboard.util.PasswordUtils;
 import gov.noaa.pmel.tws.client.impl.TwsClientImpl.NoopException;
@@ -34,11 +37,16 @@ public class AdminClient extends CLClient {
 
     private static Logger logger;
     
+    private static CLOption opt_batch = CLOption.builder().name("batch").flag("y").longFlag("batch")
+                                            .requiresValue(false)
+                                            .description("batch mode: assume yes at prompts").build();
+    
     private static CLOption opt_username = CLOption.builder().name("user").flag("u").longFlag("username")
                                             .requiredOption(true)
                                             .description("username for user-oriented options").build();
     private static CLOption opt_password = CLOption.builder().name("password").flag("pw").longFlag("password")
-                                            .description("new user's password - must conform to password complexity rules").build();
+                                            .description("new user's password - must conform to password complexity rules, should be enclosed in single quotes")
+                                            .defaultValue("Genereated secure password").build();
     private static CLOption opt_firstName = CLOption.builder().name("firstName").flag("fn").longFlag("firstname")
                                             .requiredOption(true)
                                             .description("User first name.").build();
@@ -55,6 +63,13 @@ public class AdminClient extends CLClient {
                                             .description("User email.").build();
     private static CLOption opt_phone = CLOption.builder().name("phone").flag("t").longFlag("phone")
                                             .description("User phone. Use \"x####\" to specify an extension.").build();
+    private static CLOption opt_target = CLOption.builder().name("targetDb").flag("d").longFlag("db")
+                                            .defaultValue("localhost")
+                                            .description("Target database. Options: localhost, prod(uction), hostname (which may or may not be supported.)").build();
+    
+    private static CLOption opt_noop = CLOption.builder().name("no-op").flag("x").longFlag("noop")
+                                            .requiresValue(false)
+                                            .description("Do not perform requested operation.  Output options and parameters and exit.").build();
     
     
     @SuppressWarnings("unused") // found by reflection
@@ -68,6 +83,8 @@ public class AdminClient extends CLClient {
                                                 .option(opt_userOrg)
                                                 .option(opt_email)
                                                 .option(opt_phone)
+                                                .option(opt_target)
+                                                .option(opt_batch)
                                                 .build();
     
     private CLOptions _clOptions;
@@ -79,9 +96,36 @@ public class AdminClient extends CLClient {
         // TODO Auto-generated constructor stub
     }
 
+    public boolean confirm(String message) {
+        if ( _clOptions.booleanValue(opt_batch, false)) {
+            return true;
+        }
+        System.out.print("Confirm: " + message + " [yN]: ");
+        Console console = System.console();
+        if ( console == null ) { // running in IDE
+            return true; // use code below.
+        }
+        String answer = System.console().readLine();
+        return answer != null && answer.startsWith("y");
+    }
+    /*
+    private static String getUserResponse(String msg, String defaultValue) throws IOException {
+    String prompt = msg + (defaultValue != null ? " [" + defaultValue + "]" : "") + " : ";
+    System.out.print(prompt);
+    BufferedReader reader = new BufferedReader(new InputStreamReader(System.in));
+    String response = reader.readLine();
+    if ( StringUtils.emptyOrNull(response)) {
+    response = defaultValue;
+    }
+    return response;
+    }
+    */
+
+    
     public void doAdd() {
-        System.out.println("Add user");
+        logger.info("Add user");
         try {
+            String target = _clOptions.get(opt_target);
             String userid = _clOptions.get(opt_username);
             User existgUser = Users.getUser(userid);
             if ( existgUser != null ) {
@@ -89,6 +133,7 @@ public class AdminClient extends CLClient {
             }
             String pw = _clOptions.get(opt_password);
             if ( pw != null ) {
+                logger.info("Checking supplied pw: " + pw);
                 PasswordUtils.validatePasswordStrength(pw);
             } else {
                 pw = PasswordUtils.generateSecurePassword();
@@ -101,8 +146,12 @@ public class AdminClient extends CLClient {
                             .lastName(_clOptions.get(opt_lastName))
                             .email(_clOptions.get(opt_email))
                             .build();
-            Users.addUser(newUser, pw, UserRole.Groupie);
-            logger.info("User " + userid + " added.");
+            if ( confirm("Add user " + newUser + " to target db: " + target)) {
+                Users.addUser(newUser, pw, UserRole.Groupie);
+                logger.info("User " + userid + " added.");
+            } else {
+                logger.info("User not added.");
+            }
         } catch (CredentialException cex) {
             System.err.println("Password unacceptable.");
             System.err.println(PasswordUtils.passwordRules());
@@ -117,7 +166,9 @@ public class AdminClient extends CLClient {
 //            checkOptions(command);
             
             _clOptions = new CLOptions(command, optionValues, arguments);
-            
+            if ( _clOptions.options().containsKey(opt_target)) {
+                MybatisConnectionFactory.initialize(_clOptions.optionValue(opt_target));
+            }
             Method processingMethod = getProcessingMethod(command);
             processingMethod.invoke(this);
             
@@ -181,14 +232,32 @@ public class AdminClient extends CLClient {
         }
         return methodName;
     }
+    
+    private static void dumpProperties() {
+        Properties sysprops = System.getProperties();
+        for ( Object key : sysprops.keySet()) {
+            System.out.println(key+" : " + sysprops.get(key));
+        }
+    }
 
     /**
      * @param args
      */
     public static void main(String[] args) {
         try {
-            System.out.println("Running AdminClient");
+            args = new String[] { "add", "-u", "test", "-pw", "ch@ngeM3s00n", "-fn", "Testy", "-ln", "Testarosa", "-e", "nobody@noaa.gov", "-d", "newbock", "-b" };
+
+//            System.out.println("Running AdminClient");
             List<String> filteredArgs = preprocessArgs(args); // sets system property and removes -D args
+//            if ( filteredArgs.contains(opt_target.flag()) ||
+//                 filteredArgs.contains(opt_target.longFlag())) {
+//                int idx = filteredArgs.indexOf(opt_target.flag());
+//                if ( idx < 0 ) {
+//                    idx = filteredArgs.indexOf(opt_target.longFlag());
+//                }
+//                String value = filteredArgs.get(idx+1);
+//                System.setProperty(MybatisConnectionFactory.DB_ENV_PROPERTY, value);
+//            }
             ApplicationConfiguration.Initialize("oap");
             logger = LogManager.getLogger(AdminClient.class);
             logger.debug("Running AdminClient");
