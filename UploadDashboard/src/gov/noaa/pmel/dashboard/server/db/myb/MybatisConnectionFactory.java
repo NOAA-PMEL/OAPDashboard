@@ -34,23 +34,41 @@ public class MybatisConnectionFactory {
     private static final String My_dashboardDb = "my-dashboard";
     
     private static final String DEFAULT_DB_ENVIRONMENT = My_dashboardDb;
-    static{
-        org.apache.ibatis.logging.LogFactory.useLog4J2Logging();
-        
-        String dbConfigFileName = ApplicationConfiguration.getProperty("oap.db.config.file", DEFAULT_CONFIG_FILE);
-        ApplicationConfiguration.console("Using dbConfigFile: "+ dbConfigFileName);
-        String dashboardEnv = ApplicationConfiguration.getProperty("oap.db.environment", DEFAULT_DB_ENVIRONMENT);
-        ApplicationConfiguration.console("Using dashboard environemnt: "+ dashboardEnv);
-        try ( Reader r1 = Resources.getResourceAsReader(dbConfigFileName); ) {
-        	SqlSessionFactoryBuilder builder = new SqlSessionFactoryBuilder();
-            dashboardSessionFactory = builder.build(r1, dashboardEnv );
-            System.out.println(dashboardSessionFactory);
-        }catch(Exception e) {
-            e.printStackTrace();
+
+    public static final String DB_ENV_PROPERTY = "oap.db.environment";
+    public static final String DB_CONFIG_FILE_PROPERTY = "oap.db.config.file";
+    
+    private static Object configureLock = new Object();
+    private static boolean configured = false;
+    
+    static void initialize(String dbEnvironemt) {
+        System.setProperty(DB_ENV_PROPERTY, dbEnvironemt);
+        initialize();
+    }
+    static void initialize() {
+        synchronized (configureLock) {
+            if ( !configured) {
+                org.apache.ibatis.logging.LogFactory.useLog4J2Logging();
+                String dbConfigFileName = ApplicationConfiguration.getProperty(DB_CONFIG_FILE_PROPERTY, DEFAULT_CONFIG_FILE);
+                ApplicationConfiguration.console("Using dbConfigFile: "+ dbConfigFileName);
+                String dashboardEnv = ApplicationConfiguration.getProperty(DB_ENV_PROPERTY, DEFAULT_DB_ENVIRONMENT);
+                ApplicationConfiguration.console("Using dashboard environemnt: "+ dashboardEnv);
+                try ( Reader r1 = Resources.getResourceAsReader(dbConfigFileName); ) {
+                	SqlSessionFactoryBuilder builder = new SqlSessionFactoryBuilder();
+                    dashboardSessionFactory = builder.build(r1, dashboardEnv );
+                    System.out.println(dashboardSessionFactory);
+                    configured = true;
+                }catch(Exception e) {
+                    System.err.println("Critical Database Configuration Error: " + e);
+                    e.printStackTrace();
+                    System.exit(-1);
+                }
+            }
         }
     }
  
     public static SqlSessionFactory getDashboardDbSessionFactory(){
+        if ( !configured ) { initialize(); }
         return dashboardSessionFactory;
     }
 
