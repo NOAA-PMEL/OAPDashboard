@@ -32,18 +32,20 @@ public class PasswordUtils {
                 "\t lower-case characters\n" +
                 "\t upper-case characters\n" +
                 "\t numbers\n" +
-                "\t symbols  '!', '$', '%', '#', '&', '_', '*', '^'";
+                "\t symbols  '!', '$', '%', '#', '&', '_', '*', '^'\n" + 
+                "NOTE: To avoid mysterious failures, it's best to enclose a provided password in single quotes, as: 'password'";
     }
     
     private static void test(String pw) {
         try {
             validatePasswordStrength(pw);
         } catch (Exception ex) {
+            System.out.println("Password unacceptable:\""+pw+"\"");
             System.out.println(passwordRules());
         }
     }
     public static void main(String[] args) {
-        test("abcDef123");
+        test("ch@ngeM3now!");
     }
     private static interface PasswordChecker {
         public void validate(String password) throws CredentialException;
