@@ -332,7 +332,7 @@ public class OADSMetadata {
             checkSpatialExtents(metadata);
             checkTemporalExtents(metadata);
             checkVariables(metadata);
-            validationMsg = "Validated.";
+            validationMsg = "Validated";
 //        } catch (JAXBException ex) {
 //            validationMsg = "There was an error processing the metadata file.";
 //            ex.printStackTrace();
