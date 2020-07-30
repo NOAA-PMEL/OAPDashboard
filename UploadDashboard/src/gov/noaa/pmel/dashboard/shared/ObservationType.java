@@ -21,6 +21,7 @@ public class ObservationType {
             "Time-series (profile)",
             "Pump cast",
             "Model output",
+            "Field experiment",
             "Laboratory experiment",
             "Fish examination",
             "Biological tows",
