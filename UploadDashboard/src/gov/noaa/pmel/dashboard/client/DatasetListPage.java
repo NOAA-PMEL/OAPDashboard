@@ -1611,7 +1611,9 @@ public class DatasetListPage extends CompositeWithUsername {
 					sb.appendHtmlConstant(msg);
 					sb.appendHtmlConstant("</div>");
                 } else {
-    				if ( msg.contains("warnings") || 
+                    if ( msg.equals(DashboardUtils.CHECK_STATUS_ACCEPTABLE) ) {
+                        // all good
+                    } else if ( msg.contains("warnings") || 
     					  ( msg.contains("errors") && 
     					    ( ! msg.contains(DashboardUtils.GEOPOSITION_ERRORS_MSG) ) && 
     					    ( cruise.getNumErrorRows() <= DashboardUtils.MAX_ACCEPTABLE_ERRORS ))) {
