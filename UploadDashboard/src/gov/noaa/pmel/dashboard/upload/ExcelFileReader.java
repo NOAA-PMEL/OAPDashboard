@@ -35,6 +35,7 @@ import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.ss.usermodel.Sheet;
 import org.apache.poi.ss.usermodel.Workbook;
 import org.apache.poi.ss.usermodel.WorkbookFactory;
+import org.apache.poi.xssf.usermodel.XSSFCell;
 
 import com.example.OoXmlStrictConverter;
 
@@ -251,22 +252,28 @@ private ExcelFileReader(Workbook workbook) throws IOException {
         for ( int cellIdx = 0; cellIdx < rowCellCount; cellIdx ++ ) {
             String cellValue;
             Cell cell = row.getCell(cellIdx, Row.MissingCellPolicy.CREATE_NULL_AS_BLANK);
-            if ( cell.getCellType() == CellType.FORMULA ) {
-                switch (cell.getCachedFormulaResultType()) {
-                    case BOOLEAN:
-                        cellValue = String.valueOf(cell.getBooleanCellValue());
-                        break;
-                    case NUMERIC:
-                        cellValue = String.valueOf(cell.getNumericCellValue());
-                        break;
-                    case STRING:
-                        cellValue = String.valueOf(cell.getRichStringCellValue());
-                        break;
-                    default:
-                        cellValue = df.formatCellValue(cell);
-                }                    
-            } else {
-                cellValue = df.formatCellValue(cell);
+            try { // some types of cells (Date-type in particular) throw an exception on getCellType
+                if ( cell.getCellType() == CellType.FORMULA ) {
+                    switch (cell.getCachedFormulaResultType()) {
+                        case BOOLEAN:
+                            cellValue = String.valueOf(cell.getBooleanCellValue());
+                            break;
+                        case NUMERIC:
+                            cellValue = String.valueOf(cell.getNumericCellValue());
+                            break;
+                        case STRING:
+                            cellValue = String.valueOf(cell.getRichStringCellValue());
+                            break;
+                        default:
+                            cellValue = df.formatCellValue(cell);
+                    }                    
+                } else {
+                    cellValue = df.formatCellValue(cell);
+                }
+            } catch (Exception ex) { // if exception thrown, just try to get the raw cell value.
+                System.err.println(ex);
+                XSSFCell xsc = (XSSFCell)cell;
+                cellValue = xsc.getRawValue();
             }
 
             if ( cellValue == null ) {
@@ -402,12 +409,16 @@ private ExcelFileReader(Workbook workbook) throws IOException {
 //                    "/Users/kamb/workspace/oa_dashboard_test_data/WOAC_metadata_jh100918.xlsx",
 //                    "/Users/kamb/workspace/oa_dashboard_test_data/A02_HLY0803-loose.xlsx",
 //                    "/Users/kamb/workspace/oa_dashboard_test_data/A02_HLY0803.xlsx.loose",
-                    "/Users/kamb/workspace/oa_dashboard_test_data/A02_HLY0803.xlsx"
+            "/Users/kamb/workspace/oa_dashboard_test_data/WOAC_metadata-fixed-strict.xlsx"
+//                    "/Users/kamb/workspace/oa_dashboard_test_data/A02_HLY0803.xlsx"
                     };
             for (String file : files ) {
                 InputStream inStream = new FileInputStream(file);
                 ExcelFileReader efr = newInstance(inStream);
                 System.out.println(efr);
+                for (String[] row : efr ) {
+                    System.out.println(row);
+                }
             }
         } catch (Exception ex) {
             ex.printStackTrace();
