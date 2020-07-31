@@ -11,7 +11,7 @@
                 <g:FlowPanel addStyleNames="{style.headerInfo}">
                     <g:Label  ui:field="titleLabel" addStyleNames="{style.headerpagelabel}" >DataSet List</g:Label> <!-- -->
                     <g:FlowPanel>
-                    <g:Label  addStyleNames="{style.headersoftwaretitle}" >OAP Scientific Data Integration System</g:Label>
+                    <g:Label  addStyleNames="{style.headersoftwaretitle}" >OAP Science Data Information System</g:Label>
                     <g:Label  addStyleNames="{style.headerversionlabel}" >pre-release</g:Label>
                     <g:FlowPanel ui:field="headerRightPanel" addStyleNames="{style.titleRightGroup}">
                         <g:Label ui:field="userInfoLabel" addStyleNames="{style.headeruserlabel}">Not Logged In</g:Label>
