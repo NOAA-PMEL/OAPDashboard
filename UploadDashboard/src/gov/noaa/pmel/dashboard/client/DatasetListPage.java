@@ -1524,10 +1524,24 @@ public class DatasetListPage extends CompositeWithUsername {
             @Override
             public String getValue(DashboardDataset cruise) {
                 String featureType = cruise.getUserObservationType(); // .getFeatureTypeName();
-                if ( featureType.isEmpty() )
+                int parenIdx = -1;
+                if ( featureType.isEmpty() ) {
                     featureType = FeatureType.UNSPECIFIED.name(); // XXX Should be an error!
+                } else if ((parenIdx = featureType.indexOf('(')) > 0 ) {
+                    featureType = featureType.substring(0, parenIdx - 1) + "<br/>" +
+                                  featureType.substring(parenIdx);
+                }
                 return featureType;
             }
+            @Override
+            public void render(Cell.Context ctx, DashboardDataset cruise, 
+                                                    SafeHtmlBuilder sb) {
+                String msg = getValue(cruise);
+                sb.appendHtmlConstant("<div>");
+                sb.appendHtmlConstant(msg);
+                sb.appendHtmlConstant("</div>");
+            }
+
         };
         return featureTypeColumn;
     }
