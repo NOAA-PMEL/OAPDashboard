@@ -54,6 +54,7 @@ public class DashboardUtils {
 	public static final String CHECK_STATUS_ACCEPTABLE = "No warnings";
 	public static final String CHECK_STATUS_WARNINGS_PREFIX = "Warnings:";
 	public static final String CHECK_STATUS_ERRORS_PREFIX = "Errors:";
+	public static final String CHECK_STATUS_CRITICAL_ERRORS_PREFIX = "Critical Errors:";
 	public static final String CHECK_STATUS_UNACCEPTABLE = "Unacceptable";
 	public static final String GEOPOSITION_ERRORS_MSG = "(lat/lon/time errors!)";
 

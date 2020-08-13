@@ -375,6 +375,8 @@ public class StdUserDataArray extends StdDataArray {
 			for (int rowIdx = 0; rowIdx < numSamples; rowIdx++) {
 				if ( times[rowIdx] == null ) {
 					isOk = false;
+                    // XXX Messages are now added during the data standarization phase
+					// in the StdUserDataArray constructor.
 //					ADCMessage msg = new ADCMessage();
 //					msg.setSeverity(Severity.CRITICAL);
 //					msg.setRowIndex(rowIdx);

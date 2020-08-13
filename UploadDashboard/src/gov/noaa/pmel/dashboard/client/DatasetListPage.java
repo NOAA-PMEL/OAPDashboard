@@ -1396,6 +1396,7 @@ public class DatasetListPage extends CompositeWithUsername {
         for (DashboardDataset dataset : selectedList.values()) {
             String datastatus = dataset.getDataCheckStatus();
             if (datastatus.equals("Unacceptable") ||
+                datastatus.contains("ritical") ||
                 datastatus.equalsIgnoreCase(DashboardUtils.STRING_MISSING_VALUE)) {
                 previewButton.setEnabled(false);
                 maybeSetTitleAdvisory(previewButton, "Unable to Preview data: " + 
@@ -1602,6 +1603,11 @@ public class DatasetListPage extends CompositeWithUsername {
 					status = NO_DATA_CHECK_STATUS_STRING;
 				}
 				else if ( status.startsWith( 
+						DashboardUtils.CHECK_STATUS_CRITICAL_ERRORS_PREFIX) ) { 
+					status = status.substring(0,
+							DashboardUtils.CHECK_STATUS_CRITICAL_ERRORS_PREFIX.length()-1);
+				}
+				else if ( status.startsWith( 
 						DashboardUtils.CHECK_STATUS_ERRORS_PREFIX) ) { 
 					status = status.substring(
 							DashboardUtils.CHECK_STATUS_ERRORS_PREFIX.length());
@@ -1627,6 +1633,8 @@ public class DatasetListPage extends CompositeWithUsername {
                 } else {
                     if ( msg.equals(DashboardUtils.CHECK_STATUS_ACCEPTABLE) ) {
                         // all good
+                    } else if ( msg.contains("ritical")) {
+						backgroundColor = UploadDashboard.CHECKER_ERROR_COLOR;
                     } else if ( msg.contains("warnings") || 
     					  ( msg.contains("errors") && 
     					    ( ! msg.contains(DashboardUtils.GEOPOSITION_ERRORS_MSG) ) && 

@@ -1124,6 +1124,7 @@ public class DataColumnSpecsPage extends CompositeWithUsername {
 				updateDatasetColumnSpecs(ddd);
 				String status = ddd.getDataCheckStatus();
 				if ( status.equals(DashboardUtils.CHECK_STATUS_NOT_CHECKED) ||
+					 status.startsWith(DashboardUtils.CHECK_STATUS_CRITICAL_ERRORS_PREFIX) ||
 					 status.equals(DashboardUtils.CHECK_STATUS_UNACCEPTABLE) ) {
 					// the sanity checker had serious problems
 					UploadDashboard.theresAproblem(QuestionType.CRITICAL, 

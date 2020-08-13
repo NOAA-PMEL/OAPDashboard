@@ -161,12 +161,14 @@ public class ProfileDatasetChecker extends BaseDatasetChecker implements Dataset
 				userWarns.add(new RowColumn(wtype.getRowIndex(), wtype.getColumnIndex()));
 			}
 		}
+        int numCritical = 0;
 		// Get the indices of data rows the automated data checker 
 		// found having errors not not detected by the PI.
 		List<Integer> errRows = new ArrayList<>();
 		for ( QCFlag wtype : dataset.getCheckerFlags() ) {
 			if ( Severity.CRITICAL.equals(wtype.getSeverity()) ) {
 				hasCriticalError = true;
+                numCritical += 1;
 				RowColumn rowCol = new RowColumn(wtype.getRowIndex(), wtype.getColumnIndex());
 				if ( ! userErrs.contains(rowCol) )
 					errRows.add(wtype.getRowIndex());
@@ -199,7 +201,9 @@ public class ProfileDatasetChecker extends BaseDatasetChecker implements Dataset
 
 		// Assign the data-check status message using the results of the sanity check
 		if ( hasCriticalError ) {
-			dataset.setDataCheckStatus(DashboardUtils.CHECK_STATUS_UNACCEPTABLE);
+//			dataset.setDataCheckStatus(DashboardUtils.CHECK_STATUS_UNACCEPTABLE);
+			dataset.setDataCheckStatus(DashboardUtils.CHECK_STATUS_CRITICAL_ERRORS_PREFIX +
+					Integer.toString(numCritical) + " errors");
 		}
 		else if ( numErrorRows > 0 ) {
 			dataset.setDataCheckStatus(DashboardUtils.CHECK_STATUS_ERRORS_PREFIX +
@@ -232,9 +236,18 @@ public class ProfileDatasetChecker extends BaseDatasetChecker implements Dataset
             Object depth = depthIdx != null ? stdUserData.getStdVal(row, depthIdx.intValue()) : null;
             Object press = pressureIdx != null ? stdUserData.getStdVal(row, pressureIdx.intValue()) : null;
             if (( depth == null || DashboardUtils.FP_MISSING_VALUE.equals(depth)) && 
-                ( press == null | DashboardUtils.FP_MISSING_VALUE.equals(press))) {
-                ADCMessage msg = stdUserData.messageFor(Severity.ERROR, new Integer(row), null, "Missing value", 
-                                                        "No pressure or depth value for row " + (row+1));
+                ( press == null || DashboardUtils.FP_MISSING_VALUE.equals(press))) {
+                Severity severity;
+                String message;
+                if ( depth == null && press == null ) {
+                    severity = Severity.ERROR;
+                    message = "No pressure or depth value for row " + (row+1);
+                } else {
+                    severity = Severity.WARNING;
+                    message = "Missing Value for pressure or depth for row " + (row+1);
+                }
+                ADCMessage msg = stdUserData.messageFor(severity, new Integer(row), null, "Missing value", 
+                                                        message);
                 stdUserData.addStandardizationMessage(msg);
                 allGood = false;
             } else if ( depthIdx != null && depth == null || DashboardUtils.FP_MISSING_VALUE.equals(depth)) {
