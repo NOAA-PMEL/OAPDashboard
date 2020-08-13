@@ -560,11 +560,11 @@ public class TimestampConverter extends ValueConverter<String> {
         		return stdVal;
             } catch (Exception ex) {
                 logger.info("Unable to parse time string: " + valueString + " : " + ex);
-                return null;
+                throw new IllegalArgumentException("Unable to parse time string: " + valueString + " : " + ex);
             }
         } else {
             logger.info("Unable to match time string: " + valueString);
-            return null;
+            throw new IllegalArgumentException("Unable to match time string: " + valueString);
         }
 	}
 	/**
