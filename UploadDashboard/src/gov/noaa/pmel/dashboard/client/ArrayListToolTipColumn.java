@@ -41,7 +41,7 @@ public class ArrayListToolTipColumn extends ArrayListTextColumn {
 	@Override
 	public void render(final Context context, final ArrayList<String> object, final SafeHtmlBuilder sb) {
 	
-		String toolTipText = getMessagesText(context, null);
+		String toolTipText = "ArraListToolTipColumn: Not yet implemented.";
 		sb.append(TEMPLATES.startToolTip(toolTipText));
 		super.render(context, object, sb);
 		sb.append(TEMPLATES.endToolTip());

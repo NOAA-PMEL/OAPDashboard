@@ -96,11 +96,17 @@ public class UploadDashboard implements EntryPoint, ValueChangeHandler<String> {
 	static final double FILENAME_COLUMN_WIDTH = 16.0;
 
 	// Data background colors
+    // lightish yellow: #fffed4
+	// lightish red: #ff6d70
 	static final String CHECKER_LIGHT_WARNING_COLOR = "#FFFBD6";
-	static final String CHECKER_WARNING_COLOR = "#FFDD54"; // "#FFCC33";
-	static final String CHECKER_ERROR_COLOR = "#FF6666";
+	static final String CHECKER_WARNING_COLOR = "#F9EB8B"; // "#FFDD54"; // "#FFCC33";
+	static final String CHECKER_ERROR_COLOR =  "#FF8485"; // "#FF6666";
 	static final String USER_WARNING_COLOR = "#FFEE99";
 	static final String USER_ERROR_COLOR = "#FFCCCC";
+	
+	static final String CHECKER_WARNING_CELL_COLOR = "#FFFED4";
+	static final String CHECKER_ERROR_CELL_COLOR = "#FF6D70";
+	static final String CHECKER_CRITICAL_CELL_COLOR = CHECKER_ERROR_COLOR;
 
 	// Color for row numbers
 	static final String ROW_NUMBER_COLOR = "#666666";
