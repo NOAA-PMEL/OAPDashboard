@@ -21,11 +21,11 @@ public class QCFlag implements Comparable<QCFlag>, Serializable, IsSerializable 
 	 * WOCE-like enumerated type indicating the severity of a QC flag value
 	 */
 	public enum Severity implements Serializable, IsSerializable {
-		UNASSIGNED,
 		CRITICAL,
 		ERROR,
 		WARNING,
-		ACCEPTABLE
+		ACCEPTABLE,
+		UNASSIGNED
 	}
 	
 	public enum FlagSource implements Serializable, IsSerializable {
