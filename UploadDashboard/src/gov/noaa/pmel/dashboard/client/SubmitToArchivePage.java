@@ -407,9 +407,9 @@ public class SubmitToArchivePage extends CompositeWithUsername implements DataSu
         header.setDatasetIds(dataset.getUserDatasetName());
         // to allow only archiving of specified columns. Maybe if/for archiving the ncDSG 
 //		singleton.updateDatasetColumns(dataset); 
+        setFilesToBeArchived(_dataset);
         submitCommentTextArea.setText(dataset.getArchiveSubmissionMessage());
         genDoiChkBx.setValue(dataset.getArchiveDOIrequested());
-        
     }
 
     /**
@@ -777,38 +777,39 @@ public class SubmitToArchivePage extends CompositeWithUsername implements DataSu
         }
     }
     
-	protected void updateDatasetColumns(DashboardDataset dataset) {
-	    _submitIdsList.clear();
-//	    select_none.setValue(false);
-//	    select_std.setValue(false);
-//	    select_all.setValue(false);
-	    clearSelections();
-//	    if ( ! okToArchive(datasets)) {
-//	        UploadDashboard.showMessage("All datasets selected for archival must have the same set of columns.");
+    // Not currently used.  Before the idea was to allow picking which columns would be included.
+//	protected void updateDatasetColumns(DashboardDataset dataset) {
+//	    _submitIdsList.clear();
+////	    select_none.setValue(false);
+////	    select_std.setValue(false);
+////	    select_all.setValue(false);
+//	    clearSelections();
+////	    if ( ! okToArchive(datasets)) {
+////	        UploadDashboard.showMessage("All datasets selected for archival must have the same set of columns.");
+////	        return;
+////	    }
+//        
+////		for (DashboardDataset dd : datasets.values()) {
+////			if ( okToArchive(dd)) {
+//				_submitIdsList.add(dataset.getRecordId());
+////			} else {
+////				_skipList.add(dd);
+////			}
+////		}
+//		
+//		_dataset = dataset; // s.values().iterator().next();
+//	    if ( _dataset.getRecordId().equals(_datasetRecordId)) {
 //	        return;
 //	    }
-        
-//		for (DashboardDataset dd : datasets.values()) {
-//			if ( okToArchive(dd)) {
-				_submitIdsList.add(dataset.getRecordId());
-//			} else {
-//				_skipList.add(dd);
-//			}
-//		}
-		
-		_dataset = dataset; // s.values().iterator().next();
-	    if ( _dataset.getDatasetId().equals(_datasetRecordId)) {
-	        return;
-	    }
-		_datasetRecordId = _dataset.getDatasetId();
-		header.userInfoLabel.setText(WELCOME_INTRO + getUsername());
-		
-//		columnsPanel.clear();
-        
-        setFilesToBeArchived(_dataset);
-        
-//        setDataColumns(dataset);
-	}
+//		_datasetRecordId = _dataset.getRecordId();
+//		header.userInfoLabel.setText(WELCOME_INTRO + getUsername());
+//		
+////		columnsPanel.clear();
+//        
+//        setFilesToBeArchived(_dataset);
+//        
+////        setDataColumns(dataset);
+//	}
 
 	/**
      * @param dataset
@@ -817,11 +818,14 @@ public class SubmitToArchivePage extends CompositeWithUsername implements DataSu
         StringBuilder b = new StringBuilder();
         b.append("<ul>");
         addLine(b, "Data File", dataset.getUploadFilename());
-        addLine(b, "Metadata File", dataset.getDatasetId()+"_OADS.xml");
+        addLine(b, "Metadata File", dataset.getRecordId()+"_OADS.xml");
         if ( dataset.getAddlDocs().size() > 0 ) {
             b.append("<li>Supplemental Documents<ul>");
             for (String f : dataset.getAddlDocs()) {
-                addFile(b, f);
+                String filename = f.indexOf(";") > 0 ?
+                                    f.substring(0, f.indexOf(';')-1).trim() :
+                                    f;
+                addFile(b, filename);
             }
             b.append("</ul></li>");
         }
