@@ -22,11 +22,18 @@ import org.apache.tika.parser.AutoDetectParser;
 import org.apache.tika.parser.Parser;
 import org.apache.tomcat.util.http.fileupload.FileItem;
 
+import gov.noaa.ncei.oads.xml.v_a0_2_2.OadsMetadataDocumentType;
+import gov.noaa.ncei.oads.xml.v_a0_2_2.PersonContactInfoType;
+import gov.noaa.ncei.oads.xml.v_a0_2_2.PersonNameType;
+import gov.noaa.ncei.oads.xml.v_a0_2_2.PersonType;
 import gov.noaa.pmel.dashboard.handlers.DataFileHandler;
 import gov.noaa.pmel.dashboard.handlers.MetadataFileHandler;
 import gov.noaa.pmel.dashboard.handlers.RawUploadFileHandler;
+import gov.noaa.pmel.dashboard.oads.OADSMetadata;
 import gov.noaa.pmel.dashboard.server.DashboardConfigStore;
 import gov.noaa.pmel.dashboard.server.DataUploadService;
+import gov.noaa.pmel.dashboard.server.Users;
+import gov.noaa.pmel.dashboard.server.model.User;
 import gov.noaa.pmel.dashboard.shared.DashboardDatasetData;
 import gov.noaa.pmel.dashboard.shared.FeatureType;
 import gov.noaa.pmel.dashboard.shared.FileType;
@@ -94,6 +101,9 @@ public abstract class FileUploadProcessor {
         _dataFileHandler = _configStore.getDataFileHandler();
         
         processUploadedFile(isUpdateRequest);
+        if ( ! isUpdateRequest ) {
+            generateInitialMetadataFile(submissionId);
+        }
     }
     
     abstract void processUploadedFile(boolean isUpdateRequest) throws UploadProcessingException;
@@ -101,9 +111,35 @@ public abstract class FileUploadProcessor {
     static Path copyFile(File sourceFile, File destFile, CopyOption... options) throws IOException {
         return Files.copy(sourceFile.toPath(), destFile.toPath(), options);
     }
-    protected static void generateEmptyMetadataFile(String datasetId) throws IOException {
+    private void generateInitialMetadataFile(String datasetId) throws IOException {
         MetadataFileHandler mdf = DashboardConfigStore.get().getMetadataFileHandler();
-        mdf.createEmptyOADSMetadataFile(datasetId);
+//        mdf.createInitialOADSMetadataFile(datasetId, username);
+        // pulling in core from MDF for now.
+        File mdataFile = mdf.getMetadataFile(datasetId);
+        OadsMetadataDocumentType mdDoc = new OadsMetadataDocumentType();
+        try {
+            User dataSubmitter = Users.getUser(username);
+            if ( dataSubmitter == null ) {
+                throw new IllegalStateException("No user found for userid " + username);
+            }
+            PersonType dsPerson = PersonType.builder()
+                    .name(PersonNameType.builder()
+                          .first(dataSubmitter.firstName())
+                          .middle(dataSubmitter.middle())
+                          .last(dataSubmitter.lastName())
+                          .build())
+                    .organization(dataSubmitter.organization())
+                    .contactInfo(PersonContactInfoType.builder()
+                                 .email(dataSubmitter.email())
+                                 .phone(dataSubmitter.telephoneString())
+                                 .build())
+                    .build();
+            mdDoc.setDataSubmitter(dsPerson);
+            OADSMetadata.writeNewOadsXml(mdataFile, mdDoc);
+        } catch (Exception ex) {
+            logger.warn("Exception creating initial metadata document for submission " + 
+                         datasetId + " for user " + username, ex);
+        }
     }
     
     public ArrayList<String> getMessages() {

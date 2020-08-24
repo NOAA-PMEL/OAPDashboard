@@ -94,7 +94,6 @@ public class NewOpaqueFileUploadProcessor extends FileUploadProcessor {
                     File uploadedFile = saveOpaqueFileData(pseudoDataset, datasetDir);
                     pseudoDataset.setUploadedFile(uploadedFile.getPath());
                     _dataFileHandler.saveDatasetInfoToFile(pseudoDataset, "save opaque data info");
-                    generateEmptyMetadataFile(itemDatasetId);
                     _successes.add(itemDatasetId);
                     // datasetHandler.saveDatasetDataToFile(pseudoDataset, "save opaque data data");
                 } catch (Exception ex) {

@@ -140,24 +140,13 @@ public class GeneralizedUploadProcessor extends FileUploadProcessor {
 //                        appended = true;
 //                    }
                 }
-                // At this point, datasetData is the dataset to save, regardless of new, overwrite, or append
         
-                try {
-                    MetadataFileHandler mdataHandler = _configStore.getMetadataFileHandler();
-                    mdataHandler.createEmptyOADSMetadataFile(datasetId);
-                } catch (Exception ex) {
-                    ex.printStackTrace();
-                }
-                    
                 // Add any existing documents for this cruise
                 ArrayList<DashboardMetadata> mdataList = 
                         _configStore.getMetadataFileHandler().getMetadataFiles(datasetId);
                 TreeSet<String> addlDocs = new TreeSet<String>();
                 for ( DashboardMetadata mdata : mdataList ) {
-                    if ( MetadataFileHandler.autoExtractedMdFilename(datasetId).equals(mdata.getFilename())) {
-                        // Ignore the auto-extracted XML stub file
-                    }
-                    else if ( MetadataFileHandler.metadataFilename(datasetId).equals(mdata.getFilename())) {
+                    if ( MetadataFileHandler.metadataFilename(datasetId).equals(mdata.getFilename())) {
                         datasetData.setMdTimestamp(mdata.getUploadTimestamp());                 
                     }
                     else {
