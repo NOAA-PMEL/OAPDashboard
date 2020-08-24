@@ -29,11 +29,14 @@
 			<!--arg column="auth_string" javaType="java.lang.String" />  -->
 		</constructor>
 		<result property="_username" column="username"/>
+		<result property="_lastLogin" column="last_login"/>
 		<result property="_firstName" column="first_name"/>
 		<result property="_middle" column="middle_name"/>
 		<result property="_lastName" column="last_name"/>
 		<result property="_email" column="email"/>
-		<result property="_lastLogin" column="last_login"/>
+		<result property="_telephone" column="telephone"/>
+		<result property="_telExtension" column="extension"/>
+		<result property="_organization" column="organization"/>
         <collection property="_roles" ofType="java.lang.String" javaType="ArrayList" 
             column="db_id" select="getRolesForUser" />
         <!--
@@ -74,7 +77,11 @@
 			last_login,
 			first_name,
 			last_name,
-			email
+            middle_name,
+			email,
+            telephone,
+            extension,
+            organization
 		) <include refid="${assignment_values}"/> (
 			<include refid="${db_field}"/>
 			now(),
@@ -82,7 +89,11 @@
 			#{_lastLogin},
 			#{_firstName},
 			#{_lastName},
-			#{_email}
+			#{_middle},
+			#{_email},
+			#{_telepone},
+			#{_telExtension},
+			#{_organization}
 		)
 	</sql>
 	<sql id="myParameterizedUpdate">
@@ -92,7 +103,11 @@
 			last_login = #{_lastLogin},
 			first_name = #{_firstName},
 			last_name = #{_lastName},
-			email = #{_email}
+            middle_name = #{_middle},
+			email = #{_email},
+			telephone = #{_telephone},
+			extension = #{_telExtension},
+			organization = #{_organization}
 	</sql>
 	<sql id="pgParameterizedInsertOrUpdate">
 		<include refid="${insert_or_update}"/> (
@@ -102,7 +117,11 @@
 			last_login,
 			first_name,
 			last_name,
-			email
+			middle_name,
+			email,
+			telephone,
+			extension,
+			organization
 		) <include refid="${assignment_values}"/> (
 			<include refid="${db_field}"/>
 			now(),
@@ -110,7 +129,11 @@
 			#{_lastLogin},
 			#{_firstName},
 			#{_lastName},
-			#{_email}
+			#{_middle},
+			#{_email},
+			#{_telephone},
+			#{_telExtension},
+			#{_organization}
 		)
 	</sql>
 	

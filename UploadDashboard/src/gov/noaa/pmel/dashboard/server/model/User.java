@@ -6,6 +6,7 @@ package gov.noaa.pmel.dashboard.server.model;
 import java.util.Date;
 import java.util.List;
 
+import gov.noaa.pmel.oads.util.StringUtils;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -37,6 +38,11 @@ public class User {
     
     private String _email;
     
+    private String _telephone;
+    private String _telExtension;
+    
+    private String _organization;
+    
     private List<String> _roles;
     
     public String fullName() {
@@ -56,10 +62,33 @@ public class User {
                 .lastLogin(_lastLogin)
                 .firstName(_firstName)
                 .lastName(_lastName)
-                .email(_email);
+                .middle(_middle)
+                .email(_email)
+                .telephone(_telephone)
+                .telExt(_telExtension)
+                .organization(_organization);
     }
     
     public boolean hasRole(String roleName) {
         return _roles != null && _roles.contains(roleName);
+    }
+    
+    /**
+     * Returns A String representation of the telephone number, plus extension if exists.
+     * If there is no phone number, an empty String is returned.
+     * 
+     * @return A String representation of the telephone number, plus extension if exists.
+     */
+    public String telephoneString() {
+        StringBuilder phone = new StringBuilder();
+        if ( StringUtils.emptyOrNull(_telephone)) {
+            return "";
+        }
+        phone.append(_telephone);
+        if ( StringUtils.emptyOrNull(_telExtension)) {
+            return phone.toString();
+        }
+        phone.append(",ext:").append(_telExtension);
+        return phone.toString();
     }
 }

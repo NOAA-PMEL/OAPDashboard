@@ -27,8 +27,10 @@ public class InsertUser extends User {
 
     @Builder(builderMethodName="newUser")
     public InsertUser(Long dbId, Date createTime, Date modifiedTime, String username, Date lastLogin,
-                      String firstName, String middle, String lastName, String email, String authString, List<String> _roles) {
-        super(dbId, createTime, modifiedTime, username, lastLogin, firstName, middle, lastName, email, _roles);
+                      String firstName, String middle, String lastName, String email, 
+                      String telephone, String telExt, String organization, String authString, List<String> _roles) {
+        super(dbId, createTime, modifiedTime, username, lastLogin, firstName, middle, lastName, 
+              email, telephone, telExt, organization, _roles);
         _authString = authString;
     }
     
