@@ -1045,59 +1045,59 @@ public class DataColumnSpecsPage extends CompositeWithUsername {
 			return;
 		}
 
-		if ( unknownIndices.size() > 0 ) {
-			// Unknown column data types found; put up error message and return
-//			ArrayList<String> colNames = cruise.getUserColNames();
-//			String errMsg = Integer.toString(unknownIndices.size()) + 
-//					UNKNOWN_COLUMN_TYPE_PROLOGUE;
-//			int cnt = 0;
-//			for ( int idx : unknownIndices ) {
-//				cnt++;
-//				if ( (cnt == 5) && (unknownIndices.size() > 5) ) {
-//					errMsg += "<li> ... </li>";
-//					break;
-//				}
-//				errMsg += "<li>" + SafeHtmlUtils.htmlEscape(colNames.get(idx)) + "</li>";
+//		if ( unknownIndices.size() > 0 ) {
+//			// Unknown column data types found; put up error message and return
+////			ArrayList<String> colNames = cruise.getUserColNames();
+////			String errMsg = Integer.toString(unknownIndices.size()) + 
+////					UNKNOWN_COLUMN_TYPE_PROLOGUE;
+////			int cnt = 0;
+////			for ( int idx : unknownIndices ) {
+////				cnt++;
+////				if ( (cnt == 5) && (unknownIndices.size() > 5) ) {
+////					errMsg += "<li> ... </li>";
+////					break;
+////				}
+////				errMsg += "<li>" + SafeHtmlUtils.htmlEscape(colNames.get(idx)) + "</li>";
+////			}
+////			errMsg += UNKNOWN_COLUMN_TYPE_EPILOGUE;
+////            UploadDashboard.showMessage(errMsg);
+////			return;
+//			UploadDashboard.theresAproblem("There are data columns of unknown type. Continue anyway?", "Continue", "Cancel", new AsyncCallback<Boolean>() {
+//                @Override
+//                public void onFailure(Throwable arg0) {
+//                    // Doesn't happen
+//                }
+//                @Override
+//                public void onSuccess(Boolean ignore) {
+//                    if ( ignore.booleanValue() ) {
+//                        doSubmit();
+//                    }
+//                }
+//			}); 
+//		} else if ( ! hasSecond ) {
+//			// Warning about missing seconds, asking whether to continue
+//			if ( defaultSecondsPopup == null ) {
+//				defaultSecondsPopup = new DashboardAskPopup(USE_DEFAULT_SECONDS_TEXT,
+//						NO_DEFAULT_SECONDS_TEXT, new AsyncCallback<Boolean>() {
+//					@Override
+//					public void onSuccess(Boolean okay) {
+//						// Only continue if okay to use default zero for seconds
+//						if ( okay )
+//							doSubmit();
+//					}
+//					@Override
+//					public void onFailure(Throwable caught) {
+//						// never called
+//					}
+//				});
 //			}
-//			errMsg += UNKNOWN_COLUMN_TYPE_EPILOGUE;
-//            UploadDashboard.showMessage(errMsg);
+//			defaultSecondsPopup.askQuestion(DEFAULT_SECONDS_WARNING_QUESTION);
 //			return;
-			UploadDashboard.theresAproblem("There are data columns of unknown type. Continue anyway?", "Continue", "Cancel", new AsyncCallback<Boolean>() {
-                @Override
-                public void onFailure(Throwable arg0) {
-                    // Doesn't happen
-                }
-                @Override
-                public void onSuccess(Boolean ignore) {
-                    if ( ignore.booleanValue() ) {
-                        doSubmit();
-                    }
-                }
-			}); 
-		} else if ( ! hasSecond ) {
-			// Warning about missing seconds, asking whether to continue
-			if ( defaultSecondsPopup == null ) {
-				defaultSecondsPopup = new DashboardAskPopup(USE_DEFAULT_SECONDS_TEXT,
-						NO_DEFAULT_SECONDS_TEXT, new AsyncCallback<Boolean>() {
-					@Override
-					public void onSuccess(Boolean okay) {
-						// Only continue if okay to use default zero for seconds
-						if ( okay )
-							doSubmit();
-					}
-					@Override
-					public void onFailure(Throwable caught) {
-						// never called
-					}
-				});
-			}
-			defaultSecondsPopup.askQuestion(DEFAULT_SECONDS_WARNING_QUESTION);
-			return;
-	   } else {
-    		// longitude, latitude, sea water co2, and some form of a timestamp 
-    		// is present so continue on  
+//	   } else {
+//    		// longitude, latitude, sea water co2, and some form of a timestamp 
+//    		// is present so continue on  
     		doSubmit();
-	   }
+//	   }
 	}
 
 	private void doSubmit() {

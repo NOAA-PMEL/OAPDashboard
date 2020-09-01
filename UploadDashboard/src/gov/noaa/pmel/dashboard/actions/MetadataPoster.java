@@ -54,9 +54,6 @@ public class MetadataPoster {
         String metadataEditorPostEndpoint = null;
         try {
 			File mdFile = OADSMetadata.getMetadataFile(datasetId);
-			if ( !mdFile.exists()) {
-				mdFile = OADSMetadata.getExtractedMetadataFile(datasetId);
-			} 
 			if ( !mdFile.exists()) { // dataset has either not been checked or critically failed check.
 //                try {
 //                    StdUserDataArray stdArray = 
@@ -65,8 +62,8 @@ public class MetadataPoster {
 //                                                                          DashboardUtils.autoExtractedMdFilename(datasetId), 
 //                                                                          "Initial Auto-extraction");
 //                }
-                
-                mdFile = OADSMetadata.createEmptyOADSMetadataFile(datasetId);
+                logger.warn("No metadata file found for submission " + datasetId); // XXX TODO: Should not happen!
+                mdFile = DashboardConfigStore.get(false).getMetadataFileHandler()._createEmptyOADSMetadataFile(datasetId);
 			}
             // XXX HttpClient and stuff coming (currently) from netcdfAll jar 
             @SuppressWarnings("resource")

@@ -3,6 +3,13 @@
 # This script makes all the changes necessary to add a user to the SADashboard
 # Tomcat db users and roles, OAPDashboard user files, etc.
 
+echo "###"
+echo "### DEPRECATED"
+echo "###"
+echo "### use adminClient/addUser"
+echo "###"
+exit 
+
 PROG=$0
 DIR=`dirname $PROG`/
 

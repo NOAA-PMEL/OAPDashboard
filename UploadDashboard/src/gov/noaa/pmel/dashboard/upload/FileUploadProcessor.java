@@ -10,17 +10,10 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
 import java.util.ArrayList;
-import java.util.List;
-import java.util.TreeMap;
+import java.util.Date;
 import java.util.TreeSet;
 
 import org.apache.log4j.Logger;
-import org.apache.tika.Tika;
-import org.apache.tika.config.TikaConfig;
-import org.apache.tika.detect.Detector;
-import org.apache.tika.parser.AutoDetectParser;
-import org.apache.tika.parser.Parser;
-import org.apache.tomcat.util.http.fileupload.FileItem;
 
 import gov.noaa.ncei.oads.xml.v_a0_2_2.OadsMetadataDocumentType;
 import gov.noaa.ncei.oads.xml.v_a0_2_2.PersonContactInfoType;
@@ -31,16 +24,15 @@ import gov.noaa.pmel.dashboard.handlers.MetadataFileHandler;
 import gov.noaa.pmel.dashboard.handlers.RawUploadFileHandler;
 import gov.noaa.pmel.dashboard.oads.OADSMetadata;
 import gov.noaa.pmel.dashboard.server.DashboardConfigStore;
-import gov.noaa.pmel.dashboard.server.DataUploadService;
 import gov.noaa.pmel.dashboard.server.Users;
 import gov.noaa.pmel.dashboard.server.model.User;
-import gov.noaa.pmel.dashboard.shared.DashboardDatasetData;
+import gov.noaa.pmel.dashboard.shared.DashboardDataset;
 import gov.noaa.pmel.dashboard.shared.FeatureType;
 import gov.noaa.pmel.dashboard.shared.FileType;
 import gov.noaa.pmel.dashboard.util.FormUtils;
+import gov.noaa.pmel.oads.util.TimeUtils;
 import gov.noaa.pmel.tws.util.Logging;
 import lombok.AccessLevel;
-import lombok.Data;
 import lombok.Setter;
 
 /**
@@ -112,7 +104,7 @@ public abstract class FileUploadProcessor {
         return Files.copy(sourceFile.toPath(), destFile.toPath(), options);
     }
     private void generateInitialMetadataFile(String datasetId) throws IOException {
-        MetadataFileHandler mdf = DashboardConfigStore.get().getMetadataFileHandler();
+        MetadataFileHandler mdf = DashboardConfigStore.get(false).getMetadataFileHandler();
 //        mdf.createInitialOADSMetadataFile(datasetId, username);
         // pulling in core from MDF for now.
         File mdataFile = mdf.getMetadataFile(datasetId);
@@ -136,6 +128,11 @@ public abstract class FileUploadProcessor {
                     .build();
             mdDoc.setDataSubmitter(dsPerson);
             OADSMetadata.writeNewOadsXml(mdataFile, mdDoc);
+            DataFileHandler dfh = DashboardConfigStore.get(false).getDataFileHandler();
+            DashboardDataset dd = dfh.getDatasetFromInfoFile(datasetId);
+            dd.setMdStatus("Initial Metadata");
+            dd.setMdTimestamp(TimeUtils.formatUTC(new Date(), "yyyy-MM-dd HH:mm Z"));
+            dfh.saveDatasetInfoToFile(dd, "Initial Metadata");
         } catch (Exception ex) {
             logger.warn("Exception creating initial metadata document for submission " + 
                          datasetId + " for user " + username, ex);

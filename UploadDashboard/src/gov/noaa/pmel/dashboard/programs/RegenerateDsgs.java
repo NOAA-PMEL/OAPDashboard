@@ -8,6 +8,7 @@ import java.io.FileReader;
 import java.util.ArrayList;
 import java.util.TreeSet;
 
+import gov.noaa.ncei.oads.xml.v_a0_2_2.OadsMetadataDocumentType;
 import gov.noaa.pmel.dashboard.datatype.KnownDataTypes;
 import gov.noaa.pmel.dashboard.dsg.DsgMetadata;
 import gov.noaa.pmel.dashboard.dsg.DsgNcFile;
@@ -17,7 +18,6 @@ import gov.noaa.pmel.dashboard.ferret.SocatTool;
 import gov.noaa.pmel.dashboard.handlers.DataFileHandler;
 import gov.noaa.pmel.dashboard.handlers.DsgNcFileHandler;
 import gov.noaa.pmel.dashboard.handlers.MetadataFileHandler;
-import gov.noaa.pmel.dashboard.oads.DashboardOADSMetadata;
 import gov.noaa.pmel.dashboard.oads.OADSMetadata;
 import gov.noaa.pmel.dashboard.server.DashboardConfigStore;
 import gov.noaa.pmel.dashboard.server.DashboardServerUtils;
@@ -88,8 +88,9 @@ public class RegenerateDsgs {
 
 			// Get the metadata in the OME XML file
 			// XXX TODO: OME_FILENAME check
-			DashboardOADSMetadata mData = OADSMetadata.getCurrentDatasetMetadata(datasetId, metaHandler);
-			updatedMeta = mData.createDsgMetadata();
+//			DashboardOADSMetadata mData = OADSMetadata.getCurrentDatasetMetadata(datasetId, metaHandler);
+            OadsMetadataDocumentType mdDoc = OADSMetadata.readNewOadsXml(datasetId);
+			updatedMeta = OADSMetadata.createDsgMetadata(mdDoc, datasetId);
 
 			if ( ! fullDataMeta.equals(updatedMeta) )
 				updateIt = true;

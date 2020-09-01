@@ -37,7 +37,7 @@ public class AdminClient extends CLClient {
 
     private static Logger logger;
     
-    private static CLOption opt_batch = CLOption.builder().name("batch").flag("y").longFlag("batch")
+    private static CLOption opt_batch = CLOption.builder().name("batch").flag("b").longFlag("batch")
                                             .requiresValue(false)
                                             .description("batch mode: assume yes at prompts").build();
     
@@ -46,7 +46,7 @@ public class AdminClient extends CLClient {
                                             .description("username for user-oriented options").build();
     private static CLOption opt_password = CLOption.builder().name("password").flag("pw").longFlag("password")
                                             .description("new user's password - must conform to password complexity rules, should be enclosed in single quotes")
-                                            .defaultValue("Genereated secure password").build();
+                                            .defaultValue("Generated secure password").build();
     private static CLOption opt_firstName = CLOption.builder().name("firstName").flag("fn").longFlag("firstname")
                                             .requiredOption(true)
                                             .description("User first name.").build();
@@ -79,12 +79,14 @@ public class AdminClient extends CLClient {
                                                 .option(opt_username)
                                                 .option(opt_password)
                                                 .option(opt_firstName)
+                                                .option(opt_middleName)
                                                 .option(opt_lastName)
                                                 .option(opt_userOrg)
                                                 .option(opt_email)
                                                 .option(opt_phone)
                                                 .option(opt_target)
                                                 .option(opt_batch)
+                                                .option(opt_noop)
                                                 .build();
     
     private CLOptions _clOptions;
@@ -137,18 +139,29 @@ public class AdminClient extends CLClient {
                 PasswordUtils.validatePasswordStrength(pw);
             } else {
                 pw = PasswordUtils.generateSecurePassword();
-                logger.info("New user " +userid + " temp password:"+pw);
+                System.out.println("New user " +userid + " temp password:"+pw);
             }
             User newUser = User.builder()
                             .username(userid)
                             .firstName(_clOptions.get(opt_firstName))
-//                            .middle(_clOptions.get(opt_middleName))
+                            .middle(_clOptions.get(opt_middleName))
                             .lastName(_clOptions.get(opt_lastName))
+                            .organization(_clOptions.get(opt_userOrg))
                             .email(_clOptions.get(opt_email))
+                            .telephone(_clOptions.get(opt_phone))
                             .build();
             if ( confirm("Add user " + newUser + " to target db: " + target)) {
-                Users.addUser(newUser, pw, UserRole.Groupie);
-                logger.info("User " + userid + " added.");
+                if ( ! _clOptions.booleanValue(opt_noop, false)) {
+                    Users.addUser(newUser, pw, UserRole.Groupie);
+                    System.out.print("User " + userid + " added");
+                    if ( _clOptions.get(opt_password) == null ) {
+                        System.out.println(" with generated password: " + pw);
+                    } else {
+                        System.out.println(".");
+                    }
+                } else {
+                    System.out.println("No-op requested.  User not added.");
+                }
             } else {
                 logger.info("User not added.");
             }
@@ -245,24 +258,14 @@ public class AdminClient extends CLClient {
      */
     public static void main(String[] args) {
         try {
-            args = new String[] { "add", "-u", "test", "-pw", "ch@ngeM3s00n", "-fn", "Testy", "-ln", "Testarosa", "-e", "nobody@noaa.gov", "-d", "newbock", "-b" };
+//            args = new String[] { "add", "-u", "test", "-pw", "ch@ngeM3s00n", "-fn", "Testy", "-ln", "Testarosa", "-e", "nobody@noaa.gov", "-d", "newbock", "-b" };
 
 //            System.out.println("Running AdminClient");
             List<String> filteredArgs = preprocessArgs(args); // sets system property and removes -D args
-//            if ( filteredArgs.contains(opt_target.flag()) ||
-//                 filteredArgs.contains(opt_target.longFlag())) {
-//                int idx = filteredArgs.indexOf(opt_target.flag());
-//                if ( idx < 0 ) {
-//                    idx = filteredArgs.indexOf(opt_target.longFlag());
-//                }
-//                String value = filteredArgs.get(idx+1);
-//                System.setProperty(MybatisConnectionFactory.DB_ENV_PROPERTY, value);
-//            }
             ApplicationConfiguration.Initialize("oap");
             logger = LogManager.getLogger(AdminClient.class);
             logger.debug("Running AdminClient");
             runCommand(filteredArgs.toArray(new String[filteredArgs.size()]));
-
         } catch (Exception ex) {
             ex.printStackTrace();
             System.exit(-1);
