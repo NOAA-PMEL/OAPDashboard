@@ -3,13 +3,18 @@
  */
 package gov.noaa.pmel.dashboard.server;
 
+import java.lang.management.ManagementFactory;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
+import java.util.Hashtable;
 import java.util.TimeZone;
 import java.util.regex.Pattern;
+
+import javax.management.MBeanServerConnection;
+import javax.management.ObjectName;
 
 import gov.noaa.pmel.dashboard.datatype.CharDashDataType;
 import gov.noaa.pmel.dashboard.datatype.DoubleDashDataType;
@@ -468,5 +473,34 @@ public class DashboardServerUtils {
             }
         }
 		return date;
+    }
+    
+    /*
+     * XXX NOT TESTED.  
+     * From: https://stackoverflow.com/questions/35693333/how-to-shutdown-a-single-application-in-tomcat
+     * 
+     * The idea is to shut down the app if the db configuration is not working.
+     * 
+     * We may want to just System.exit() anyway.
+     */
+    public static void shutdownApp() {
+        try {
+            String serviceName = "Catalina"; // @see server.xml
+            String hostName = "localhost"; // @see server.xml
+            String contextName = "MyApplicationName"; // the name of your application in the URL
+
+            Hashtable<String, String> keys = new Hashtable<>();
+            keys.put("j2eeType", "WebModule");
+            keys.put("name", "//" + hostName + "/" + contextName);
+            keys.put("J2EEApplication", "none");
+            keys.put("J2EEServer", "none");
+
+            MBeanServerConnection mbeanServer = ManagementFactory.getPlatformMBeanServer();
+            ObjectName appObject = ObjectName.getInstance(serviceName, keys);
+            System.out.println("Found objectName: " + appObject);
+            mbeanServer.invoke(appObject, "stop", null, null);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 }
