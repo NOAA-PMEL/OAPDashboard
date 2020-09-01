@@ -41,21 +41,16 @@ public class MybatisConnectionFactory {
     private static Object configureLock = new Object();
     private static boolean configured = false;
     
-    static void initialize(String dbEnvironemt) {
-        System.setProperty(DB_ENV_PROPERTY, dbEnvironemt);
-        initialize();
-    }
-    static void initialize() {
+    public static void initialize(String dbEnvironmet) {
         synchronized (configureLock) {
             if ( !configured) {
                 org.apache.ibatis.logging.LogFactory.useLog4J2Logging();
                 String dbConfigFileName = ApplicationConfiguration.getProperty(DB_CONFIG_FILE_PROPERTY, DEFAULT_CONFIG_FILE);
                 ApplicationConfiguration.console("Using dbConfigFile: "+ dbConfigFileName);
-                String dashboardEnv = ApplicationConfiguration.getProperty(DB_ENV_PROPERTY, DEFAULT_DB_ENVIRONMENT);
-                ApplicationConfiguration.console("Using dashboard environemnt: "+ dashboardEnv);
+                ApplicationConfiguration.console("Using dashboard environemnt: "+ dbEnvironmet);
                 try ( Reader r1 = Resources.getResourceAsReader(dbConfigFileName); ) {
                 	SqlSessionFactoryBuilder builder = new SqlSessionFactoryBuilder();
-                    dashboardSessionFactory = builder.build(r1, dashboardEnv );
+                    dashboardSessionFactory = builder.build(r1, dbEnvironmet );
                     System.out.println(dashboardSessionFactory);
                     configured = true;
                 }catch(Exception e) {
@@ -65,6 +60,10 @@ public class MybatisConnectionFactory {
                 }
             }
         }
+    }
+    static void initialize() {
+        String dbEnvironmet = ApplicationConfiguration.getProperty(DB_ENV_PROPERTY, DEFAULT_DB_ENVIRONMENT);
+        initialize(dbEnvironmet);
     }
  
     public static SqlSessionFactory getDashboardDbSessionFactory(){
