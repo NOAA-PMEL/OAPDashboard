@@ -25,6 +25,7 @@ import org.apache.logging.log4j.Logger;
 
 import com.google.gwt.user.server.rpc.RemoteServiceServlet;
 
+import gov.noaa.ncei.oads.xml.v_a0_2_2.OadsMetadataDocumentType;
 import gov.noaa.pmel.dashboard.actions.DatasetChecker;
 import gov.noaa.pmel.dashboard.actions.DatasetModifier;
 import gov.noaa.pmel.dashboard.actions.MetadataPoster;
@@ -36,7 +37,6 @@ import gov.noaa.pmel.dashboard.handlers.FeedbackHandler;
 import gov.noaa.pmel.dashboard.handlers.MetadataFileHandler;
 import gov.noaa.pmel.dashboard.handlers.PreviewPlotsHandler;
 import gov.noaa.pmel.dashboard.handlers.UserFileHandler;
-import gov.noaa.pmel.dashboard.oads.DashboardOADSMetadata;
 import gov.noaa.pmel.dashboard.oads.OADSMetadata;
 import gov.noaa.pmel.dashboard.server.model.User;
 import gov.noaa.pmel.dashboard.server.submission.status.StatusRecord;
@@ -57,7 +57,6 @@ import gov.noaa.pmel.dashboard.shared.PreviewPlotResponse;
 import gov.noaa.pmel.dashboard.shared.SessionException;
 import gov.noaa.pmel.dashboard.shared.ADCMessageList;
 import gov.noaa.pmel.dashboard.shared.TypesDatasetDataPair;
-import gov.noaa.pmel.tws.util.ApplicationConfiguration;
 import gov.noaa.pmel.tws.util.StringUtils;
 import gov.noaa.pmel.tws.util.TimeUtils;
 
@@ -549,11 +548,12 @@ public class DashboardServices extends RemoteServiceServlet implements Dashboard
         if ( stdArray.hasDate() && stdArray.hasLatitude() && stdArray.hasLongitude() &&
                 ! stdArray.hasMissingTimeOrLocation()) { 
 //              ! stdArray.hasCriticalError()) {
-			DashboardOADSMetadata mdata = OADSMetadata.extractOADSMetadata(stdArray);
             MetadataFileHandler metafiles = configStore.getMetadataFileHandler();
             try {
-    			metafiles.saveAsOadsXmlDoc(mdata, MetadataFileHandler.autoExtractedMdFilename(datasetId), 
-                                           "Initial Auto-extraction");
+                File metadataFile = metafiles.getMetadataFile(datasetId);
+                OadsMetadataDocumentType mdDoc = OADSMetadata.extractOADSMetadata(stdArray, metadataFile);
+//                OadsMetadataDocumentType existgMd = MetadataFileHandler.
+    			metafiles.saveOadsXmlDoc(mdDoc, datasetId, "Auto-extraction from StdArray");
             } catch (Exception ex) {
                 logger.warn("Exception extracting metadata:"+ex, ex);
             }

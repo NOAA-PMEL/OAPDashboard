@@ -80,6 +80,7 @@ public class DatasetSubmitter {
         _configStore = configStore;
 	}
 
+    private static boolean QC_SUPPORTED = false;
 	/**
 	 * Submit a dataset.  This standardized the data using the automated data checker 
 	 * and generates DSG and decimated DSG files for datasets which are editable 
@@ -110,8 +111,14 @@ public class DatasetSubmitter {
 	 * 		if there was a problem saving the updated dataset information (including archive status)
 	 */
 	public void submitDatasetsForQC(Collection<String> idsSet, String archiveStatus, String timestamp, 
-			boolean repeatSend, String submitter) throws IllegalArgumentException {
+			boolean repeatSend, String submitter) throws IllegalArgumentException, IllegalStateException {
 
+        if ( !QC_SUPPORTED ) {
+            String s = "Calling submit datasets to QC NOT SUPPORTED";
+            IllegalStateException ex = new IllegalStateException(s);
+            logger.warn(s, ex);
+            throw ex;
+        }
 		HashSet<String> ingestIds = new HashSet<String>();
 		ArrayList<String> errorMsgs = new ArrayList<String>();
 		for ( String datasetId : idsSet ) {
@@ -152,7 +159,7 @@ public class DatasetSubmitter {
 					}
 
 					// XXX TODO: OME_FILENAME check
-					DashboardOADSMetadata oadsMd = OADSMetadata.extractOADSMetadata(standardized);
+					DashboardOADSMetadata oadsMd = new DashboardOADSMetadata(datasetId); // XXX  OADSMetadata.extractOADSMetadata(standardized);
 					DsgMetadata dsgMData = oadsMd.createDsgMetadata();
 					dsgMData.setVersion(version);
 					

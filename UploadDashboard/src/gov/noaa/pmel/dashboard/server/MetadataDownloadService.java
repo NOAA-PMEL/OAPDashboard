@@ -55,9 +55,6 @@ public class MetadataDownloadService extends HttpServlet {
 			File metadataFile = OADSMetadata.getMetadataFile(datasetId);
 			
 			if ( !metadataFile.exists()) {
-				metadataFile = OADSMetadata.getExtractedMetadataFile(datasetId);
-			}
-			if ( !metadataFile.exists()) {
 				response.sendError(HttpServletResponse.SC_NOT_FOUND, "OADS metadata not found for dataset : " + datasetId);
 			} else {
 				sendFile(metadataFile, response);

@@ -24,13 +24,19 @@ import org.apache.log4j.Logger;
 import org.apache.tomcat.util.http.fileupload.IOUtils;
 import org.tmatesoft.svn.core.SVNException;
 
+import gov.noaa.ncei.oads.xml.v_a0_2_2.OadsMetadataDocumentType;
+import gov.noaa.ncei.oads.xml.v_a0_2_2.PersonContactInfoType;
+import gov.noaa.ncei.oads.xml.v_a0_2_2.PersonNameType;
+import gov.noaa.ncei.oads.xml.v_a0_2_2.PersonType;
 import gov.noaa.pmel.dashboard.dsg.StdUserDataArray;
 import gov.noaa.pmel.dashboard.oads.DashboardOADSMetadata;
 import gov.noaa.pmel.dashboard.oads.OADSMetadata;
 import gov.noaa.pmel.dashboard.server.DashboardServerUtils;
 import gov.noaa.pmel.dashboard.server.Users;
+import gov.noaa.pmel.dashboard.server.model.User;
 import gov.noaa.pmel.dashboard.shared.DashboardMetadata;
 import gov.noaa.pmel.dashboard.shared.DashboardUtils;
+import gov.noaa.pmel.oads.xml.a0_2_2.OadsXmlWriter;
 import gov.noaa.pmel.tws.util.FileUtils;
 import gov.noaa.pmel.tws.util.Logging;
 import gov.noaa.pmel.tws.util.TimeUtils;
@@ -124,12 +130,12 @@ public class MetadataFileHandler extends VersionedFileHandler {
         return getMetadataFile(datasetId, MetadataFileHandler.metadataFilename(datasetId));
 	}
     
-	public File getAutoExtractedMetadataFile(String datasetId) {
-		String stdId = DashboardServerUtils.checkDatasetID(datasetId);
-		String stdName = MetadataFileHandler.autoExtractedMdFilename(stdId);
-		File metadataFile = new File(getMetadataDirectory(datasetId), stdName);
-		return metadataFile;
-	}
+//	public File getAutoExtractedMetadataFile(String datasetId) {
+//		String stdId = DashboardServerUtils.checkDatasetID(datasetId);
+//		String stdName = MetadataFileHandler.autoExtractedMdFilename(stdId);
+//		File metadataFile = new File(getMetadataDirectory(datasetId), stdName);
+//		return metadataFile;
+//	}
 	
 	/**
 	 * Returns the list of valid metadata files (including supplemental 
@@ -881,7 +887,22 @@ public class MetadataFileHandler extends VersionedFileHandler {
 	}
 	*/
 
-	public void saveAsOadsXmlDoc(DashboardOADSMetadata mdata, String fileName, String message) throws Exception {
+	public void saveOadsXmlDoc(OadsMetadataDocumentType mdata, String datasetId, String message) throws Exception {
+		File mdataFile = getMetadataFile(datasetId);
+        OadsXmlWriter.writeXml(mdata, mdataFile);
+
+        if ( (message == null) || message.trim().isEmpty() )
+            return;
+        // Submit the updated information file to version control
+        try {
+            commitVersion(mdataFile, message);
+        } catch ( Exception ex ) {
+            throw new IllegalArgumentException("Problems committing updated metadata information " + 
+                    mdataFile.getPath() + ":\n    " + ex.getMessage());
+        }
+
+	}
+	public void old_saveAsOadsXmlDoc(DashboardOADSMetadata mdata, String fileName, String message) throws Exception {
 		File mdataFile = getMetadataFile(mdata.getDatasetId(), fileName);
 		File parentDir = mdataFile.getParentFile();
 		if ( !parentDir.exists()) {
@@ -894,7 +915,7 @@ public class MetadataFileHandler extends VersionedFileHandler {
 		// Save the XML document to the metadata document file
 //		try {
 			// Generate the OADS XML 
-			String xml = OADSMetadata.createOadsMetadataXml(mdata);
+			String xml = OADSMetadata.createOldOadsMetadataXml(mdata);
 			try ( FileOutputStream out = new FileOutputStream(mdataFile); ) {
 				out.write(xml.getBytes());
 //				(new XMLOutputter(Format.getPrettyFormat())).output(omeDoc, out);
@@ -916,11 +937,53 @@ public class MetadataFileHandler extends VersionedFileHandler {
 	}
 
     /**
-     * @param datasetId
+     * @param datasetId 
      * @throws IOException 
      */
-    public File createEmptyOADSMetadataFile(String datasetId) throws IOException {
-		File mdataFile = getAutoExtractedMetadataFile(datasetId);
+    public File createInitialOADSMetadataFile(String datasetId, String userid) {
+		File mdataFile = getMetadataFile(datasetId);
+        OadsMetadataDocumentType mdDoc = new OadsMetadataDocumentType();
+        try {
+            User dataSubmitter = Users.getUser(userid);
+            if ( dataSubmitter == null ) {
+                throw new IllegalStateException("No user found for userid " + userid);
+            }
+            PersonType dsPerson = PersonType.builder()
+                    .name(PersonNameType.builder()
+                          .first(dataSubmitter.firstName())
+                          .middle(dataSubmitter.middle())
+                          .last(dataSubmitter.lastName())
+                          .build())
+                    .organization(dataSubmitter.organization())
+                    .contactInfo(PersonContactInfoType.builder()
+                                 .email(dataSubmitter.email())
+                                 .phone(dataSubmitter.telephoneString())
+                                 .build())
+                    .build();
+            mdDoc.setDataSubmitter(dsPerson);
+            OADSMetadata.writeNewOadsXml(mdataFile, mdDoc);
+            try {
+                commitVersion(mdataFile, "Initial OADS metadata file for:" + datasetId);
+            } catch ( Exception ex ) {
+                throw new IllegalArgumentException("Problems committing updated metadata information " + 
+                        mdataFile.getPath() + ":\n    " + ex.getMessage());
+            }
+
+        } catch (Exception ex) {
+            logger.warn("Exception retrieving user for userid " + userid, ex);
+        }
+        return mdataFile;
+    }
+    // Should not normally be used.
+    public File _createEmptyOADSMetadataFile(String datasetId) throws Exception {
+		File mdataFile = getMetadataFile(datasetId);
+        if ( mdataFile.exists()) {
+            logger.warn("Request to create empty metadata file for " + datasetId + " when file " +
+                         mdataFile.getPath() + " exists!");
+            File backup = new File(mdataFile.getParent(), mdataFile.getName()+".bak");
+            mdataFile.renameTo(backup);
+        }
+        
 		File parentDir = mdataFile.getParentFile();
 		if ( !parentDir.exists()) {
 			parentDir.mkdirs();
@@ -928,12 +991,14 @@ public class MetadataFileHandler extends VersionedFileHandler {
 				throw new IllegalStateException("Unable to create metadata directory.");
 			}
 		}
-        try ( FileWriter writer = new FileWriter(mdataFile); ) {
-            writer.write(EMPTY_OADS_XML_METADATA_ELEMENT_OPENING);
-//            writer.write(datasetId);
-            writer.write(EMPTY_OADS_XML_METADATA_ELEMENT_CLOSING);
-            writer.flush();
-        }
+        OadsMetadataDocumentType emptyDoc = new OadsMetadataDocumentType();
+        OadsXmlWriter.writeXml(emptyDoc, mdataFile);
+//        try ( FileWriter writer = new FileWriter(mdataFile); ) {
+//            writer.write(EMPTY_OADS_XML_METADATA_ELEMENT_OPENING);
+////            writer.write(datasetId);
+//            writer.write(EMPTY_OADS_XML_METADATA_ELEMENT_CLOSING);
+//            writer.flush();
+//        }
         return mdataFile;
     }
 
@@ -952,7 +1017,7 @@ public class MetadataFileHandler extends VersionedFileHandler {
         }
     }
 
-    public static String autoExtractedMdFilename(String datasetId) {
+    public static String _autoExtractedMdFilename(String datasetId) {
     	return "extracted_"+metadataFilename(datasetId);
     }
 

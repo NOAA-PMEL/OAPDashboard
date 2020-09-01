@@ -22,8 +22,8 @@ PKG_BASE_DIR=gov/noaa/pmel/dashboard
 JAR_FILE_NAME=dashboard-client.jar
 MANIFEST_FILE=${CLIENT_DIR_ROOT}/manifest.mf
 
-COPY_DIRS=(db server shared util)
-COPY_DIRS=(actions datatype db dsg ferret handlers server shared util)
+COPY_DIRS=(server shared util)
+COPY_DIRS=(actions datatype dsg ferret handlers server shared util)
 
 LIBS_DIR=war/WEB-INF/lib
 LIB_JARS=(catalina commons jackson log4j mybatis mysql tomcat tws)
@@ -50,7 +50,7 @@ unpackJar() {
 
 # hack because I don't want the tws_client in the WEB-INF lib
 cp lib/tws_client.jar ${LIBS_DIR}/
-cp scratch/tomcat-juli.jar ${LIBS_DIR}/
+cp lib/tomcat-juli.jar ${LIBS_DIR}/
 for jar in ${LIB_JARS[*]} ; do
 	unpackJar $jar
 done

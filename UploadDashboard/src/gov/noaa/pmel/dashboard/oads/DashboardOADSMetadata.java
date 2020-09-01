@@ -26,6 +26,7 @@ import gov.noaa.pmel.dashboard.handlers.MetadataFileHandler;
 import gov.noaa.pmel.dashboard.server.DashboardConfigStore;
 import gov.noaa.pmel.dashboard.shared.DashboardMetadata;
 import gov.noaa.pmel.dashboard.shared.DashboardUtils;
+import gov.noaa.pmel.dashboard.util.Anglican;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 
@@ -43,7 +44,7 @@ import lombok.EqualsAndHashCode;
 @EqualsAndHashCode(callSuper=true)
 public @Data class DashboardOADSMetadata extends DashboardMetadata  implements Serializable, IsSerializable {
 
-    private static final String DEFAULT_ORGANIZATION = "NOAA/Pacific Marine Environmental Laboratory";
+    static final String DEFAULT_ORGANIZATION = "NOAA/Pacific Marine Environmental Laboratory";
     
 	@XmlElement(name="expocode")
 	private String _expocode;
@@ -160,7 +161,7 @@ public @Data class DashboardOADSMetadata extends DashboardMetadata  implements S
 		Platform vessel = vessel();
 		if ( vessel != null ) {
 			String platformName = vessel.name();
-			scMData.setPlatformName(anglicizeName(platformName));
+			scMData.setPlatformName(Anglican.anglicize(platformName));
 			// Set the platform type - could be missing
 			try {
 				scMData.setPlatformType(vessel.type());
@@ -212,7 +213,7 @@ public @Data class DashboardOADSMetadata extends DashboardMetadata  implements S
 				if ( piNames.length() > 0 )
 					piNames.append(DsgMetadata.NAMES_SEPARATOR);
 				// Anglicize investigator names for NetCDF/LAS
-				piNames.append(anglicizeName(investigator.getFullName()));
+				piNames.append(Anglican.anglicize(investigator.getFullName()));
 			}
 			scMData.setInvestigatorNames(piNames.toString());
 		}
@@ -231,7 +232,7 @@ public @Data class DashboardOADSMetadata extends DashboardMetadata  implements S
 					if ( orgGroup.length() > 0 )
 						orgGroup.append(DsgMetadata.NAMES_SEPARATOR);
 					// Anglicize organizations names for NetCDF/LAS
-					orgGroup.append(anglicizeName(orgName));
+					orgGroup.append(Anglican.anglicize(orgName));
 				}
 			}
 		}
@@ -242,10 +243,4 @@ public @Data class DashboardOADSMetadata extends DashboardMetadata  implements S
 
 		return scMData;
 	}
-	
-	// XXX TODO: do we need this?
-	private String anglicizeName(String name) {
-		return name;
-	}
-
 }

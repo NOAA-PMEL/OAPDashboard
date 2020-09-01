@@ -10,6 +10,7 @@ import java.io.IOException;
 import java.io.StringWriter;
 import java.io.Writer;
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.attribute.BasicFileAttributeView;
@@ -18,6 +19,7 @@ import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.TreeSet;
 
 import javax.xml.bind.JAXBContext;
 import javax.xml.bind.JAXBException;
@@ -29,28 +31,36 @@ import org.apache.logging.log4j.Logger;
 import org.xml.sax.SAXException;
 
 import gov.noaa.ncei.oads.xml.v_a0_2_2.BaseVariableType;
+import gov.noaa.ncei.oads.xml.v_a0_2_2.Co2Autonomous;
+import gov.noaa.ncei.oads.xml.v_a0_2_2.Co2Discrete;
+import gov.noaa.ncei.oads.xml.v_a0_2_2.DicVariableType;
 import gov.noaa.ncei.oads.xml.v_a0_2_2.OadsMetadataDocumentType;
 import gov.noaa.ncei.oads.xml.v_a0_2_2.PersonContactInfoType;
 import gov.noaa.ncei.oads.xml.v_a0_2_2.PersonNameType;
 import gov.noaa.ncei.oads.xml.v_a0_2_2.PersonType;
+import gov.noaa.ncei.oads.xml.v_a0_2_2.PhVariableType;
+import gov.noaa.ncei.oads.xml.v_a0_2_2.PlatformType;
 import gov.noaa.ncei.oads.xml.v_a0_2_2.SpatialExtentsType;
+import gov.noaa.ncei.oads.xml.v_a0_2_2.TaVariableType;
 import gov.noaa.ncei.oads.xml.v_a0_2_2.TemporalExtentsType;
 import gov.noaa.pmel.dashboard.datatype.DashDataType;
+import gov.noaa.pmel.dashboard.dsg.DsgMetadata;
 import gov.noaa.pmel.dashboard.dsg.StdUserDataArray;
-import gov.noaa.pmel.dashboard.handlers.DataFileHandler;
 import gov.noaa.pmel.dashboard.handlers.MetadataFileHandler;
 import gov.noaa.pmel.dashboard.server.DashboardConfigStore;
 import gov.noaa.pmel.dashboard.server.DashboardServerUtils;
-import gov.noaa.pmel.dashboard.shared.DashboardDatasetData;
 import gov.noaa.pmel.dashboard.shared.DashboardMetadata;
 import gov.noaa.pmel.dashboard.shared.DashboardUtils;
 import gov.noaa.pmel.dashboard.shared.FileInfo;
 import gov.noaa.pmel.dashboard.shared.MetadataPreviewInfo;
 import gov.noaa.pmel.dashboard.shared.NotFoundException;
+import gov.noaa.pmel.dashboard.util.Anglican;
 import gov.noaa.pmel.dashboard.util.xml.XReader;
 import gov.noaa.pmel.dashboard.util.xml.XmlUtils;
 import gov.noaa.pmel.oads.util.StringUtils;
 import gov.noaa.pmel.oads.xml.a0_2_2.OadsXmlReader;
+import gov.noaa.pmel.oads.xml.a0_2_2.OadsXmlWriter;
+import gov.noaa.pmel.tws.util.ApplicationConfiguration;
 
 /**
  * @author kamb
@@ -120,44 +130,206 @@ public class OADSMetadata {
 			"pCO2D"
 	};
 	
-	public static DashboardOADSMetadata extractOADSMetadata(StdUserDataArray stdArray) {
-		DashboardOADSMetadata oads = new DashboardOADSMetadata(stdArray.getDatasetName());
+    public static OadsMetadataDocumentType readNewOadsXml(String recordId) throws Exception {
+        File metadataFile = DashboardConfigStore.get(false).getMetadataFileHandler().getMetadataFile(recordId);
+        if ( ! metadataFile.exists() || metadataFile.length() == 0 ) {
+            return new OadsMetadataDocumentType();
+        }
+        OadsMetadataDocumentType mdDoc;
+//        try {
+            mdDoc = OadsXmlReader.read(metadataFile);
+            return mdDoc;
+//        } catch (Exception ex) {
+//            logger.warn("Exception parsing metadata file " + metadataFile.getPath() + " : " + ex, ex);
+//        }
+    }
+    
+    public static void writeNewOadsXml(File metadataFile, OadsMetadataDocumentType mdDoc) throws Exception {
+        OadsXmlWriter.writeXml(mdDoc, metadataFile);
+    }
+    
+	public static OadsMetadataDocumentType extractOADSMetadata(StdUserDataArray stdArray,
+	                                                        File metadataFile)
+	    throws Exception
+	{
+        OadsMetadataDocumentType mdDoc = OadsXmlReader.read(metadataFile);
+//        OadsMetadataDocumentTypeBuilder mdBuilder = mdDoc.toBuilder();
+//		DashboardOADSMetadata oads = new DashboardOADSMetadata(stdArray.getDatasetName());
 		GeoTemporalExtents gtExtents = extractGeospatialTemporalExtents(stdArray);
-		oads.westernBound(gtExtents.lonExtents.minValue);
-		oads.easternBound(gtExtents.lonExtents.maxValue);
-		oads.northernBound(gtExtents.latExtents.maxValue);
-		oads.southernBound(gtExtents.latExtents.minValue);
-		oads.startDate(new Date((long)(1000*gtExtents.timeExtents.minValue)));
-		oads.endDate(new Date((long)(1000*gtExtents.timeExtents.maxValue)));
-		Set<String> addVars = new HashSet<>();
-		for (String varname : requiredVars ) {
-			try {
-				String addName = addVariable(varname, oads, stdArray);
-				addVars.add(addName);
-			} catch (NoSuchFieldException e) {
-				System.err.println(e);
-				logger.info("No data column found for variable " + varname);
-			}
-		}
-		for (int i = 0; i < stdArray.getNumDataCols(); i++ ) {
-			String username = stdArray.getUserColumnTypeName(i);
-			String uunits = stdArray.getUserColumnUnits(i);
-			DashDataType<?> colType = stdArray.getDataTypes().get(i);
-			String stdName = colType.getStandardName();
-			String fullName = DashboardUtils.isEmptyOrNull(stdName) ? username : stdName;
-			if ( ! exclude(username, colType) &&
-				 ! addVars.contains(username)) {
-				oads.addVariable(new Variable().abbreviation(username).unit(uunits).fullName(fullName));
-			}
-		}
-		return oads;
+        mdDoc.setSpatialExtents(SpatialExtentsType.builder()
+                                .westernBounds(new BigDecimal(gtExtents.lonExtents.minValue).setScale(3, RoundingMode.HALF_UP))
+                                .easternBounds(new BigDecimal(gtExtents.lonExtents.maxValue).setScale(3, RoundingMode.HALF_UP))
+                                .northernBounds(new BigDecimal(gtExtents.latExtents.maxValue).setScale(3, RoundingMode.HALF_UP))
+                                .southernBounds(new BigDecimal(gtExtents.latExtents.minValue).setScale(3, RoundingMode.HALF_UP))
+                                .build());
+		mdDoc.setTemporalExtents(TemporalExtentsType.builder()
+		                         .startDate(new Date((long)(1000*gtExtents.timeExtents.minValue)))
+		                         .endDate(new Date((long)(1000*gtExtents.timeExtents.maxValue)))
+		                         .build());
+		                                    
+        if ( ApplicationConfiguration.getProperty("oap.metadata.extract_variables", false) && mdDoc.getVariables().isEmpty()) {
+            
+            // XXX TODO: This is just a mess.
+            // XXX What to do with unknowns and other/ignored, 
+            // XXX plus putting data variables first and others last
+            
+//            Set<String> existgVars = checkExistgVars(mdDoc, stdArray);
+    		Set<String> addVars = new HashSet<>();
+    		for (String varname : requiredVars ) {
+//                if ( existgVars.contains(varname)) continue;
+    			try {
+    				String addName = addVariable(varname, mdDoc, stdArray);
+    				addVars.add(addName);
+    			} catch (NoSuchFieldException e) {
+    				System.err.println(e);
+    				logger.info("No data column found for variable " + varname);
+    			}
+    		}
+    		for (int i = 0; i < stdArray.getNumDataCols(); i++ ) {
+    			DashDataType<?> colType = stdArray.getDataTypes().get(i);
+//                if ( ! ( colType instanceof DoubleDashDataType )) {
+//                    continue;
+//                }
+    			String userColName = stdArray.getUserColumnTypeName(i);
+    			String uunits = stdArray.getUserColumnUnits(i);
+    			String stdName = DashboardUtils.isEmptyOrNull(colType.getStandardName()) ?
+    			                    userColName :
+    			                    colType.getStandardName();
+    			String fullName = colType.getDisplayName();
+                if ( colType.getVarName().equals(DashboardUtils.UNKNOWN_VARNAME)) {
+                    fullName = "Unspecified column type";
+                }
+    			if ( ! ( exclude(userColName, colType) ||
+//                         existgVars.contains(stdName) || 
+    				     addVars.contains(userColName))) {
+//                    addVariable(stdName, mdDoc, stdArray);
+                    addVariable(userColName, stdName, fullName, uunits, mdDoc, stdArray);
+    //				oads.addVariable(new Variable().abbreviation(username).unit(uunits).fullName(fullName));
+    			}
+    		}
+        }
+		return mdDoc;
 	}
+
+/**
+     * @param mdDoc
+     * @return
+     */
+    private static Set<String> checkExistgVars(OadsMetadataDocumentType mdDoc, StdUserDataArray stdArray) {
+        Set<String> existg = new TreeSet<>();
+        Set<BaseVariableType> removed = new TreeSet<>();
+        for ( BaseVariableType v : mdDoc.getVariables()) {
+            if ( stdArray.findDataColumn(v.getDatasetVarName()) == null ) {
+                removed.add(v);
+            } else {
+                existg.add(v.getName());
+            }
+        }
+        for ( BaseVariableType v : removed ) {
+            mdDoc.getVariables().remove(v);
+        }
+        return existg;
+    }
+
+//	public static DashboardOADSMetadata OLD_extractOADSMetadata(StdUserDataArray stdArray) {
+//		DashboardOADSMetadata oads = new DashboardOADSMetadata(stdArray.getDatasetName());
+//		GeoTemporalExtents gtExtents = extractGeospatialTemporalExtents(stdArray);
+//		oads.westernBound(gtExtents.lonExtents.minValue);
+//		oads.easternBound(gtExtents.lonExtents.maxValue);
+//		oads.northernBound(gtExtents.latExtents.maxValue);
+//		oads.southernBound(gtExtents.latExtents.minValue);
+//		oads.startDate(new Date((long)(1000*gtExtents.timeExtents.minValue)));
+//		oads.endDate(new Date((long)(1000*gtExtents.timeExtents.maxValue)));
+//		Set<String> addVars = new HashSet<>();
+//		for (String varname : requiredVars ) {
+//			try {
+//				String addName = addVariable(varname, oads, stdArray);
+//				addVars.add(addName);
+//			} catch (NoSuchFieldException e) {
+//				System.err.println(e);
+//				logger.info("No data column found for variable " + varname);
+//			}
+//		}
+//		for (int i = 0; i < stdArray.getNumDataCols(); i++ ) {
+//			String username = stdArray.getUserColumnTypeName(i);
+//			String uunits = stdArray.getUserColumnUnits(i);
+//			DashDataType<?> colType = stdArray.getDataTypes().get(i);
+//			String stdName = colType.getStandardName();
+//			String fullName = DashboardUtils.isEmptyOrNull(stdName) ? username : stdName;
+//			if ( ! exclude(username, colType) &&
+//				 ! addVars.contains(username)) {
+//				oads.addVariable(new Variable().abbreviation(username).unit(uunits).fullName(fullName));
+//			}
+//		}
+//		return oads;
+//	}
 
 	private static boolean exclude(String username, DashDataType<?> colType) {
 		return false;
 	}
 
-	private static String addVariable(String varname, DashboardOADSMetadata oads, StdUserDataArray stdArray) 
+	private static String addVariable(String varname, OadsMetadataDocumentType oads, StdUserDataArray stdArray) 
+			throws NoSuchFieldException {
+		String fullname;
+		String abbrev;
+		String units;
+		int colIdx;
+		DashDataType<?> dataCol = stdArray.findDataColumn(varname);
+		if ( dataCol != null) {
+			colIdx = stdArray.findDataColumnIndex(varname);
+			fullname = DashboardUtils.isEmptyOrNull(dataCol.getStandardName()) ?
+												  dataCol.getDescription() : 
+												  dataCol.getStandardName();
+    		abbrev = stdArray.getUserColumnTypeName(colIdx);
+    		units = stdArray.getUserColumnUnits(colIdx);
+    		addVariable(varname, abbrev, fullname, units, oads, stdArray);
+		}
+        return varname;
+	}
+        
+/**
+     * @param userColName
+     * @param stdName
+     * @param uunits
+     * @param mdDoc
+     * @param stdArray
+     */
+    private static void addVariable(String userColName, String stdName, String fullName, String uunits, 
+                                    OadsMetadataDocumentType mdDoc, StdUserDataArray stdArray) {
+        BaseVariableType v = getVariableFor(stdName);
+        
+        v.setName(stdName);
+        v.setFullName(fullName);
+        v.setDatasetVarName(userColName);
+        v.setUnits(uunits);
+        mdDoc.getVariables().add(v);
+	}
+
+    private static BaseVariableType getVariableFor(String varname) {
+        switch (varname.toLowerCase()) {
+            case "inorganic_carbon":
+            case "dissolved_inorganic_carbon":
+            case "Dissolved Inorganic Carbon":
+                return new DicVariableType();
+            case "alkalinity":
+            case "Total Alkalinity":
+                return new TaVariableType();
+            case "ph_total":
+            case "ph":
+                return new PhVariableType();
+            case "pco2/fco2 (autonomous)":
+            case "pco2(fco2)_autonomous":
+            case "pco2a":
+                return new Co2Autonomous();
+            case "pco2/fco2 (discrete)":
+            case "pco2(fco2)_discrete":
+            case "pco2d":
+                return new Co2Discrete();
+            default:
+                return new BaseVariableType();
+        }
+    }
+	private static String OLD_addVariable(String varname, DashboardOADSMetadata oads, StdUserDataArray stdArray) 
 			throws NoSuchFieldException {
 		Variable v = new Variable();
 		
@@ -182,7 +354,7 @@ public class OADSMetadata {
 		return abbrev;
 	}
 
-	public static DashboardOADSMetadata readOadsXml(File oadsXmlFile) throws Exception {
+	public static DashboardOADSMetadata readOldOadsXml(File oadsXmlFile) throws Exception {
 //		org.w3c.dom.Document xmlDoc = null;
 	    JAXBContext jaxbContext = JAXBContext.newInstance(DashboardOADSMetadata.class);
 		Unmarshaller jaxbUnmrshlr = jaxbContext.createUnmarshaller();
@@ -190,18 +362,18 @@ public class OADSMetadata {
 	    return dbOADSmd;
 	}
 	
-	public static String createOadsMetadataXml(DashboardOADSMetadata mdata) throws Exception {
+	public static String createOldOadsMetadataXml(DashboardOADSMetadata mdata) throws Exception {
 //	    JAXBContext jaxbContext = JAXBContext.newInstance(mdata.getClass());
 //	    Marshaller jaxbMarshaller = jaxbContext.createMarshaller();
 //	    jaxbMarshaller.setProperty(Marshaller.JAXB_FORMATTED_OUTPUT, true);
 	 
 	    StringWriter result = new StringWriter();
 //	    jaxbMarshaller.marshal(mdata, result);
-	    writeOadsMetadataXml(mdata, result, true);
+	    writeOldOadsMetadataXml(mdata, result, true);
 	    String xml = result.toString();
 	    return xml;
 	}
-	public static void writeOadsMetadataXml(DashboardOADSMetadata mdata, Writer out, boolean formatted) throws Exception {
+	public static void writeOldOadsMetadataXml(DashboardOADSMetadata mdata, Writer out, boolean formatted) throws Exception {
 	    JAXBContext jaxbContext = JAXBContext.newInstance(mdata.getClass());
 	    Marshaller jaxbMarshaller = jaxbContext.createMarshaller();
 	    jaxbMarshaller.setProperty(Marshaller.JAXB_FORMATTED_OUTPUT, formatted);
@@ -218,7 +390,7 @@ public class OADSMetadata {
 	 */
 	private static void writeToFile(DashboardOADSMetadata oads, File outfile) throws Exception {
 		FileWriter fout = new FileWriter(outfile);
-		OADSMetadata.writeOadsMetadataXml(oads, fout, true);
+		OADSMetadata.writeOldOadsMetadataXml(oads, fout, true);
 	}
 
 	public static MetadataPreviewInfo getMetadataPreviewInfo(String pageUsername, String datasetId)
@@ -227,9 +399,9 @@ public class OADSMetadata {
 			MetadataPreviewInfo preview = new MetadataPreviewInfo();
 			String xml = null;
 			File mdFile = OADSMetadata.getMetadataFile(datasetId);
-			if ( !mdFile.exists()) {
-				mdFile = OADSMetadata.getExtractedMetadataFile(datasetId);
-			}
+//			if ( !mdFile.exists()) {
+//				mdFile = OADSMetadata.getExtractedMetadataFile(datasetId);
+//			}
 			if ( !mdFile.exists()) {
 				throw new FileNotFoundException("No metadata file found for " + datasetId);
 			}
@@ -250,15 +422,6 @@ public class OADSMetadata {
 		}
 	}
 
-	public static File getExtractedMetadataFile(String datasetId) throws IOException {
-		// Check and standardize the dataset
-		String stdId = DashboardServerUtils.checkDatasetID(datasetId);
-		String extractedFile =  MetadataFileHandler.autoExtractedMdFilename(stdId);
-		DashboardConfigStore configStore = DashboardConfigStore.get(false);
-		File parentDir = configStore.getMetadataFileHandler().getMetadataFile(stdId, extractedFile).getParentFile();
-		File metadataFile = new File(parentDir, extractedFile);
-		return metadataFile;
-	}
 	public static File getMetadataFile(String datasetId) throws IOException {
 		// Check and standardize the dataset
 		String stdId = DashboardServerUtils.checkDatasetID(datasetId);
@@ -284,15 +447,15 @@ public class OADSMetadata {
 		return getMetadataXml(datasetId, mdFile);
 	}
 
-	public static DashboardOADSMetadata getCurrentDatasetMetadata(String datasetId, MetadataFileHandler mdHandler) throws Exception {
+	public static DashboardOADSMetadata _getCurrentDatasetMetadata(String datasetId, MetadataFileHandler mdHandler) throws Exception {
 	    DashboardMetadata mdata = mdHandler.getMetadataInfo(datasetId, MetadataFileHandler.metadataFilename(datasetId)); 
-	    return getCurrentDatasetMetadata(mdata, mdHandler);
+	    return _getCurrentDatasetMetadata(mdata, mdHandler);
     }
 	
-	public static DashboardOADSMetadata getCurrentDatasetMetadata(DashboardMetadata mdata, 
+	public static DashboardOADSMetadata _getCurrentDatasetMetadata(DashboardMetadata mdata, 
 	                                                              MetadataFileHandler mdHandler) throws Exception {
 		File oadsXmlFile = mdHandler.getMetadataFile(mdata.getDatasetId());
-		DashboardOADSMetadata dbOADSmd = readOadsXml(oadsXmlFile);
+		DashboardOADSMetadata dbOADSmd = readOldOadsXml(oadsXmlFile);
 		dbOADSmd.setUploadTimestamp(mdata.getUploadTimestamp());
 		dbOADSmd.setOwner(mdata.getOwner());
 		dbOADSmd.setVersion(mdata.getVersion());
@@ -304,8 +467,8 @@ public class OADSMetadata {
      * @param datasetId
      * @throws IOException 
      */
-    public static File createEmptyOADSMetadataFile(String datasetId) throws IOException {
-        File mdFile = DashboardConfigStore.get().getMetadataFileHandler().createEmptyOADSMetadataFile(datasetId);
+    public static File createInitialOADSMetadataFile(String datasetId, String userid) throws IOException {
+        File mdFile = DashboardConfigStore.get().getMetadataFileHandler().createInitialOADSMetadataFile(datasetId, userid);
         return mdFile;
     }
 
@@ -491,35 +654,143 @@ public class OADSMetadata {
         }
     }
     
-	public static void _main(String[] args) {
+	/**
+	 * Create a DsgMetadata object from the data in this object.
+	 * Any PI or platform names will be anglicized.  
+	 * The version status and QC flag are not assigned.
+	 * 
+	 * @return
+	 *		created DsgMetadata object 
+	 */
+	public static DsgMetadata createDsgMetadata(OadsMetadataDocumentType mdDoc, String datasetId) throws IllegalArgumentException {
+        // Copied/edited from DashboardOADSMetadata
+
+//		// We cannot create a DsgMetadata object if there are conflicts
+//		if ( isConflicted() ) {
+//			throw new IllegalArgumentException("The Metadata contains conflicts");
+//		}
+
+		DashboardConfigStore confStore;
+		try {
+			confStore = DashboardConfigStore.get(false);
+		} catch ( Exception ex ) {
+			throw new RuntimeException("Unexpected failure to get the configuration information");
+		}
+		DsgMetadata scMData = new DsgMetadata(confStore.getKnownMetadataTypes());
+		
+		scMData.setDatasetId(datasetId);
+		// XXX TODO: OME_FILENAME check
+//		scMData.setDatasetName(getExperimentName());
+
+		// Anglicize the platform name for NetCDF/LAS
+		List<PlatformType> platforms = mdDoc.getPlatforms();
+		if ( platforms != null && ! platforms.isEmpty() ) {
+            PlatformType platform = platforms.get(0);
+			String platformName = platform.getName(); // XXX what if there are more than one...
+			scMData.setPlatformName(Anglican.anglicize(platformName));
+			// Set the platform type - could be missing
+			try {
+				scMData.setPlatformType(platform.getType());
+			} catch ( Exception ex ) {
+				scMData.setPlatformType(null);
+			}
+		}
+
+		try {
+			scMData.setWestmostLongitude(mdDoc.getSpatialExtents().getWesternBounds().doubleValue());
+		} catch (NumberFormatException | NullPointerException ex) {
+			scMData.setWestmostLongitude(null);				
+		}
+
+		try {
+			scMData.setEastmostLongitude(mdDoc.getSpatialExtents().getEasternBounds().doubleValue());
+		} catch (NumberFormatException | NullPointerException ex) {
+			scMData.setEastmostLongitude(null);
+		}
+
+		try {
+			scMData.setSouthmostLatitude(mdDoc.getSpatialExtents().getSouthernBounds().doubleValue());
+		} catch (NumberFormatException | NullPointerException ex) {
+			scMData.setSouthmostLatitude(null);
+		}
+
+		try {
+			scMData.setNorthmostLatitude(mdDoc.getSpatialExtents().getNorthernBounds().doubleValue());
+		} catch (NumberFormatException | NullPointerException ex) {
+			scMData.setNorthmostLatitude(null);
+		}
+		
+//		SimpleDateFormat dateParser = new SimpleDateFormat("yyyyMMdd HH:mm:ss");
+//		dateParser.setTimeZone(TimeZone.getTimeZone("UTC"));
+		try {
+			scMData.setBeginTime(Double.valueOf(mdDoc.getTemporalExtents().getStartDate().getTime() / 1000.0));
+		} catch (Exception ex) {
+			scMData.setBeginTime(null);
+		}
+		try {
+			scMData.setEndTime(Double.valueOf(mdDoc.getTemporalExtents().getStartDate().getTime() / 1000.0));
+		} catch (Exception ex) {
+			scMData.setEndTime(null);
+		}
+
+		StringBuffer piNames = new StringBuffer();
+        List<PersonType> investigators = mdDoc.getInvestigators();
+		if ( investigators != null ) {
+			for ( PersonType investigator : investigators ) {
+				if ( piNames.length() > 0 )
+					piNames.append(DsgMetadata.NAMES_SEPARATOR);
+				// Anglicize investigator names for NetCDF/LAS
+				piNames.append(Anglican.anglicize(getStandardFullName(investigator)));
+			}
+			scMData.setInvestigatorNames(piNames.toString());
+		}
+
+		HashSet<String> usedOrganizations = new HashSet<String>();
+		StringBuffer orgGroup = new StringBuffer();
+        List<PersonType> pis = mdDoc.getInvestigators();
+		if ( pis != null ) {
+            for ( PersonType pi : pis ) {
+                String orgName = pi.getOrganization();
+				if ( StringUtils.emptyOrNull(orgName)) 
+					continue;
+				if ( usedOrganizations.add(orgName) ) {
+					if ( orgGroup.length() > 0 )
+						orgGroup.append(DsgMetadata.NAMES_SEPARATOR);
+					// Anglicize organizations names for NetCDF/LAS
+					orgGroup.append(Anglican.anglicize(orgName));
+				}
+			}
+		}
+		String allOrgs = orgGroup.toString().trim();
+		if ( allOrgs.isEmpty() )
+			allOrgs = DashboardOADSMetadata.DEFAULT_ORGANIZATION; // XXX
+		scMData.setOrganizationName(allOrgs);
+
+		return scMData;
+	}
+	/**
+     * @param person
+     * @return the full name of the person as a single string
+     */
+    private static String getStandardFullName(PersonType person) {
+        if ( person == null ) throw new IllegalArgumentException("Attempting to get full name of null person.");
+        PersonNameType name = person.getName();
+        StringBuilder sb = new StringBuilder();
+        sb.append(name.getFirst()).append(" ");
+        if ( name.getMiddle() != null ) { sb.append(name.getMiddle()).append(" "); }
+        sb.append(name.getLast()).append(" ");
+        if ( name.getSuffix() != null ) { sb.append(name.getSuffix()); }
+        return sb.toString().trim();
+    }
+
+    public static void _main(String[] args) {
 		try {
 			String filename = "/Users/kamb/tomcat/7/content/OAPUploadDashboard/MetadataDocs/CHAB/CHABA062014/CHABA062014_OADS.xml";
 			File mdFile = new File(filename);
-			DashboardOADSMetadata dbOAmd = OADSMetadata.readOadsXml(mdFile);
+			DashboardOADSMetadata dbOAmd = OADSMetadata.readOldOadsXml(mdFile);
 			System.out.println(dbOAmd);
 		} catch (Exception e) {
 			e.printStackTrace();
-		}
-	}
-	public static void __main(String[] args) {
-		try {
-//			String dataFilesDirName = "/Users/kamb/tomcat/7/content/OAPUploadDashboard/CruiseFiles";
-			String configDir = "/Users/kamb/tomcat/7";
-			System.setProperty("OA_DOCUMENT_ROOT", configDir);
-			System.setProperty("UPLOAD_DASHBOARD_SERVER_NAME", "OAPUploadDashboard");
-			String datasetId = "CHABA062014";
-			DashboardConfigStore config = DashboardConfigStore.get(false);
-			DataFileHandler dfh = config.getDataFileHandler();
-			DashboardDatasetData ddd = dfh.getDatasetDataFromFiles(datasetId, 0, -1);
-			StdUserDataArray std = new StdUserDataArray(ddd, config.getKnownUserDataTypes());
-			DashboardOADSMetadata oads = OADSMetadata.extractOADSMetadata(std);
-			String xml = createOadsMetadataXml(oads);
-			System.out.println(xml);
-			File outfile = new File(datasetId+"_OADS.xml");
-			OADSMetadata.writeToFile(oads, outfile);
-		} catch (Exception e) {
-			e.printStackTrace();
-			// TODO: handle exception
 		}
 	}
 	public static void main(String[] args) {

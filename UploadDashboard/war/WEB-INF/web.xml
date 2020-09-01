@@ -1,238 +1,163 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<web-app xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-	xsi:schemaLocation="http://java.sun.com/xml/ns/javaee 
-						http://java.sun.com/xml/ns/javaee/web-app_2_5.xsd"
-	version="2.5" xmlns="http://java.sun.com/xml/ns/javaee">
-
-	<display-name>OAP Upload Dashboard</display-name>
-	<session-config>
-		<session-timeout>180</session-timeout> <!-- XXX 180 -->
-	</session-config>
-
-    <listener>
-        <listener-class>gov.noaa.pmel.dashboard.server.ApplicationContextListener</listener-class>
-    </listener>
-    
-    <filter>
-        <filter-name>LoginPageMisdirectFilter</filter-name>
-        <filter-class>gov.noaa.pmel.dashboard.server.LoginRedirectFilter</filter-class>
-    </filter>
-    <filter-mapping>
-        <filter-name>LoginPageMisdirectFilter</filter-name>
-        <url-pattern>/OAPUploadDashboard/DashboardServices</url-pattern>
-        <url-pattern>/OAPUploadDashboard/DataUploadService</url-pattern>
-        <url-pattern>/OAPUploadDashboard/DataUploadService/*</url-pattern>
-        <url-pattern>/OAPUploadDashboard/SessionServices</url-pattern>
-    </filter-mapping>
-    <filter>
-        <filter-name>LoginDetectionFilter</filter-name>
-        <filter-class>gov.noaa.pmel.dashboard.server.LoginDetectionFilter</filter-class>
-    </filter>
-    <filter-mapping>
-        <filter-name>LoginDetectionFilter</filter-name>
-        <url-pattern>/*</url-pattern>
-    </filter-mapping>
-	
-    <filter>
-        <filter-name>WsRequestValidator</filter-name>
-        <filter-class>gov.noaa.pmel.dashboard.server.ws.SignedMsgVerifier</filter-class>
-    </filter>
-    <filter-mapping>
-        <filter-name>WsRequestValidator</filter-name>
-        <url-pattern>/tws/*</url-pattern>
-    </filter-mapping>
-<!-- This seems to have no effect here.
-   <multipart-config>
- ~10KB test   
-      <max-file-size>10242</max-file-size>
-      <max-request-size>10242</max-request-size>
-      <file-size-threshold>1024</file-size-threshold>
-    </multipart-config>
--->
-	<!-- Servlets -->
-	<servlet>
-		<servlet-name>DashboardServlet</servlet-name>
-		<servlet-class>gov.noaa.pmel.dashboard.server.DashboardServices</servlet-class>
-	</servlet>
-	<servlet-mapping>
-		<servlet-name>DashboardServlet</servlet-name>
-		<url-pattern>/OAPUploadDashboard/DashboardServices</url-pattern>
-	</servlet-mapping>
-
-	<servlet>
-		<servlet-name>SessionServlet</servlet-name>
-		<servlet-class>gov.noaa.pmel.dashboard.server.SessionServices</servlet-class>
-	</servlet>
-	<servlet-mapping>
-		<servlet-name>SessionServlet</servlet-name>
-		<url-pattern>/OAPUploadDashboard/SessionServices</url-pattern>
-	</servlet-mapping>
-  
-	<servlet>
-		<servlet-name>DashboardDataUploadServlet</servlet-name>
-		<servlet-class>gov.noaa.pmel.dashboard.server.DataUploadService</servlet-class>
-	</servlet>
-	<servlet-mapping>
-		<servlet-name>DashboardDataUploadServlet</servlet-name>
-        <url-pattern>/OAPUploadDashboard/DataUploadService</url-pattern>
-        <url-pattern>/OAPUploadDashboard/DataUploadService/*</url-pattern>
-	</servlet-mapping>
-
-	<servlet>
-		<servlet-name>DashboardMetadataUploadServlet</servlet-name>
-		<servlet-class>gov.noaa.pmel.dashboard.server.MetadataUploadService</servlet-class>
-	</servlet>
-	<servlet-mapping>
-		<servlet-name>DashboardMetadataUploadServlet</servlet-name>
-		<url-pattern>/OAPUploadDashboard/MetadataUploadService</url-pattern>
-	</servlet-mapping>
-
-	<servlet>
-		<servlet-name>DashboardMetadataDownloadServlet</servlet-name>
-		<servlet-class>gov.noaa.pmel.dashboard.server.MetadataDownloadService</servlet-class>
-	</servlet>
-	<servlet-mapping>
-		<servlet-name>DashboardMetadataDownloadServlet</servlet-name>
-		<url-pattern>/OAPUploadDashboard/MetadataDownloadService/*</url-pattern>
-	</servlet-mapping>
-
-	<servlet>
-		<servlet-name>EditQcFlagsServlet</servlet-name>
-		<servlet-class>gov.noaa.pmel.dashboard.server.EditFlagsService</servlet-class>
-	</servlet>
-	<servlet-mapping>
-		<servlet-name>EditQcFlagsServlet</servlet-name>
-		<url-pattern>/DashboardUpdateService/EditFlags/*</url-pattern>
-	</servlet-mapping>
-
-	<servlet>
-		<servlet-name>NotificationServlet</servlet-name>
-		<servlet-class>gov.noaa.pmel.dashboard.server.NotificationService</servlet-class>
-	</servlet>
-	<servlet-mapping>
-		<servlet-name>NotificationServlet</servlet-name>
-		<url-pattern>/DashboardUpdateService/notify/*</url-pattern>
-	</servlet-mapping>
-
-    <servlet>
-        <servlet-name>PublicServices</servlet-name>
-		<servlet-class>gov.noaa.pmel.dashboard.server.ws.PublicServices</servlet-class>
-    </servlet>
-	<servlet-mapping>
-		<servlet-name>PublicServices</servlet-name>
-		<url-pattern>/tx/*</url-pattern>
-	</servlet-mapping>
-  
-    <servlet>
-        <servlet-name>jersey</servlet-name>
-        <servlet-class>com.sun.jersey.spi.container.servlet.ServletContainer</servlet-class>
-        <init-param>
-          <param-name>com.sun.jersey.config.property.packages</param-name>
-          <param-value>gov.noaa.pmel.dashboard.server.ws</param-value>
-        </init-param>
-        <init-param>
-          <param-name>jersey.config.server.provider.classnames</param-name>
-          <param-value>com.fasterxml.jackson.jaxrs.json.JacksonJsonProvider</param-value>
-        </init-param>
-        <init-param>
-          <param-name>com.sun.jersey.api.json.POJOMappingFeature</param-name>
-          <param-value>true</param-value>
-        </init-param>
-<!--         <multipart-config>
-          <location>/home/data/web/tmp</location>
-          <max-file-size>524288000</max-file-size>
-          <file-size-threshold>1024000</file-size-threshold>
-        </multipart-config> -->
-    </servlet>
-    <servlet-mapping>
-        <servlet-name>jersey</servlet-name>
-        <url-pattern>/tws/*</url-pattern>
-        <url-pattern>/twx/*</url-pattern>
-    </servlet-mapping>
-  
-	<security-constraint>
-		<web-resource-collection>
-			<web-resource-name>DashboardServices</web-resource-name>
-			<url-pattern>/DashboardUpdateService/*</url-pattern>
-			<url-pattern>/images/*</url-pattern>
-			<url-pattern>/css/*</url-pattern>
-            <url-pattern>/accountrequested.html</url-pattern>
-            <url-pattern>/dashboardlogout.html</url-pattern>
-            <url-pattern>/passwordhelp.html</url-pattern>
-            <url-pattern>/passwordreset.html</url-pattern>
-            <url-pattern>/requestlogin.html</url-pattern>
-            <url-pattern>/tx/*</url-pattern>
-            <url-pattern>/tws/*</url-pattern>
-            <url-pattern>/twx/*</url-pattern>
-            <!--
-			<http-method>GET</http-method>
-			<http-method>POST</http-method>
-       --> 
-		</web-resource-collection>
-	</security-constraint>
-	
-	<security-constraint>
-		<web-resource-collection>
-			<web-resource-name>OAP Dashboard</web-resource-name>
-			<url-pattern>/*</url-pattern>
-		</web-resource-collection>
-		<auth-constraint>
-			<role-name>oapdashboarduser</role-name>
-		</auth-constraint>
-	</security-constraint>
-<!--  NOTE: This next section has to be commented out when running in SuperDevMode
-      because Jetty redirects to login page (whereas Tomcat forwards to it.) 
-<security-constraint>
-	<display-name>excluded</display-name>
-	<web-resource-collection>
-		<web-resource-name>No Access</web-resource-name>
-        <url-pattern>/dashboardlogin.html</url-pattern>
-	</web-resource-collection>
-	<auth-constraint />
-</security-constraint>
-   -->
-<!--
-<security-constraint>
-	<display-name>excluded</display-name>
-	<web-resource-collection>
-		<web-resource-name>No Access</web-resource-name>
-		<url-pattern>/excluded/*</url-pattern>
-		<url-pattern>/restricted/employee/excluded/*</url-pattern>
-		<url-pattern>/restricted/partners/excluded/*</url-pattern>
-	</web-resource-collection>
-	<web-resource-collection>
-		<web-resource-name>No Access</web-resource-name>
-		<url-pattern>/restricted/*</url-pattern>
-		<http-method>DELETE</http-method>
-		<http-method>PUT</http-method>
-		<http-method>HEAD</http-method>
-		<http-method>OPTIONS</http-method>
-		<http-method>TRACE</http-method>
-		<http-method>GET</http-method>
-		<http-method>POST</http-method>
-	</web-resource-collection>
-	<auth-constraint />
-	<user-data-constraint>
-		<transport-guarantee>NONE</transport-guarantee>
-	</user-data-constraint>
-</security-constraint>
-  -->
-	<login-config>
-		<auth-method>FORM</auth-method>
-		<realm-name>oapdashboarduser</realm-name>
-		<form-login-config>
-			<form-login-page>/dashboardlogin.html</form-login-page>
-			<form-error-page>/dashboardloginerror.html</form-error-page>
-		</form-login-config>
-	</login-config>
-
-	<security-role>
-		<description>OAP Dashboard User</description>
-		<role-name>oapdashboarduser</role-name>
-	</security-role>
-	<!-- Default page to serve -->
-	<welcome-file-list>
-		<welcome-file>OAPUploadDashboard.html</welcome-file>
-	</welcome-file-list>
-
+<web-app xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns="http://java.sun.com/xml/ns/javaee" xsi:schemaLocation="http://java.sun.com/xml/ns/javaee http://java.sun.com/xml/ns/javaee/web-app_2_5.xsd" version="2.5">
+  <display-name>OAP Upload Dashboard</display-name>
+  <session-config>
+    <session-timeout>180</session-timeout>
+  </session-config>
+  <listener>
+    <listener-class>gov.noaa.pmel.dashboard.server.ApplicationContextListener</listener-class>
+  </listener>
+  <filter>
+    <filter-name>LoginPageMisdirectFilter</filter-name>
+    <filter-class>gov.noaa.pmel.dashboard.server.LoginRedirectFilter</filter-class>
+  </filter>
+  <filter-mapping>
+    <filter-name>LoginPageMisdirectFilter</filter-name>
+    <url-pattern>/OAPUploadDashboard/DashboardServices</url-pattern>
+    <url-pattern>/OAPUploadDashboard/DataUploadService</url-pattern>
+    <url-pattern>/OAPUploadDashboard/DataUploadService/*</url-pattern>
+    <url-pattern>/OAPUploadDashboard/SessionServices</url-pattern>
+  </filter-mapping>
+  <filter>
+    <filter-name>LoginDetectionFilter</filter-name>
+    <filter-class>gov.noaa.pmel.dashboard.server.LoginDetectionFilter</filter-class>
+  </filter>
+  <filter-mapping>
+    <filter-name>LoginDetectionFilter</filter-name>
+    <url-pattern>/*</url-pattern>
+  </filter-mapping>
+  <filter>
+    <filter-name>WsRequestValidator</filter-name>
+    <filter-class>gov.noaa.pmel.dashboard.server.ws.SignedMsgVerifier</filter-class>
+  </filter>
+  <filter-mapping>
+    <filter-name>WsRequestValidator</filter-name>
+    <url-pattern>/tws/*</url-pattern>
+  </filter-mapping>
+  <servlet>
+    <servlet-name>DashboardServlet</servlet-name>
+    <servlet-class>gov.noaa.pmel.dashboard.server.DashboardServices</servlet-class>
+  </servlet>
+  <servlet-mapping>
+    <servlet-name>DashboardServlet</servlet-name>
+    <url-pattern>/OAPUploadDashboard/DashboardServices</url-pattern>
+  </servlet-mapping>
+  <servlet>
+    <servlet-name>SessionServlet</servlet-name>
+    <servlet-class>gov.noaa.pmel.dashboard.server.SessionServices</servlet-class>
+  </servlet>
+  <servlet-mapping>
+    <servlet-name>SessionServlet</servlet-name>
+    <url-pattern>/OAPUploadDashboard/SessionServices</url-pattern>
+  </servlet-mapping>
+  <servlet>
+    <servlet-name>DashboardDataUploadServlet</servlet-name>
+    <servlet-class>gov.noaa.pmel.dashboard.server.DataUploadService</servlet-class>
+  </servlet>
+  <servlet-mapping>
+    <servlet-name>DashboardDataUploadServlet</servlet-name>
+    <url-pattern>/OAPUploadDashboard/DataUploadService</url-pattern>
+    <url-pattern>/OAPUploadDashboard/DataUploadService/*</url-pattern>
+  </servlet-mapping>
+  <servlet>
+    <servlet-name>DashboardMetadataUploadServlet</servlet-name>
+    <servlet-class>gov.noaa.pmel.dashboard.server.MetadataUploadService</servlet-class>
+  </servlet>
+  <servlet-mapping>
+    <servlet-name>DashboardMetadataUploadServlet</servlet-name>
+    <url-pattern>/OAPUploadDashboard/MetadataUploadService</url-pattern>
+  </servlet-mapping>
+  <servlet>
+    <servlet-name>DashboardMetadataDownloadServlet</servlet-name>
+    <servlet-class>gov.noaa.pmel.dashboard.server.MetadataDownloadService</servlet-class>
+  </servlet>
+  <servlet-mapping>
+    <servlet-name>DashboardMetadataDownloadServlet</servlet-name>
+    <url-pattern>/OAPUploadDashboard/MetadataDownloadService/*</url-pattern>
+  </servlet-mapping>
+  <servlet>
+    <servlet-name>EditQcFlagsServlet</servlet-name>
+    <servlet-class>gov.noaa.pmel.dashboard.server.EditFlagsService</servlet-class>
+  </servlet>
+  <servlet-mapping>
+    <servlet-name>EditQcFlagsServlet</servlet-name>
+    <url-pattern>/DashboardUpdateService/EditFlags/*</url-pattern>
+  </servlet-mapping>
+  <servlet>
+    <servlet-name>NotificationServlet</servlet-name>
+    <servlet-class>gov.noaa.pmel.dashboard.server.NotificationService</servlet-class>
+  </servlet>
+  <servlet-mapping>
+    <servlet-name>NotificationServlet</servlet-name>
+    <url-pattern>/DashboardUpdateService/notify/*</url-pattern>
+  </servlet-mapping>
+  <servlet>
+    <servlet-name>PublicServices</servlet-name>
+    <servlet-class>gov.noaa.pmel.dashboard.server.ws.PublicServices</servlet-class>
+  </servlet>
+  <servlet-mapping>
+    <servlet-name>PublicServices</servlet-name>
+    <url-pattern>/tx/*</url-pattern>
+  </servlet-mapping>
+  <servlet>
+    <servlet-name>jersey</servlet-name>
+    <servlet-class>com.sun.jersey.spi.container.servlet.ServletContainer</servlet-class>
+    <init-param>
+      <param-name>com.sun.jersey.config.property.packages</param-name>
+      <param-value>gov.noaa.pmel.dashboard.server.ws</param-value>
+    </init-param>
+    <init-param>
+      <param-name>jersey.config.server.provider.classnames</param-name>
+      <param-value>com.fasterxml.jackson.jaxrs.json.JacksonJsonProvider</param-value>
+    </init-param>
+    <init-param>
+      <param-name>com.sun.jersey.api.json.POJOMappingFeature</param-name>
+      <param-value>true</param-value>
+    </init-param>
+  </servlet>
+  <servlet-mapping>
+    <servlet-name>jersey</servlet-name>
+    <url-pattern>/tws/*</url-pattern>
+    <url-pattern>/twx/*</url-pattern>
+  </servlet-mapping>
+  <security-constraint>
+    <web-resource-collection>
+      <web-resource-name>DashboardServices</web-resource-name>
+      <url-pattern>/DashboardUpdateService/*</url-pattern>
+      <url-pattern>/images/*</url-pattern>
+      <url-pattern>/css/*</url-pattern>
+      <url-pattern>/accountrequested.html</url-pattern>
+      <url-pattern>/dashboardlogout.html</url-pattern>
+      <url-pattern>/passwordhelp.html</url-pattern>
+      <url-pattern>/passwordreset.html</url-pattern>
+      <url-pattern>/requestlogin.html</url-pattern>
+      <url-pattern>/tx/*</url-pattern>
+      <url-pattern>/tws/*</url-pattern>
+      <url-pattern>/twx/*</url-pattern>
+    </web-resource-collection>
+  </security-constraint>
+  <security-constraint>
+    <web-resource-collection>
+      <web-resource-name>OAP Dashboard</web-resource-name>
+      <url-pattern>/*</url-pattern>
+    </web-resource-collection>
+    <auth-constraint>
+      <role-name>oapdashboarduser</role-name>
+    </auth-constraint>
+  </security-constraint>
+  <login-config>
+    <auth-method>FORM</auth-method>
+    <realm-name>oapdashboarduser</realm-name>
+    <form-login-config>
+      <form-login-page>/dashboardlogin.html</form-login-page>
+      <form-error-page>/dashboardloginerror.html</form-error-page>
+    </form-login-config>
+  </login-config>
+  <security-role>
+    <description>OAP Dashboard User</description>
+    <role-name>oapdashboarduser</role-name>
+  </security-role>
+  <welcome-file-list>
+    <welcome-file>OAPUploadDashboard.html</welcome-file>
+  </welcome-file-list>
 </web-app>

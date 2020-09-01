@@ -178,14 +178,14 @@ public class EditFlagsService extends HttpServlet {
         _dataFileHandler.saveDatasetDataToFile(ddd, msg);
         _dataFileHandler.saveDatasetInfoToFile(ddd, msg);
         
-        // redo the standardization after changes
-        StdUserDataArray stdUsr = cfg.getDashboardDatasetChecker(ddd.getFeatureType()).standardizeDataset(ddd, null);
-        DsgNcFileHandler dsgHandler = cfg.getDsgNcFileHandler();
-        DashboardOADSMetadata oadsMd = OADSMetadata.extractOADSMetadata(stdUsr);
-        DsgMetadata dsgMData = oadsMd.createDsgMetadata();
-        dsgMData.setVersion("1.0");
-        dsgHandler.saveDatasetDsg(dsgMData, stdUsr);
-        dsgHandler.flagErddap();
+//        // redo the standardization after changes XXX TODO: Commented out until we bring back QC Flagging
+//        StdUserDataArray stdUsr = cfg.getDashboardDatasetChecker(ddd.getFeatureType()).standardizeDataset(ddd, null);
+//        DsgNcFileHandler dsgHandler = cfg.getDsgNcFileHandler();
+//        DashboardOADSMetadata oadsMd = OADSMetadata.extractOADSMetadata(stdUsr);
+//        DsgMetadata dsgMData = oadsMd.createDsgMetadata();
+//        dsgMData.setVersion("1.0");
+//        dsgHandler.saveDatasetDsg(dsgMData, stdUsr);
+//        dsgHandler.flagErddap();
     }
 
     private static int getColumnIdx(String qcFlagName, StdUserDataArray preStdUsr, DashboardDatasetData ddd) {

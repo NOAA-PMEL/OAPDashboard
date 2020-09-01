@@ -1,5 +1,9 @@
 #!/bin/bash
 
+THIS=$0
+PROG_PATH=${THIS%/*}
+DIR="$( cd "$( dirname "$0" )" && pwd )"
+
 host=`hostname`
 host=${host%%\.*}
 host=${host/-/_}
@@ -29,7 +33,7 @@ new_bock_APP_CONTENT="${OA_DOCUMENT_ROOT}/${STD_LOC}"
 
 APP_CONTENT="${host}_APP_CONTENT"
 
-CLIENT_JAR="/Users/kamb/workspace/OADashboard/adminClient/dashboard-client.jar"
+CLIENT_JAR="${DIR}/dashboard-client.jar"
 echo client jar: $CLIENT_JAR
 
 # OAP_ENV=-Doap.env=matisse 

@@ -212,10 +212,7 @@ public class ArchiveFilesBundler extends VersionedFileHandler {
 			// Exclude the (dataset)/OME.xml document at this time;
 			// do include the (dataset)/PI_OME.xml 
 			String filename = mdata.getFilename();
-			// XXX TODO: OME_FILENAME check
-			if ( ! filename.equals(MetadataFileHandler.autoExtractedMdFilename(mdata.getDatasetId())) ) {
-				addlDocs.add(metadataHandler.getMetadataFile(stdId, filename));
-			}
+			addlDocs.add(metadataHandler.getMetadataFile(stdId, filename));
 		}
 		if ( addlDocs.isEmpty() )
 			throw new IOException("No metadata/supplemental documents for " + stdId);
@@ -401,9 +398,7 @@ public class ArchiveFilesBundler extends VersionedFileHandler {
 		ArrayList<File> addlDocs = new ArrayList<File>();
 		for ( DashboardMetadata mdata : metadataHandler.getMetadataFiles(stdId) ) {
 			String filename = mdata.getFilename();
-			if ( ! filename.equals(MetadataFileHandler.autoExtractedMdFilename(mdata.getDatasetId())) ) {
-				addlDocs.add(metadataHandler.getMetadataFile(stdId, filename));
-			}
+			addlDocs.add(metadataHandler.getMetadataFile(stdId, filename));
 		}
 		if ( addlDocs.isEmpty() )
 			throw new IOException("No metadata/supplemental documents for " + stdId);
