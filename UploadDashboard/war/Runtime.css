@@ -6,6 +6,9 @@
 	Runtime styling needs to be available to the browser.
 */
 
+.underlined {
+	text-decoration: underline;
+}
 .reloginSubmit {
     color: buttontext;
     background-color: #f0f1f0;
