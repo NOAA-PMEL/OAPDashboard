@@ -23,6 +23,8 @@ public class PasswordCrypt {
     static int keyLength = 256;
 
     public static String generateTomcatPasswd(String forPassword) throws GeneralSecurityException {
+        // XXX Wrong version of this can come from GWT if it's higher in the classpath.
+//        JWhich.which("org.apache.tomcat.util.res.StringManager"); 
         SecretKeyCredentialHandler credible = new SecretKeyCredentialHandler();
         credible.setAlgorithm(algorithm);
         credible.setIterations(iterations);
