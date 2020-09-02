@@ -21,6 +21,8 @@ import com.google.gwt.cell.client.ValueUpdater;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.Element;
+import com.google.gwt.dom.client.NativeEvent;
+import com.google.gwt.dom.client.Node;
 import com.google.gwt.dom.client.Style;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.DoubleClickEvent;
@@ -84,7 +86,11 @@ public class DatasetListPage extends CompositeWithUsername {
 	private static final String NO_UNDERLINE = "";
 	private static final String WITH_UNDERLINE = "text-decoration:underline;";
 	private static final String UNDERLINE_LINKS = NO_UNDERLINE;
+	private static final String LINK_COLOR = "color:#214997;font-weight:bold;";
 
+    private static final int DATA_CHECK_COLUMN_IDX = 5;
+    private static final int ARCHIVE_COLUMN_IDX = 8;
+    
 	private static final String NEW_SUBMISSION_BUTTON_TEXT = "New Submission";
 	private static final String NEW_SUBMISSION_BUTTON_HOVER_HELP = 
 			"Create a new archive submission record.";
@@ -289,11 +295,11 @@ public class DatasetListPage extends CompositeWithUsername {
 	private static final String NO_TIMESTAMP_STRING = "(unknown)";
 	private static final String STATUS_CANNOT_CHECK_STRING = "Cannot check";
 	private static final String NO_DATA_CHECK_STATUS_STRING = "Not checked";
-	private static final String NO_METADATA_STATUS_STRING = "(no metadata)";
+	private static final String NO_METADATA_STATUS_STRING = "Add metadata";
 	private static final String NO_QC_STATUS_STRING = "Private";
 	private static final String NO_ARCHIVE_STATUS_STRING = "Not archived";
 	private static final String NO_UPLOAD_FILENAME_STRING = "(unknown)";
-	private static final String NO_ADDL_DOCS_STATUS_STRING = "(no documents)";
+	private static final String NO_ADDL_DOCS_STATUS_STRING = "Add documents";
 	private static final String NO_OWNER_STRING = "(unknown)";
 
 	interface DatasetListPageUiBinder extends UiBinder<Widget, DatasetListPage> {
@@ -356,6 +362,7 @@ public class DatasetListPage extends CompositeWithUsername {
 	private class SelectionHandler implements CellPreviewEvent.Handler<DashboardDataset> {
         @Override
         public void onCellPreview(CellPreviewEvent<DashboardDataset> event) {
+//            UploadDashboard.logToConsole("SH:"+event.getNativeEvent().getType() + " on c:"+ event.getColumn() + ", r:"+ event.getIndex());
             clickRowIdx = event.getIndex();
             clickedDataset = event.getValue();
         }
@@ -374,6 +381,43 @@ public class DatasetListPage extends CompositeWithUsername {
         }
     }
     
+	private class ClickableCellUpdater implements CellPreviewEvent.Handler<DashboardDataset> {
+        @Override
+        public void onCellPreview(CellPreviewEvent<DashboardDataset> event) {
+//            UploadDashboard.logToConsole("CCU:"+event.getNativeEvent().getType() + " on c:"+ event.getColumn() + ", r:"+ event.getIndex());
+            String eventType = event.getNativeEvent().getType();
+            int column = event.getColumn();
+            if ( isClickable(column, event.getValue())) {
+                Element cellElement = event.getNativeEvent().getEventTarget().cast();
+                if ("mouseover".equals(eventType)) {
+                    cellElement.addClassName("underlined");
+                } else if ("mouseout".equals(eventType)) {
+                    cellElement.removeClassName("underlined");
+                }
+            }
+        }
+        private boolean isClickable(int column, DashboardDataset dataset) {
+            return column >= DATA_CHECK_COLUMN_IDX && 
+                   column <= ARCHIVE_COLUMN_IDX &&
+                   ( column != DATA_CHECK_COLUMN_IDX ||
+                       ( dataset.getFeatureType().isDSG() &&
+                         dataset.getFileType().equals(FileType.DELIMITED))
+                   );
+        }
+        
+        // from https://stackoverflow.com/questions/7818222/mouse-over-event-on-the-column-of-a-gwt-celltable
+        // but doesn't seem to work. 
+        private String getElementValue(Element element) {
+            Element child = element.getFirstChildElement().cast();
+            while (child != null) {
+                element = child;
+                child = element.getFirstChildElement().cast();
+            }
+            Node firstChild = element.getFirstChild(); 
+            return firstChild.getNodeValue();
+        }
+	}
+    
 	/**
 	 * Creates an empty dataset list page.  Do not call this 
 	 * constructor; instead use the showPage static method 
@@ -391,12 +435,15 @@ public class DatasetListPage extends CompositeWithUsername {
 		buildSelectionSets();
 		
         datasetsGrid.addCellPreviewHandler(selectionHandler);
+        datasetsGrid.addCellPreviewHandler(new ClickableCellUpdater());
+        
         datasetsGrid.addDomHandler(new DoubleClickHandler() {
             @Override
             public void onDoubleClick(DoubleClickEvent event) {
                 setSelection(event);
             }
         }, DoubleClickEvent.getType());
+//        datasetsGrid.addDomHandler(new DoubleClickHandler() {
         
         header.setPageTitle(TITLE_TEXT);
 
@@ -503,7 +550,7 @@ public class DatasetListPage extends CompositeWithUsername {
 			}
 		});
         if ( meLink != null ) {
-            meLink.setAttribute("style", "cursor:pointer;"+UNDERLINE_LINKS);
+            meLink.setAttribute("style", "cursor:pointer;"+LINK_COLOR+UNDERLINE_LINKS);
             meLink = null;
         }
 	}
@@ -1592,10 +1639,10 @@ public class DatasetListPage extends CompositeWithUsername {
 				new Column<DashboardDataset,String> (new ClickableTextCell()) {
 			@Override
 			public String getValue(DashboardDataset cruise) { 
-                if ( FeatureType.OTHER == cruise.getFeatureType() ) {
+                if ( ! cruise.getFeatureType().isDSG() ) {
                     return STATUS_CANNOT_CHECK_STRING + ":<br/>Observation Type";
                 }
-                if ( FileType.OTHER == cruise.getFileType()) {
+                if ( ! cruise.getFileType().equals(FileType.DELIMITED)) {
                     return STATUS_CANNOT_CHECK_STRING + ":<br/>File Format";
                 }
 				String status = cruise.getDataCheckStatus();
@@ -1647,7 +1694,7 @@ public class DatasetListPage extends CompositeWithUsername {
     					// Many errors, unacceptable, or not checked - use error background color
 						backgroundColor = UploadDashboard.CHECKER_ERROR_COLOR;
     				}
-					sb.appendHtmlConstant("<div style=\"cursor:pointer;"+UNDERLINE_LINKS+
+					sb.appendHtmlConstant("<div style=\"cursor:pointer;"+LINK_COLOR+UNDERLINE_LINKS+
 					                      "background-color:"+backgroundColor+";\">");
 					sb.appendHtmlConstant("<em>");
 					sb.appendEscaped(msg);
@@ -1706,11 +1753,18 @@ public class DatasetListPage extends CompositeWithUsername {
 													SafeHtmlBuilder sb) {
 				String cid = cruise.getRecordId();
 				String divid = "mecol_"+cid;
-			    sb.appendHtmlConstant("<div id=\""+ divid + "\" style=\"cursor:pointer;"+UNDERLINE_LINKS+"\">");
+			    sb.appendHtmlConstant("<div id=\""+ divid + "\" style=\"cursor:pointer;"+LINK_COLOR+UNDERLINE_LINKS+"\">");
 				sb.appendHtmlConstant("<em>");
 				sb.appendEscaped(getValue(cruise));
 				sb.appendHtmlConstant("</em></div>");
 			}
+//            @Override
+//            public void onBrowserEvent(Cell.Context context,
+//                                       Element parent,
+//                                       DashboardDataset dataset,
+//                                       NativeEvent event) {
+//                UploadDashboard.logToConsole(event.getType() + " : " + context);
+//            }
 		};
 		metadataColumn.setFieldUpdater(new FieldUpdater<DashboardDataset,String>() {
 			@Override
@@ -1764,7 +1818,7 @@ public class DatasetListPage extends CompositeWithUsername {
 			@Override
 			public void render(Cell.Context ctx, DashboardDataset cruise, 
 													SafeHtmlBuilder sb) {
-				sb.appendHtmlConstant("<div style=\"overflow:hidden; white-space:nowrap; cursor:pointer;"+UNDERLINE_LINKS+"\">");
+				sb.appendHtmlConstant("<div style=\"overflow:hidden; white-space:nowrap; cursor:pointer;"+LINK_COLOR+UNDERLINE_LINKS+"\">");
 				sb.appendHtmlConstant("<em>");
 				sb.appendHtmlConstant(getValue(cruise));
 				sb.appendHtmlConstant("</em></u></div>");
@@ -1872,7 +1926,7 @@ public class DatasetListPage extends CompositeWithUsername {
 													SafeHtmlBuilder sb) {
 				Boolean editable = cruise.isEditable();
 				if ( editable != null ) {
-					sb.appendHtmlConstant("<div style=\"cursor:pointer;"+UNDERLINE_LINKS+"\">");
+					sb.appendHtmlConstant("<div style=\"cursor:pointer;"+LINK_COLOR+UNDERLINE_LINKS+"\">");
 					sb.appendHtmlConstant("<em>");
 					sb.appendHtmlConstant(getValue(cruise));
 					sb.appendHtmlConstant("</em></div>");
