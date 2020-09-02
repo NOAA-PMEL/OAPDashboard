@@ -3,7 +3,10 @@
  */
 package gov.noaa.pmel.dashboard.server.admin;
 
+import java.io.BufferedReader;
 import java.io.Console;
+import java.io.IOException;
+import java.io.InputStreamReader;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.List;
@@ -22,6 +25,7 @@ import gov.noaa.pmel.dashboard.server.model.User;
 import gov.noaa.pmel.dashboard.util.PasswordUtils;
 import gov.noaa.pmel.tws.client.impl.TwsClientImpl.NoopException;
 import gov.noaa.pmel.tws.util.ApplicationConfiguration;
+import gov.noaa.pmel.tws.util.StringUtils;
 import gov.noaa.pmel.tws.util.cli.CLClient;
 import gov.noaa.pmel.tws.util.cli.CLCommand;
 import gov.noaa.pmel.tws.util.cli.CLOption;
@@ -45,8 +49,9 @@ public class AdminClient extends CLClient {
                                             .requiredOption(true)
                                             .description("username for user-oriented options").build();
     private static CLOption opt_password = CLOption.builder().name("password").flag("pw").longFlag("password")
-                                            .description("new user's password - must conform to password complexity rules, should be enclosed in single quotes")
-                                            .defaultValue("Generated secure password").build();
+                                            .description("new user's password - must conform to password complexity rules, should be enclosed in single quotes." +
+                                                         " Default: generated secure password.")
+                                            .build();
     private static CLOption opt_firstName = CLOption.builder().name("firstName").flag("fn").longFlag("firstname")
                                             .requiredOption(true)
                                             .description("User first name.").build();
@@ -65,7 +70,7 @@ public class AdminClient extends CLClient {
                                             .description("User phone. Use \"x####\" to specify an extension.").build();
     private static CLOption opt_target = CLOption.builder().name("targetDb").flag("d").longFlag("db")
                                             .defaultValue("localhost")
-                                            .description("Target database. Options: localhost, prod(uction), hostname (which may or may not be supported.)").build();
+                                            .description("Target database. Options: localhost, prod(uction), [hostname] (which may or may not be supported.)").build();
     
     private static CLOption opt_noop = CLOption.builder().name("no-op").flag("x").longFlag("noop")
                                             .requiresValue(false)
@@ -102,26 +107,29 @@ public class AdminClient extends CLClient {
         if ( _clOptions.booleanValue(opt_batch, false)) {
             return true;
         }
-        System.out.print("Confirm: " + message + " [yN]: ");
+        String fullMessage = "Confirm: " + message + " [yN]: ";
+        System.out.print(fullMessage);
         Console console = System.console();
         if ( console == null ) { // running in IDE
-            return true; // use code below.
+            return getUserResponse(fullMessage, "N").toLowerCase().startsWith("y"); // use code below.
         }
         String answer = System.console().readLine();
         return answer != null && answer.startsWith("y");
     }
-    /*
-    private static String getUserResponse(String msg, String defaultValue) throws IOException {
-    String prompt = msg + (defaultValue != null ? " [" + defaultValue + "]" : "") + " : ";
-    System.out.print(prompt);
-    BufferedReader reader = new BufferedReader(new InputStreamReader(System.in));
-    String response = reader.readLine();
-    if ( StringUtils.emptyOrNull(response)) {
-    response = defaultValue;
+    private static String getUserResponse(String msg, String defaultValue) {
+        try {
+//            String prompt = msg + (defaultValue != null ? " [" + defaultValue + "]" : "") + " : ";
+//            System.out.print(prompt);
+            BufferedReader reader = new BufferedReader(new InputStreamReader(System.in));
+            String response = reader.readLine();
+            if ( StringUtils.emptyOrNull(response)) {
+                response = defaultValue;
+            }
+            return response;
+        } catch (IOException iox) {
+            throw new RuntimeException("Exception reading user input.", iox);
+        }
     }
-    return response;
-    }
-    */
 
     
     public void doAdd() {
@@ -180,7 +188,9 @@ public class AdminClient extends CLClient {
             
             _clOptions = new CLOptions(command, optionValues, arguments);
             if ( _clOptions.options().containsKey(opt_target)) {
-                MybatisConnectionFactory.initialize(_clOptions.optionValue(opt_target));
+                String dbEnv = _clOptions.optionValue(opt_target);
+                System.out.println("Configuring db for environment: " + dbEnv + " from mybatis-config");
+                MybatisConnectionFactory.initialize(dbEnv);
             }
             Method processingMethod = getProcessingMethod(command);
             processingMethod.invoke(this);

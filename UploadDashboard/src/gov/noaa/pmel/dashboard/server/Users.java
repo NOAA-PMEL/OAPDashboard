@@ -7,6 +7,7 @@ import java.io.IOException;
 import java.security.GeneralSecurityException;
 import java.security.NoSuchAlgorithmException;
 import java.sql.SQLException;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -84,7 +85,10 @@ public class Users {
         UsersDao udao = DaoFactory.UsersDao();
         boolean dConfig = false;
         try {
-            InsertUser inUser = user.asInsertUser().authString(cryptPasswd).build();
+            InsertUser inUser = user.asInsertUser()
+                                    .authString(cryptPasswd)
+                                    .createTime(new Date())
+                                    .build();
             int dbId = udao.addUser(inUser);
             dConfig = true;
             return dbId;
