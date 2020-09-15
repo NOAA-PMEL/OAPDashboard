@@ -1,0 +1,61 @@
+ ! NOAA/PMEL TMAP
+ ! PyFerret v7.6 (optimized)
+ ! Darwin 18.7.0 - 07/29/20
+ !  3-Sep-20 10:45     
+
+! set globally to wait after every plot
+! DEFINE SYMBOL PAUSE = "0"
+! DEFINE SYMBOL DO_QUICK "0"
+
+IF ($PROGRAM_NAME"0|PyFerret>1|*>0") THEN  SET TEXT /FONT=Arial
+
+! CAN MODE VERIFY
+
+CAN MODE LOGO 
+
+IF ($PAUSE"0") THEN 
+  SET MODE WAIT
+ELSE
+  CAN MODE WAIT
+ENDIF
+
+DEFINE SYMBOL var_name = ($1)
+
+! assumes dataset has already been set
+! use dsg_trajectory.nc
+
+DEFINE VIEWPORT/x=.1:.9/y=.4:1 upper_map ! x=.2:.8/ x=.1:.9/
+DEFINE VIEWPORT/y=0:.4 lower_series
+SET WINDOW/ASPECT=1.2
+
+IF ($DO_QUICK"0") THEN
+
+  SET VIEW upper_map
+  USE/feature=trajectory 1
+    go margins 1.0 .75 1 1.2
+    plot/nolab/key/symbol=boxfill/siz=0.05 ($var_name)
+    ANNOTATE/norm/x=0.5/y=1.05/halign=0 "`($1),return=title` (`($1),return=units`)"
+    GO land_detail
+
+ELSE
+
+  SET VIEW upper_map
+  USE/feature=trajectory 1
+   ! go margins 1.0 .1 1 1.2
+    go margins 1.0 .75 1 1.2
+   !  go plot_vs_pad.jnl longitude, latitude
+    go plot_pad.jnl "plot/vs/nolab longitude, latitude"
+    go oap_preview_fland "tan"
+   ! go OA_trajectory_plot ($var_name)
+    ANNOTATE/norm/x=0.5/y=1.05/halign=0 "`($1),return=title` (`($1),return=units`)"
+   ! ANNOTATE/norm/x=0.5/y=.9/halign=0 "`($1),return=title` (`($1),return=units`)"
+    plot/over/nolab/key/symbol=boxfill/siz=0.05 ($var_name)
+
+ENDIF
+ 
+  SET VIEW lower_series
+  USE/feature=timeseries 1
+    go margins .25 1 1.1 1.2
+    PLOT/NOLAB/symbol=dot/size=0.2 ($var_name)
+
+

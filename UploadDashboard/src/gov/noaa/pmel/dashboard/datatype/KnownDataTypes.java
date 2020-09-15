@@ -130,7 +130,7 @@ public class KnownDataTypes {
 	public KnownDataTypes addStandardTypesForMetadataFiles() {
 		addDataType(DashboardServerUtils.DATASET_ID);
 		addDataType(DashboardServerUtils.DATASET_NAME);
-//		addDataType(DashboardServerUtils.PLATFORM_CODE);
+		addDataType(DashboardServerUtils.PLATFORM_CODE);
 		addDataType(DashboardServerUtils.PLATFORM_NAME);
 		addDataType(DashboardServerUtils.PLATFORM_TYPE);
 		addDataType(DashboardServerUtils.ORGANIZATION_NAME);

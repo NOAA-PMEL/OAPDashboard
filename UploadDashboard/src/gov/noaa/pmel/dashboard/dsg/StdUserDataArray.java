@@ -606,10 +606,36 @@ public class StdUserDataArray extends StdDataArray {
 		if ( (columnIdx < 0) || (columnIdx >= numDataCols) )
 			throw new IndexOutOfBoundsException("data column index is invalid: " + columnIdx);
 		if ( standardized[columnIdx] == null )
-			throw new IllegalArgumentException("value cannot be standardized");
+			throw new IllegalArgumentException("data column index " + columnIdx + " cannot be standardized");
 		if ( ! standardized[columnIdx].booleanValue() )
 			throw new IllegalStateException("value has not been standardized");
 		return stdObjects[sampleIdx][columnIdx];
+	}
+	public Double getStdValAsDouble(int row, int columnIdx) 
+			throws IndexOutOfBoundsException, IllegalArgumentException, IllegalStateException
+	{
+		try {
+		    Double val = (Double)getStdVal(row, columnIdx);
+            return val;
+        } catch (ClassCastException cce) {
+            throw new IllegalStateException("Unable to retrieve value as Double for column " + columnIdx);
+		}
+	}
+	public Integer getStdValAsInteger(int row, int columnIdx) 
+			throws IndexOutOfBoundsException, IllegalArgumentException, IllegalStateException
+	{
+		try {
+		    Integer val = (Integer)getStdVal(row, columnIdx);
+            return val;
+        } catch (ClassCastException cce) {
+            throw new IllegalStateException("Unable to retrieve value as Integer for column " + columnIdx);
+		}
+	}
+	public String getStdValAsString(int row, int columnIdx) 
+			throws IndexOutOfBoundsException, IllegalArgumentException, IllegalStateException
+	{
+        Object stdVal = getStdVal(row, columnIdx);
+	    return stdVal != null ? String.valueOf(stdVal) : DashboardUtils.STRING_MISSING_VALUE;
 	}
 	
 	public Object[] getStdValues(int columnIdx) 
@@ -621,6 +647,37 @@ public class StdUserDataArray extends StdDataArray {
 		return values;
 	}
 
+    public String[] getStdValuesAsString(int columnIdx)  
+			throws IndexOutOfBoundsException, IllegalArgumentException, IllegalStateException {
+		String[] values = new String[numSamples];
+		for (int row = 0; row < numSamples; row++ ) {
+            Object stdVal = getStdVal(row, columnIdx);
+		    values[row] = stdVal != null ? String.valueOf(stdVal) : DashboardUtils.STRING_MISSING_VALUE;
+		}
+		return values;
+	}
+    /** 
+     * May return nulls.
+     * 
+     * @param columnIdx
+     * @return
+     * @throws IndexOutOfBoundsException
+     * @throws IllegalArgumentException
+     * @throws IllegalStateException
+     */
+    public String[] getAllValuesAsString(int columnIdx)  
+			throws IndexOutOfBoundsException, IllegalArgumentException, IllegalStateException {
+		String[] values = new String[numSamples];
+		for (int row = 0; row < numSamples; row++ ) {
+			try {
+                Object stdVal = stdObjects[row][columnIdx];
+			    values[row] = stdVal != null ? String.valueOf(getStdVal(row, columnIdx)) : null;
+            } catch (ClassCastException cce) {
+                throw new IllegalStateException("Unable to retrieve values as integers for column " + columnIdx);
+			}
+		}
+		return values;
+	}
 	public Integer[] getStdValuesAsInteger(int columnIdx) 
 			throws IndexOutOfBoundsException, IllegalArgumentException, IllegalStateException {
 		Integer[] values = new Integer[numSamples];

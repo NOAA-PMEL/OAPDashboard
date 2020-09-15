@@ -14,17 +14,20 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import gov.noaa.pmel.dashboard.actions.DatasetChecker;
-import gov.noaa.pmel.dashboard.actions.checker.ProfileDatasetChecker;
+import gov.noaa.pmel.dashboard.datatype.DashDataType;
+import gov.noaa.pmel.dashboard.datatype.DoubleDashDataType;
 import gov.noaa.pmel.dashboard.datatype.KnownDataTypes;
 import gov.noaa.pmel.dashboard.dsg.DsgMetadata;
 import gov.noaa.pmel.dashboard.dsg.DsgNcFile;
 import gov.noaa.pmel.dashboard.dsg.StdUserDataArray;
 import gov.noaa.pmel.dashboard.ferret.FerretConfig;
+import gov.noaa.pmel.dashboard.ferret.FerretConfig.Action;
 import gov.noaa.pmel.dashboard.ferret.SocatTool;
 import gov.noaa.pmel.dashboard.server.DashboardConfigStore;
 import gov.noaa.pmel.dashboard.server.DashboardServerUtils;
 import gov.noaa.pmel.dashboard.shared.DashboardDatasetData;
 import gov.noaa.pmel.dashboard.shared.DashboardUtils;
+import gov.noaa.pmel.dashboard.shared.DataColumnType;
 import gov.noaa.pmel.dashboard.shared.FeatureType;
 import gov.noaa.pmel.dashboard.shared.PreviewPlotImage;
 
@@ -39,7 +42,6 @@ public class PreviewPlotsHandler {
 	KnownDataTypes knownDataFileTypes;
 	FerretConfig ferretConfig;
     private DashboardConfigStore _configStore;
-    private FeatureType featureType;
 
 	private static Logger logger = LogManager.getLogger(PreviewPlotsHandler.class);
 	
@@ -159,48 +161,43 @@ public class PreviewPlotsHandler {
 	 * 		if there is an error generating the preview DSG file, or
 	 * 		if there is an error generating the preview data plots 
 	 */
-	public void createPreviewPlots(String datasetId, String timetag) 
+	public void createPreviewPlots(String datasetId, String timetag)  
 										throws IllegalArgumentException {
-		String stdId = DashboardServerUtils.checkDatasetID(datasetId);
-		logger.debug("reading data for " + stdId);
-
-		// Get the complete original cruise data
-		DashboardDatasetData dataset = dataHandler.getDatasetDataFromFiles(stdId, 0, -1);
-        featureType = dataset.getFeatureType();
+        createPreviewPlots(_configStore.getDataFileHandler().getDatasetDataFromFiles(datasetId, 0, -1),
+                                  timetag);
+	}
+	
+	public void createPreviewPlots(DashboardDatasetData dataset, String timetag) 
+										throws IllegalArgumentException {
+        FeatureType featureType = dataset.getFeatureType();
 		DatasetChecker dataChecker = _configStore.getDashboardDatasetChecker(featureType);
 
-		logger.debug("standardizing data for " + stdId);
+        String datasetId = dataset.getRecordId();
+		logger.debug("standardizing data for " + datasetId);
 
 		// Just create a minimal DsgMetadata to create the preview DSG file
 		DsgMetadata dsgMData = new DsgMetadata(knownMetadataTypes);
-		dsgMData.setDatasetId(stdId);
+		dsgMData.setDatasetId(datasetId);
 		dsgMData.setVersion(dataset.getVersion());
 
 		// TODO: update DsgMetadata with metadata derived from data
 		// Although probably not important for the preview plots.
 		StdUserDataArray stdUserData = dataChecker.standardizeDataset(dataset, null);
 		if ( DashboardUtils.CHECK_STATUS_UNACCEPTABLE.equals(dataset.getDataCheckStatus()) )
-			throw new IllegalArgumentException(stdId + ": unacceptable; check data check error messages " +
+			throw new IllegalArgumentException(datasetId + ": unacceptable; check data check error messages " +
 										"(missing lon/lat/depth/time or uninterpretable values)");
 
 		// Get the preview DSG filename, creating the parent directory if it does not exist
-		File dsgDir = getDatasetPreviewDsgDir(stdId);
+		File dsgDir = getDatasetPreviewDsgDir(datasetId);
         logger.debug("Preview DSG dir:"+ dsgDir);
-        DsgNcFile dsgFile;
-        if ( FeatureType.PROFILE.equals(dataset.getFeatureType())) {
-    		dsgFile = DsgNcFile.createProfileFile(dsgDir, stdId + "_" + timetag + ".nc");
-        } else if ( FeatureType.TRAJECTORY.equals(dataset.getFeatureType())) {
-    		dsgFile = DsgNcFile.createTrajectoryFile(dsgDir, stdId + "_" + timetag + ".nc");
-        } else {
-            throw new IllegalArgumentException("Cannot create preview plots for feature type: " + dataset.getFeatureTypeName());
-        }
-
+        String dsgFilename = datasetId + "_" + timetag + ".nc";
+        DsgNcFile dsgFile = DsgNcFile.newDsgFile(dataset.getFeatureType(), dsgDir, dsgFilename);
 		logger.debug("creating preview DSG file " + dsgFile.getPath());
 
 		// Create the preview NetCDF DSG file
 		try {
 			dsgFile.create(dsgMData, stdUserData, knownDataFileTypes);
-			createSymlink(dsgFile, dsgDir, stdId);
+			createSymlink(dsgFile, dsgDir, datasetId);
 		} catch (Exception ex) {
             logger.warn(ex, ex);
             ex.printStackTrace();
@@ -226,11 +223,14 @@ public class PreviewPlotsHandler {
 		logger.debug("generating preview plots for " + dsgFile.getPath());
 
 		// Get the location for the preview plots, creating the directory if it does not exist
-		File cruisePlotsDir = getDatasetPreviewPlotsDir(stdId);
+		File cruisePlotsDir = getDatasetPreviewPlotsDir(datasetId);
 		String cruisePlotsDirname = cruisePlotsDir.getPath();
 		File cruiseDsgDir = getDatasetPreviewDsgDir(datasetId);
-		String dsgFileName = cruiseDsgDir.getAbsolutePath() + "/" + stdId+".nc";
+		String dsgFileName = cruiseDsgDir.getAbsolutePath() + "/" + datasetId+".nc";
 
+        // get the variables to plot
+		List<String>plottableVarNames = getVariablesToPlot(dataset, stdUserData);
+		
 		boolean GENERATE_PLOTS = true;
 		if ( GENERATE_PLOTS ) {
 			// Call Ferret to generate the plots from the preview DSG file
@@ -245,10 +245,11 @@ public class PreviewPlotsHandler {
 			scriptArgs.add(cruisePlotsDirname);
 			scriptArgs.add(timetag);
             FeatureType dataFeatureType = dataset.getFeatureType();
-            FerretConfig.Action action = dataFeatureType.equals(FeatureType.PROFILE) ?
-                                            FerretConfig.Action.PLOTS :
-                                            FerretConfig.Action.trajectory_PLOTS;
-			tool.init(scriptArgs, stdId, action);
+            FerretConfig.Action action = getFerretAction(dataFeatureType);
+            if ( action == null ) {
+                throw new IllegalArgumentException("No plotting action available for feature type: " + dataFeatureType);
+            }
+			tool.init(scriptArgs, datasetId, action, dataset, stdUserData, plottableVarNames);
             try {
     			tool.run();
             } catch (Exception ex) {
@@ -262,7 +263,95 @@ public class PreviewPlotsHandler {
 		logger.debug("preview plots generated in " + cruisePlotsDirname);
 	}
 
-	private void clearDir(File cruisePlotsDir) {
+	/**
+     * @param dataset
+     * @return
+     */
+    private List<String> getVariablesToPlot(DashboardDatasetData dataset, StdUserDataArray stdData) {
+        List<String> dataVariables = new ArrayList<>();
+        List<DataColumnType> columns = dataset.getDataColTypes();
+        for (int col = 0; col < columns.size(); col++ ) {
+            DataColumnType dcColumnType = columns.get(col);
+            DashDataType<?> dashColumnType = knownDataFileTypes.getDataType(dcColumnType);
+            if ( dashColumnType == null ) {
+                dashColumnType = _configStore.getKnownUserDataTypes().getDataType(dcColumnType);
+            }
+            if ( dashColumnType != null 
+                 && dashColumnType instanceof DoubleDashDataType
+                 && stdData.isStandardized(col)
+                 && ! excluded(dashColumnType)) {
+                dataVariables.add(dcColumnType.getVarName());
+            }
+        }
+        return dataVariables;
+    }
+
+//    private List<String> getVariablesToPlot(DashboardDatasetData dataset, StdUserDataArray stdData) {
+//        List<String> dataVariables = new ArrayList<>();
+//        for (DataColumnType dcColumnType : dataset.getDataColTypes()) {
+//            DashDataType<?> dashColumnType = knownDataFileTypes.getDataType(dcColumnType);
+//            if ( dashColumnType == null ) {
+//                dashColumnType = _configStore.getKnownUserDataTypes().getDataType(dcColumnType);
+//            }
+//            if ( dashColumnType != null ) {
+//                DashDataType<?> stdUserColumnType = stdData.findDataColumn(dashColumnType.getVarName());
+//                if ( stdUserColumnType.isS)
+//                 && dashColumnType instanceof DoubleDashDataType
+//                 && ! excluded(dashColumnType)) {
+//                dataVariables.add(dcColumnType.getVarName());
+//            }
+//        }
+//        return dataVariables;
+//    }
+
+    static List<DoubleDashDataType> excludedVars = Arrays.asList(new DoubleDashDataType[] {
+        DashboardServerUtils.TIME,
+        DashboardServerUtils.LATITUDE,
+        DashboardServerUtils.LONGITUDE,
+        DashboardServerUtils.SAMPLE_DEPTH,
+        DashboardServerUtils.CTD_PRESSURE,
+        DashboardServerUtils.WESTERNMOST_LONGITUDE,
+        DashboardServerUtils.EASTERNMOST_LONGITUDE,
+        DashboardServerUtils.SOUTHERNMOST_LATITUDE,
+        DashboardServerUtils.NORTHERNMOST_LATITUDE,
+        DashboardServerUtils.TIME_COVERAGE_START,
+        DashboardServerUtils.TIME_COVERAGE_END,
+        DashboardServerUtils.SECOND_OF_MINUTE,
+        DashboardServerUtils.DAY_OF_YEAR,
+        DashboardServerUtils.SECOND_OF_DAY
+    });
+    /**
+     * @param dashColumnType
+     * @return
+     */
+    private boolean excluded(DashDataType<?> dashColumnType) {
+        return excludedVars.contains(dashColumnType);
+    }
+
+    /**
+     * @param dataFeatureType
+     * @return
+     */
+    private static Action getFerretAction(FeatureType dataFeatureType) {
+        switch (dataFeatureType) {
+            case PROFILE:
+                return FerretConfig.Action.profile_PLOTS;
+            case TIMESERIES:
+                return FerretConfig.Action.timeseries_PLOTS;
+            case TRAJECTORY:
+                return FerretConfig.Action.trajectory_PLOTS;
+            case TIMESERIES_PROFILE:
+                return FerretConfig.Action.timeseriesProfile_PLOTS;
+            case TRAJECTORY_PROFILE:
+                return FerretConfig.Action.trajectoryProfile_PLOTS;
+            case UNSPECIFIED:
+            case OTHER:
+            default:
+                return null;
+        }
+    }
+
+    private void clearDir(File cruisePlotsDir) {
 		for (File f : cruisePlotsDir.listFiles()) {
 			if ( f.isDirectory()) {
 				clearDir(f);
@@ -288,7 +377,50 @@ public class PreviewPlotsHandler {
 		}
 	}
 
-	public List<List<PreviewPlotImage>> getPreviewPlots(final String datasetId) {
+	public List<List<PreviewPlotImage>> getPreviewPlots(final String datasetId, FeatureType featureType) {
+        switch(featureType) {
+            case TIMESERIES:
+                return getSimplePreviewPlots(datasetId);
+            case TRAJECTORY:
+                return getSimplePreviewPlots(datasetId);
+            case PROFILE:
+                return getProfilePreviewPlots(datasetId);
+            case TIMESERIES_PROFILE:
+            case TRAJECTORY_PROFILE:
+            case OTHER:
+            case UNSPECIFIED:
+            default:
+                throw new IllegalArgumentException("DSG type " + featureType + " not supported.");
+        }
+	}
+	/**
+     * @param datasetId
+     * @return
+     */
+    private List<List<PreviewPlotImage>> getSimplePreviewPlots(String datasetId) {
+		List<List<PreviewPlotImage>> plotTabs = new ArrayList<>();
+		String stdId = DashboardServerUtils.checkDatasetID(datasetId);
+		String cruisePlotsDirname = getDatasetPreviewPlotsDir(stdId).getPath();
+		File cruisePlotsDir = new File(cruisePlotsDirname);
+		ArrayList<String> plotFiles = new ArrayList<>(Arrays.asList(cruisePlotsDir.list(new FilenameFilter() {
+			@Override
+			public boolean accept(File dir, String name) {
+				return name.startsWith(datasetId) && name.endsWith(".gif") || name.endsWith(".png");
+			}
+		})));
+		HashMap<String, PreviewPlotImage> plotNameMap = buildNameMap(plotFiles);
+		logger.debug("Overview---");
+		List<PreviewPlotImage> tabList = // featureType.equals(FeatureType.PROFILE) ? 
+		                                    getOverviewPlots(plotNameMap, datasetId); //  :
+//		                                    buildPlotList(plotNameMap);
+		plotTabs.add(tabList);
+		logger.debug("General---");
+		tabList = buildPlotList(plotNameMap);
+		plotTabs.add(tabList);
+        return plotTabs;
+    }
+
+    public List<List<PreviewPlotImage>> getProfilePreviewPlots(final String datasetId) {
 		List<List<PreviewPlotImage>> plotTabs = new ArrayList<>();
 		String stdId = DashboardServerUtils.checkDatasetID(datasetId);
 		String cruisePlotsDirname = getDatasetPreviewPlotsDir(stdId).getPath();
@@ -302,9 +434,9 @@ public class PreviewPlotsHandler {
 		HashMap<String, PreviewPlotImage> plotNameMap = buildNameMap(plotFiles);
 		
 		logger.debug("Overview---");
-		List<PreviewPlotImage> tabList = featureType.equals(FeatureType.PROFILE) ? 
-		                                    getOverviewPlots(plotNameMap, datasetId) :
-		                                    buildPlotList(plotNameMap);
+		List<PreviewPlotImage> tabList = // featureType.equals(FeatureType.PROFILE) ? 
+		                                    getOverviewPlots(plotNameMap, datasetId); //  :
+//		                                    buildPlotList(plotNameMap);
 		plotTabs.add(tabList);
 		logger.debug("General---");
 		tabList = getGeneralPlots(plotNameMap, datasetId);
@@ -378,19 +510,22 @@ public class PreviewPlotsHandler {
 		checkAddAndRemove(plotName, plotNameMap, plotList);
 		plotName = plotName(datasetId, "time", "show_time");
 		checkAddAndRemove(plotName, plotNameMap, plotList);
-		plotName = plotName(datasetId, "ctd_pressure", "sample_depth");
+		plotName = plotName(datasetId, "sample_pressure", "sample_depth");
 		checkAddAndRemove(plotName, plotNameMap, plotList);
 		return plotList;
 	}
 
+    private static final String pressureVarName = DsgNcFile.SAMPLE_PRESSURE_VARNAME;
+    private static final String depthVarName = DsgNcFile.SAMPLE_DEPTH_VARNAME;
+    
 	private static List<PreviewPlotImage> getGeneralPlots(HashMap<String, PreviewPlotImage> plotNameMap, String datasetId) {
 		List<PreviewPlotImage> plotList = new ArrayList<>();
-		String pressureDepth = "ctd_pressure";
-		String plotName = plotName(datasetId, "ctd_temperature", "ctd_pressure");
+		String pressureDepth = pressureVarName;
+		String plotName = plotName(datasetId, "ctd_temperature", pressureVarName);
 		if ( ! checkAddAndRemove(plotName, plotNameMap, plotList)) {
-			plotName = plotName(datasetId, "ctd_temperature", "sample_depth");
+			plotName = plotName(datasetId, "ctd_temperature", depthVarName);
 			if ( checkAddAndRemove(plotName, plotNameMap, plotList)) {
-				pressureDepth = "sample_depth";
+				pressureDepth = depthVarName;
 			}
 		}
 		plotName = plotName(datasetId, "ctd_salinity", pressureDepth);
