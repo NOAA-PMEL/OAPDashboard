@@ -48,9 +48,9 @@ public class PreviewPlotImage implements Serializable, IsSerializable {
 	}				
 	private static String specialCase(String name) {
 		if ( "map".equals(name)) {
-			return "Profile location map";
+			return "Location map";
 		} else if ( name.indexOf("show_time") >= 0 ) {
-			return "Profile dates";
+			return "Observation dates";
 		}
 		return name;
 	}

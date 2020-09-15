@@ -1,0 +1,148 @@
+\cancel mode verify
+!
+! plot_pad.jnl
+!  Draw a plot with the region expanded either automatically
+!  or by a fixed amount in either direction
+!  If the resulting plot has axes labeled with longitudeand 
+!  latitude, then auto-padding adds at least 5 degrees for a better 
+!  map plot and the plot is not extended beyond -90:90 latitude.
+!
+! usage:           arg1       arg2   arg3
+!  GO plot_pad  plot_command [hpad] [vpad] 
+!
+!  Arguments
+!  arg1  The plot command, in quotes. Any plot command will work except for WIRE. 
+!         however this is intended for ($pcommand)plots where otherwise the axes
+!         are drawn so that points are often right on the axis.
+!  arg2  Optional padding to use in the horizontal direction, in units of the horizontal axis
+!  arg3  Optional padding to use in the vertical direction, in units of the vertical axis
+!
+! Examples
+!   go plot_pad "PLOT/VS xpts, ypts", 5, 2	! PLOT/VS with specified padding
+!   go plot_pad "PLOT traj_temperature"		! data on a DSG trajectory, auto-padding
+!   go plot_pad "RIBBON/VS temp, sal, chlor"	! Scatter plot of discrete data 
+!   go plot_pad "RIBBON/VS time, depth, temp"	! a Z-T plot of discrete data
+
+! Get the arguments
+query/ignore $1%0|*>1|<GO plot_pad "plot command" [hpad] [vpad]
+
+LET min_pad = 2 ! degree
+
+DEFINE SYMBOL pcommand = ($1)
+
+LET phpad = 0
+LET pvpad = 0
+IF ($2"0|*>1") THEN LET phpad = ($2"0")
+IF ($3"0|*>1") THEN LET pvpad = ($3"0")
+
+IF `phpad LT 0` THEN LET phpad = 0
+IF `pvpad LT 0` THEN LET pvpad = 0
+
+! Draw a plot to have Ferret find the ranges
+
+($pcommand)
+
+! The axis min and max 
+
+LET phmin = ($xaxis_min)
+LET phmax = ($xaxis_max)
+
+LET pvmin = ($yaxis_min)
+LET pvmax = ($yaxis_max)
+
+! Is the horizontal axis labeled with longitude?
+
+LET ph_is_lon = 0
+IF ($labx"0|*>1") THEN 
+   LET ph_is_lon = `STRINDEX(UPCASE("($labx)"), "LON") GT 0` 
+ELSE
+   DEFINE SYMBOL args = `SUBSTRING("($pcommand)", STRINDEX("($pcommand)", " "), STRLEN("($pcommand)"))`
+   LET sepIdx = `STRINDEX("($args)", ",")`
+   IF `sepIdx EQ 0` THEN LET sepIdx = `STRINDEX("($args)", " ")`
+   IF `sepIdx GT 0` THEN
+	  DEFINE SYMBOL xpts = `SUBSTRING("($args)", 0, sepIdx)`
+	  say xpts ($xpts)
+	  DEFINE SYMBOL ypts = `SUBSTRING("($args)", sepIdx, STRLEN("($args)"))`
+	  say ypts ($ypts)
+   ELSE
+      DEFINE SYMBOL xpts = ($args)
+	  say xpts ($xpts)
+	  DEFINE SYMBOL ypts = ""
+   ENDIF
+   LET ph_is_lon = `STRINDEX(UPCASE("($xpts)"), "LON") GT 0` 
+ENDIF
+
+! Is the vertical axis labeled with latitude?
+
+LET pv_is_lat = 0
+IF ($laby"0|*>1") THEN 
+   LET pv_is_lat = `STRINDEX( UPCASE("($laby)"), "LAT") GT 0` 
+ELSE
+   LET pv_is_lat = `STRINDEX( UPCASE("($ypts)"), "LAT") GT 0` 
+ENDIF
+
+! auto-pad by 10%, or if longitude/latitude at least 5 degrees above and below data range 
+
+! Horizontal-axis padding
+
+IF `phpad EQ 0` THEN
+
+   LET phpad = (phmax - phmin)/10
+   IF `ph_is_lon` THEN LET phpad = MAX(`phpad`, `min_pad`)
+
+ENDIF
+
+LET phlo = phmin - phpad
+LET phhi = phmax + phpad
+
+! Vertical-axis padding
+
+
+IF `pvpad EQ 0` THEN
+
+   LET pvpad = (pvmax - pvmin)/10
+   IF `pv_is_lat` THEN LET phpad = MAX(`phpad`, `min_pad`)
+
+ENDIF
+
+
+LET pvlo = pvmin - pvpad
+LET pvhi = pvmax + pvpad
+
+! IF it's latitude, stay within [-90,90]
+
+IF `pv_is_lat` THEN 
+
+   LET pvlo = `MAX(-90, pvlo)`
+   LET pvhi = `MIN(90, pvhi)`
+
+ENDIF
+
+! Insert /HLIM and /VLIM into the plot command
+
+LET pput = STRINDEX("($pcommand)", "/")
+IF `pput EQ 0` THEN LET pput = STRINDEX("($pcommand)", " ")
+DEFINE SYMBOL pc1 = `SUBSTRING("($pcommand)", 1, pput-1)`
+DEFINE SYMBOL pc2 = `SUBSTRING("($pcommand)", pput, STRLEN("($pcommand)") )`
+DEFINE SYMBOL pc_extend = ($pc1)/HLIM=`phlo,p=6`:`phhi,p=6`/VLIM=`pvlo,p=6`:`pvhi,p=6` ($pc2)
+
+($pc_extend)
+
+! Define some symbols with the x and y range for use in further plots such as fland.
+
+DEFINE SYMBOL region_h_lo = `phlo,p=6`
+DEFINE SYMBOL region_h_hi = `phhi,p=6`
+DEFINE SYMBOL region_v_lo = `pvlo,p=6`
+DEFINE SYMBOL region_v_hi = `pvhi,p=6`
+
+say Symbols for horizontal and vertial region used:
+SHOW SYMBOL region_h_lo, region_h_hi
+SHOW SYMBOL region_v_lo, region_v_hi
+
+! Define some symbols with the x and y range for use in further plots such as fland.
+DEFINE SYMBOL region_x_range = `phhi-phlo`
+DEFINE SYMBOL region_y_range = `pvhi-pvlo`
+say region_x_range and region_y_range are defined as ($region_x_range), ($region_y_range)
+
+set mode/last verify
+

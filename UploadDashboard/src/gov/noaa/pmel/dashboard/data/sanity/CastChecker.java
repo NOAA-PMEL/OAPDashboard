@@ -444,7 +444,7 @@ public class CastChecker {
 		Integer depthCol = stda.lookForDataColumnIndex(columnName);
 		if ( depthCol == null ) {
 			logger.info("No sample depth column.  Checking for water pressure column.");
-            columnName = DashboardUtils.WATER_PRESSURE_VARNAME;
+            columnName = DashboardUtils.CTD_PRESSURE_VARNAME;
     		depthCol = stda.lookForDataColumnIndex(columnName);
             if ( depthCol == null ) {
                 // The critical error of their being no pressure or depth column is added in ProfileDatasetChecker.checkRequiredColumns()
@@ -506,7 +506,7 @@ public class CastChecker {
 		}
         int start = castRows.get(0).intValue();
         int last = castRows.get(castRows.size()-1).intValue() + 1;
-		Integer pressureCol = stda.lookForDataColumnIndex(DashboardUtils.WATER_PRESSURE_VARNAME);
+		Integer pressureCol = stda.lookForDataColumnIndex(DashboardUtils.CTD_PRESSURE_VARNAME);
 		if ( pressureCol == null ) {
 			logger.warn("No pressure column found. Not doing pressure-depth consistency check.");
 			return;

@@ -7,7 +7,7 @@ import java.io.IOException;
 
 import org.junit.Test;
 
-import gov.noaa.pmel.dashboard.client.DatasetPreviewPage;
+import gov.noaa.pmel.dashboard.client.DatasetPreviewProfilePage;
 import gov.noaa.pmel.dashboard.handlers.PreviewPlotsHandler;
 import gov.noaa.pmel.dashboard.server.DashboardConfigStore;
 
@@ -41,9 +41,9 @@ public class PreviewPlotsHandlerTest {
 
 		File plotFile;
 		for ( String imgName : new String[] {
-				DatasetPreviewPage.LAT_VS_LON_IMAGE_NAME,
-				DatasetPreviewPage.LAT_LON_IMAGE_NAME,
-				DatasetPreviewPage.SAMPLE_VS_TIME_IMAGE_NAME } ) {
+				DatasetPreviewProfilePage.LAT_VS_LON_IMAGE_NAME,
+				DatasetPreviewProfilePage.LAT_LON_IMAGE_NAME,
+				DatasetPreviewProfilePage.SAMPLE_VS_TIME_IMAGE_NAME } ) {
 			plotFile = new File(plotsDir, EXPOCODE + "_" + imgName + "_" + timetag + ".gif");
 			assertTrue( "Plot for " + imgName + " does not exist", plotFile.exists() );
 			plotFile.delete();

@@ -757,14 +757,21 @@ public class DashboardServices extends RemoteServiceServlet implements Dashboard
 		
 		boolean generatePlots = force || checkNeedToGeneratePlots(datasetId);
 		
+//		String stdId = DashboardServerUtils.checkDatasetID(datasetId);
+		logger.debug("reading data for " + datasetId);
+
+		// Get the complete original cruise data
+		DashboardDataset dataset = configStore.getDataFileHandler().getDatasetFromInfoFile(datasetId);
+        
 		// Generate the preview plots for this dataset
 		// TODO: refactor so starts this in a separate thread when firstCall is true and 
 		//       returns false, then when gets called again with firstCall is false for
 		//       a status update, returns false if still working and true if all plots are done
 		if ( generatePlots ) {
-			configStore.getPreviewPlotsHandler().createPreviewPlots(datasetId, timetag);
+    		dataset = configStore.getDataFileHandler().getDatasetDataFromFiles(datasetId, 0, -1);
+			configStore.getPreviewPlotsHandler().createPreviewPlots((DashboardDatasetData)dataset, timetag);
 		}
-		List<List<PreviewPlotImage>> plots = configStore.getPreviewPlotsHandler().getPreviewPlots(datasetId);
+		List<List<PreviewPlotImage>> plots = configStore.getPreviewPlotsHandler().getPreviewPlots(datasetId, dataset.getFeatureType());
 		return new PreviewPlotResponse(plots, true);
 	}
 
@@ -802,15 +809,17 @@ public class DashboardServices extends RemoteServiceServlet implements Dashboard
 	@Override
 	public void submitDatasetsForQC(String pageUsername, HashSet<String> idsSet, String archiveStatus, 
 			String timestamp, boolean repeatSend) throws IllegalArgumentException {
-		// Get the dashboard data store and current username, and validate that username
-		if ( ! validateRequest(pageUsername) ) 
-			throw new IllegalArgumentException("Invalid user request");
-
-		// Submit the datasets for QC and possibly send to be archived
-		configStore.getDashboardDatasetSubmitter().submitDatasetsForQC(idsSet, 
-				archiveStatus, timestamp, repeatSend, username);
-		logger.info("datasets " + idsSet.toString() + 
-				" submitted by " + username);
+        logger.warn(pageUsername + "calling submitForQC");
+        throw new IllegalStateException("SubmitForQC: Not implemented.");
+//		// Get the dashboard data store and current username, and validate that username
+//		if ( ! validateRequest(pageUsername) ) 
+//			throw new IllegalArgumentException("Invalid user request");
+//
+//		// Submit the datasets for QC and possibly send to be archived
+//		configStore.getDashboardDatasetSubmitter().submitDatasetsForQC(idsSet, 
+//				archiveStatus, timestamp, repeatSend, username);
+//		logger.info("datasets " + idsSet.toString() + 
+//				" submitted by " + username);
 	}
 
 	@Override

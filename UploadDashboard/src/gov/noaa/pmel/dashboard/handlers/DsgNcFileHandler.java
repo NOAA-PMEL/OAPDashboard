@@ -16,14 +16,16 @@ import java.util.ArrayList;
 import gov.noaa.pmel.dashboard.datatype.KnownDataTypes;
 import gov.noaa.pmel.dashboard.dsg.DsgMetadata;
 import gov.noaa.pmel.dashboard.dsg.DsgNcFile;
-import gov.noaa.pmel.dashboard.dsg.DsgNcFile.DsgFileType;
 import gov.noaa.pmel.dashboard.dsg.StdDataArray;
 import gov.noaa.pmel.dashboard.dsg.StdUserDataArray;
 import gov.noaa.pmel.dashboard.ferret.FerretConfig;
 import gov.noaa.pmel.dashboard.ferret.SocatTool;
+import gov.noaa.pmel.dashboard.server.DashboardConfigStore;
 import gov.noaa.pmel.dashboard.server.DashboardServerUtils;
+import gov.noaa.pmel.dashboard.shared.DashboardDataset;
 import gov.noaa.pmel.dashboard.shared.DashboardDatasetData;
 import gov.noaa.pmel.dashboard.shared.DashboardUtils;
+import gov.noaa.pmel.dashboard.shared.FeatureType;
 
 
 /**
@@ -114,10 +116,13 @@ public class DsgNcFileHandler {
 	 * @throws IllegalArgumentException
 	 * 		if the dataset ID is invalid, or
 	 * 		if problems creating the parent subdirectory
+	 * @throws IOException 
 	 */
-	public DsgNcFile getDsgNcFile(String datasetId) throws IllegalArgumentException {
+	public DsgNcFile getDsgNcFile(String datasetId) throws IllegalArgumentException, IOException {
 		// Check and standardize the dataset ID
 		String stdId = DashboardServerUtils.checkDatasetID(datasetId);
+        DashboardDataset dd = DashboardConfigStore.get(false).getDataFileHandler().getDatasetFromInfoFile(stdId);
+        FeatureType dsgType = dd.getFeatureType();
 		// Make sure the parent directory exists
 		File parentDir = new File(dsgFilesDir, stdId.substring(0,4));
 		if ( parentDir.exists() ) {
@@ -130,7 +135,7 @@ public class DsgNcFileHandler {
 			throw new IllegalArgumentException("Unable to create the new subdirectory " + 
 					parentDir.getPath());
 		}
-		return DsgNcFile.createProfileFile(parentDir, stdId + DSG_FILE_SUFFIX); // XXX hard-coded profile type
+		return DsgNcFile.newDsgFile(dsgType, parentDir, stdId + DSG_FILE_SUFFIX); // XXX hard-coded profile type
 	}
 
 	/**
@@ -147,9 +152,10 @@ public class DsgNcFileHandler {
 	 * @throws IllegalArgumentException
 	 * 		if there are problems with the metadata or data given, or
 	 * 		if there are problems creating or writing the full-data DSG file
+	 * @throws IOException 
 	 */
 	public void saveDatasetDsg(DsgMetadata metadata, 
-	                           StdUserDataArray stdUserData) throws IllegalArgumentException {
+	                           StdUserDataArray stdUserData) throws IllegalArgumentException, IOException {
 		// Get the location and name for the NetCDF DSG file
 		DsgNcFile dsgFile = getDsgNcFile(stdUserData.getDatasetName());
 
@@ -237,8 +243,9 @@ public class DsgNcFileHandler {
 	 * @throws IllegalArgumentException
 	 * 		if the dataset ID is invalid, or 
 	 * 		if unable to delete one of the files 
+	 * @throws IOException 
 	 */
-	public boolean deleteCruise(String datasetId) throws IllegalArgumentException {
+	public boolean deleteCruise(String datasetId) throws IllegalArgumentException, IOException {
 		boolean fileDeleted = false;
 		File dsgFile = getDsgNcFile(datasetId);
 		if ( dsgFile.exists() ) {

@@ -40,8 +40,12 @@ public class FerretConfig extends Document {
 		/**
 		 * Create the preview plots
 		 */
-		PLOTS,
-        trajectory_PLOTS
+        timeseries_PLOTS,
+        trajectory_PLOTS,
+		profile_PLOTS,
+        timeseriesProfile_PLOTS,
+        trajectoryProfile_PLOTS
+//        , PLOTS
 	}
 
 	/**
@@ -97,13 +101,10 @@ public class FerretConfig extends Document {
                 }
                 env.put(name,value);
             }
-            if (env != null) {
-                RuntimeEnvironment runenv = new RuntimeEnvironment();
-                runenv.setBaseDir(base_dir);
-                runenv.setParameters(env);
-                return runenv;
-                
-            }
+            RuntimeEnvironment runenv = new RuntimeEnvironment();
+            runenv.setBaseDir(base_dir);
+            runenv.setParameters(env);
+            return runenv;
         }
         return null;
     }
@@ -238,6 +239,9 @@ public class FerretConfig extends Document {
         }
         return "";
     }
+    public String getTemplatesDirectory() {
+        return this.getRootElement().getChild("invoker").getAttributeValue("templates_directory");
+    }
     /**
      * This is the first (and only script) that will get run by the tool.
      * 
@@ -252,10 +256,12 @@ public class FerretConfig extends Document {
         		driver = invoker.getAttributeValue("compute_driver");
         	else if ( actionEnum.equals(Action.DECIMATE) )
         		driver = invoker.getAttributeValue("decimate_driver");
-        	else if ( actionEnum.equals(Action.PLOTS) )
-        		driver = invoker.getAttributeValue("plots_driver");
+        	else if ( actionEnum.equals(Action.profile_PLOTS) )
+        		driver = invoker.getAttributeValue("profile_plots_driver");
         	else if ( actionEnum.equals(Action.trajectory_PLOTS) )
         		driver = invoker.getAttributeValue("trajectory_plots_driver");
+        	else if ( actionEnum.equals(Action.timeseries_PLOTS) )
+        		driver = invoker.getAttributeValue("timeseries_plots_driver");
         	else
         		driver = null;
             if ( driver != null ) {
