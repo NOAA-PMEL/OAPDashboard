@@ -172,6 +172,9 @@ IF `STRCMP("($day_4_fourth)", "($day_3_fourth)") EQ 0` THEN LET dates_same = 1
 ! second line under the lables.
 
 IF `dates_same GT 0` THEN
+
+	let tpts = ck_tpts
+
    IF `PLMlabel LT 2` THEN LET PLMlabel = 2
 
    LET ttime = `($TLAB_tstart)+0*($TLAB_tstep)`

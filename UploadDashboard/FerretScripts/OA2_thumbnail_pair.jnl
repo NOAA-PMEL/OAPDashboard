@@ -7,6 +7,8 @@
 
 define symbol plotname = ($fnamepath)_($1)__($2).($plotextn)
 
+Say thumbnail_pair ($1) - ($2)
+
 ! Check for existence of requested variables, make a blank plot
 ! if one or both are missing. Below we will also test for valid
 ! data in one or both variables and label that on the plot
@@ -40,14 +42,25 @@ IF `($shape1"0|($shape2)>1|*>0") EQ 0` THEN
 ENDIF
 DEFINE SYMBOL ishape = ($shape1"|POINT>i|X>i|Y>j|Z>k|T>l|E>m|F>n")
 
-
 let ngood = MIN(($1)[($ishape)=@ngd], ($2)[($ishape)=@ngd]); say `ngood`
 
 cancel symbol vlimit
-IF ($2"0|sample_depth>1|*>0") then
-   ppl %range 0 `sample_depth[i=@max]`
-ELIF ($2"0|sample_pressure>1|*>0") then
-   ppl %range 0 `sample_pressure[i=@max]`
+
+IF ($2"0|sample_pressure>1|*>0") then
+   let down_var = sample_pressure
+ELIF ($2"0|sample_depth>1|*>0") then
+   let down_var = sample_depth
+ELIF `down_var,return=isReady` then
+   CAN VAR down_var
+ENDIF
+
+show variable down_var
+
+IF `down_var,return=isReady` then
+   say Depth plot ($1) v ($2)
+
+   ppl %range 0 `down_var[i=@max]`
+   ! ppl %range 0 `sample_depth[i=@max]`
 
    define symbol vlimit = /vlim=($PPL$RANGE_HIGH):0
    define symbol vlimit = /vlim=240:0
@@ -105,6 +118,7 @@ ELIF ($2"0|sample_pressure>1|*>0") then
      let i1 = `i2+1`)
 
 else
+   say Property property ($1) - ($2)
    plot/vs/color=red/sym=18/set ($1), ($2)
       ppl labset,,.16,.16,.16   ! larger labels
       ppl axlsze,.12,.12
