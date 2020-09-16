@@ -35,7 +35,6 @@ define symbol palette="pale_green_blue"
 let units_str = "`($1),return=units`"
 IF `STRINDEX(units_str, "seconds") GT 0` THEN
   go plot_pad "plot/vs longitude, latitude"
-  say OA_tp land_palette: ($land_palette)
   GO oap_preview_fland ($land_palette)
   plot/over/key/pal=($palette)/nolab/symbol=boxfill/siz=0.06/SET ($1)
    annotate/norm/x=0.5/y=-0.15/halign=0 "Colored by sample time"

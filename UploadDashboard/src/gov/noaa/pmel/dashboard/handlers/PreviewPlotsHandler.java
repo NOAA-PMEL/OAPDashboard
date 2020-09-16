@@ -536,7 +536,7 @@ public class PreviewPlotsHandler {
 		checkAddAndRemove(plotName, plotNameMap, plotList);
 		plotName = plotName(datasetId, "alkalinity", pressureDepth);
 		checkAddAndRemove(plotName, plotNameMap, plotList);
-		plotName = plotName(datasetId, "ctd_temperature", "ctd_salinity");
+		plotName = plotName(datasetId, "ctd_salinity", "ctd_temperature");
 		checkAddAndRemove(plotName, plotNameMap, plotList);
 		plotName = plotName(datasetId, "ctd_density", pressureDepth);
 		checkAddAndRemove(plotName, plotNameMap, plotList);

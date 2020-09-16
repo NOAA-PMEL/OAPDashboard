@@ -81,11 +81,11 @@ go OA2_thumbnail_pair ctd_density, ($pres_or_depth)
 go OA2_thumbnail_pair ctd_oxygen, ($pres_or_depth)
 go OA2_thumbnail_pair inorganic_carbon, ($pres_or_depth)
 go OA2_thumbnail_pair alkalinity, ($pres_or_depth)
+go OA2_thumbnail_pair ctd_salinity, ctd_temperature
 
 ! Biogeochemistry
 go OA2_thumbnail_pair ctd_salinity, alkalinity 
 go OA2_thumbnail_pair ctd_oxygen, inorganic_carbon
-go OA2_thumbnail_pair ctd_temperature, ctd_salinity
 go OA2_thumbnail_pair nitrate, inorganic_carbon
 go OA2_thumbnail_pair nitrate, alkalinity
 go OA2_thumbnail_pair nitrate, ph_total
