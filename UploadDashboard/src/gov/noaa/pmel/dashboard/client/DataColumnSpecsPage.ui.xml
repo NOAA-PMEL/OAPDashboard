@@ -27,8 +27,8 @@
     					<g:Label addStyleNames="{style.datamsgreset}" />
     				</g:FlowPanel>
     				<g:FlowPanel addStyleNames="{style.horizontalbuttonpanel}">
-    					<g:Button addStyleNames="{style.horizontalbutton}" ui:field="submitButton" />
     					<g:Button addStyleNames="{style.horizontalbutton}" ui:field="doneButton" />
+    					<g:Button addStyleNames="{style.horizontalbutton}" ui:field="submitButton" />
     					<g:Button addStyleNames="{style.horizontalbutton}" ui:field="saveButton" />
     				</g:FlowPanel>
     			</g:FlowPanel>
