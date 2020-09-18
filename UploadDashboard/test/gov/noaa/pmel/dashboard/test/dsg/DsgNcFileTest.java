@@ -23,6 +23,7 @@ import gov.noaa.pmel.dashboard.dsg.StdUserDataArray;
 import gov.noaa.pmel.dashboard.server.DashboardServerUtils;
 import gov.noaa.pmel.dashboard.shared.DashboardDatasetData;
 import gov.noaa.pmel.dashboard.shared.DataColumnType;
+import gov.noaa.pmel.dashboard.shared.FeatureType;
 
 /**
  * @author Karl Smith
@@ -191,7 +192,7 @@ public class DsgNcFileTest {
 		File parentDir = new File("/var/tmp/junit");
 		if ( ! parentDir.exists() )
 			parentDir.mkdir();
-		dsgNcFile = DsgNcFile.createTrajectoryFile(parentDir, expocode + ".nc");
+		dsgNcFile = DsgNcFile.newDsgFile(FeatureType.TRAJECTORY, parentDir, expocode + ".nc");
 		dsgNcFile.create(metadata, stdUserData, KNOWN_DATA_FILE_TYPES);
 		assertTrue( dsgNcFile.exists() );
 		assertEquals(expocode, dsgNcFile.getMetadata().getDatasetId());
@@ -274,7 +275,7 @@ public class DsgNcFileTest {
 			File parentDir = new File("/var/tmp/junit");
 			if ( ! parentDir.exists() )
 				parentDir.mkdir();
-			dsgNcFile = DsgNcFile.createTrajectoryFile(parentDir, expocode + ".nc");
+			dsgNcFile = DsgNcFile.newDsgFile(FeatureType.TRAJECTORY, parentDir, expocode + ".nc");
 			try {
 				dsgNcFile.create(metadata, stdUserData, KNOWN_DATA_FILE_TYPES);
 			} catch ( IllegalArgumentException ex ) {

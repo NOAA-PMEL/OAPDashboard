@@ -1,0 +1,103 @@
+! OA_preview_profile.template
+!
+! based on: ! OA2_thumbnails.jnl
+!   Ansley Manke 8/14/17
+!   Script to produce set of thumbnail plots from a OA Profile DSG file.
+!   Runs with either Ferret or PyFerret.
+!
+! arguments 
+! 1  The input profile dsg file name name, with path
+! 2  The path for writing image files
+!
+! This version of the script is 
+! examples
+! From the Ferret command line,
+!   yes? GO OA2_thumbnails /home/users/ansley/data/PRISM022008BADCASTS.nc /home/users/ansley/images/
+!
+! or in batch mode, from the Unix command line (this is how LAS would run this script)
+!   > ferret -gif -server -script OA2_thumbnails.jnl /home/users/ansley/data/PRISM022008BADCASTS.nc /home/users/ansley/images/
+
+
+! ------------------
+!
+! Set up to run with either PyFerret or Ferret
+
+! SET MODE VERIFY:ALWAYS 
+
+define symbol plotextn = gif
+IF ($PROGRAM_NAME"0|PyFerret>1|*>0") THEN 
+   set text/font=Arial
+   define symbol plotextn = png
+endif
+
+set window/siz=0.5
+cancel mode logo
+
+! The following is set by the template renderer
+DEFINE SYMBOL pres_or_depth = {{DEPTH_VAR_NAME}}
+say Plotting variables against depth variable : ($pres_or_depth)
+
+! bigger labels on all axis tic marks
+ppl axlsze,.12,.12
+ppl txlsze,.12 
+
+! PRISM022008BADCASTS.nc doesn't have ctd_salinity. The script will continue
+! and make a blank plot labeled with the names of variables not found in the file.
+!
+! Here assuming there will be a variable ctd_salt - edit to change it if not.
+
+use/feature=none ($1)
+
+let varnames = ..varnames ! the list of variables in the file
+
+! Set the base file name with path to use in naming the image files. 
+! The filenames will have the variable names added onto this.
+
+define symbol fname = `longitude,return=dset`
+define symbol fnamepath = ($2)/`longitude,return=dset`
+
+! Start a log file in the images directory. 
+SET REDIRECT/TEE/CLOBBER/FILE="($2)/`longitude,return=dset`_($session_PID)_thumbnails.log"
+
+define symbol land_palette = "tan"
+
+! Map plot doesn't use the OA2_thumbnail_pair.jnl script. The map 
+! and time plots could be fancier, when we do that, make their own scripts.
+
+go OA_profile_plot time
+
+frame/file="($fnamepath)_map.($plotextn)"
+
+! Plot showing times of profiles. 
+
+let/title="Profile Times"/units=" " show_time = 0*time
+go OA2_thumbnail_pair time, show_time
+
+! Profile plots
+go OA2_thumbnail_pair ctd_temperature, ($pres_or_depth)
+go OA2_thumbnail_pair ctd_salinity, ($pres_or_depth)
+go OA2_thumbnail_pair sample_pressure, sample_depth
+go OA2_thumbnail_pair ctd_density, ($pres_or_depth)
+go OA2_thumbnail_pair ctd_oxygen, ($pres_or_depth)
+go OA2_thumbnail_pair inorganic_carbon, ($pres_or_depth)
+go OA2_thumbnail_pair alkalinity, ($pres_or_depth)
+go OA2_thumbnail_pair ctd_salinity, ctd_temperature
+
+! Biogeochemistry
+go OA2_thumbnail_pair ctd_salinity, alkalinity 
+go OA2_thumbnail_pair ctd_oxygen, inorganic_carbon
+go OA2_thumbnail_pair nitrate, inorganic_carbon
+go OA2_thumbnail_pair nitrate, alkalinity
+go OA2_thumbnail_pair nitrate, ph_total
+go OA2_thumbnail_pair ph_total, inorganic_carbon
+go OA2_thumbnail_pair ph_total, alkalinity
+go OA2_thumbnail_pair alkalinity, inorganic_carbon
+go OA2_thumbnail_pair oxygen, ctd_oxygen
+
+! Nutrients and others
+go OA2_thumbnail_pair silicate, ($pres_or_depth)
+go OA2_thumbnail_pair phosphate, ($pres_or_depth)
+go OA2_thumbnail_pair nitrate, ($pres_or_depth)
+go OA2_thumbnail_pair nitrite, ($pres_or_depth)
+go OA2_thumbnail_pair ammonia, ($pres_or_depth)
+

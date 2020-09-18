@@ -205,6 +205,9 @@ public class DashboardUtils {
 	public static final ArrayList<String> PRESSURE_UNITS = 
 			new ArrayList<String>(Arrays.asList("decibars"));
 
+    /** Units of temperature */
+	public static final ArrayList<String> TEMPERATURE_UNITS =
+			new ArrayList<String>(Arrays.asList("degrees C"));
 	/**
 	 * UNASSIGNED needs to be respecified as one of the (other) data column types.
 	 */
@@ -287,14 +290,21 @@ public class DashboardUtils {
 	public static final DataColumnType LATITUDE = new DataColumnType(LATITUDE_VARNAME,
 			302.0, "latitude", "sample latitude", true, LATITUDE_UNITS);
 
-	public static final String WATER_PRESSURE_VARNAME = "water_pressure";
-	public static final DataColumnType WATER_PRESSURE = new DataColumnType(WATER_PRESSURE_VARNAME,
-			303.0, "water pressure", "water pressure", true, PRESSURE_UNITS);
+//	public static final String WATER_PRESSURE_VARNAME = "water_pressure";
+	public static final String CTD_PRESSURE_VARNAME = "ctd_pressure";
+	public static final DataColumnType CTD_PRESSURE = new DataColumnType(CTD_PRESSURE_VARNAME,
+			303.0, "ctd pressure", "ctd pressure", true, PRESSURE_UNITS);
 
 	public static final String SAMPLE_DEPTH_VARNAME = "sample_depth";
 	public static final DataColumnType SAMPLE_DEPTH = new DataColumnType(SAMPLE_DEPTH_VARNAME,
 			304.0, "sample depth", "sample depth", true, DEPTH_UNITS);
 
+    public static final String TEMPERATURE_VARNAME = "temperature";
+    public static final DataColumnType TEMPERATURE = new DataColumnType(TEMPERATURE_VARNAME, 
+            305.0, "temperature", "temperature", false, TEMPERATURE_UNITS);
+    public static final String SEA_SURFACE_TEMPERATURE_VARNAME = "sea_surface_temperature";
+    public static final DataColumnType SEA_SURFACE_TEMP = new DataColumnType(SEA_SURFACE_TEMPERATURE_VARNAME, 
+            306.0, "sea surface temp", "sea surface temperature", false, TEMPERATURE_UNITS);
 	/**
 	 * Date and time of the measurement
 	 */
@@ -806,6 +816,10 @@ public class DashboardUtils {
 		return isEmptyOrNull(value) || "null".equalsIgnoreCase(String.valueOf(value));
 	}
 	
+    public static boolean isNullOrNull(Object value) {
+        return value == null || "null".equalsIgnoreCase(String.valueOf(value));
+    }
+
 //	public static boolean isOrNullOrNull(Object value) {
 //		return  || "null".equalsIgnoreCase(String.valueOf(value));
 //	}

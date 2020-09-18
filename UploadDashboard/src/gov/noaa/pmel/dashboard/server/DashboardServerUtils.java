@@ -85,7 +85,7 @@ public class DashboardServerUtils {
 	 * UNASSIGNED needs to be respecified as one of the (other) data column types.
 	 */
 	public static final StringDashDataType UNKNOWN = new StringDashDataType(DashboardUtils.UNKNOWN, 
-			null, null, null, null, null, null, null);
+			"Unknown Data Type", null, null, null, null, null, null);
 
 	/**
 	 * OTHER is for supplementary data in the user's original data file but 
@@ -94,7 +94,7 @@ public class DashboardServerUtils {
 	 * Multiple columns may have this type.
 	 */
 	public static final StringDashDataType OTHER = new StringDashDataType(DashboardUtils.OTHER, 
-			null, null, null, null, null, null, null);
+			"Ignored Data Type", null, null, null, null, null, null);
 
 	/**
 	 * Unique identifier for the dataset 
@@ -185,8 +185,8 @@ public class DashboardServerUtils {
 			"latitude", LOCATION_CATEGORY, "degrees_north", "-90.0", null, null, "90.0");
 	public static final DoubleDashDataType SAMPLE_DEPTH = new DoubleDashDataType(DashboardUtils.SAMPLE_DEPTH, 
 			"sample_depth", BATHYMETRY_CATEGORY, "meters", "0.0", null, null, "16000");
-	public static final DoubleDashDataType WATER_PRESSURE = new DoubleDashDataType(DashboardUtils.WATER_PRESSURE, 
-			"sample_pressure", BATHYMETRY_CATEGORY, "decibars", "0.0", null, null, "16000");
+	 public static final DoubleDashDataType CTD_PRESSURE = new DoubleDashDataType(DashboardUtils.CTD_PRESSURE, 
+			 "ctd_pressure", BATHYMETRY_CATEGORY, "decibars", "0.0", null, null, "16000");
 
 	/**
 	 * Date and time of the measurement

@@ -45,14 +45,11 @@ import gov.noaa.pmel.dashboard.shared.PreviewPlotResponse;
  * 
  * @author Karl Smith
  */
-public class DatasetPreviewPage extends CompositeWithUsername {
+public class DatasetPreviewSimplePage extends CompositeWithUsername {
 	
 	Logger logger = Logger.getLogger("DatasetPreviewPage");
 
 	private static final String TITLE_TEXT = "Preview Dataset";
-
-	private static final String INTRO_HTML_PROLOGUE = 
-			"Plots of the dataset: ";
 
 	private static final String REFRESH_TEXT = "Refresh plots";
 	private static final String REFRESH_HOVER_HELP = "Regenerate the plot images";
@@ -61,20 +58,16 @@ public class DatasetPreviewPage extends CompositeWithUsername {
 	private static final String PLOT_GENERATION_FAILURE_HTML = "<b>Problems generating the plot previews</b>";
 
 	private static final String TAB0_TEXT = "Overview";
-	private static final String TAB1_TEXT = "Profiles";
-	private static final String TAB2_TEXT = "BioGeoChem";
-	private static final String TAB3_TEXT = "Nutrients +";
+	private static final String TAB1_TEXT = "Variables";
 
 	private static final String TAB0_ALT_TEXT = "Overview plots";
-	private static final String TAB1_ALT_TEXT = "Plots vs depth";
-	private static final String TAB2_ALT_TEXT = "Property-property plots";
-	private static final String TAB3_ALT_TEXT = "Measured nutrients vs depth";
+	private static final String TAB1_ALT_TEXT = "Data variable plots";
 
 	public static final String LAT_VS_LON_IMAGE_NAME = "lat_vs_lon";
 	public static final String LAT_LON_IMAGE_NAME = "lat_lon";
 	public static final String SAMPLE_VS_TIME_IMAGE_NAME = "sample_vs_time";
 
-	interface DatasetPreviewPageUiBinder extends UiBinder<Widget, DatasetPreviewPage> {
+	interface DatasetPreviewPageUiBinder extends UiBinder<Widget, DatasetPreviewSimplePage> {
 	}
 
 	private static DatasetPreviewPageUiBinder uiBinder = 
@@ -92,13 +85,9 @@ public class DatasetPreviewPage extends CompositeWithUsername {
 	@UiField TabLayoutPanel tabsPanel;
 	@UiField FlowPanel tab0Panel;
 	@UiField FlowPanel tab1Panel;
-	@UiField FlowPanel tab2Panel;
-	@UiField FlowPanel tab3Panel;
 
 	@UiField HTML tab0Html;
 	@UiField HTML tab1Html;
-	@UiField HTML tab2Html;
-	@UiField HTML tab3Html;
 
 	List<List<PreviewPlotImage>> availablePlots;
 	List<FlowPanel> tabPanels = new ArrayList<FlowPanel>();
@@ -111,9 +100,9 @@ public class DatasetPreviewPage extends CompositeWithUsername {
 	private AsyncCallback<PreviewPlotResponse> checkStatusCallback;
 
 	// The singleton instance of this page
-	private static DatasetPreviewPage singleton;
+	private static DatasetPreviewSimplePage singleton;
 
-	public DatasetPreviewPage() {
+	public DatasetPreviewSimplePage() {
         super(PagesEnum.PREVIEW_DATASET.name());
 		initWidget(uiBinder.createAndBindUi(this));
 		
@@ -164,19 +153,13 @@ public class DatasetPreviewPage extends CompositeWithUsername {
 		// Set the HTML for the tabs
 		tab0Html.setHTML(TAB0_TEXT);
 		tab1Html.setHTML(TAB1_TEXT);
-		tab2Html.setHTML(TAB2_TEXT);
-		tab3Html.setHTML(TAB3_TEXT);
 
 		// Set hover helps for the tabs
 		tab0Html.setTitle(TAB0_ALT_TEXT);
 		tab1Html.setTitle(TAB1_ALT_TEXT);
-		tab2Html.setTitle(TAB2_ALT_TEXT);
-		tab3Html.setTitle(TAB3_ALT_TEXT);
 
 		tabPanels.add(tab0Panel);
 		tabPanels.add(tab1Panel);
-		tabPanels.add(tab2Panel);
-		tabPanels.add(tab3Panel);
 	}
 
 	/**
@@ -186,7 +169,7 @@ public class DatasetPreviewPage extends CompositeWithUsername {
 	 */
 	static void showPage(DashboardDatasetList cruiseList) {
 		if ( singleton == null )
-			singleton = new DatasetPreviewPage();
+			singleton = new DatasetPreviewSimplePage();
 // 		String datasetId = cruiseList.keySet().iterator().next(); 
 		DashboardDataset dataset = cruiseList.get(cruiseList.keySet().iterator().next()); 
 		singleton.updatePreviewPlots(dataset,

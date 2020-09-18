@@ -231,7 +231,7 @@ public class ProfileDatasetChecker extends BaseDatasetChecker implements Dataset
     private static boolean checkForMissingPressureOrDepth(StdUserDataArray stdUserData) {
         boolean allGood = true;
         Integer depthIdx = stdUserData.lookForDataColumnIndex(DashboardUtils.SAMPLE_DEPTH_VARNAME);
-        Integer pressureIdx = stdUserData.lookForDataColumnIndex(DashboardUtils.WATER_PRESSURE_VARNAME);
+        Integer pressureIdx = stdUserData.lookForDataColumnIndex(DashboardUtils.CTD_PRESSURE_VARNAME);
         for (int row = 0; row < stdUserData.getNumSamples(); row++) {
             Object depth = depthIdx != null ? stdUserData.getStdVal(row, depthIdx.intValue()) : null;
             Object press = pressureIdx != null ? stdUserData.getStdVal(row, pressureIdx.intValue()) : null;
@@ -304,7 +304,7 @@ public class ProfileDatasetChecker extends BaseDatasetChecker implements Dataset
             stdUserData.addStandardizationMessage(msg);
         }
         if ( ! ( stdUserData.hasDataColumn(DashboardServerUtils.SAMPLE_DEPTH.getStandardName()) || 
-                 stdUserData.hasDataColumn(DashboardUtils.WATER_PRESSURE_VARNAME))) {
+                 stdUserData.hasDataColumn(DashboardUtils.CTD_PRESSURE_VARNAME))) {
             logger.info("dataset " + stdUserData.getDatasetName() + " missing sample depth and pressure.");
             gotem = false;
             ADCMessage msg = new ADCMessage();

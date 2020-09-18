@@ -2,9 +2,14 @@ package gov.noaa.pmel.dashboard.dsg;
 
 import java.io.File;
 import java.io.IOException;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Date;
+import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.TreeSet;
+import java.util.Map;
+import java.util.Map.Entry;
+import java.util.TimeZone;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -17,7 +22,7 @@ import gov.noaa.pmel.dashboard.datatype.KnownDataTypes;
 import gov.noaa.pmel.dashboard.datatype.StringDashDataType;
 import gov.noaa.pmel.dashboard.server.DashboardServerUtils;
 import gov.noaa.pmel.dashboard.shared.DashboardUtils;
-
+import gov.noaa.pmel.dashboard.shared.FeatureType;
 import ucar.ma2.ArrayChar;
 import ucar.ma2.ArrayDouble;
 import ucar.ma2.ArrayInt;
@@ -28,6 +33,7 @@ import ucar.nc2.Dimension;
 import ucar.nc2.Group;
 import ucar.nc2.NetcdfFile;
 import ucar.nc2.NetcdfFileWriter;
+import ucar.nc2.NetcdfFileWriter.Version;
 import ucar.nc2.Variable;
 
 
@@ -39,26 +45,164 @@ public abstract class DsgNcFile extends File {
     
 	protected static final String DSG_VERSION = "DsgNcFile 2.0";
 	protected static final String TIME_ORIGIN_ATTRIBUTE = "01-JAN-1970 00:00:00";
+    
+    // for ragged array-type DSG files
+	static final String SAMPLES_PER_FEATURE_VARNAME = "rowcount";
+    // FEATURE_*_VARNAME identify feature-instance values
+	// SAMPLE_*_VARNAME identify observation-instance value
+	// ie, each PROFILE will have a single lat/lon/time.  
+	// whereas each PROFILE observation will have a depth (or possibly alternatively a pressure)
+	// and MAY also have a sample lat/lon/time. 
+	// Each TIMESERIES will have a single lat/lon and possibly depth/pressure,
+	// with each observation having a time.
+    // A TRAJECTORY will have no feature-type variables other than ID,
+	// with each observation varying in lat/lon/time and possibly depth.
+    // FEATURE_ID_VARNAME = _featureType.dsgTypeName();
+//	static final String FEATURE_ID_VARNAME = "dsg_feature_id";
+	public static final String FEATURE_LAT_VARNAME = "latitude"; // "dsg_feature_latitude";
+	public static final String FEATURE_LON_VARNAME = "longitude"; //  "dsg_feature_longitude";
+	public static final String FEATURE_TIME_VARNAME = "time"; //  "dsg_feature_time";
+	public static final String FEATURE_DEPTH_VARNAME = "depth"; // "dsg_feature_depth";
+	public static final String FEATURE_PRESSURE_VARNAME = "pressure"; // "dsg_feature_pressure";
+	public static final String SAMPLE_ID_VARNAME = "sample_id";
+	public static final String SAMPLE_DEPTH_VARNAME = "sample_depth";
+	public static final String SAMPLE_PRESSURE_VARNAME = "sample_pressure";
+	public static final String SAMPLE_TIME_VARNAME = "sample_time";
+	public static final String SAMPLE_LAT_VARNAME = "sample_latitude";
+	public static final String SAMPLE_LON_VARNAME = "sample_longitude";
 
-	protected DsgMetadata metadata;
-	protected StdDataArray stddata;
-
-	public static enum DsgFileType {
-		TRAJECTORY,
-		PROFILE
+	private static enum ElemCategory {
+		METADATA,
+		FEATURE,
+		DATA
+	}
+	private class Dims {
+		List<Dimension> _dString;
+		List<Dimension> _dChar;
+		List<Dimension> _dNum;
+		
+		Dims(List<Dimension> dNum, List<Dimension> dChar, List<Dimension> dString) {
+			_dNum = dNum;
+			_dChar = dChar;
+			_dString = dString;
+		}
+		
+		List<Dimension> strings() { return _dString; }
+		List<Dimension> chars() { return _dChar; }
+		List<Dimension> nums() { return _dNum; }
+	}
+	enum UtcTimeFormat {
+		tf_8601Z("yyyy-mm-dd'T'hh:mm:ssZ"),
+		tf_8601_compressed("yyyymmdd'T'hhmmssZ");
+		
+		private String _format;
+		private UtcTimeFormat(String formatString) {
+			_format = formatString;
+		}
+		private String pattern() {
+			return _format;
+		}
+        String now() {
+            return format(System.currentTimeMillis());
+        }
+        String format(Date date) {
+            return format(date.getTime());
+        }
+    	String format(long timeMillis) {
+    		Date d = new Date(timeMillis);
+    		SimpleDateFormat sdf = getDateFormatter(pattern(), TimeZone.getTimeZone("UTC"));
+    		return sdf.format(d);
+    	}
+    	private static SimpleDateFormat getDateFormatter(String formatPattern, TimeZone zone) {
+    		SimpleDateFormat sdf = new SimpleDateFormat(formatPattern);
+    		if ( zone != null ) {
+    			sdf.setTimeZone(zone);
+    		}
+    		return sdf;
+    	}
 	}
 	
-	public static DsgNcFile createTrajectoryFile(String filename) {
-		return new TrajectoryDsgFile(filename);
+    protected Map<String, Variable> _typeSpecificVariables = new LinkedHashMap<>();
+    protected FeatureType _featureType;
+	protected DsgMetadata _metadata;
+	protected StdUserDataArray _stdUser;
+    protected String _datasetId;
+	protected int _maxStrLen;
+    protected int _numObservations;
+
+	private Dimension _dimNumFeatures;
+	private Dimension _dimNumObs;
+	private Dimension _dimOfOne;
+	List<Dimension> _metaDimList = new ArrayList<Dimension>();
+	List<Dimension> _metaCharDimList = new ArrayList<Dimension>();
+	List<Dimension> _metaStringDimList = new ArrayList<Dimension>();
+	List<Dimension> _featureDimList = new ArrayList<Dimension>();
+	List<Dimension> _featureStringDimList = new ArrayList<Dimension>();
+	List<Dimension> _featureCharDimList = new ArrayList<Dimension>();
+	List<Dimension> _obsDimList = new ArrayList<Dimension>();
+	List<Dimension> _obsCharDimList = new ArrayList<Dimension>();
+	List<Dimension> _obsStringDimList = new ArrayList<>();
+	Dims _metadataDims;
+	Dims _featureDims;
+	Dims _obsDims;
+    
+	protected abstract int getNumFeatures();
+	protected abstract void doFeatureTypeSpecificInitialization();
+	protected abstract void checkFeatureTypeSpecificIndeces();
+//	protected abstract void createTypeSpecificDimensions(NetcdfFileWriter ncFile);
+	protected abstract void addFeatureTypeVariables(NetcdfFileWriter ncFile);
+//	protected abstract void addObservationVariables(NetcdfFileWriter ncFile);
+//	protected abstract boolean excludeType(DashDataType<?> dtype);
+    
+//	protected abstract void addQcVariables(NetcdfFileWriter ncFile, KnownDataTypes dataTypes);
+    
+	protected abstract void writeFeatureTypeVariables(NetcdfFileWriter ncFile) throws Exception;
+//	protected abstract void writeObservationVariables(NetcdfFileWriter ncFile) throws Exception;
+//	protected abstract void writeQcVariables(NetcdfFileWriter ncFile) throws Exception;
+	
+    
+    public static DsgNcFile newDsgFile(FeatureType type, String filename) {
+        return newDsgFile(type, null, filename);
+    }
+    public static DsgNcFile newDsgFile(FeatureType type, File parent, String filename) {
+        switch (type) {
+            case PROFILE:
+                return new ProfileDsgFile(parent, filename);
+            case TIMESERIES:
+                return new TimeseriesDsgFile(parent, filename);
+            case TIMESERIES_PROFILE:
+                throw new IllegalStateException("Feature type " + FeatureType.TIMESERIES_PROFILE + ": Not yet implemented.");
+            case TRAJECTORY:
+                return new TrajectoryDsgFile(parent, filename);
+            case TRAJECTORY_PROFILE:
+                throw new IllegalStateException("Feature type " + FeatureType.TRAJECTORY_PROFILE + ": Not yet implemented.");
+            case UNSPECIFIED:
+                throw new IllegalArgumentException("Cannot create DSG files for feature type: " + type);
+            case OTHER:
+                throw new IllegalArgumentException("Cannot create DSG files for feature type: " + type);
+            default:
+                throw new IllegalArgumentException("Unknown FeatureType:"+type);
+        }
+    }
+    
+	/**
+	 * See {@link java.io.File#File(java.lang.String)}
+	 * The internal metadata and data array references are set null.
+	 */
+	protected DsgNcFile(FeatureType type, String filename) {
+		this(type, null, filename);
 	}
-	public static DsgNcFile createTrajectoryFile(File parent, String filename) {
-		return new TrajectoryDsgFile(parent,filename);
-	}
-//	public static DsgNcFile createProfileFile(String filename) {
-//		return new ProfileDsgFile(filename);
-//	}
-	public static DsgNcFile createProfileFile(File parent, String filename) {
-		return new ProfileDsgFile(parent,filename);
+
+	/**
+	 * See {@link java.io.File#File(java.io.File,java.lang.String)}
+	 * The internal metadata and data array references are set null.
+	 */
+	protected DsgNcFile(FeatureType type, File parent, String child) {
+		super(parent, child);
+        _typeSpecificVariables = new LinkedHashMap<>();
+		_metadata = null;
+		_stdUser = null;
+        _featureType = type;
 	}
 
 	/**
@@ -88,22 +232,242 @@ public abstract class DsgNcFile extends File {
 	 * @throws IllegalAccessException
 	 * 		if creating the NetCDF file throws one
 	 */
-	public void create(DsgMetadata metaData, StdUserDataArray userStdData, KnownDataTypes dataFileTypes) 
+	public void create(DsgMetadata metaData, StdUserDataArray fileData, KnownDataTypes dataTypes) 
 			throws Exception, IllegalArgumentException, IOException, InvalidRangeException, IllegalAccessException {
 		if ( metaData == null )
 			throw new IllegalArgumentException("no metadata given");
-		metadata = metaData;
-		if ( userStdData == null )
+		_metadata = metaData;
+		_datasetId = _metadata.getDatasetId();
+		if ( fileData == null )
 			throw new IllegalArgumentException("no data given");
+		_stdUser = fileData;
+		
+		initialize();
+		checkIndeces();
+		
+		try ( NetcdfFileWriter ncFile = NetcdfFileWriter.createNew(Version.netcdf3, getPath()); ) {
+			
+			createDimensions(ncFile);
+			
+			addAttributes(ncFile);
+			
+            addVariables(ncFile);
 
-		// The following verifies lon, lat, depth, and time
-		// Adds time and, if not already present, year, month, day, hour, minute, and second.
-		stddata = userStdData; // new StdDataArray(userStdData, dataFileTypes);
+			ncFile.create();
 
-		create(metadata, userStdData);
+			// The header has been created.  Now let's fill it up.
+			
+            writeVariables(ncFile);
+            ncFile.flush();
+		}
+	}
+	
+    protected void initialize() {
+        int metaMax = _metadata.getMaxStringLength();
+        int dataMax = findLongestDataString();
+        _maxStrLen = Math.max(metaMax, dataMax);
+		_numObservations = _stdUser.getNumSamples();
+        doFeatureTypeSpecificInitialization();
+    }
+	protected void checkIndeces() {
+        checkCommonIndeces();
+        checkFeatureTypeSpecificIndeces();
+	}
+	protected void checkCommonIndeces() {
+		// Quick check of data column indices already assigned in stdUser
+		if ( ! _stdUser.hasLatitude() )
+			throw new IllegalArgumentException("no latitude data column");
+		if ( ! _stdUser.hasLongitude() )
+			throw new IllegalArgumentException("no longitude data column");
+        if ( ! _stdUser.hasSampleTime()) 
+			throw new IllegalArgumentException("incomplete or missing sample time");
+//		if ( ! stdUser.hasLongitude() )
+//			throw new IllegalArgumentException("no longitude data column");
+//		if ( ! stdUser.hasLatitude() )
+//			throw new IllegalArgumentException("no latitude data column");
+//		if ( ! ( stdUser.hasSampleDepth() || stdUser.hasSamplePressure() ))
+//			throw new IllegalArgumentException("no sample depth data column");
+//		if ( ! stdUser.hasYear() )
+//			throw new IllegalArgumentException("no year data column");
+//		if ( ! stdUser.hasMonthOfYear() )
+//			throw new IllegalArgumentException("no month of year data column");
+//		if ( ! stdUser.hasDayOfMonth() )
+//			throw new IllegalArgumentException("no day of month data column");
+//		if ( ! stdUser.hasHourOfDay() )
+//			throw new IllegalArgumentException("no hour of day data column");
+//		if ( ! stdUser.hasMinuteOfHour() )
+//			throw new IllegalArgumentException("no minute of hour data column");
+//		if ( ! stdUser.hasSecondOfMinute() )
+//			throw new IllegalArgumentException("no second of minute data column");
+	}
+	
+    /**
+     * @return the length of the longest value in String-type data
+     */
+    private int findLongestDataString() {
+        int max = 0;
+        for (int col=0; col<_stdUser.numDataCols; col++) {
+            if ( _stdUser.getDataTypes().get(col) instanceof StringDashDataType
+                    && _stdUser.isStandardized(col)) {
+                String[] values = (String[])_stdUser.getStdValuesAsString(col);
+                for (int row=0; row<_stdUser.getNumSamples(); row++) {
+                    int len = values[row] != null ? values[row].trim().length() : 0;
+                    if ( len > max ) { max = len; }
+                }
+            }
+        }
+        return max;
+    }
+	
+	protected void createDimensions(NetcdfFileWriter ncFile) {
+//	    createCommonDimensions(ncFile);
+//	    createTypeSpecificDimensions(ncFile);
+//	}
+//	protected void createCommonDimensions(NetcdfFileWriter ncFile) {
+		Dimension dStringLen = ncFile.addDimension(null, "string_length", _maxStrLen);
+		Dimension dCharLen = ncFile.addDimension(null, "char_length", 1);
+		
+		_dimOfOne = ncFile.addDimension(null, "one", 1);
+		_metaDimList.add(_dimOfOne);
+//		_metaCharDimList.add(_one);
+		_metaCharDimList.add(dCharLen);
+//		_metaStringDimList.add(_one);
+		_metaStringDimList.add(dStringLen);
+		_metadataDims = new Dims(_metaDimList, _metaCharDimList, _metaStringDimList);
+		
+		_dimNumFeatures = ncFile.addDimension(null, _featureType.dsgTypeName(), getNumFeatures());
+		_featureDimList.add(_dimNumFeatures);
+
+		_featureStringDimList.add(_dimNumFeatures);
+		_featureStringDimList.add(dStringLen);
+
+		_featureCharDimList.add(_dimNumFeatures);
+		_featureCharDimList.add(dCharLen);
+		_featureDims = new Dims(_featureDimList, _featureCharDimList, _featureStringDimList);
+
+		_dimNumObs = ncFile.addDimension(null, "obs", _numObservations);
+		_obsDimList.add(_dimNumObs);
+
+		_obsCharDimList.add(_dimNumObs);
+		_obsCharDimList.add(dCharLen);
+		
+		_obsStringDimList.add(_dimNumObs);
+		_obsStringDimList.add(dStringLen);
+		_obsDims = new Dims(_obsDimList, _obsCharDimList, _obsStringDimList);
+	}
+	
+	protected void addAttributes(NetcdfFileWriter ncFile) {
+        addCommonAttributes(ncFile);
+		addMetadataAttributes(ncFile);
+        addDsgTypeSpecificAttributes(ncFile);
+	}
+	protected void addCommonAttributes(NetcdfFileWriter ncFile) {
+		ncFile.addGroupAttribute(null, new Attribute("cdm_data_type", _featureType.dsgTypeName()));
+		ncFile.addGroupAttribute(null, new Attribute("featureType", _featureType.dsgTypeName()));
+		ncFile.addGroupAttribute(null, new Attribute("Conventions", "CF-1.6,COARDS,ACDD-1.3"));
+		ncFile.addGroupAttribute(null, new Attribute("COORD_SYSTEM", "Geographical"));
+		ncFile.addGroupAttribute(null, new Attribute("creation_date", UtcTimeFormat.tf_8601Z.now()));
+		ncFile.addGroupAttribute(null, new Attribute("history", DSG_VERSION));
+		ncFile.addGroupAttribute(null, new Attribute("id", _stdUser.getDatasetName()));
+		ncFile.addGroupAttribute(null, new Attribute("dataset_id", _stdUser.getDatasetName()));
+	}
+	protected void addMetadataAttributes(NetcdfFileWriter ncFile) {
+		String varName;
+		for ( Entry<DashDataType<?>,Object> entry : _metadata.getValuesMap().entrySet() ) {
+			DashDataType<?> dtype = entry.getKey();
+			Object value = entry.getValue();
+			varName = dtype.getVarName();
+			logger.debug("metadata var as attribute:"+varName + ": " + value);
+			if ( DashboardUtils.isNullOrNull(value)) { continue; }
+			ncFile.addGroupAttribute(null, new Attribute(getAttributeNameFor(dtype), String.valueOf(value)));
+		}
+	}
+	protected void addDsgTypeSpecificAttributes(NetcdfFileWriter ncFile) {
+	    // default empty
+	}
+	protected static String getAttributeNameFor(DashDataType<?> dtype) {
+		String name = dtype.getStandardName();
+		if ( name == null || DashboardUtils.STRING_MISSING_VALUE.equals(name)) {
+			name = dtype.getVarName();
+		}
+		return name;
+	}
+    protected void addVariables(NetcdfFileWriter ncFile) {
+//		addMetadataVariables(ncFile);
+        addCommonVariables(ncFile);
+		addFeatureTypeVariables(ncFile);
+		addObservationVariables(ncFile);
+//		addQcVariables(ncFile, dataTypes);
+    }        
+    private void addCommonVariables(NetcdfFileWriter ncFile) {
+		addFeatureIdVariable(ncFile, _featureDimList);
+		Variable var = ncFile.addVariable(null, SAMPLES_PER_FEATURE_VARNAME, DataType.INT, _featureDimList);
+		ncFile.addVariableAttribute(var, new Attribute("sample_dimension", "obs"));
+		ncFile.addVariableAttribute(var, new Attribute("long_name", "Number of Observations in this Feature"));
+    }
+    private Variable addFeatureIdVariable(NetcdfFileWriter ncFile, List<Dimension> dims) {
+		Variable var = ncFile.addVariable(null, _featureType.dsgTypeName(), DataType.CHAR, _featureDims.strings());
+		ncFile.addVariableAttribute(var, new Attribute("long_name", "Unique identifier for each feature instance."));
+		ncFile.addVariableAttribute(var, new Attribute("cf_role", _featureType.dsgTypeName()+"_id"));
+		ncFile.addVariableAttribute(var, new Attribute("ioos_category", "Identifier"));
+        return var;
+	}
+	protected static Variable addTimeVariable(NetcdfFileWriter ncFile, String stdName, String longName, 
+        	                                  List<Dimension> dims, boolean isDsgAxis) {
+		Variable var = ncFile.addVariable(null, stdName, DataType.DOUBLE, dims);
+		addAttributes(ncFile, var, Double.NaN, longName, stdName, "Time", "seconds since 1970-01-01T00:00:00Z");
+		ncFile.addVariableAttribute(var, new Attribute("_CoordinateAxisType", "Time"));
+		ncFile.addVariableAttribute(var, new Attribute("time_origin", "1970-01-01T00:00:00Z"));
+        if ( isDsgAxis ) {
+    		ncFile.addVariableAttribute(var, new Attribute("axis", "T"));
+        }
+		return var;
+	}
+	protected static Variable addLatitudeVariable(NetcdfFileWriter ncFile, String varname, String longName, 
+            	                                  List<Dimension> dims, boolean isDsgAxis) {
+		Variable var = ncFile.addVariable(null, varname, DataType.DOUBLE, dims);
+		addAttributes(ncFile, var, DashboardUtils.FP_MISSING_VALUE, longName, "latitude", "Location", "degrees_north");
+		ncFile.addVariableAttribute(var, new Attribute("_CoordinateAxisType", "Lat"));
+        if ( isDsgAxis ) {
+    		ncFile.addVariableAttribute(var, new Attribute("axis", "Y"));
+        }
+        return var;
+	}
+	protected static Variable addLongitudeVariable(NetcdfFileWriter ncFile, String varname, String longName, 
+    	                                           List<Dimension> dims, boolean isDsgAxis) {
+		Variable var = ncFile.addVariable(null, varname, DataType.DOUBLE, dims);
+		addAttributes(ncFile, var, DashboardUtils.FP_MISSING_VALUE, longName, "longitude", "Location", "degrees_east");
+		ncFile.addVariableAttribute(var, new Attribute("_CoordinateAxisType", "Lon"));
+        if ( isDsgAxis ) {
+    		ncFile.addVariableAttribute(var, new Attribute("axis", "X"));
+        }
+		return var;
+	}
+	protected static Variable addDepthVariable(NetcdfFileWriter ncFile, String varname, String longName, 
+        	                                   List<Dimension> dims, boolean isDsgAxis) {
+		Variable var = ncFile.addVariable(null, varname, DataType.DOUBLE, dims);
+		addAttributes(ncFile, var, DashboardUtils.FP_MISSING_VALUE, longName, "depth", "Location", "meters");
+		ncFile.addVariableAttribute(var, new Attribute("_CoordinateAxisType", "Depth"));
+		ncFile.addVariableAttribute(var, new Attribute("positive", "down"));
+        if ( isDsgAxis ) {
+    		ncFile.addVariableAttribute(var, new Attribute("axis", "Z"));
+        }
+		return var;
+	}
+	protected static Variable addPressureVariable(NetcdfFileWriter ncFile, String varname, String longName, 
+                                                  List<Dimension> dims, boolean isDsgAxis) {
+		Variable var = ncFile.addVariable(null, varname, DataType.DOUBLE, dims);
+		addAttributes(ncFile, var, DashboardUtils.FP_MISSING_VALUE, longName, "depth", "Location", "meters");
+		ncFile.addVariableAttribute(var, new Attribute("_CoordinateAxisType", "Depth"));
+		ncFile.addVariableAttribute(var, new Attribute("positive", "down"));
+        if ( isDsgAxis ) {
+    		ncFile.addVariableAttribute(var, new Attribute("axis", "Z"));
+        }
+		return var;
 	}
 	
 	/**
+     * NOT IMPLEMENTED
 	 * Creates this NetCDF DSG file with the given metadata and standardized data
 	 * for data files.  The internal metadata and stddata references are updated 
 	 * to the given DsgMetadata and StdDataArray object.  Every data sample should 
@@ -126,35 +490,18 @@ public abstract class DsgNcFile extends File {
 	 * 		if creating the NetCDF file throws one
 	 * @throws IllegalAccessException
 	 * 		if creating the NetCDF file throws one
-	 */
-	public abstract void create(DsgMetadata metaData, StdDataArray fileData) 
-		throws Exception, IllegalArgumentException, IOException, InvalidRangeException, IllegalAccessException;
+	 *
+     */
+	public void create(DsgMetadata metaData, StdDataArray fileData) 
+		throws Exception, IllegalArgumentException, IOException, InvalidRangeException, IllegalAccessException  {
+        throw new IllegalStateException("Not implemented"); // XXX TODO: Do we need this? Or do we need the other create?
+	}
 	
-	/**
-	 * See {@link java.io.File#File(java.lang.String)}
-	 * The internal metadata and data array references are set null.
-	 */
-	protected DsgNcFile(String filename) {
-		super(filename);
-		metadata = null;
-		stddata = null;
-	}
-
-	/**
-	 * See {@link java.io.File#File(java.io.File,java.lang.String)}
-	 * The internal metadata and data array references are set null.
-	 */
-	protected DsgNcFile(File parent, String child) {
-		super(parent, child);
-		metadata = null;
-		stddata = null;
-	}
-
 	/**
 	 * Adds the missing_value, _FillValue, long_name, standard_name, ioos_category, 
 	 * and units attributes to the given variables in the given NetCDF file.
 	 * 
-	 * @param ncfile
+	 * @param ncFile
 	 * 		NetCDF file being written containing the variable
 	 * @param var
 	 * 		the variables to add attributes to
@@ -173,63 +520,49 @@ public abstract class DsgNcFile extends File {
 	 * 		if not null and not {@link DashboardUtils#STRING_MISSING_VALUE}, 
 	 * 		the value for the units attribute
 	 */
-	protected static void addAttributes(NetcdfFileWriter ncfile, Variable var, Object missVal, 
+	protected static void addAttributes(NetcdfFileWriter ncFile, Variable var, Object missVal, 
 			String longName, String standardName, String ioosCategory, String units) {
         if ( var == null ) {
             logger.warn("Add attributes: No ncVar found for varName " + longName);
             return;
         }
 		if ( missVal != null ) {
-			ncfile.addVariableAttribute(var, new Attribute("missing_value", String.valueOf(missVal)));
-			ncfile.addVariableAttribute(var, new Attribute("_FillValue", String.valueOf(missVal)));
+			ncFile.addVariableAttribute(var, new Attribute("missing_value", String.valueOf(missVal)));
+			ncFile.addVariableAttribute(var, new Attribute("_FillValue", String.valueOf(missVal)));
 		}
 		if ( (longName != null) && ! DashboardUtils.STRING_MISSING_VALUE.equals(longName) ) {
-			ncfile.addVariableAttribute(var, new Attribute("long_name", longName));
+			ncFile.addVariableAttribute(var, new Attribute("long_name", longName));
 		}
 		if ( (standardName != null) && ! DashboardUtils.STRING_MISSING_VALUE.equals(standardName) ) {
-			ncfile.addVariableAttribute(var, new Attribute("standard_name", standardName));
+			ncFile.addVariableAttribute(var, new Attribute("standard_name", standardName));
 		}
 		if ( (ioosCategory != null) && ! DashboardUtils.STRING_MISSING_VALUE.equals(ioosCategory) ) {
-			ncfile.addVariableAttribute(var, new Attribute("ioos_category", ioosCategory));
+			ncFile.addVariableAttribute(var, new Attribute("ioos_category", ioosCategory));
 		}
 		if ( (units != null) && ! DashboardUtils.STRING_MISSING_VALUE.equals(units) ) {
-			ncfile.addVariableAttribute(var, new Attribute("units", units));
+			ncFile.addVariableAttribute(var, new Attribute("units", units));
 		}
 	}
-	protected void checkIndeces(StdDataArray stddata) {
-		// Quick check of data column indices already assigned in StdDataArray
-		if ( ! stddata.hasLongitude() )
-			throw new IllegalArgumentException("no longitude data column");
-		if ( ! stddata.hasLatitude() )
-			throw new IllegalArgumentException("no latitude data column");
-		if ( ! ( stddata.hasSampleDepth() || stddata.hasSamplePressure() ))
-			throw new IllegalArgumentException("no sample depth data column");
-		if ( ! stddata.hasYear() )
-			throw new IllegalArgumentException("no year data column");
-		if ( ! stddata.hasMonthOfYear() )
-			throw new IllegalArgumentException("no month of year data column");
-		if ( ! stddata.hasDayOfMonth() )
-			throw new IllegalArgumentException("no day of month data column");
-		if ( ! stddata.hasHourOfDay() )
-			throw new IllegalArgumentException("no hour of day data column");
-		if ( ! stddata.hasMinuteOfHour() )
-			throw new IllegalArgumentException("no minute of hour data column");
-		if ( ! stddata.hasSecondOfMinute() )
-			throw new IllegalArgumentException("no second of minute data column");
+    
+	protected Variable addVariable(NetcdfFileWriter ncFile, String varName, DataType dtype, List<Dimension> dataDims) {
+		return addVariable(ncFile, null, varName, dtype, dataDims);
 	}
-	
-	protected Variable addVariable(NetcdfFileWriter ncfile, String varName, DataType dtype, List<Dimension> dataDims) {
-		return addVariable(ncfile, null, varName, dtype, dataDims);
-	}
-	protected Variable addVariable(NetcdfFileWriter ncfile, Group group, String varName, DataType dtype, List<Dimension> dataDims) {
-		Variable var = ncfile.addVariable(group, varName, dtype, dataDims);
+	protected Variable addVariable(NetcdfFileWriter ncFile, Group group, String varName, DataType dtype, List<Dimension> dataDims) {
+		Variable var = ncFile.addVariable(group, varName, dtype, dataDims);
 		if ( var == null ) { 
 			String msg = "Failed to add NetCDF Variable for " + varName +".";
-			var = ncfile.findVariable(varName);
+			var = ncFile.findVariable(varName);
 			if ( var != null ) {
 				msg += " Variable already exists with dimensions " + var.getDimensions();
 			}
 			throw new IllegalStateException(msg);
+		}
+		return var;
+	}
+	protected Variable getVariable(NetcdfFileWriter ncFile, String varName) {
+		Variable var = ncFile.findVariable(varName);
+		if ( var == null ) {
+			throw new RuntimeException("Unexpected failure to find ncFile variable " + varName);
 		}
 		return var;
 	}
@@ -255,13 +588,13 @@ public abstract class DsgNcFile extends File {
 			throw new IllegalArgumentException("no metadata file types given");
 		ArrayList<String> namesNotFound = new ArrayList<String>();
 		
-		try ( NetcdfFile ncfile = NetcdfFile.open(getPath()); ) {
+		try ( NetcdfFile ncFile = NetcdfFile.open(getPath()); ) {
 			// Create the metadata with default (missing) values
-			metadata = new DsgMetadata(metadataTypes);
+			_metadata = new DsgMetadata(metadataTypes);
 
 			for ( DashDataType<?> dtype : metadataTypes.getKnownTypesSet() ) {
 				String varName = dtype.getVarName();
-				Variable var = ncfile.findVariable(varName);
+				Variable var = ncFile.findVariable(varName);
 				if ( var == null ) {
 					namesNotFound.add(varName);
 					continue;
@@ -272,7 +605,7 @@ public abstract class DsgNcFile extends File {
 					ArrayChar.D2 mvar = (ArrayChar.D2) var.read();
 					String strval = mvar.getString(0);
 					if ( ! DashboardUtils.STRING_MISSING_VALUE.equals(strval) )
-						metadata.setValue(dtype, strval);
+						_metadata.setValue(dtype, strval);
 				}
 				else if ( dtype instanceof CharDashDataType ) {
 					if ( var.getShape(1) != 1 )
@@ -280,20 +613,20 @@ public abstract class DsgNcFile extends File {
 					ArrayChar.D2 mvar = (ArrayChar.D2) var.read();
 					Character charval = mvar.get(0, 0);
 					if ( ! DashboardUtils.CHAR_MISSING_VALUE.equals(charval) )
-						metadata.setValue(dtype, charval);
+						_metadata.setValue(dtype, charval);
 				}
 				else if ( dtype instanceof IntDashDataType ) {
 					ArrayInt.D1 mvar = (ArrayInt.D1) var.read();
 					Integer intval = mvar.getInt(0);
 					if ( ! DashboardUtils.INT_MISSING_VALUE.equals(intval) )
-						metadata.setValue(dtype, intval);
+						_metadata.setValue(dtype, intval);
 				}
 				else if ( dtype instanceof DoubleDashDataType ) {
 					ArrayDouble.D1 mvar = (ArrayDouble.D1) var.read();
 					Double dblval = mvar.getDouble(0);
 					if ( ! DashboardUtils.closeTo(DashboardUtils.FP_MISSING_VALUE, dblval, 
 							DashboardUtils.MAX_RELATIVE_ERROR, DashboardUtils.MAX_ABSOLUTE_ERROR) )
-						metadata.setValue(dtype, dblval);
+						_metadata.setValue(dtype, dblval);
 				}
 				else {
 					throw new IllegalArgumentException("invalid metadata file type " + dtype.getVarName());
@@ -304,6 +637,8 @@ public abstract class DsgNcFile extends File {
 	}
 
 	/**
+     * NOT IMPLEMENTED
+     * 
 	 * Creates and assigns the internal standard data array 
 	 * reference from the contents of this netCDF DSG file.
 	 * 
@@ -323,6 +658,8 @@ public abstract class DsgNcFile extends File {
 	 */
 	public ArrayList<String> readData(KnownDataTypes dataTypes) 
 			throws IllegalArgumentException, IOException {
+        throw new RuntimeException("Not implemented");
+        /*
 		if ( (dataTypes == null) || dataTypes.isEmpty() )
 			throw new IllegalArgumentException("no data file types given");
 		int numColumns;
@@ -340,10 +677,10 @@ public abstract class DsgNcFile extends File {
 
 		ArrayList<String> namesNotFound = new ArrayList<String>();
 		
-		try ( NetcdfFile ncfile = NetcdfFile.open(getPath()); ) {
+		try ( NetcdfFile ncFile = NetcdfFile.open(getPath()); ) {
 			// Get the number of samples from the length of the time 1D array
 			String varName = DashboardServerUtils.TIME.getVarName();
-			Variable var = ncfile.findVariable(varName);
+			Variable var = ncFile.findVariable(varName);
 			if ( var == null )
 				throw new IOException("unable to find variable 'time' in " + getName());
 			int numSamples = var.getShape(0);
@@ -354,7 +691,7 @@ public abstract class DsgNcFile extends File {
 			for (int k = 0; k < numColumns; k++) {
 				DashDataType<?> dtype = dataTypesArray[k];
 				varName = dtype.getVarName();
-				var = ncfile.findVariable(varName);
+				var = ncFile.findVariable(varName);
 				if ( var == null ) {
 					namesNotFound.add(varName);
 					for (int j = 0; j < numSamples; j++)
@@ -404,9 +741,11 @@ public abstract class DsgNcFile extends File {
 					throw new IllegalArgumentException("invalid data file type " + dtype.toString());
 				}
 			}
-			stddata = new StdDataArray(dataTypesArray, dataArray);
+			// _stdUser = new StdUserDataArray(dataTypesArray, dataArray); // Old way
+			_stdUser = new StdUserDataArray(dataTypesArray, dataArray);
 		}
 		return namesNotFound;
+    */
 	}
 
 	/**
@@ -414,7 +753,7 @@ public abstract class DsgNcFile extends File {
 	 * 		the internal metadata reference; may be null
 	 */
 	public DsgMetadata getMetadata() {
-		return metadata;
+		return _metadata;
 	}
 
 	/**
@@ -422,7 +761,7 @@ public abstract class DsgNcFile extends File {
 	 * 		the internal standard data array reference; may be null
 	 */
 	public StdDataArray getStdDataArray() {
-		return stddata;
+		return _stdUser;
 	}
 
 	/**
@@ -445,8 +784,8 @@ public abstract class DsgNcFile extends File {
 								throws IOException, IllegalArgumentException {
 		char[] dataVals;
 		
-		try ( NetcdfFile ncfile = NetcdfFile.open(getPath()); ) {
-			Variable var = ncfile.findVariable(varName);
+		try ( NetcdfFile ncFile = NetcdfFile.open(getPath()); ) {
+			Variable var = ncFile.findVariable(varName);
 			if ( var == null )
 				throw new IllegalArgumentException("Unable to find variable '" + 
 						varName + "' in " + getName());
@@ -481,8 +820,8 @@ public abstract class DsgNcFile extends File {
 								throws IOException, IllegalArgumentException {
 		int[] dataVals;
 		
-		try ( NetcdfFile ncfile = NetcdfFile.open(getPath()); ) {
-			Variable var = ncfile.findVariable(varName);
+		try ( NetcdfFile ncFile = NetcdfFile.open(getPath()); ) {
+			Variable var = ncFile.findVariable(varName);
 			if ( var == null )
 				throw new IllegalArgumentException("Unable to find variable '" + 
 						varName + "' in " + getName());
@@ -515,8 +854,8 @@ public abstract class DsgNcFile extends File {
 								throws IOException, IllegalArgumentException {
 		double[] dataVals;
 		
-		try ( NetcdfFile ncfile = NetcdfFile.open(getPath()); ) {
-			Variable var = ncfile.findVariable(varName);
+		try ( NetcdfFile ncFile = NetcdfFile.open(getPath()); ) {
+			Variable var = ncFile.findVariable(varName);
 			if ( var == null )
 				throw new IllegalArgumentException("Unable to find variable '" + 
 						varName + "' in " + getName());
@@ -551,8 +890,8 @@ public abstract class DsgNcFile extends File {
 	public void updateStringVarValue(String varName, String newValue) 
 		throws IllegalArgumentException, IOException, InvalidRangeException {
 		
-		try ( NetcdfFileWriter ncfile = NetcdfFileWriter.openExisting(getPath()); ) {
-			Variable var = ncfile.findVariable(varName);
+		try ( NetcdfFileWriter ncFile = NetcdfFileWriter.openExisting(getPath()); ) {
+			Variable var = ncFile.findVariable(varName);
 			if ( var == null ) 
 				throw new IllegalArgumentException("Unable to find variable '" + 
 						varName + "' in " + getName());
@@ -563,11 +902,11 @@ public abstract class DsgNcFile extends File {
 						varLen + ")");
 			ArrayChar.D2 valArray = new ArrayChar.D2(1, varLen);
 			valArray.setString(0, newValue);
-			ncfile.write(var, valArray);
+			ncFile.write(var, valArray);
 		}
 	}
 
-	/**
+	/*  *
 	 * Writes the given array of characters as the values 
 	 * for the given character data variable.
 	 * 
@@ -580,12 +919,11 @@ public abstract class DsgNcFile extends File {
 	 * @throws IllegalArgumentException
 	 * 		if the variable name or number of provided values
 	 * 		is invalid
-	 */
 	public void writeCharVarDataValues(String varName, char[] values) 
 								throws IOException, IllegalArgumentException {
 		
-		try ( NetcdfFileWriter ncfile = NetcdfFileWriter.openExisting(getPath()); ) {
-			Variable var = ncfile.findVariable(varName);
+		try ( NetcdfFileWriter ncFile = NetcdfFileWriter.openExisting(getPath()); ) {
+			Variable var = ncFile.findVariable(varName);
 			if ( var == null )
 				throw new IllegalArgumentException("Unable to find variable '" + 
 						varName + "' in " + getName());
@@ -602,11 +940,202 @@ public abstract class DsgNcFile extends File {
 				dvar.set(k, 0, values[k]);
 			}
 			try {
-				ncfile.write(var, dvar);
+				ncFile.write(var, dvar);
 			} catch (InvalidRangeException ex) {
 				throw new IllegalArgumentException(ex);
 			}
 		}
 	}
+	 */
 
+	protected void addObservationVariables(NetcdfFileWriter ncFile) {
+        for (int col=0; col<_stdUser.getNumDataCols(); col++) {
+            DashDataType<?> dtype = _stdUser.getDataTypes().get(col);
+            if ( ! (dtype instanceof DoubleDashDataType)) {
+                logger.debug("Skipping non-double column " + dtype.getVarName() + " at index " + col);
+                continue;
+            }
+            if ( ! _stdUser.isStandardized(col)) {
+                logger.debug("Skipping non-standardized column " + dtype.getVarName() + " at index " + col);
+                continue;
+            }
+			if ( excludeColumn(col, dtype)) {
+				logger.debug("Not adding variable for excluded column: " + dtype);
+				continue;
+			}
+			DashDataType<?> dataCol =  _stdUser.findDataColumn(dtype.getVarName());
+			if ( dataCol == null ) {
+				logger.warn("No data column found for type: " + dtype.getVarName());
+				continue;
+			}
+			Variable var = addVariableFor(ncFile, dtype, ElemCategory.DATA);
+			logger.debug("Added data variable " + var);
+		}
+	}
+    
+	protected void writeVariables(NetcdfFileWriter ncFile) throws Exception {
+//		writeMetadataVariables(ncFile);
+		writeFeatureTypeVariables(ncFile);
+		writeObservationVariables(ncFile);
+	}
+	protected void writeObservationVariables(NetcdfFileWriter ncFile) throws Exception {
+//		Collection<DashDataType<?>> dsgVariableTypes = getDataVariablesToWriteToDsgFile();
+//		for (DashDataType<?> dtype : dsgVariableTypes) {
+        for (int col=0; col<_stdUser.getNumDataCols(); col++) {
+            DashDataType<?> dtype = _stdUser.getDataTypes().get(col);
+			if ( excludeColumn(col, dtype)) {
+				logger.debug("Not adding data for excluded column: " + dtype);
+				continue;
+			}
+			String varName = dtype.getVarName();
+			Variable var = ncFile.findVariable(varName);
+			if ( var == null ) {
+				System.err.println("Did not find Variable for " + varName);
+				continue;
+			}
+			int dataColumnIdx = _stdUser.findDataColumnIndex(varName);
+			if ( dataColumnIdx == -1 ) {
+				System.err.println("Did not find data column for " + varName);
+				continue;
+			}
+            if ( _stdUser.isStandardized(dataColumnIdx)) {
+    			Object[] data = _stdUser.getStdValues(dataColumnIdx);
+    			writeVariableData(ncFile, var, dtype, data);
+            } else {
+                Object[] data = _stdUser.getAllValuesAsString(dataColumnIdx);
+    			writeVariableData(ncFile, var, dtype, data);
+            }
+		}
+	}
+	private void writeVariableData(NetcdfFileWriter ncFile, Variable var, DashDataType<?> dtype, Object[] data) 
+			throws Exception {
+		int numSamples = data.length;
+		if ( dtype instanceof CharDashDataType ) {
+			ArrayChar dvar = var.getRank() > 1 ?
+								new ArrayChar.D2(numSamples, 1) :
+								new ArrayChar.D1(1);
+			for (int j = 0; j < numSamples; j++) {
+				Character dvalue = (Character) data[j];
+				if ( dvalue == null ) {
+					dvalue = DashboardUtils.CHAR_MISSING_VALUE;
+				}
+				dvar.setChar(j, dvalue.charValue());
+			}
+			ncFile.write(var, dvar);
+		}
+		else if ( dtype instanceof StringDashDataType ) {
+			ArrayChar dvar =   var.getRank() > 1 ? 
+								new ArrayChar.D2(numSamples, _maxStrLen) :
+								new ArrayChar.D1(_maxStrLen);
+			for (int j = 0; j < numSamples; j++) {
+				String dvalue = (String) data[j];
+				if ( dvalue == null ) {
+					dvalue = DashboardUtils.STRING_MISSING_VALUE;
+				}
+				if ( var.getRank() > 1 ) {
+					dvar.setString(j, dvalue);
+				} else {
+					dvar.setString(dvalue);
+				}
+			}
+			ncFile.write(var, dvar);
+		}
+		else if ( dtype instanceof IntDashDataType ) {
+			ArrayInt.D1 dvar = new ArrayInt.D1(numSamples);
+			for (int j = 0; j < numSamples; j++) {
+				Integer dvalue = (Integer) data[j];
+				if ( dvalue == null )
+					dvalue = DashboardUtils.INT_MISSING_VALUE;
+				dvar.set(j, dvalue.intValue());
+			}
+			ncFile.write(var, dvar);
+		}
+		else if ( dtype instanceof DoubleDashDataType ) {
+			// Data Doubles
+			ArrayDouble.D1 dvar = new ArrayDouble.D1(numSamples);
+			for (int j = 0; j < numSamples; j++) {
+				Double dvalue = (Double) data[j];
+				if ( (dvalue == null) || dvalue.isNaN() || dvalue.isInfinite() )
+					dvalue = DashboardUtils.FP_MISSING_VALUE;
+				dvar.set(j, dvalue.doubleValue());
+			}
+			ncFile.write(var, dvar);
+		}
+		else {
+			throw new IllegalArgumentException("unexpected unknown data type: " + dtype.toString());
+		}
+		ncFile.flush();
+	}
+	
+    protected boolean excludeColumn(int columnIndex, DashDataType<?> dtype) {
+        if ( dtype.getVarName().equals("other") ||
+             dtype.typeNameLike("unknown") ||
+             _typeSpecificVariables.containsKey(dtype.getVarName())) {
+            return true;
+        }
+        return false;
+    }
+//    protected boolean excludeColumnFromData(int columnIndex, DashDataType<?> dtype) {
+//        if ( dtype.getVarName().equals("other") ||
+//             dtype.typeNameLike("unknown") ||
+//             _typeSpecificVariables.containsKey(dtype.getVarName())) {
+//            return true;
+//        }
+//        return false;
+//    }
+	protected Variable addVariableFor(NetcdfFileWriter ncFile, DashDataType<?> dashType, ElemCategory category) {
+		DataType ncDType = dataTypeFor(dashType);
+		List<Dimension> dims = dimensionsFor(dashType, category);
+		Variable var = addVariable(ncFile, dashType.getVarName(), ncDType, dims);
+		addStandardAttributes(ncFile, var, dashType);
+		return var;
+	}
+	protected static void addStandardAttributes(NetcdfFileWriter ncFile, Variable var, DashDataType<?> dtype) {
+		addAttributes(ncFile, var, null, dtype.getDescription(), 
+					  dtype.getStandardName(), dtype.getCategoryName(), dtype.getFileStdUnit());
+	}
+	protected DataType dataTypeFor(DashDataType<?> dashType) {
+		String dataTypeName = dashType.getDataClassName().toLowerCase();
+		return dataTypeFor(dataTypeName);
+	}
+	protected static DataType dataTypeFor(String dataTypeName) {
+		switch (dataTypeName.toLowerCase()) {
+			case "double":
+				return DataType.DOUBLE;
+			case "integer":
+				return DataType.INT;
+			case "string":
+			case "character":
+				return DataType.CHAR;
+			default:
+				throw new IllegalArgumentException("Unknown DashDataType:"+dataTypeName);
+		}
+	}
+	
+	protected List<Dimension> dimensionsFor(DashDataType<?> dashType, ElemCategory category) {
+		String dataTypeName = dashType.getDataClassName().toLowerCase();
+		Dims dims = _obsDims;
+		switch (category) {
+			case METADATA:
+				dims = _metadataDims;
+				break;
+			case FEATURE:
+				dims = _featureDims;
+				break;
+			case DATA:
+				dims = _obsDims;
+				break;
+		}
+		switch (dataTypeName) {
+			case "double":
+			case "integer":
+				return dims.nums();
+			case "string":
+				return dims.strings();
+			case "character":
+				return dims.chars();
+			default:
+				throw new IllegalArgumentException("Unknown DashDataType:"+dataTypeName);
+		}
+	}
 }

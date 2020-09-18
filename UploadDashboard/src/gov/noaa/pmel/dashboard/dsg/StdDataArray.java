@@ -406,7 +406,7 @@ public class StdDataArray {
 				latitudeIndex = k;
 			else if ( DashboardServerUtils.SAMPLE_DEPTH.typeNameEquals(dataTypes[k]) )
 				sampleDepthIndex = k;
-			else if ( DashboardServerUtils.WATER_PRESSURE.typeNameEquals(dataTypes[k]) )
+			else if ( DashboardServerUtils.CTD_PRESSURE.typeNameEquals(dataTypes[k]) )
 				samplePressureIndex = k;
 			else if ( DashboardServerUtils.DATASET_ID.typeNameEquals(dataTypes[k]))
 				datasetIdIndex = k;
@@ -541,6 +541,9 @@ public class StdDataArray {
 	public int getSampleDepthIndex() {
 		return sampleDepthIndex;
 	}
+    public Double getSampleDepth(int rowIdx) {
+        return (Double) stdObjects[rowIdx][sampleDepthIndex];
+    }
 
     protected Double[] _sampleTimes = null;
 	/**
@@ -870,6 +873,20 @@ public class StdDataArray {
 
     public boolean hasSamplePressure() {
         return isUsableIndex(samplePressureIndex);
+    }
+    public int getSamplePressureIndex() {
+        return samplePressureIndex;
+    }
+	public Double[] getSamplePressures() throws IllegalStateException {
+		if ( ! isUsableIndex(samplePressureIndex) )
+			throw new IllegalStateException("no valid sample depth data column");
+		Double[] sampleDepths = new Double[numSamples];
+		for (int j = 0; j < numSamples; j++)
+			sampleDepths[j] = (Double) stdObjects[j][samplePressureIndex];
+		return sampleDepths;
+	}
+    public Double getSamplePressure(int rowIdx) {
+        return (Double) stdObjects[rowIdx][samplePressureIndex];
     }
 
 	public boolean hasDate() {

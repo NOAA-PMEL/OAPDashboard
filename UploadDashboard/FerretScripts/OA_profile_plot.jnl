@@ -1,0 +1,53 @@
+! Plot a pair of variables for the OA thumbnail plots.
+! If the second is the sample_depth, then draw lines
+! connecting the data from each profile.
+! 11/20/2019 ACM Make this work for pairs on the instance axis (obs)
+! or the feature-axis (e.g. per profile).
+
+
+! PALETTE viridis
+define symbol plotname = ($fnamepath)_($1).($plotextn)
+
+! Check for existence of requested variables, make a blank plot
+! if one or both are missing. Below we will also test for valid
+! data in one or both variables and label that on the plot
+
+!! let ok1 = `($1),return=isready`
+!! let ok2 = `($2),return=isready` 
+!! IF `ok1 + ok2 LT 2` THEN
+   !! plot/vs/nolab {-1,1}, {-1,1}
+   !! IF `ok1+ok2 EQ 1` THEN
+      !! IF `ok1 eq 0` THEN annotate/norm/x=0.5/y=0.5/halign=0 "@AC($1) is not in ($fname).nc"
+      !! IF `ok2 eq 0` THEN annotate/norm/x=0.5/y=0.5/halign=0 "@AC($2) is not in ($fname).nc"
+   !! ELSE
+      !! IF `ok1 eq 0` THEN annotate/norm/x=0.5/y=0.45/halign=0 "@AC($1) is not in ($fname).nc"
+      !! IF `ok2 eq 0` THEN annotate/norm/x=0.5/y=0.55/halign=0 "@AC($2) is not in ($fname).nc"
+   !! ENDIF
+   !! frame/file="($plotname)"
+!! 
+   !! exit/script
+!! ENDIF
+
+set window/outline=0.75
+
+let units_str = "`($1),return=units`"
+IF `STRINDEX(units_str, "seconds") GT 0` THEN
+
+  go plot_pad "plot/vs longitude, latitude" 3 1
+  GO oap_preview_fland ($land_palette)
+
+!plot/vs/over/ribbon longitude, latitude, time
+  plot/vs/over/ribbon/key/pal=viridis/nolab/symbol=boxfill/siz=0.15/SET longitude, latitude, ($1)
+   annotate/norm/x=0.5/y=-0.15/halign=0 "Colored by sample time"
+   go color_datekey "H", ($1)
+  ppl plot/over
+
+ELSE
+   plot/over/nolab/key/symbol=boxfill/siz=0.06/title="`($1),return=title`" ($1)
+   annotate/norm/x=0.5/y=-0.15/halign=0 "`($1),return=title` (`($1),return=units`)"
+   ! save the plot, but only if it's not the map, which is saved elsewhere...
+   ! frame/file="($plotname)"
+ENDIF
+
+
+ppl shaset reset

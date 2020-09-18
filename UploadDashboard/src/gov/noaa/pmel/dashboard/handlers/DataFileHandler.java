@@ -1585,6 +1585,7 @@ public class DataFileHandler extends VersionedFileHandler {
 	 * 		if the user is not permitted to delete the dataset, or 
 	 * 		if there were problems deleting a file or 
 	 * 			committing the deletion in version control
+	 * @throws IOException 
 	 */
 	public void deleteDatasetFiles(String datasetId, String username, 
                         			boolean deleteMetadata) throws IllegalArgumentException {
@@ -1606,8 +1607,12 @@ public class DataFileHandler extends VersionedFileHandler {
 
 		// If they exist, delete the DSG files and notify ERDDAP
 		DsgNcFileHandler dsgHandler = configStore.getDsgNcFileHandler();
-		if ( dsgHandler.deleteCruise(datasetId) )
-			dsgHandler.flagErddap();
+        try {
+    		if ( dsgHandler.deleteCruise(datasetId) )
+    			dsgHandler.flagErddap();
+        } catch (Exception ex) {
+            logger.warn(ex,ex);
+        }
 
 		// If it exists, delete the messages file
 		configStore.getCheckerMsgHandler().deleteMsgsFile(datasetId);

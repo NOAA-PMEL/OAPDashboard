@@ -844,7 +844,8 @@ public class DatasetListPage extends CompositeWithUsername {
 					MANY_DATASETS_SELECTED_ERR_START + FOR_PREVIEW_ERR_END);
 			return;
 		}
-		for ( DashboardDataset dataset : selectedDatasets.values() ) {
+        DashboardDataset dataset = selectedDatasets.values().iterator().next();
+//		for ( DashboardDataset dataset : selectedDatasets.values() ) {
 			String status = dataset.getDataCheckStatus();
 			if ( status.equals(DashboardUtils.CHECK_STATUS_NOT_CHECKED) ) {
 				UploadDashboard.showMessage(CANNOT_PREVIEW_UNCHECKED_ERRMSG);
@@ -854,8 +855,19 @@ public class DatasetListPage extends CompositeWithUsername {
 				UploadDashboard.showMessage(CANNOT_PREVIEW_WITH_SERIOUS_ERRORS_ERRMSG);
 				return;				
 			}
-		}
-		DatasetPreviewPage.showPage(selectedDatasets);
+//		}
+        switch (dataset.getFeatureType()) {
+            case TIMESERIES:
+            case TRAJECTORY:
+        		DatasetPreviewSimplePage.showPage(selectedDatasets);
+                break;
+            case PROFILE:
+        		DatasetPreviewProfilePage.showPage(selectedDatasets);
+                break;
+            default:
+				UploadDashboard.showMessage(dataset.getFeatureTypeName() + 
+				                            " not currently supported for preview images.");
+        }
 		return;
 	}
 
@@ -1504,7 +1516,10 @@ public class DatasetListPage extends CompositeWithUsername {
             }
         }
         for ( DashboardDataset dd : selectedList.values()) {
-            if ( ! dd.getFeatureType().equals(FeatureType.PROFILE)) {
+            FeatureType ddType = dd.getFeatureType();
+            if ( ! ( ddType.equals(FeatureType.PROFILE) || 
+                     ddType.equals(FeatureType.TRAJECTORY) ||
+                     ddType.equals(FeatureType.TIMESERIES))) {
                 previewButton.setEnabled(false);
                 maybeSetTitleAdvisory(previewButton, "Data Preview is not yet available for this type.");
             }
