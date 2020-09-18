@@ -551,6 +551,10 @@ public class DashboardServices extends RemoteServiceServlet implements Dashboard
             MetadataFileHandler metafiles = configStore.getMetadataFileHandler();
             try {
                 File metadataFile = metafiles.getMetadataFile(datasetId);
+                if ( ! metadataFile.exists()) { // Should not generally happen.
+                    logger.warn("Metadata file not found: " + metadataFile.getPath());
+                    OADSMetadata.createInitialOADSMetadataFile(datasetId, pageUsername);
+                }
                 OadsMetadataDocumentType mdDoc = OADSMetadata.extractOADSMetadata(stdArray, metadataFile);
 //                OadsMetadataDocumentType existgMd = MetadataFileHandler.
     			metafiles.saveOadsXmlDoc(mdDoc, datasetId, "Auto-extraction from StdArray");
