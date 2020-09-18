@@ -58,6 +58,7 @@ SET REDIRECT/TEE/CLOBBER/FILE="($2)/`longitude,return=dset`_($session_PID)_thumb
 CAN MODE LOGO
 go plot_pad "plot/vs/symbol=boxfill/size=.15/color=blue longitude, latitude" 15, 10
 go oap_preview_fland "tan"
+plot/vs/over/symbol=boxfill/size=.15/color=blue longitude, latitude
 
 frame/file="($fnamepath)_map.($plotextn)"
 

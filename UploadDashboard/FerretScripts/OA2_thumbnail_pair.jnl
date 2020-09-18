@@ -4,6 +4,10 @@
 ! 11/20/2019 ACM Make this work for pairs on the instance axis (obs)
 ! or the feature-axis (e.g. per profile).
 
+IF ($PROGRAM_NAME"0|PyFerret>1|*>0") THEN 
+   set text/font=Arial
+   define symbol plotextn = png
+endif
 
 define symbol plotname = ($fnamepath)_($1)__($2).($plotextn)
 
@@ -50,8 +54,6 @@ IF ($2"0|sample_pressure>1|*>0") then
    let down_var = sample_pressure
 ELIF ($2"0|sample_depth>1|*>0") then
    let down_var = sample_depth
-ELIF `down_var,return=isReady` then
-   CAN VAR down_var
 ENDIF
 
 show variable down_var
@@ -60,10 +62,11 @@ IF `down_var,return=isReady` then
    say Depth plot ($1) v ($2)
 
    ppl %range 0 `down_var[i=@max]`
-   ! ppl %range 0 `sample_depth[i=@max]`
+   say 
 
+   ! define symbol vlimit = /vlim=240:0
+   let vlimhi = ($PPL$RANGE_HIGH)*1.05
    define symbol vlimit = /vlim=($PPL$RANGE_HIGH):0
-   define symbol vlimit = /vlim=240:0
 
 ! Draw a plot with invisible to set things up, all profiles
 ! Set up label sizes, remove extra labels in the upper left
@@ -116,6 +119,8 @@ IF `down_var,return=isReady` then
      ribbon($fquals) ($1)[i=`i1`:`i2`@fln],  ($2)[i=`i1`:`i2`@fln], 0*colr[i=`i1`:`i2`];\
      ribbon/i=`i1`:`i2`($quals)($kqual)  ($1), ($2), colr;\
      let i1 = `i2+1`)
+
+   CAN VAR down_var
 
 else
    say Property property ($1) - ($2)
