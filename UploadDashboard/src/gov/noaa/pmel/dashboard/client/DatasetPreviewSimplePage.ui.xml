@@ -26,41 +26,24 @@
     							<g:customHeader>
     								<g:HTML addStyleNames="{style.plotslabel}" ui:field="tab1Html" />
     							</g:customHeader>
-    <!--							<g:Image addStyleNames="{style.plotsimage}" ui:field="latVsLonImage" />  -->
     							<g:ScrollPanel addStyleNames="{style.previewscrollpanel}">
     								<g:FlowPanel ui:field="tab1Panel">
     								</g:FlowPanel>
     							</g:ScrollPanel>
     						</g:tab>
-    						<g:tab>
-    							<g:customHeader>
-    								<g:HTML addStyleNames="{style.plotslabel}" ui:field="tab2Html" />
-    							</g:customHeader>
-    <!--							<g:Image addStyleNames="{style.plotsimage}" ui:field="latLonImage" />  -->
-    							<g:ScrollPanel addStyleNames="{style.previewscrollpanel}">
-    								<g:FlowPanel ui:field="tab2Panel">
-    								</g:FlowPanel>
-    							</g:ScrollPanel>
-    						</g:tab>
-    						<g:tab>
-    							<g:customHeader>
-    								<g:HTML addStyleNames="{style.plotslabel}" ui:field="tab3Html" />
-    							</g:customHeader>
-    <!--							<g:Image addStyleNames="{style.plotsimage}" ui:field="sampleVsTimeImage" />  -->
-    							<g:ScrollPanel addStyleNames="{style.previewscrollpanel}">
-    								<g:FlowPanel ui:field="tab3Panel">
-    								</g:FlowPanel>
-    							</g:ScrollPanel>
-    						</g:tab>
     					</g:TabLayoutPanel>
     			</g:ResizeLayoutPanel>
-    			<g:FlowPanel addStyleNames="{style.horizontalbuttonpanel}">
-    				<g:Button addStyleNames="{style.horizontalbutton}" ui:field="refreshButton" />
-    				<g:Button addStyleNames="{style.horizontalbutton}" ui:field="doneButton" />
-    			</g:FlowPanel>
     		</g:FlowPanel>
         </g:center>
-        <g:south size="3"> <oap:ApplicationFooter ui:field="footer"/> </g:south>
+        <g:south size="5.5">
+            <g:FlowPanel>
+                <g:FlowPanel addStyleNames="{style.horizontalbuttonpanel}">
+                    <g:Button addStyleNames="{style.horizontalbutton}" ui:field="refreshButton" />
+                    <g:Button addStyleNames="{style.horizontalbutton}" ui:field="doneButton" />
+                </g:FlowPanel>
+                <oap:ApplicationFooter ui:field="footer"/>
+            </g:FlowPanel>
+        </g:south>
 	</g:DockLayoutPanel>
 
 </ui:UiBinder>

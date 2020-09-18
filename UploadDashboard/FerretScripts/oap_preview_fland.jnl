@@ -11,6 +11,10 @@ LET lon_range = ($region_x_range)
 LET lat_range = ($region_y_range)
 LET fland_area = `ABS(lon_range * lat_range) / (360 * 180)`
 
+say lon_range  `lon_range`
+say lat_range  `lat_range`
+say fland_area `fland_area`
+
 ! If a tiny region then use the etopo2 or etopo1 from PMEL server
 
 CANCEL SYMBOL topo_url
@@ -19,7 +23,7 @@ CANCEL SYMBOL topo_url
 ! map for all but the tiniest regions.
 
 LET fland_cutoff = 0.008
-IF `fland_area LT fland_cutoff` THEN
+IF 1 THEN ! `fland_area LT fland_cutoff` THEN
   
    SET DATA/SAVE
 
@@ -40,12 +44,16 @@ IF `fland_area LT fland_cutoff` THEN
         DEFINE SYMBOL topo_url = "http://ferret.pmel.noaa.gov/thredds/dodsC/data/PMEL/etopo1.nc"
    ENDIF
 
+   IF `fland_area GT fland_cutoff` THEN DEFINE SYMBOL topo_url = etopo5
+      
    IF `($topo_url"0|*>1") EQ 0` THEN 
       DEFINE SYMBOL topo_url = etopo5
    ENDIF
 
+	SAY using etopo: ($topo_url)
+
    USE ($topo_url)
-   SHADE/NOLAB/NOKEY/LEV=($land_levels)/PAL=($fland_palette)/OVERLAY rose($map_reg)
+   SHADE/NOLAB/NOKEY/LEV=($land_levels)/PAL=($fland_palette) rose($map_reg)
    DEFINE SYMBOL toponame = `rose,return=dset`
 
    CAN DATA ($toponame)
@@ -59,6 +67,6 @@ ELSE
 ENDIF
 
 IF `($fland_done"0|*>1") EQ 0` THEN \
-GO fland ($fland_resolution) ($fland_palette)
+GO fland ($fland_resolution) ($fland_palette) ! basemap
 
 ! End of review_fland.jnl --------------------------------------------------

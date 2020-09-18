@@ -3,6 +3,7 @@
  */
 package gov.noaa.pmel.dashboard.datatype;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -17,6 +18,7 @@ import com.google.gson.JsonParser;
 
 import gov.noaa.pmel.dashboard.dsg.StdDataArray;
 import gov.noaa.pmel.dashboard.dsg.StdUserDataArray;
+import gov.noaa.pmel.dashboard.server.DashboardConfigStore;
 import gov.noaa.pmel.dashboard.server.DashboardServerUtils;
 import gov.noaa.pmel.dashboard.shared.ADCMessage;
 import gov.noaa.pmel.dashboard.shared.DashboardUtils;
@@ -618,6 +620,19 @@ public abstract class DashDataType<T extends Comparable<T>> implements Comparabl
 		return 0;
 	}
 
+    public boolean isComponentOfTime() {
+        return this.equals(DashboardServerUtils.TIMESTAMP)
+               || this.equals(DashboardServerUtils.DATE)
+               || this.equals(DashboardServerUtils.YEAR)
+               || this.equals(DashboardServerUtils.MONTH_OF_YEAR)
+               || this.equals(DashboardServerUtils.DAY_OF_MONTH)
+               || this.equals(DashboardServerUtils.DAY_OF_YEAR)
+               || this.equals(DashboardServerUtils.TIME)
+               || this.equals(DashboardServerUtils.TIME_OF_DAY)
+               || this.equals(DashboardServerUtils.HOUR_OF_DAY)
+               || this.equals(DashboardServerUtils.MINUTE_OF_HOUR)
+               || this.equals(DashboardServerUtils.SECOND_OF_MINUTE);
+    }
 	@Override
 	public String toString() {
 		return "DashDataType[varName=" + varName + 
@@ -693,10 +708,11 @@ public abstract class DashDataType<T extends Comparable<T>> implements Comparabl
 			return true;
 		if ( other == null )
 			return false;
-		if ( typeNameEquals(other.varName) )
+        if ( typeNameEquals(other.varName) ||
+             typeNameEquals(other.standardName) ||
+		     typeNameEquals(other.displayName)) {
 			return true;
-		if ( typeNameEquals(other.displayName) )
-			return true;
+        }
 		return false;
 	}
 
@@ -732,6 +748,17 @@ public abstract class DashDataType<T extends Comparable<T>> implements Comparabl
 		return false;
 	}
 
+    public boolean isMetadataType() {
+        try {
+            KnownDataTypes metadataTypes = DashboardConfigStore.get(false).getKnownMetadataTypes();
+            if ( metadataTypes.containsTypeName(this.getVarName())) {
+                return true;
+            }
+            return false;
+        } catch (IOException ioex) {
+            throw new IllegalStateException("Unexpected failure to get configuration information: " + ioex);
+        }
+    }
 	/**
 	 * A QC flag type for another data type is a {@link CharDashDataType} with 
 	 * a category name of {@link DashboardServerUtils#QUALITY_CATEGORY} and a 

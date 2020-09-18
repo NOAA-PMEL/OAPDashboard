@@ -109,9 +109,10 @@ public class DatasetSubmitter {
 	 * 		if the data or metadata is missing,
 	 * 		if the DSG files cannot be created, or
 	 * 		if there was a problem saving the updated dataset information (including archive status)
+	 * @throws IOException 
 	 */
 	public void submitDatasetsForQC(Collection<String> idsSet, String archiveStatus, String timestamp, 
-			boolean repeatSend, String submitter) throws IllegalArgumentException, IllegalStateException {
+			boolean repeatSend, String submitter) throws IllegalArgumentException, IOException {
 
         if ( !QC_SUPPORTED ) {
             String s = "Calling submit datasets to QC NOT SUPPORTED";
@@ -406,7 +407,7 @@ public class DatasetSubmitter {
     }
 
     /**
-     * @param datasetId
+     * @param sRecord
      * @param archiveBundle
      * @param userRealName
      * @param userEmail
@@ -442,9 +443,8 @@ public class DatasetSubmitter {
             new OapMailSender().sendMessage(toList, subject, message);
     }
     /**
-     * @param datasetId 
+     * @param submission 
      * @param archiveBundle
-     * @param datasetId
      * @param userRealName
      * @param userEmail
      * @return

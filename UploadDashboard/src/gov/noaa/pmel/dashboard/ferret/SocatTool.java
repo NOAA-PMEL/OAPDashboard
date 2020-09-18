@@ -1,13 +1,23 @@
 package gov.noaa.pmel.dashboard.ferret;
 
 import java.io.File;
+import java.io.FileWriter;
+import java.io.IOException;
 import java.io.PrintStream;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.jdom2.Element;
+
+import gov.noaa.pmel.dashboard.dsg.DsgNcFile;
+import gov.noaa.pmel.dashboard.dsg.StdUserDataArray;
+import gov.noaa.pmel.dashboard.shared.DashboardDataset;
+import gov.noaa.pmel.dashboard.shared.FeatureType;
+import gov.noaa.pmel.tws.util.TemplateFileContentLoader;
 
 
 
@@ -19,17 +29,22 @@ public class SocatTool extends Thread {
     
 	FerretConfig ferret = new FerretConfig();
 	ArrayList<String> scriptArgs;
+    DashboardDataset dataset;
+    StdUserDataArray stdUser;
 	String expocode;
 	FerretConfig.Action action;
+    FeatureType dsgType;
 	String message;
 	boolean error;
 	boolean done;
-
+    List<String> plottableVarNames;
 
 	public SocatTool(FerretConfig ferretConf) {
 	    ferret = new FerretConfig();
 	    ferret.setRootElement((Element)ferretConf.getRootElement().clone());
 	    scriptArgs = new ArrayList<String>(3);
+        dataset = null;
+        stdUser = null;
 	    expocode = null;
 	    message = null;
 	    error = false;
@@ -37,10 +52,18 @@ public class SocatTool extends Thread {
 	}
 
 	public void init(List<String> scriptArgs, String expocode, FerretConfig.Action action) {
+        this.init(scriptArgs, expocode, action, null, null, null);
+	}
+	public void init(List<String> scriptArgs, String expocode, FerretConfig.Action action, 
+	                 DashboardDataset dataset, StdUserDataArray stdUser, List<String> plottableVarNames) {
 		this.scriptArgs.clear();
 		this.scriptArgs.addAll(scriptArgs);
+        this.dataset = dataset;
+        this.stdUser = stdUser;
 		this.expocode = expocode;
 		this.action = action;
+        this.dsgType = dataset.getFeatureType();
+        this.plottableVarNames = plottableVarNames;
 	}
 
 	@Override
@@ -52,13 +75,17 @@ public class SocatTool extends Thread {
 			String temp_dir = ferret.getTempDir();
 			if ( !temp_dir.endsWith(File.separator) ) temp_dir = temp_dir + "/";
 			
-			String driver = ferret.getDriverScript(action);
-			
 			File temp = new File(temp_dir);
 			if ( !temp.exists() ) {
 				temp.mkdirs();
 			}
 
+			String driver = // dsgType != null ?
+                    		// 	getDsgPlotsDriverScript() :
+            			        ferret.getDriverScript(action);
+            String driverTemplate = driver+".template";
+            driver = createDriverScript(driverTemplate, temp);
+            
 			File script;
 			if ( action.equals(FerretConfig.Action.COMPUTE) ) {
 				script = new File(temp_dir, "ferret_compute_" + expocode + ".jnl");
@@ -66,11 +93,11 @@ public class SocatTool extends Thread {
 			else if ( action.equals(FerretConfig.Action.DECIMATE) ) {
 				script = new File(temp_dir, "ferret_decimate_" + expocode + ".jnl");
 			}
-			else if ( action.equals(FerretConfig.Action.PLOTS) || action.equals(FerretConfig.Action.trajectory_PLOTS) ) {
+			else { // if ( action.equals(FerretConfig.Action.PLOTS)) {
 				script = new File(temp_dir, "ferret_plots_" + expocode + ".jnl");
 			}
-			else
-				throw new RuntimeException("Unknown action " + action.toString());
+//			else
+//				throw new RuntimeException("Unknown action " + action.toString());
 			
             logger.debug("Script file: "+ script);
 			try ( PrintStream script_writer = new PrintStream(script); ) {
@@ -114,13 +141,148 @@ public class SocatTool extends Thread {
 			if ( ! error && deleteScriptOnExit )
 				script.delete();
 		} catch ( Exception e ) {
+            logger.warn(e,e);
+            e.printStackTrace();
 			done = true;
 			error = true;
 			message = e.getMessage();
 		} 
-
-
 	}
+    /**
+     * @param driverTemplate
+     * @param temp
+     * @param dsgType2
+     * @throws IOException 
+     */
+    private String createDriverScript(String driverTemplate, File temp) throws Exception {
+        File templateFile = getTemplateFile(driverTemplate);
+        String driverName = driverTemplate.substring(0, driverTemplate.indexOf(".template"))+"_"+expocode + ".jnl";
+        switch (dsgType) {
+            case TIMESERIES:
+                createTimeseriesDriver(templateFile, driverName, temp);
+                break;
+            case TRAJECTORY:
+                createTrajectoryDriver(templateFile, driverName, temp);
+                break;
+            case PROFILE:
+                createProfileDriver(templateFile, driverName, temp);
+                break;
+            case OTHER:
+            case TIMESERIES_PROFILE:
+            case TRAJECTORY_PROFILE:
+            case UNSPECIFIED:
+            default:
+                throw new IllegalArgumentException("DSG type " + dsgType + " not supported.");
+        }
+        return driverName;
+    }
+
+    /**
+     * @param driverTemplate
+     * @return
+     */
+    private File getTemplateFile(String driverTemplate) {
+        File templatesDir = new File(ferret.getTemplatesDirectory());
+        File template = new File(templatesDir, driverTemplate);
+        return template;
+    }
+
+    /**
+     * @param driver
+     * @param temp
+     * @throws IOException 
+     */
+    private void createTimeseriesDriver(File templateFile, String driverName, File temp) throws Exception {
+        File driverFile = new File(temp, driverName);
+        TemplateFileContentLoader template = TemplateFileContentLoader.NewLoader(templateFile);
+        StringBuilder timeseriesPlots = new StringBuilder();
+        Map<String, String>replacements = new HashMap<String, String>();
+        if ( plottableVarNames != null ) {
+            for ( String varname : plottableVarNames) {
+                timeseriesPlots.append("go OA_timeseries_plot ").append(varname).append("\n");
+            }
+            replacements.put("TIMESERIES_PLOTS", timeseriesPlots.toString());
+        } else {
+            replacements.put("TIMESERIES_PLOTS", "");  // nothing to plot...
+        }
+        String driverContent = template.getContent(replacements);
+        try ( FileWriter fout = new FileWriter(driverFile)) {
+            fout.write(driverContent);
+        }
+    }
+
+    /**
+     * @param driver
+     * @param temp
+     * @throws Exception 
+     */
+    private void createTrajectoryDriver(File templateFile, String driverName, File temp) throws Exception {
+        File driverFile = new File(temp, driverName);
+        TemplateFileContentLoader template = TemplateFileContentLoader.NewLoader(templateFile);
+        StringBuilder timeseriesPlots = new StringBuilder();
+        Map<String, String>replacements = new HashMap<String, String>();
+        if ( plottableVarNames != null ) {
+            for ( String varname : plottableVarNames) {
+                timeseriesPlots.append("go OA_trajectory_plot ").append(varname).append("\n");
+            }
+            replacements.put("TRAJECTORY_PLOTS", timeseriesPlots.toString());
+        } else {
+            replacements.put("TRAJECTORY_PLOTS", "");  // nothing to plot...
+        }
+        String driverContent = template.getContent(replacements);
+        try ( FileWriter fout = new FileWriter(driverFile)) {
+            fout.write(driverContent);
+        }
+    }
+
+    /**
+     * @param driver
+     * @param temp
+     * @throws IOException 
+     */
+    private void createProfileDriver(File templateFile, String driverName, File temp) throws Exception {
+        File driverFile = new File(temp, driverName);
+        TemplateFileContentLoader template = TemplateFileContentLoader.NewLoader(templateFile);
+        Map<String, String>replacements = new HashMap<String, String>();
+        String depthVarName =  stdUser.hasSamplePressure() ?
+                                DsgNcFile.SAMPLE_PRESSURE_VARNAME :
+                                DsgNcFile.SAMPLE_DEPTH_VARNAME;
+        replacements.put("DEPTH_VAR_NAME", depthVarName);
+        
+        /*
+        StringBuilder timeseriesPlots = new StringBuilder();
+        if ( plottableVarNames != null ) {
+            for ( String varname : plottableVarNames) {
+                timeseriesPlots.append("go OA_trajectory_plot ").append(varname).append("\n");
+            }
+            replacements.put("TRAJECTORY_PLOTS", timeseriesPlots.toString());
+        } else {
+            replacements.put("TRAJECTORY_PLOTS", "");  // nothing to plot...
+        }
+        */
+        String driverContent = template.getContent(replacements);
+        try ( FileWriter fout = new FileWriter(driverFile)) {
+            fout.write(driverContent);
+        }
+    }
+
+    /**
+     * @param dsgType2
+     * @return
+    private String getDsgPlotsDriverScript() {
+        switch (dsgType) {
+            case TIMESERIES:
+                return "OAPPreview_timeseries";
+            case TRAJECTORY:
+                return "OAPPreview_trajectory";
+            case PROFILE:
+                return "OAPPreview_profile";
+            default:
+                throw new IllegalArgumentException("DSG type " + dsgType + " not supported.");
+        }
+    }
+     */
+
     public boolean hasError() {
         return error;
     }

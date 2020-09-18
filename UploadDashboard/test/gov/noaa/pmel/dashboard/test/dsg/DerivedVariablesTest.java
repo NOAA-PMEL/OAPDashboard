@@ -12,6 +12,7 @@ import gov.noaa.pmel.dashboard.dsg.StdDataArray;
 import gov.noaa.pmel.dashboard.ferret.FerretConfig;
 import gov.noaa.pmel.dashboard.ferret.SocatTool;
 import gov.noaa.pmel.dashboard.server.DashboardConfigStore;
+import gov.noaa.pmel.dashboard.shared.FeatureType;
 
 public class DerivedVariablesTest {
 
@@ -65,7 +66,7 @@ public class DerivedVariablesTest {
 		tool.run();
 		assertFalse(tool.hasError());
 
-		DsgNcFile decDsgFile = DsgNcFile.createTrajectoryFile(decDataFilename);
+		DsgNcFile decDsgFile = DsgNcFile.newDsgFile(FeatureType.TRAJECTORY, decDataFilename);
 		unknownNames = decDsgFile.readMetadata(DsgNcFileTest.KNOWN_METADATA_FILE_TYPES);
 		assertEquals(0, unknownNames.size());
 		unknownNames = decDsgFile.readData(DsgNcFileTest.KNOWN_DATA_FILE_TYPES);

@@ -131,7 +131,6 @@ public class AdminClient extends CLClient {
         }
     }
 
-    
     public void doAdd() {
         logger.info("Add user");
         try {
@@ -269,9 +268,17 @@ public class AdminClient extends CLClient {
     public static void main(String[] args) {
         try {
 //            args = new String[] { "add", "-u", "test", "-pw", "ch@ngeM3s00n", "-fn", "Testy", "-ln", "Testarosa", "-e", "nobody@noaa.gov", "-d", "newbock", "-b" };
-
 //            System.out.println("Running AdminClient");
             List<String> filteredArgs = preprocessArgs(args); // sets system property and removes -D args
+//            if ( filteredArgs.contains(opt_target.flag()) ||
+//                 filteredArgs.contains(opt_target.longFlag())) {
+//                int idx = filteredArgs.indexOf(opt_target.flag());
+//                if ( idx < 0 ) {
+//                    idx = filteredArgs.indexOf(opt_target.longFlag());
+//                }
+//                String value = filteredArgs.get(idx+1);
+//                System.setProperty(MybatisConnectionFactory.DB_ENV_PROPERTY, value);
+//            }
             ApplicationConfiguration.Initialize("oap");
             logger = LogManager.getLogger(AdminClient.class);
             logger.debug("Running AdminClient");

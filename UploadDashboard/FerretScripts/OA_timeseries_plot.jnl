@@ -1,0 +1,35 @@
+! Plot a pair of variables for the OA thumbnail plots.
+! If the second is the sample_depth, then draw lines
+! connecting the data from each profile.
+! 11/20/2019 ACM Make this work for pairs on the instance axis (obs)
+! or the feature-axis (e.g. per profile).
+
+
+define symbol plotname = ($fnamepath)_($1).($plotextn)
+
+! Check for existence of requested variables, make a blank plot
+! if one or both are missing. Below we will also test for valid
+! data in one or both variables and label that on the plot
+
+!! let ok1 = `($1),return=isready`
+!! let ok2 = `($2),return=isready` 
+!! IF `ok1 + ok2 LT 2` THEN
+   !! plot/vs/nolab {-1,1}, {-1,1}
+   !! IF `ok1+ok2 EQ 1` THEN
+      !! IF `ok1 eq 0` THEN annotate/norm/x=0.5/y=0.5/halign=0 "@AC($1) is not in ($fname).nc"
+      !! IF `ok2 eq 0` THEN annotate/norm/x=0.5/y=0.5/halign=0 "@AC($2) is not in ($fname).nc"
+   !! ELSE
+      !! IF `ok1 eq 0` THEN annotate/norm/x=0.5/y=0.45/halign=0 "@AC($1) is not in ($fname).nc"
+      !! IF `ok2 eq 0` THEN annotate/norm/x=0.5/y=0.55/halign=0 "@AC($2) is not in ($fname).nc"
+   !! ENDIF
+   !! frame/file="($plotname)"
+!! 
+   !! exit/script
+!! ENDIF
+
+plot ($1)
+
+! save the plot
+frame/file="($plotname)"
+
+ppl shaset reset
