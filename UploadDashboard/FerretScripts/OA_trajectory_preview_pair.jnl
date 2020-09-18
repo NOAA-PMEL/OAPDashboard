@@ -41,14 +41,10 @@ ELSE
 
   SET VIEW upper_map
   USE/feature=trajectory 1
-   ! go margins 1.0 .1 1 1.2
     go margins 1.0 .75 1 1.2
-   !  go plot_vs_pad.jnl longitude, latitude
     go plot_pad.jnl "plot/vs/nolab longitude, latitude"
     go oap_preview_fland "tan"
-   ! go OA_trajectory_plot ($var_name)
     ANNOTATE/norm/x=0.5/y=1.05/halign=0 "`($1),return=title` (`($1),return=units`)"
-   ! ANNOTATE/norm/x=0.5/y=.9/halign=0 "`($1),return=title` (`($1),return=units`)"
     plot/over/nolab/key/symbol=boxfill/siz=0.05 ($var_name)
 
 ENDIF
