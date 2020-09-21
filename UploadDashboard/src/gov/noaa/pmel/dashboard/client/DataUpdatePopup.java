@@ -325,7 +325,8 @@ public class DataUpdatePopup extends Composite {
 		clearTokens();
         clearForm();
         setDataset(dataset);
-        setDatasetIdToken(dataset.getDatasetId());
+        // setting this changes datasetname (user dataset name) property.
+//        setDatasetIdToken(dataset.getDatasetId());
         setDisplayTitle(dataset.getUserDatasetName());
         previousFileNameToken.setValue(dataset.getUploadFilename());
 		uploadForm.setAction(GWT.getModuleBaseURL() + "DataUploadService/update/" + dataset.getDatasetId());
