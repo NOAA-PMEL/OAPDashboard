@@ -29,19 +29,6 @@ public class CSVFileReader implements RecordOrientedFileReader {
     private String detectedFileType;
     private CsvParser dataParser;
     private CsvFormat fileFormat;
-    private static final char[] commaSeparatedExpectation = new char[] {',', '\t', ';', '|'};
-    private static final char[] tabSeparatedExpectation = new char[] {'\t', ',', ';', '|'};
-    
-//    public static CSVFileReader readerFor(File inputFile) {
-//        return new CSVFileReader(inputFile);
-//    }
-//    
-//    private File inputFile;
-//    
-//    private CSVFileReader(File inputFile) {
-//        this.inputFile = inputFile;
-////        this.dataReader = new BufferedReader(new InputStreamReader(inputStream)); 
-//    }
     
     public CSVFileReader(InputStream inputStream, String fileType) {
         this.dataReader = new BufferedReader(new InputStreamReader(inputStream)); 
@@ -57,8 +44,8 @@ public class CSVFileReader implements RecordOrientedFileReader {
         CsvParserSettings settings = new CsvParserSettings();
         settings.detectFormatAutomatically();
         char[] detectionChars = detectedFileType.contains("tab") ? 
-                                    tabSeparatedExpectation : 
-                                    commaSeparatedExpectation;
+                                    new char[] {'\t', ',', ';', '|'} : 
+                                    new char[] {',', '\t', ';', '|'}; 
         settings.setDelimiterDetectionEnabled(true, detectionChars);
         
         settings.setCommentCollectionEnabled(true);
