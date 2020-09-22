@@ -46,6 +46,9 @@ public class LinearConverter extends ValueConverter<Double> {
 		key = "from \"mbar\" to \"hPa\"";
 		SLOPES_MAP.put(key, 1.0);
 		INTERCEPTS_MAP.put(key, 0.0);
+		key = "from \"millibars\" to \"hPa\"";
+		SLOPES_MAP.put(key, 1.0);
+		INTERCEPTS_MAP.put(key, 0.0);
 		key = "from \"mmHg\" to \"hPa\"";
 		SLOPES_MAP.put(key, 1.3332239);
 		INTERCEPTS_MAP.put(key, 0.0);
