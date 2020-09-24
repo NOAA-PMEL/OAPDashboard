@@ -203,7 +203,7 @@ public class DashboardUtils {
 
 	/** Unit of pressure */
 	public static final ArrayList<String> PRESSURE_UNITS = 
-			new ArrayList<String>(Arrays.asList("decibars"));
+			new ArrayList<String>(Arrays.asList("hPa", "kPa", "mmHg", "decibars"));
 
     /** Units of temperature */
 	public static final ArrayList<String> TEMPERATURE_UNITS =
@@ -290,7 +290,6 @@ public class DashboardUtils {
 	public static final DataColumnType LATITUDE = new DataColumnType(LATITUDE_VARNAME,
 			302.0, "latitude", "sample latitude", true, LATITUDE_UNITS);
 
-//	public static final String WATER_PRESSURE_VARNAME = "water_pressure";
 	public static final String CTD_PRESSURE_VARNAME = "ctd_pressure";
 	public static final DataColumnType CTD_PRESSURE = new DataColumnType(CTD_PRESSURE_VARNAME,
 			303.0, "ctd pressure", "ctd pressure", true, PRESSURE_UNITS);
