@@ -4,17 +4,15 @@
 package gov.noaa.pmel.dashboard.upload;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.List;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.tomcat.util.http.fileupload.FileItem;
 
-import gov.noaa.pmel.dashboard.handlers.DataFileHandler;
-import gov.noaa.pmel.dashboard.handlers.RawUploadFileHandler;
 import gov.noaa.pmel.dashboard.shared.DashboardDataset;
 import gov.noaa.pmel.dashboard.shared.DashboardUtils;
-import gov.noaa.pmel.dashboard.shared.FileType;
 import gov.noaa.pmel.dashboard.util.FormUtils;
 import gov.noaa.pmel.tws.util.FileUtils;
 import gov.noaa.pmel.tws.util.StringUtils;
@@ -41,11 +39,11 @@ public class NewOpaqueFileUploadProcessor extends FileUploadProcessor {
 //        if ( datafiles.size() > 1 ) {
 //            multiFileUpload = true;
 //        }
-        for ( FileItem item : datafiles ) {
+        for ( FileItem item : datafiles ) { // Note: Only allow one at the moment
             String filename = item.getName();
             logger.info("processing " + _uploadFields.fileType() + " upload file " + filename);
             datasetId = submissionRecordId; // getDatasetId(datasetId, filename, multiFileUpload);
-            OpaqueDataset pseudoDataset = createPseudoDataset(datasetId, item, _uploadedFile, _uploadFields);
+            OpaqueDataset pseudoDataset = createPseudoDataset(isUpdateRequest, datasetId, item, _uploadedFile, _uploadFields);
             String userDatasetName = StringUtils.emptyOrNull(specifiedDatasetId) ?
                                       _uploadedFile.getName() :
                                       specifiedDatasetId;
@@ -53,50 +51,52 @@ public class NewOpaqueFileUploadProcessor extends FileUploadProcessor {
                 // Check if the dataset already exists
                 String itemDatasetId = pseudoDataset.getDatasetId();
                 boolean datasetDataDirExists = _dataFileHandler.datasetDataDirExists(itemDatasetId);
-                if ( datasetDataDirExists ) {
-                    String owner = "";
-                    String status = "";
-                    DashboardDataset oldDataset = null;
-//                    try {
-                        // Read the original dataset info to get the current owner and submit status
-                        oldDataset = _dataFileHandler.getDatasetFromInfoFile(datasetId);
-                        owner = oldDataset.getOwner();
-                        status = oldDataset.getSubmitStatus();
-//                    } catch ( Exception ex ) {
-                        // Some problem with the properties file
-//                    }
-                    // If only create new datasets, add error message and skip the dataset
-                    if ( DashboardUtils.NEW_DATASETS_REQUEST_TAG.equals(action) ) {
-                        _messages.add(DashboardUtils.DATASET_EXISTS_HEADER_TAG + " " + 
-                                filename + " ; " + itemDatasetId + " ; " + owner + " ; " + status);
-                        continue;
-                    }
-                    // Make sure this user has permission to modify this dataset
-                    try {
-                        _dataFileHandler.verifyOkayToDeleteDataset(itemDatasetId, username);
-                    } catch ( Exception ex ) {
-                        _messages.add(DashboardUtils.DATASET_EXISTS_HEADER_TAG + " " + 
-                                filename + " ; " + itemDatasetId + " ; " + owner + " ; " + status);
-                        continue;
-                    }
-                    String uploadedFilePath = oldDataset.getUploadedFile();
-                    if ( ! StringUtils.emptyOrNull(uploadedFilePath)) {
-                        File previousFile = new File(uploadedFilePath);
-                        if ( ! _uploadedFile.getName().equals(previousFile.getName())) {
-                            if ( !previousFile.delete()) {
-                                logger.warn("Failed to delete previous file:" + uploadedFilePath);
+                if ( isUpdateRequest ) { 
+                    DashboardDataset oldDataset = _dataFileHandler.getDatasetFromInfoFile(datasetId);
+                    String owner = oldDataset.getOwner();
+                    String status = oldDataset.getSubmitStatus();
+                    if ( datasetDataDirExists ) {
+                        // If only create new datasets, add error message and skip the dataset
+                        if ( DashboardUtils.NEW_DATASETS_REQUEST_TAG.equals(action) ) {
+                            _messages.add(DashboardUtils.DATASET_EXISTS_HEADER_TAG + " " + 
+                                    filename + " ; " + itemDatasetId + " ; " + owner + " ; " + status);
+                            continue;
+                        }
+                        // Make sure this user has permission to modify this dataset
+                        try {
+                            _dataFileHandler.verifyOkayToDeleteDataset(itemDatasetId, username);
+                        } catch ( Exception ex ) {
+                            _messages.add(DashboardUtils.DATASET_EXISTS_HEADER_TAG + " " + 
+                                    filename + " ; " + itemDatasetId + " ; " + owner + " ; " + status);
+                            continue;
+                        }
+                        String uploadedFilePath = oldDataset.getUploadedFile();
+                        if ( ! StringUtils.emptyOrNull(uploadedFilePath)) {
+                            File previousFile = new File(uploadedFilePath);
+                            if ( ! _uploadedFile.getName().equals(previousFile.getName())) {
+                                if ( !previousFile.delete()) {
+                                    logger.warn("Failed to delete previous file:" + uploadedFilePath);
+                                }
                             }
                         }
+                    } else { // updateRequest, but data file doesn't exist. Must be clone.
+                        String mdStatus = oldDataset.getMdStatus();
+                        pseudoDataset.setMdStatus(mdStatus);
                     }
-                } 
+                } else { // Not an update request
+                    try {
+                        generateEmptyMetadataFile(itemDatasetId);
+                    } catch (IOException ex) {
+                        // TODO Auto-generated catch block
+                        ex.printStackTrace();
+                    }
+                }
                 try {
                     File datasetDir = _dataFileHandler.datasetDataFile(itemDatasetId).getParentFile();
                     File uploadedFile = saveOpaqueFileData(pseudoDataset, datasetDir);
                     pseudoDataset.setUploadedFile(uploadedFile.getPath());
                     _dataFileHandler.saveDatasetInfoToFile(pseudoDataset, "save opaque data info");
-                    generateEmptyMetadataFile(itemDatasetId);
                     _successes.add(itemDatasetId);
-                    // datasetHandler.saveDatasetDataToFile(pseudoDataset, "save opaque data data");
                 } catch (Exception ex) {
                     ex.printStackTrace();
                 }
@@ -122,7 +122,9 @@ public class NewOpaqueFileUploadProcessor extends FileUploadProcessor {
         return datasetFile;
     }
 
-    private OpaqueDataset createPseudoDataset(String itemId, FileItem item, File _uploadedFile, StandardUploadFields _uploadFields) {
+    private OpaqueDataset createPseudoDataset(boolean isUpdateRequest, String itemId, 
+                                              FileItem item, File _uploadedFile, 
+                                              StandardUploadFields _uploadFields) {
         OpaqueDataset odd = new OpaqueDataset(itemId);
         odd.setUploadFilename(item.getName());
         odd.setUploadTimestamp(_uploadFields.timestamp());
@@ -133,6 +135,10 @@ public class NewOpaqueFileUploadProcessor extends FileUploadProcessor {
         odd.setFeatureType(_uploadFields.featureType().name());
         odd.setUserObservationType(_uploadFields.observationType());
         odd.setFileType(_uploadFields.fileType().name());
+        if (isUpdateRequest) {
+            DashboardDataset existgDataset = _dataFileHandler.getDatasetFromInfoFile(itemId);
+            odd.setMdStatus(existgDataset.getMdStatus());
+        }
         return odd;
     }
 
