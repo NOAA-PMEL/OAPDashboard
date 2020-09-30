@@ -10,7 +10,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.TreeSet;
-import java.util.logging.Logger;
 
 import com.google.gwt.cell.client.Cell;
 import com.google.gwt.cell.client.CheckboxCell;
@@ -21,7 +20,6 @@ import com.google.gwt.cell.client.ValueUpdater;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.Element;
-import com.google.gwt.dom.client.NativeEvent;
 import com.google.gwt.dom.client.Node;
 import com.google.gwt.dom.client.Style;
 import com.google.gwt.event.dom.client.ClickEvent;
@@ -40,6 +38,7 @@ import com.google.gwt.user.cellview.client.ColumnSortList;
 import com.google.gwt.user.cellview.client.ColumnSortList.ColumnSortInfo;
 import com.google.gwt.user.cellview.client.DataGrid;
 import com.google.gwt.user.cellview.client.Header;
+import com.google.gwt.user.cellview.client.RowStyles;
 import com.google.gwt.user.cellview.client.TextColumn;
 import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.rpc.AsyncCallback;
@@ -72,8 +71,6 @@ import gov.noaa.pmel.dashboard.shared.FileType;
  */
 public class DatasetListPage extends CompositeWithUsername {
 
-    private static Logger logger = Logger.getLogger(DatasetListPage.class.getName());
-    
 	private static enum SubmitFor {
 		QC,
 		ARCHIVE
@@ -98,6 +95,10 @@ public class DatasetListPage extends CompositeWithUsername {
 	private static final String UPDATE_SUBMISSION_BUTTON_HOVER_HELP = 
 			"Update the selected submission.";
 
+	private static final String CLONE_SUBMISSION_BUTTON_TEXT = "Clone Submission";
+	private static final String CLONE_SUBMISSION_BUTTON_HOVER_HELP = 
+			"Create a new archive submission record from existing metadata.";
+    
 	private static final String VIEW_DATA_TEXT = "Identify Columns";
 	private static final String VIEW_DATA_HOVER_HELP =
 			"Review and modify data column type assignments for the " +
@@ -291,14 +292,14 @@ public class DatasetListPage extends CompositeWithUsername {
 
 	// Replacement strings for empty or null values
 	private static final String EMPTY_TABLE_TEXT = "(no uploaded datasets)";
-	private static final String NO_DATASET_ID_STRING = "(unknown)";
+	private static final String NO_DATASET_ID_STRING = "** No Dataset ID **";
 	private static final String NO_TIMESTAMP_STRING = "(unknown)";
 	private static final String STATUS_CANNOT_CHECK_STRING = "Cannot check";
 	private static final String NO_DATA_CHECK_STATUS_STRING = "Not checked";
 	private static final String NO_METADATA_STATUS_STRING = "Add metadata";
 	private static final String NO_QC_STATUS_STRING = "Private";
 	private static final String NO_ARCHIVE_STATUS_STRING = "Not archived";
-	private static final String NO_UPLOAD_FILENAME_STRING = "(unknown)";
+	private static final String NO_UPLOAD_FILENAME_STRING = "** No Data File **"; 
 	private static final String NO_ADDL_DOCS_STATUS_STRING = "Add documents";
 	private static final String NO_OWNER_STRING = "(unknown)";
 
@@ -318,6 +319,7 @@ public class DatasetListPage extends CompositeWithUsername {
 //	@UiField Button logoutButton;
 	
 	@UiField Button newSubmissionButton;
+	@UiField Button cloneSubmissionButton;
 	@UiField Button viewDataAndColumnsButton;
 	@UiField Button metadataButton;
 	@UiField Button addlDocsButton;
@@ -444,11 +446,25 @@ public class DatasetListPage extends CompositeWithUsername {
             }
         }, DoubleClickEvent.getType());
 //        datasetsGrid.addDomHandler(new DoubleClickHandler() {
+        datasetsGrid.setRowStyles(new RowStyles<DashboardDataset>() {
+            @Override
+            public String getStyleNames(DashboardDataset cruise, int rowIndex) {
+                String rowStyle = "oa_row ";
+                if ( cruise.getFileType().equals(FileType.UNSPECIFIED)) {
+                    rowStyle += "oa_datagrid_user_error_row";
+                }
+                return rowStyle;
+            }
+        });
+
         
         header.setPageTitle(TITLE_TEXT);
 
 		newSubmissionButton.setText(NEW_SUBMISSION_BUTTON_TEXT);
 		newSubmissionButton.setTitle(NEW_SUBMISSION_BUTTON_HOVER_HELP);
+
+		cloneSubmissionButton.setText(CLONE_SUBMISSION_BUTTON_TEXT);
+		cloneSubmissionButton.setTitle(CLONE_SUBMISSION_BUTTON_HOVER_HELP);
 
 		viewDataAndColumnsButton.setText(VIEW_DATA_TEXT);
 		viewDataAndColumnsButton.setTitle(VIEW_DATA_HOVER_HELP);
@@ -491,6 +507,7 @@ public class DatasetListPage extends CompositeWithUsername {
 	private void buildSelectionSets() {
 		selectSet = new Button[] {
 			viewDataAndColumnsButton,
+            cloneSubmissionButton,
 			metadataButton,
 			addlDocsButton,
 			previewButton,
@@ -503,6 +520,7 @@ public class DatasetListPage extends CompositeWithUsername {
 		};
 		singleSet = new Button[] {
 			viewDataAndColumnsButton,
+            cloneSubmissionButton,
 			metadataButton,
 //			addlDocsButton,
 			previewButton,
@@ -775,6 +793,54 @@ public class DatasetListPage extends CompositeWithUsername {
         }
 	}
 
+    @UiHandler("cloneSubmissionButton")
+	void cloneSubmissionOnClick(ClickEvent event) {
+		if ( ! getSelectedDatasets(true) ) {
+			UploadDashboard.showMessage(
+					SUBMITTED_DATASETS_SELECTED_ERR_START + FOR_REVIEWING_ERR_END);
+			return;
+		}
+		if ( selectedDatasets.size() < 1 ) {
+			UploadDashboard.showMessage(
+					NO_DATASET_SELECTED_ERR_START + FOR_REVIEWING_ERR_END);
+			return;
+		}
+		if ( selectedDatasets.size() > 1 ) {
+			UploadDashboard.showMessage("You can only clone one submission at a time.");
+			return;
+		}
+        try {
+            String selectedRecordId = selectedDatasets.keySet().iterator().next();
+            DashboardDataset dataset = selectedDatasets.get(selectedRecordId);
+            UploadDashboard.ask("Confirm cloning of submission record " + selectedRecordId +".", 
+                                "Clone", "Cancel", QuestionType.WARNING, 
+                new OAPAsyncCallback<Boolean>() {
+                    @Override
+                    public void onSuccess(Boolean result) {
+                        if ( result.booleanValue()) {
+                            UploadDashboard.showWaitCursor();
+                            service.cloneDataset(getUsername(), selectedRecordId, true, 
+                                new AsyncCallback<DashboardDatasetList>() {
+                                    @Override
+                                    public void onFailure(Throwable caught) {
+                                        UploadDashboard.showAutoCursor();
+                                        UploadDashboard.showFailureMessage("There was an error cloning the submission.", caught);
+                                    }
+                                    @Override
+                                    public void onSuccess(DashboardDatasetList result) {
+                                        UploadDashboard.showAutoCursor();
+                                        updateDatasets(result);
+                                    }
+                            });
+                        }
+                    }
+                });
+        } catch (Exception ex) {
+            ex.printStackTrace();
+            // TODO: handle exception
+        }
+    }
+        
 	@UiHandler("viewDataAndColumnsButton")
 	void dataCheckOnClick(ClickEvent event) {
 		if ( ! getSelectedDatasets(true) ) {
@@ -1544,7 +1610,7 @@ public class DatasetListPage extends CompositeWithUsername {
 			public String getValue(DashboardDataset cruise) {
 				String recordId = cruise.getRecordId();
 				if ( recordId.isEmpty() )
-					recordId = NO_DATASET_ID_STRING;
+					recordId = NO_DATASET_ID_STRING;  // XXX Should never happen, should be an error!
 				return recordId;
 			}
             @Override
@@ -1641,6 +1707,9 @@ public class DatasetListPage extends CompositeWithUsername {
                 if ( ! cruise.getFeatureType().isDSG() ) {
                     return STATUS_CANNOT_CHECK_STRING + ":<br/>Observation Type";
                 }
+                if ( cruise.getFileType().equals(FileType.UNSPECIFIED)) {
+                    return NO_UPLOAD_FILENAME_STRING;
+                }
                 if ( ! cruise.getFileType().equals(FileType.DELIMITED)) {
                     return STATUS_CANNOT_CHECK_STRING + ":<br/>File Format";
                 }
@@ -1666,8 +1735,8 @@ public class DatasetListPage extends CompositeWithUsername {
                 
                 String backgroundColor = "transparent";
 				String msg = getValue(cruise);
-                if ( FileType.OTHER.equals(cruise.getFileType()) ||
-                     FeatureType.OTHER.equals(cruise.getFeatureType())) {
+                if ( ! cruise.getFeatureType().isDSG() || // FileType.OTHER.equals(cruise.getFileType()) ||
+                     ! cruise.getFileType().equals(FileType.DELIMITED)) { // FeatureType.OTHER.equals(cruise.getFeatureType())) {
 					sb.appendHtmlConstant("<div >"); // style=\"background-color:" + UploadDashboard.CHECKER_WARNING_COLOR + ";\">");
 					sb.appendHtmlConstant(msg);
 					sb.appendHtmlConstant("</div>");
@@ -1682,6 +1751,8 @@ public class DatasetListPage extends CompositeWithUsername {
                         backgroundColor = UploadDashboard.CHECKER_WARNING_COLOR ;
     				} else if (NO_DATA_CHECK_STATUS_STRING.equals(msg)) {
                         backgroundColor = UploadDashboard.CHECKER_LIGHT_WARNING_COLOR ;
+//    				} else if ( cruise.getFileType().equals(FileType.UNSPECIFIED)) {
+//						backgroundColor = UploadDashboard.CHECKER_LIGHT_ERROR_COLOR;
     				} else {
     					// Many errors, unacceptable, or not checked - use error background color
 						backgroundColor = UploadDashboard.CHECKER_ERROR_COLOR;
@@ -1689,7 +1760,7 @@ public class DatasetListPage extends CompositeWithUsername {
 					sb.appendHtmlConstant("<div style=\"cursor:pointer;"+LINK_COLOR+UNDERLINE_LINKS+
 					                      "background-color:"+backgroundColor+";\">");
 					sb.appendHtmlConstant("<em>");
-					sb.appendEscaped(msg);
+					sb.appendHtmlConstant(msg); // appendEscaped(msg);
 					sb.appendHtmlConstant("</em></div>");
     			}
 			}
@@ -1743,9 +1814,13 @@ public class DatasetListPage extends CompositeWithUsername {
 			@Override
 			public void render(Cell.Context ctx, DashboardDataset cruise, 
 													SafeHtmlBuilder sb) {
+                String highlight = cruise.getMdStatus().startsWith("Clone") ?
+                                    " background-color: " + UploadDashboard.CHECKER_LIGHT_ERROR_COLOR +";":
+                                    "";
 				String cid = cruise.getRecordId();
 				String divid = "mecol_"+cid;
-			    sb.appendHtmlConstant("<div id=\""+ divid + "\" style=\"cursor:pointer;"+LINK_COLOR+UNDERLINE_LINKS+"\">");
+			    sb.appendHtmlConstant("<div id=\""+ divid + "\" style=\"cursor:pointer;"+
+			                            LINK_COLOR+UNDERLINE_LINKS+highlight+"\">");
 				sb.appendHtmlConstant("<em>");
 				sb.appendEscaped(getValue(cruise));
 				sb.appendHtmlConstant("</em></div>");

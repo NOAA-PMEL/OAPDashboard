@@ -15,59 +15,89 @@ import com.google.gwt.i18n.client.DateTimeFormat;
 import com.google.gwt.user.client.rpc.IsSerializable;
 
 import gov.noaa.pmel.dashboard.shared.QCFlag.Severity;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
 
 /**
  * Represents an uploaded dataset and its current status.
  * 
  * @author Karl Smith
  */
+@Builder(toBuilder=true)
+@AllArgsConstructor
 public class DashboardDataset implements Serializable, IsSerializable {
 
 	private static final long serialVersionUID = 5005454171404329101L;
 
-	protected boolean selected;
-    protected String recordId;
-    protected String userDatasetName;
-	protected String version;
-	protected String owner;
-    protected String featureType;
-    protected String userObservationType;
-    protected String fileType;
-//	protected String datasetId;
-	protected String dataCheckStatus;
-	protected String mdTimestamp;
-	protected String mdStatus;
-	protected TreeSet<String> addlDocs;
-	protected String submitStatus;
-	protected String archiveStatus;
-	protected String archiveSubmissionMessage;
+    @Builder.Default
+	protected boolean selected = false;
+    @Builder.Default
+    protected String recordId = DashboardUtils.STRING_MISSING_VALUE;
+    @Builder.Default
+    protected String userDatasetName = DashboardUtils.STRING_MISSING_VALUE;
+    @Builder.Default
+	protected String version = DashboardUtils.STRING_MISSING_VALUE;
+    @Builder.Default
+	protected String owner = DashboardUtils.STRING_MISSING_VALUE;
+    @Builder.Default
+    protected String featureType = FeatureType.UNSPECIFIED.name();
+    @Builder.Default
+    protected String userObservationType = DashboardUtils.STRING_MISSING_VALUE;
+    @Builder.Default
+    protected String fileType = FileType.UNSPECIFIED.name();
+    @Builder.Default
+	protected String dataCheckStatus = DashboardUtils.STRING_MISSING_VALUE;
+    @Builder.Default
+	protected String mdTimestamp = DashboardUtils.STRING_MISSING_VALUE;
+    @Builder.Default
+	protected String mdStatus = DashboardUtils.STRING_MISSING_VALUE;
+    @Builder.Default
+	protected TreeSet<String> addlDocs = new TreeSet();
+    @Builder.Default
+	protected String submitStatus = DashboardUtils.STRING_MISSING_VALUE;
+    @Builder.Default
+	protected String archiveStatus = DashboardUtils.STRING_MISSING_VALUE;
+    @Builder.Default
+	protected String archiveSubmissionMessage = DashboardUtils.STRING_MISSING_VALUE;
 	protected Date archiveDate;
-    protected boolean archiveDOIrequested;
-	protected String uploadFilename;
-	protected String uploadTimestamp;
-    protected String uploadedFile;
-	protected String doi;
-	protected int numDataRows;
-	protected int numErrorRows;
-	protected int numWarnRows;
-	protected ArrayList<String> userColNames;
+    @Builder.Default
+    protected boolean archiveDOIrequested = false;
+    @Builder.Default
+	protected String uploadFilename = DashboardUtils.STRING_MISSING_VALUE;
+    @Builder.Default
+	protected String uploadTimestamp = DashboardUtils.STRING_MISSING_VALUE;
+    @Builder.Default
+    protected String uploadedFile = DashboardUtils.STRING_MISSING_VALUE;
+    @Builder.Default
+	protected String doi = DashboardUtils.STRING_MISSING_VALUE;
+    @Builder.Default
+	protected int numDataRows = 0;
+    @Builder.Default
+	protected int numErrorRows = 0;
+    @Builder.Default
+	protected int numWarnRows = 0;
+    @Builder.Default
+	protected ArrayList<String> userColNames = new ArrayList();
 	// For each data column, a DataColumnType with type, unit, and missing value
-	protected ArrayList<DataColumnType> dataColTypes;
+    @Builder.Default
+	protected ArrayList<DataColumnType> dataColTypes = new ArrayList();
 	// Checker-generated QC flags without comments
-	protected TreeSet<QCFlag> checkerFlags;
+    @Builder.Default
+	protected TreeSet<QCFlag> checkerFlags = new TreeSet();
 	// PI-provided QC flags without comments
-	protected TreeSet<QCFlag> userFlags;
+    @Builder.Default
+	protected TreeSet<QCFlag> userFlags = new TreeSet();
 
 	/**
 	 * Create an empty dashboard dataset
 	 */
 	public DashboardDataset() {
+        super();
 		selected = false;
         recordId = DashboardUtils.STRING_MISSING_VALUE;
         userDatasetName = DashboardUtils.STRING_MISSING_VALUE;
 		version = DashboardUtils.STRING_MISSING_VALUE;
 		owner = DashboardUtils.STRING_MISSING_VALUE;
-//		datasetId = DashboardUtils.STRING_MISSING_VALUE;
 		dataCheckStatus = DashboardUtils.CHECK_STATUS_NOT_CHECKED;
 		mdTimestamp = DashboardUtils.STRING_MISSING_VALUE;
 		addlDocs = new TreeSet<String>();
@@ -88,7 +118,6 @@ public class DashboardDataset implements Serializable, IsSerializable {
 		userFlags = new TreeSet<QCFlag>();
 	}
 
-    
 	public boolean isArchived() {
 	    return getArchiveStatus().startsWith("Submitted");
 	}
@@ -1036,4 +1065,5 @@ XXX This allows the possibility that numDataRows != the actual number of data ro
         }
         return false;
     }
+
 }

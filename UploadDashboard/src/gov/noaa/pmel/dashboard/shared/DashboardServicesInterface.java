@@ -38,7 +38,8 @@ public interface DashboardServicesInterface extends RemoteService {
 	 * 		if problems getting the cruise list
 	 * @throws SessionException 
 	 */
-	DashboardServiceResponse<DashboardDatasetList> getDatasetList(String username) throws IllegalArgumentException, SessionException;
+	DashboardServiceResponse<DashboardDatasetList> getDatasetList(String username) 
+	        throws IllegalArgumentException, SessionException;
 
 	/**
 	 * Deletes all files for the indicated datasets.
@@ -57,6 +58,23 @@ public interface DashboardServicesInterface extends RemoteService {
 	DashboardDatasetList deleteDatasets(String username, TreeSet<String> datasetIds, 
 			Boolean deleteMetadata) throws IllegalArgumentException;
 
+	/**
+	 * Creates a new data submission record, copying the metadata from the existing.
+	 * 
+	 * @param username
+	 * 		name of the current user - for validation
+	 * @param submissionRecordId
+	 * 		submissionRecordId to be cloned
+     * @param cloneAssociatedFiles
+     *      whether or not to clone any associated additional files
+	 * @return
+	 * 		the updated list of datasets for the current user
+	 * @throws IllegalArgumentException
+	 * 		if problems deleting a cruise
+	 */
+	DashboardDatasetList cloneDataset(String username, String submissionRecordId, boolean cloneAssociatedFiles) 
+	        throws IllegalArgumentException, SessionException;
+    
 	/**
 	 * Adds the indicated datasets to the current user's list of datasets.
 	 * 
