@@ -88,6 +88,7 @@ public class DatasetListPage extends CompositeWithUsername {
 	private static final String UNDERLINE_LINKS = NO_UNDERLINE;
 	private static final String LINK_COLOR = "color:#214997;font-weight:bold;";
 
+    private static final int SELECT_COLUMN_IDX = 0;
     private static final int DATA_CHECK_COLUMN_IDX = 5;
     private static final int ARCHIVE_COLUMN_IDX = 8;
     
@@ -356,32 +357,125 @@ public class DatasetListPage extends CompositeWithUsername {
 	// The singleton instance of this page
 	private static DatasetListPage singleton;
 
-    private int clickRowIdx = -1;
-    private DashboardDataset clickedDataset;
+    private int priorSelectionRow = -1;
+//    private DashboardDataset clickedDataset;
     
+    /**
+     * @param nativeEvent
+     * @return
+     */
+    private static String getKeys(NativeEvent nativeEvent) {
+        String keys = "";
+        String sep = "";
+        if ( nativeEvent.getAltKey()) {
+            keys += "ALT";
+            sep = "/";
+        }
+        if ( nativeEvent.getCtrlKey()) {
+            keys += sep+"CTRL";
+            sep = "/";
+        }
+        if ( nativeEvent.getMetaKey()) {
+            keys += sep+"META";
+            sep = "/";
+        }
+        if ( nativeEvent.getShiftKey()) {
+            keys += sep+"SHIFT";
+        }
+        return keys;
+    }
+
 	private class SelectionHandler implements CellPreviewEvent.Handler<DashboardDataset> {
         @Override
         public void onCellPreview(CellPreviewEvent<DashboardDataset> event) {
 //            UploadDashboard.logToConsole("SH:"+event.getNativeEvent().getType() + " on c:"+ event.getColumn() + ", r:"+ event.getIndex());
-            clickRowIdx = event.getIndex();
-            clickedDataset = event.getValue();
+            if ( event.getNativeEvent().getType().equals("click")) {
+                int clickRowIdx = event.getIndex();
+                int clickColIdx = event.getColumn();
+                DashboardDataset clickedDataset = event.getValue();
+                String keys = getKeys(event.getNativeEvent());
+                UploadDashboard.logToConsole("Click on " + clickRowIdx + "/" + clickColIdx + 
+                                             " with keys " + keys );
+                if ( clickColIdx == SELECT_COLUMN_IDX ) {
+                    setSelection(clickRowIdx, clickedDataset, keys);
+                }
+            }
+            if ( event.getNativeEvent().getType().equals("dblclick")) {
+                int clickRowIdx = event.getIndex();
+                DashboardDataset clickedDataset = event.getValue();
+                String keys = getKeys(event.getNativeEvent());
+                setSelection(clickRowIdx, clickedDataset, keys);
+            }
         }
 	}
+
     private SelectionHandler selectionHandler = new SelectionHandler();
     
-    private void setSelection(DoubleClickEvent event) {
-        if ( clickRowIdx >= 0 && clickRowIdx < 50 
-             && clickedDataset != null ) {
-            GWT.log("setSelection: " + String.valueOf(clickedDataset));
-            clickedDataset.setSelected(! clickedDataset.isSelected());
-            datasetsGrid.redrawRow(clickRowIdx);
+//    private void setSelection(DoubleClickEvent event) {
+//        if ( clickRowIdx >= 0 && clickRowIdx < 50 
+//             && clickedDataset != null ) {
+//            GWT.log("setSelection: " + String.valueOf(clickedDataset));
+//            clickedDataset.setSelected(! clickedDataset.isSelected());
+//            datasetsGrid.redrawRow(clickRowIdx);
+//            updateAvailableButtons();
+//        } else {
+//            Window.alert("bad click : " + clickRowIdx + ":" + clickedDataset);
+//        }
+//    }
+    
+    private void setSelection(int row, DashboardDataset dataset, String keys) {
+            GWT.log("setSelection: ["+row+"] " + String.valueOf(dataset));
+            boolean isShift = keys.contains("SHIFT");
+            boolean isReverse = keys.contains("ALT") || keys.contains("CTRL") || keys.contains("META");
+//            setDatasetsSelected(CLEAR_SELECTION_OPTION);
+            boolean isSelected = dataset.isSelected();
+            DashboardDatasetList selected = getSelectedDatasets();
+            if ( keys.isEmpty() ) {
+                if ( selected.size() > 0 ) {
+                    clearSelections(selected);
+                }
+            }
+            if ( isShift && priorSelectionRow != -1) {
+                shiftSelect(row, priorSelectionRow, isReverse);
+        		ColumnSortEvent.fire(datasetsGrid, datasetsGrid.getColumnSortList());
+            } else {
+                dataset.setSelected(! isSelected);
+                if ( selected.size() > 0 ) {
+            		ColumnSortEvent.fire(datasetsGrid, datasetsGrid.getColumnSortList());
+                } else {
+                    datasetsGrid.redrawRow(row);
+                }
+            }
             updateAvailableButtons();
-        } else {
-            Window.alert("bad click : " + clickRowIdx + ":" + clickedDataset);
+            priorSelectionRow = row;
+    }
+    
+    private void shiftSelect(int from, int to, boolean isReverse) {
+        int start = Math.min(from, to);
+        int end = Math.max(from, to);
+        List<DashboardDataset> list = listProvider.getList();
+        for (int row = start; row <= end; row++) {
+            DashboardDataset dataset = list.get(row);
+            boolean select = ! (row != priorSelectionRow && dataset.isSelected() && isReverse);
+            dataset.setSelected(select);
         }
     }
     
-	private class ClickableCellUpdater implements CellPreviewEvent.Handler<DashboardDataset> {
+	/**
+     * @param selected
+     */
+    private boolean clearSelections(DashboardDatasetList selected) {
+        boolean clearedSomething = false;
+        for ( DashboardDataset dataset : selected.values() ) {
+            if ( dataset.isSelected()) {
+                dataset.setSelected(false);
+                clearedSomething = true;
+            }
+        }
+        return clearedSomething;
+    }
+
+    private class ClickableCellUpdater implements CellPreviewEvent.Handler<DashboardDataset> {
         @Override
         public void onCellPreview(CellPreviewEvent<DashboardDataset> event) {
 //            UploadDashboard.logToConsole("CCU:"+event.getNativeEvent().getType() + " on c:"+ event.getColumn() + ", r:"+ event.getIndex());
@@ -440,7 +534,8 @@ public class DatasetListPage extends CompositeWithUsername {
         datasetsGrid.addDomHandler(new DoubleClickHandler() {
             @Override
             public void onDoubleClick(DoubleClickEvent event) {
-                setSelection(event);
+                GWT.log("doubleClick on " + event);
+//                setSelection(event);
             }
         }, DoubleClickEvent.getType());
 //        datasetsGrid.addDomHandler(new DoubleClickHandler() {
@@ -643,12 +738,28 @@ public class DatasetListPage extends CompositeWithUsername {
 	 * 		PUBLISHED_SELECTION_OPTION - selects published cruises; or <br />
 	 * 		CLEAR_SELECTION_OPTION - clears all selected cruises.
 	 */
-	private void setDatasetSelection(String option) {
+	private void updateDatasetSelection(String option) {
+		List<DashboardDataset> providerList = listProvider.getList();
+        _setDatasetSelection(option, providerList);
+		updateAvailableButtons();
+		Object key = selectHeader.getKey();
+		((SelectionCell)selectHeader.getCell()).setViewData(key, SELECTION_OPTION_LABEL);
+		datasetsGrid.setRowCount(providerList.size());
+		datasetsGrid.setVisibleRange(0, providerList.size());
+		// Make sure the table is sorted according to the last specification
+		ColumnSortEvent.fire(datasetsGrid, datasetsGrid.getColumnSortList());
+	}
+    
+	private void setDatasetsSelected(String option) {
+		List<DashboardDataset> providerList = listProvider.getList();
+        _setDatasetSelection(option, providerList);
+	}
+    
+	private void _setDatasetSelection(String option, List<DashboardDataset> providerList) {
 		// Do nothing is SELECTION_OPTION_LABEL is given
 		if ( SELECTION_OPTION_LABEL.equals(option) )
 			return;
 		// Modify the dataset selection
-		List<DashboardDataset> providerList = listProvider.getList();
 		if ( ALL_SELECTION_OPTION.equals(option) ) {
 			for ( DashboardDataset dataset : providerList )
 				dataset.setSelected(true);
@@ -681,15 +792,8 @@ public class DatasetListPage extends CompositeWithUsername {
 		else {
 			throw new RuntimeException("Unexpected option given the setDatasetSelection: " + option);
 		}
-		updateAvailableButtons();
-		Object key = selectHeader.getKey();
-		((SelectionCell)selectHeader.getCell()).setViewData(key, SELECTION_OPTION_LABEL);
-		datasetsGrid.setRowCount(providerList.size());
-		datasetsGrid.setVisibleRange(0, providerList.size());
-		// Make sure the table is sorted according to the last specification
-		ColumnSortEvent.fire(datasetsGrid, datasetsGrid.getColumnSortList());
 	}
-
+	
 	/**
 	 * Assigns datasetsSet with the selected cruises, and 
 	 * datasetIdsSet with the recordIds of these cruises. 
@@ -1404,7 +1508,7 @@ public class DatasetListPage extends CompositeWithUsername {
 			public void update(String option) {
 				if ( option == null )
 					return;
-				setDatasetSelection(option);
+				updateDatasetSelection(option);
 			}
 		});
 		return selectHeader;
@@ -1421,14 +1525,18 @@ public class DatasetListPage extends CompositeWithUsername {
 				return new Boolean(cruise.isSelected());
 			}
 		};
-		theSelectedColumn.setFieldUpdater(new FieldUpdater<DashboardDataset,Boolean>() {
-			@Override
-			public void update(int index, DashboardDataset cruise, Boolean value) {
-				cruise.setSelected(value.booleanValue());
-				updateAvailableButtons();
-			}
-
-		});
+//        // For some reason, deleting this whole section makes the GWT compile fail.
+//		theSelectedColumn.setFieldUpdater(new FieldUpdater<DashboardDataset,Boolean>() {
+//			@Override
+//			public void update(int index, DashboardDataset cruise, Boolean value) {
+////                if ( value.booleanValue()) {
+////                    setSelection(index, cruise, "");
+////                } else {
+////    				cruise.setSelected(value.booleanValue());
+////    				updateAvailableButtons();
+////                }
+//			}
+//		});
 		return theSelectedColumn;
 	}
 
