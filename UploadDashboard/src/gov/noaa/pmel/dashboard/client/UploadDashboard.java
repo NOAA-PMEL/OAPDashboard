@@ -99,8 +99,9 @@ public class UploadDashboard implements EntryPoint, ValueChangeHandler<String> {
     // lightish yellow: #fffed4
 	// lightish red: #ff6d70
 	static final String CHECKER_LIGHT_WARNING_COLOR = "#FFFBD6";
-	static final String CHECKER_WARNING_COLOR = "#F9EB8B"; // "#FFDD54"; // "#FFCC33";
-	static final String CHECKER_ERROR_COLOR =  "#FF8485"; // "#FF6666";
+	static final String CHECKER_WARNING_COLOR = "#FFDD54"; // "#FFCC33";
+	static final String CHECKER_ERROR_COLOR = "#FF6666";
+	static final String CHECKER_LIGHT_ERROR_COLOR = "#FFB8AF";
 	static final String USER_WARNING_COLOR = "#FFEE99";
 	static final String USER_ERROR_COLOR = "#FFCCCC";
 	

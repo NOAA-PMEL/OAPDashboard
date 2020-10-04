@@ -529,6 +529,25 @@ public class MetadataFileHandler extends VersionedFileHandler {
 	 * 
 	 * @param datasetId
 	 * 		ID of the dataset associated with this metadata
+	 * @return
+	 * 		DashboardMetadata assigned from the properties file for the 
+	 * 		given metadata document.  If the properties file does not 
+	 * 		exist, null is returned.
+	 * @throws IllegalArgumentException
+	 * 		if dataset ID or metaname is invalid, or
+	 * 		if there were problems reading from the properties file
+	 */
+	public DashboardMetadata getMetadataInfo(String datasetId) throws IllegalArgumentException {
+        return getMetadataInfo(datasetId, metadataFilename(datasetId));
+	}
+    
+	/**
+	 * Generates a DashboardMetadata initialized with the contents of
+	 * the information (properties) file for the metadata.  It will not 
+	 * be "selected".
+	 * 
+	 * @param datasetId
+	 * 		ID of the dataset associated with this metadata
 	 * @param metaname
 	 * 		name of the metadata document
 	 * @return
