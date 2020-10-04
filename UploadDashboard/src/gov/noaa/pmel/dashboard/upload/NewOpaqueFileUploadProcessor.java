@@ -83,13 +83,6 @@ public class NewOpaqueFileUploadProcessor extends FileUploadProcessor {
                         String mdStatus = oldDataset.getMdStatus();
                         pseudoDataset.setMdStatus(mdStatus);
                     }
-                } else { // Not an update request
-                    try {
-                        generateEmptyMetadataFile(itemDatasetId);
-                    } catch (IOException ex) {
-                        // TODO Auto-generated catch block
-                        ex.printStackTrace();
-                    }
                 }
                 try {
                     File datasetDir = _dataFileHandler.datasetDataFile(itemDatasetId).getParentFile();
