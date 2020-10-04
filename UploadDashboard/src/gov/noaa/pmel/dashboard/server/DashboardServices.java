@@ -38,6 +38,7 @@ import gov.noaa.pmel.dashboard.handlers.MetadataFileHandler;
 import gov.noaa.pmel.dashboard.handlers.PreviewPlotsHandler;
 import gov.noaa.pmel.dashboard.handlers.UserFileHandler;
 import gov.noaa.pmel.dashboard.oads.OADSMetadata;
+import gov.noaa.pmel.dashboard.programs.CloneSubmission;
 import gov.noaa.pmel.dashboard.server.model.User;
 import gov.noaa.pmel.dashboard.server.submission.status.StatusRecord;
 import gov.noaa.pmel.dashboard.server.submission.status.SubmissionRecord;
@@ -199,6 +200,23 @@ public class DashboardServices extends RemoteServiceServlet implements Dashboard
         return buildVersion;
     }
 
+    @Override
+	public DashboardDatasetList cloneDataset(String pageUsername, String submissionRecordId,
+	                                         boolean copyAssociatedFiles)
+		 throws IllegalArgumentException {
+		if ( ! validateRequest(pageUsername) ) 
+			throw new IllegalArgumentException("Invalid user request");
+        
+        try {
+        CloneSubmission.Clone(submissionRecordId, pageUsername, copyAssociatedFiles);
+		DashboardDatasetList datasetList = configStore.getUserFileHandler().getDatasetListing(username);
+		logger.info("dataset list returned for " + username);
+        
+		return datasetList;
+        } catch (IOException iox) {
+            throw new IllegalArgumentException(iox);
+        }
+    }
     /**
      * @return
      */

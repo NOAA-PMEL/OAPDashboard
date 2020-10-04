@@ -56,6 +56,22 @@ public interface DashboardServicesInterfaceAsync {
 			Boolean deleteMetadata, AsyncCallback<DashboardDatasetList> callback);
 
 	/**
+	 * Client side request to clone the specified submission record.
+	 * 
+	 * @param username
+	 * 		name of the current user - for validation
+	 * @param submissionRecordId
+	 * 		submission record to be cloned
+     * @param cloneAssociatedFiles
+     *      whether or not to clone any associated additional files
+	 * @return
+	 * 		the updated list of datasets for the current user
+	 * @param callback
+	 * 		the callback to make with the updated dataset list for the current user
+	 */
+	void cloneDataset(String username, String submissionRecordId, boolean cloneAssociatedFiles,
+	                  AsyncCallback<DashboardDatasetList> callback);
+	/**
 	 * Client side request to add the indicated datasets 
 	 * to the current user's list of datasets.
 	 * 
