@@ -4,7 +4,6 @@
 	<classpathentry excluding="gov/noaa/pmel/dashboard/server/new_model/TimeseriesMeasurement.java" kind="src" output="test-classes" path="test"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.junit.JUNIT_CONTAINER/4"/>
-	<classpathentry kind="con" path="org.eclipse.jst.j2ee.internal.web.container"/>
 	<classpathentry kind="con" path="com.google.gwt.eclipse.core.GWT_CONTAINER"/>
 	<classpathentry kind="con" path="com.gwtplugins.gwt.eclipse.core.GWT_CONTAINER/GWT 2.8.1"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.USER_LIBRARY/servlet_lib"/>
