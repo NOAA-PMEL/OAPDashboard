@@ -1,9 +1,8 @@
-/.jsdtscope
-/com.google.gdt.eclipse.core.prefs
-/com.google.gwt.eclipse.core.prefs
-/org.eclipse.jdt.core.prefs.mine
-/org.eclipse.wst.common.component
-/org.eclipse.wst.common.project.facet.core.xml
-/org.eclipse.wst.jsdt.ui.superType.container
-/org.eclipse.wst.jsdt.ui.superType.name
 /test-classes/
+/gwt-unitCache/
+/las_jar/
+/scratch/
+/tattly/
+/content/
+.DS_Store
+/preview/
