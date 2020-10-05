@@ -70,7 +70,7 @@ public class AdminClient extends CLClient {
                                             .description("User phone. Use \"x####\" to specify an extension.").build();
     private static CLOption opt_target = CLOption.builder().name("targetDb").flag("d").longFlag("db")
                                             .defaultValue("localhost")
-                                            .description("Target database. Options: localhost, prod(uction), [hostname] (which may or may not be supported.)").build();
+                                            .description("Target database. Options: localhost, prod, [hostname] (which may or may not be supported.)").build();
     
     private static CLOption opt_noop = CLOption.builder().name("no-op").flag("x").longFlag("noop")
                                             .requiresValue(false)
