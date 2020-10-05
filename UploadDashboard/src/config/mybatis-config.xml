@@ -42,11 +42,11 @@
         <property name="password" value="${matisse.my_password}"/>
       </dataSource>
     </environment>
-    <environment id="prod">
+    <environment id="prod"> <!-- For adding users from other machines. -->
       <transactionManager type="JDBC"/>
       <dataSource type="POOLED">
         <property name="driver" value="${db.driver}"/>
-        <property name="url" value="${db.url}"/>
+        <property name="url" value="${nb.url}"/>
         <property name="username" value="${db.username}"/>
         <property name="password" value="${db.password}"/>
         <property name="poolPingQuery" value="SELECT 1"/>
@@ -54,7 +54,7 @@
         <property name="poolPingConnectionsNotUsedFor" value="28000000"/>
       </dataSource>
     </environment>
-    <environment id="production">
+    <environment id="production"> <!-- configuration for running locally on new-bock -->
       <transactionManager type="JDBC"/>
       <dataSource type="POOLED">
         <property name="driver" value="${db.driver}"/>
@@ -71,6 +71,18 @@
       <dataSource type="POOLED">
         <property name="driver" value="${db.driver}"/>
         <property name="url" value="${db.url}"/>
+        <property name="username" value="${db.username}"/>
+        <property name="password" value="${db.password}"/>
+        <property name="poolPingQuery" value="SELECT 1"/>
+        <property name="poolPingEnabled" value="true"/>
+        <property name="poolPingConnectionsNotUsedFor" value="28000000"/>
+      </dataSource>
+    </environment>
+    <environment id="dunkel">
+      <transactionManager type="JDBC"/>
+      <dataSource type="POOLED">
+        <property name="driver" value="${db.driver}"/>
+        <property name="url" value="${dunkel.url}"/>
         <property name="username" value="${db.username}"/>
         <property name="password" value="${db.password}"/>
         <property name="poolPingQuery" value="SELECT 1"/>
