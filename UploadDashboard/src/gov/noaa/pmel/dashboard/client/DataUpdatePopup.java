@@ -305,8 +305,18 @@ public class DataUpdatePopup extends Composite {
 //        return fieldsPanel;
 //    }
     
-    private void setDisplayTitle(String displayName) {
-        title.setHTML(TITLE_BASE + displayName);
+    private String getDisplayText(DashboardDataset dataset) {
+        String text;
+        String uploadedFile = dataset.getUploadFilename();
+        if ( uploadedFile == null || uploadedFile.trim().equals("")) {
+            text = "Upload data file for for submission record " + dataset.getRecordId();
+        } else {
+            text = TITLE_BASE + dataset.getUserDatasetName();
+        }
+        return text;
+    }
+    private void setDisplayTitle(String titleText) {
+        title.setHTML(titleText);
     }
     private void setDescription(String filename) {
         descriptionHtml.setHTML(DESCRIPTION_HTML1 + filename + DESCRIPTION_HTML2);
@@ -327,7 +337,7 @@ public class DataUpdatePopup extends Composite {
         setDataset(dataset);
         // setting this changes datasetname (user dataset name) property.
 //        setDatasetIdToken(dataset.getDatasetId());
-        setDisplayTitle(dataset.getUserDatasetName());
+        setDisplayTitle(getDisplayText(dataset));
         previousFileNameToken.setValue(dataset.getUploadFilename());
 		uploadForm.setAction(GWT.getModuleBaseURL() + "DataUploadService/update/" + dataset.getDatasetId());
 //        setDescription(dataset.getUploadFilename());
@@ -427,26 +437,31 @@ public class DataUpdatePopup extends Composite {
 			UploadDashboard.showMessage(NO_FILE_ERROR_MSG);
 			return;
 		}
-        String replaceMessage;
-        if ( ! newFileName.equals(dataset.getUploadFilename())) {
-            replaceMessage = buildReplaceMessage(dataset.getUploadFilename(), newFileName);
-        } else {
-            replaceMessage = buildUpdateMessage(newFileName);
-        }
-        UploadDashboard.ask(replaceMessage,"Yes","Cancel",QuestionType.QUESTION,new AsyncCallback<Boolean>() {
-            @Override
-            public void onSuccess(Boolean answer) {
-                if ( answer.booleanValue()) {
-            		assignTolkiens(DashboardUtils.OVERWRITE_DATASETS_REQUEST_TAG);
-            		uploadForm.submit();
+        if ( ! dataset.getUploadFilename().equals("")) {
+            String replaceMessage;
+            if ( ! newFileName.equals(dataset.getUploadFilename())) {
+                replaceMessage = buildReplaceMessage(dataset.getUploadFilename(), newFileName);
+            } else {
+                replaceMessage = buildUpdateMessage(newFileName);
+            }
+            UploadDashboard.ask(replaceMessage,"Yes","Cancel",QuestionType.QUESTION,new AsyncCallback<Boolean>() {
+                @Override
+                public void onSuccess(Boolean answer) {
+                    if ( answer.booleanValue()) {
+                		assignTolkiens(DashboardUtils.OVERWRITE_DATASETS_REQUEST_TAG);
+                		uploadForm.submit();
+                    }
                 }
-            }
-            @Override
-            public void onFailure(Throwable t) {
-                UploadDashboard.logToConsole("Ask failure:" + String.valueOf(t));
-                // ignore // XXX shouldn't happen...
-            }
-        });
+                @Override
+                public void onFailure(Throwable t) {
+                    UploadDashboard.logToConsole("Ask failure:" + String.valueOf(t));
+                    // ignore // XXX shouldn't happen...
+                }
+            });
+        } else { // just do it
+       		assignTolkiens(DashboardUtils.OVERWRITE_DATASETS_REQUEST_TAG);
+       		uploadForm.submit();
+        }
 	}
 
 	/**

@@ -13,6 +13,7 @@
 				<g:Button addStyleNames="{style.cruisepanelmainbutton}" ui:field="newSubmissionButton" />
 				<g:Label addStyleNames="{style.cruisebuttonpanelseparator}" />
 				<g:Button addStyleNames="{style.cruisepanelbutton}" ui:field="viewDataAndColumnsButton" />
+				<g:Button addStyleNames="{style.cruisepanelbutton}" ui:field="datafileButton" />
 				<g:Button addStyleNames="{style.cruisepanelbutton}" ui:field="metadataButton" />
 				<g:Button addStyleNames="{style.cruisepanelbutton}" ui:field="addlDocsButton" />
 				<g:Button addStyleNames="{style.cruisepanelbutton}" ui:field="previewButton" />

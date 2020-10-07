@@ -97,6 +97,9 @@ public class DatasetListPage extends CompositeWithUsername {
 	private static final String UPDATE_SUBMISSION_BUTTON_HOVER_HELP = 
 			"Update the selected submission.";
 
+    private static final String DATA_FILE_BUTTON_TEXT = "Manage<br/>Data File";
+    private static final String DATA_FILE_BUTTON_HOVER_HELP = "Upload or update data file.";
+    
 	private static final String CLONE_SUBMISSION_BUTTON_TEXT = "Clone Submission";
 	private static final String CLONE_SUBMISSION_BUTTON_HOVER_HELP = 
 			"Create a new archive submission record from existing metadata.";
@@ -263,6 +266,8 @@ public class DatasetListPage extends CompositeWithUsername {
 			"SELECT A DATASET TO ENABLE BUTTON";
 	private static final String ONLY_ONE_TO_ENABLE_MSG = 
 			"SELECT ONLY ONE DATASET TO ENABLE BUTTON";
+    private static final String UPDATE_DATA_TO_ENABLE_MSG = 
+            "UPLOAD DATA FILE TO ENABLE BUTTON";
 	private static final String NOT_FOR_OTHER_FILES = 
 			"THIS OPTION IS NOT AVAILABLE FOR THIS FILE TYPE.";
 	private static final String NOT_FOR_OTHER_FEATURES = 
@@ -323,6 +328,7 @@ public class DatasetListPage extends CompositeWithUsername {
 	@UiField Button newSubmissionButton;
 	@UiField Button cloneSubmissionButton;
 	@UiField Button viewDataAndColumnsButton;
+	@UiField Button datafileButton;
 	@UiField Button metadataButton;
 	@UiField Button addlDocsButton;
 	@UiField Button previewButton;
@@ -339,6 +345,7 @@ public class DatasetListPage extends CompositeWithUsername {
 
 	private Button[] selectSet;
 	private Button[] singleSet;
+	private Button[] noDataSet;
 	private Button[] noOpaque;
 	
 	private Header<String> selectHeader;
@@ -601,6 +608,9 @@ public class DatasetListPage extends CompositeWithUsername {
 		viewDataAndColumnsButton.setText(VIEW_DATA_TEXT);
 		viewDataAndColumnsButton.setTitle(VIEW_DATA_HOVER_HELP);
 
+		datafileButton.setHTML(DATA_FILE_BUTTON_TEXT);
+		datafileButton.setTitle(DATA_FILE_BUTTON_HOVER_HELP);
+
 		metadataButton.setText(METADATA_TEXT);
 		metadataButton.setTitle(METADATA_HOVER_HELP);
 
@@ -640,6 +650,7 @@ public class DatasetListPage extends CompositeWithUsername {
 		selectSet = new Button[] {
 			viewDataAndColumnsButton,
             cloneSubmissionButton,
+			datafileButton,
 			metadataButton,
 			addlDocsButton,
 			previewButton,
@@ -653,6 +664,7 @@ public class DatasetListPage extends CompositeWithUsername {
 		singleSet = new Button[] {
 			viewDataAndColumnsButton,
             cloneSubmissionButton,
+			datafileButton,
 			metadataButton,
 //			addlDocsButton,
 			previewButton,
@@ -663,6 +675,12 @@ public class DatasetListPage extends CompositeWithUsername {
 //			changeOwnerButton,
 //			deleteButton
 		};
+        noDataSet = new Button[] {
+            viewDataAndColumnsButton,
+            cloneSubmissionButton,
+            previewButton,
+            archiveSubmitButton
+        };
         noOpaque = new Button[] {
 			viewDataAndColumnsButton,
 			previewButton
@@ -934,6 +952,30 @@ public class DatasetListPage extends CompositeWithUsername {
         }
 	}
 
+    @UiHandler("datafileButton")
+    void updateDataFile(ClickEvent event) {
+        GWT.log("update data file");
+            if ( selectedDatasets.size() == 0 ) {
+                Window.alert("No dataasets are selected!");
+                updateAvailableButtons();
+                doUpdateSubmission = false;
+                return;
+            }
+            if ( selectedDatasets.size() > 1 ) {
+                Window.alert("You can only update 1 submission at a time.");
+                updateAvailableButtons();
+                doUpdateSubmission = false;
+                return;
+            }
+            DashboardDataset selectedDataset = selectedDatasets.values().iterator().next();
+            UploadDashboard.pingService(new OAPAsyncCallback<Void>() {
+                @Override
+                public void onSuccess(Void arg0) {
+                    UploadDashboard.showUpdateSubmissionDialog(getUsername(), selectedDataset);
+                }
+            });
+    }
+    
     @UiHandler("cloneSubmissionButton")
 	void cloneSubmissionOnClick(ClickEvent event) {
 		if ( ! getSelectedDatasets(true) ) {
@@ -1656,7 +1698,7 @@ public class DatasetListPage extends CompositeWithUsername {
 		if ( selectCount > 1) {
 			disableButtons(singleSet, ONLY_ONE_TO_ENABLE_MSG);
 		}
-        updateSubmissionButton(selectCount);
+//        updateSubmissionButton(selectCount);
 	}
 			
 	/**
@@ -1690,7 +1732,6 @@ public class DatasetListPage extends CompositeWithUsername {
 
     /**
      * @param selectCount
-     */
     private void updateSubmissionButton(int selectCount) {
         if ( selectCount == 1 ) {
             newSubmissionButton.setText(UPDATE_SUBMISSION_BUTTON_TEXT);
@@ -1702,6 +1743,7 @@ public class DatasetListPage extends CompositeWithUsername {
             doUpdateSubmission = false;
         }
     }
+     */
 
     /**
      * @param selectedFeatures
@@ -1733,6 +1775,9 @@ public class DatasetListPage extends CompositeWithUsername {
                      ddType.equals(FeatureType.TIMESERIES))) {
                 previewButton.setEnabled(false);
                 maybeSetTitleAdvisory(previewButton, "Data Preview is not yet available for this type.");
+            }
+            if ( dd.getUploadFilename().equals("")) {
+    			disableButtons(noDataSet, UPDATE_DATA_TO_ENABLE_MSG);
             }
         }
     }
