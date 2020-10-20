@@ -592,7 +592,7 @@ public class DataFileHandler extends VersionedFileHandler {
                         String msg = "Inconsistent number of data columns (" + 
         							nColumns + " instead of " + numDataColumns + 
         							") at row " + rowNum;
-                        logger.warn(msg);
+                        logger.info(msg);
                         if ( nColumns < numDataColumns ) { // may have been trimmed by record parser
                             String[] padded = new String[numDataColumns];
                             int i = 0;
@@ -603,6 +603,9 @@ public class DataFileHandler extends VersionedFileHandler {
                                 padded[i] = "";
                             }
                             record = padded;
+                        } else if ( nColumns == numDataColumns+1 && hasTrailer(record) ) {
+                            nColumns = numDataColumns;
+                            logger.info("Row has a trailer. Ignoring.");
                         } else {
         					throw new IllegalStateException( "Inconsistent number of data columns (" + 
         							nColumns + " instead of " + numDataColumns + 
@@ -742,6 +745,14 @@ public class DataFileHandler extends VersionedFileHandler {
 		return datasetsMap;
 	}
     
+    /**
+     * @param record
+     * @return
+     */
+    private static boolean hasTrailer(String[] record) {
+        return StringUtils.emptyOrNull(record[record.length-1]);
+    }
+
     /**
      * @param record
      * @return
