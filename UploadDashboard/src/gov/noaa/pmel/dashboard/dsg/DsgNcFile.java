@@ -457,8 +457,8 @@ public abstract class DsgNcFile extends File {
 	protected static Variable addPressureVariable(NetcdfFileWriter ncFile, String varname, String longName, 
                                                   List<Dimension> dims, boolean isDsgAxis) {
 		Variable var = ncFile.addVariable(null, varname, DataType.DOUBLE, dims);
-		addAttributes(ncFile, var, DashboardUtils.FP_MISSING_VALUE, longName, "depth", "Location", "decibars");
-		ncFile.addVariableAttribute(var, new Attribute("_CoordinateAxisType", "Depth"));
+		addAttributes(ncFile, var, DashboardUtils.FP_MISSING_VALUE, longName, "pressure", "Location", "decibars");
+		ncFile.addVariableAttribute(var, new Attribute("_CoordinateAxisType", "Pressure"));
 		ncFile.addVariableAttribute(var, new Attribute("positive", "down"));
         if ( isDsgAxis ) {
     		ncFile.addVariableAttribute(var, new Attribute("axis", "Z"));
