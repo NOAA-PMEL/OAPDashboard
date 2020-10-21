@@ -55,9 +55,11 @@ import gov.noaa.pmel.dashboard.shared.MetadataPreviewInfo;
 import gov.noaa.pmel.dashboard.shared.NotFoundException;
 import gov.noaa.pmel.dashboard.shared.PreviewPlotImage;
 import gov.noaa.pmel.dashboard.shared.PreviewPlotResponse;
+import gov.noaa.pmel.dashboard.shared.PreviewTab;
 import gov.noaa.pmel.dashboard.shared.SessionException;
 import gov.noaa.pmel.dashboard.shared.ADCMessageList;
 import gov.noaa.pmel.dashboard.shared.TypesDatasetDataPair;
+import gov.noaa.pmel.tws.util.ApplicationConfiguration;
 import gov.noaa.pmel.tws.util.StringUtils;
 import gov.noaa.pmel.tws.util.TimeUtils;
 
@@ -779,26 +781,34 @@ public class DashboardServices extends RemoteServiceServlet implements Dashboard
 		if ( ! validateRequest(pageUsername) ) 
 			throw new IllegalArgumentException("Invalid user request");
 
-		logger.debug(datasetId+" @ " + timetag + " force:"+ force);
-		
-		boolean generatePlots = force || checkNeedToGeneratePlots(datasetId);
-		
-//		String stdId = DashboardServerUtils.checkDatasetID(datasetId);
-		logger.debug("reading data for " + datasetId);
-
-		// Get the complete original cruise data
-		DashboardDataset dataset = configStore.getDataFileHandler().getDatasetFromInfoFile(datasetId);
-        
-		// Generate the preview plots for this dataset
-		// TODO: refactor so starts this in a separate thread when firstCall is true and 
-		//       returns false, then when gets called again with firstCall is false for
-		//       a status update, returns false if still working and true if all plots are done
-		if ( generatePlots ) {
-    		dataset = configStore.getDataFileHandler().getDatasetDataFromFiles(datasetId, 0, -1);
-			configStore.getPreviewPlotsHandler().createPreviewPlots((DashboardDatasetData)dataset, timetag);
-		}
-		List<List<PreviewPlotImage>> plots = configStore.getPreviewPlotsHandler().getPreviewPlots(datasetId, dataset.getFeatureType());
-		return new PreviewPlotResponse(plots, true);
+        try {
+    		logger.debug(datasetId+" @ " + timetag + " force:"+ force);
+    		
+    		boolean generatePlots = force || checkNeedToGeneratePlots(datasetId);
+    		
+    //		String stdId = DashboardServerUtils.checkDatasetID(datasetId);
+    		logger.debug("reading data for " + datasetId);
+    
+    		// Get the complete original cruise data
+    		DashboardDataset dataset = configStore.getDataFileHandler().getDatasetFromInfoFile(datasetId);
+            
+    		// Generate the preview plots for this dataset
+    		// TODO: refactor so starts this in a separate thread when firstCall is true and 
+    		//       returns false, then when gets called again with firstCall is false for
+    		//       a status update, returns false if still working and true if all plots are done
+    		if ( generatePlots ) {
+        		dataset = configStore.getDataFileHandler().getDatasetDataFromFiles(datasetId, 0, -1);
+    			configStore.getPreviewPlotsHandler().createPreviewPlots((DashboardDatasetData)dataset, timetag);
+    		}
+    		List<PreviewTab> plots = configStore.getPreviewPlotsHandler().getPreviewPlots(datasetId, dataset.getFeatureType());
+    		return new PreviewPlotResponse(plots, true);
+        } catch (Exception ex) {
+            logger.warn(ex,ex);
+            throw new IllegalArgumentException("There was an error generating the preview plots.\n"
+                    + "Please try again later.\n"
+                    + "If the problem persists, please contact the System Administrator at "
+                    + ApplicationConfiguration.getProperty("oap.email.account", "linus.kamb@noaa.gov"));
+        }
 	}
 
 	private boolean checkNeedToGeneratePlots(final String datasetId) {

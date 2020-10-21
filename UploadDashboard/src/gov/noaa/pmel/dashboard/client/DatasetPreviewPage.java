@@ -37,6 +37,7 @@ import gov.noaa.pmel.dashboard.shared.DashboardServicesInterfaceAsync;
 import gov.noaa.pmel.dashboard.shared.FeatureType;
 import gov.noaa.pmel.dashboard.shared.PreviewPlotImage;
 import gov.noaa.pmel.dashboard.shared.PreviewPlotResponse;
+import gov.noaa.pmel.dashboard.shared.PreviewTab;
 
 /**
  * Page showing various plots of cruise data.
@@ -45,11 +46,14 @@ import gov.noaa.pmel.dashboard.shared.PreviewPlotResponse;
  * 
  * @author Karl Smith
  */
-public class DatasetPreviewSimplePage extends CompositeWithUsername {
+public class DatasetPreviewPage extends CompositeWithUsername {
 	
 	Logger logger = Logger.getLogger("DatasetPreviewPage");
 
 	private static final String TITLE_TEXT = "Preview Dataset";
+
+	private static final String INTRO_HTML_PROLOGUE = 
+			"Plots of the dataset: ";
 
 	private static final String REFRESH_TEXT = "Refresh plots";
 	private static final String REFRESH_HOVER_HELP = "Regenerate the plot images";
@@ -58,16 +62,20 @@ public class DatasetPreviewSimplePage extends CompositeWithUsername {
 	private static final String PLOT_GENERATION_FAILURE_HTML = "<b>Problems generating the plot previews</b>";
 
 	private static final String TAB0_TEXT = "Overview";
-	private static final String TAB1_TEXT = "Variables";
+	private static final String TAB1_TEXT = "Profiles";
+	private static final String TAB2_TEXT = "BioGeoChem";
+	private static final String TAB3_TEXT = "Nutrients +";
 
 	private static final String TAB0_ALT_TEXT = "Overview plots";
-	private static final String TAB1_ALT_TEXT = "Data variable plots";
+	private static final String TAB1_ALT_TEXT = "Plots vs depth";
+	private static final String TAB2_ALT_TEXT = "Property-property plots";
+	private static final String TAB3_ALT_TEXT = "Measured nutrients vs depth";
 
 	public static final String LAT_VS_LON_IMAGE_NAME = "lat_vs_lon";
 	public static final String LAT_LON_IMAGE_NAME = "lat_lon";
 	public static final String SAMPLE_VS_TIME_IMAGE_NAME = "sample_vs_time";
 
-	interface DatasetPreviewPageUiBinder extends UiBinder<Widget, DatasetPreviewSimplePage> {
+	interface DatasetPreviewPageUiBinder extends UiBinder<Widget, DatasetPreviewPage> {
 	}
 
 	private static DatasetPreviewPageUiBinder uiBinder = 
@@ -85,12 +93,17 @@ public class DatasetPreviewSimplePage extends CompositeWithUsername {
 	@UiField TabLayoutPanel tabsPanel;
 	@UiField FlowPanel tab0Panel;
 	@UiField FlowPanel tab1Panel;
+	@UiField FlowPanel tab2Panel;
+	@UiField FlowPanel tab3Panel;
 
 	@UiField HTML tab0Html;
 	@UiField HTML tab1Html;
+	@UiField HTML tab2Html;
+	@UiField HTML tab3Html;
 
-	List<List<PreviewPlotImage>> availablePlots;
+	List<PreviewTab> availablePlots;
 	List<FlowPanel> tabPanels = new ArrayList<FlowPanel>();
+    List<HTML> tabHeadings = new ArrayList<>();
 	List<List<Image>> tabImages = new ArrayList<List<Image>>();
 	
 	private String datasetId;
@@ -100,9 +113,9 @@ public class DatasetPreviewSimplePage extends CompositeWithUsername {
 	private AsyncCallback<PreviewPlotResponse> checkStatusCallback;
 
 	// The singleton instance of this page
-	private static DatasetPreviewSimplePage singleton;
+	private static DatasetPreviewPage singleton;
 
-	public DatasetPreviewSimplePage() {
+	public DatasetPreviewPage() {
         super(PagesEnum.PREVIEW_DATASET.name());
 		initWidget(uiBinder.createAndBindUi(this));
 		
@@ -150,16 +163,16 @@ public class DatasetPreviewSimplePage extends CompositeWithUsername {
 		refreshButton.setTitle(REFRESH_HOVER_HELP);
 		doneButton.setText(DONE_TEXT);
 
-		// Set the HTML for the tabs
-		tab0Html.setHTML(TAB0_TEXT);
-		tab1Html.setHTML(TAB1_TEXT);
-
-		// Set hover helps for the tabs
-		tab0Html.setTitle(TAB0_ALT_TEXT);
-		tab1Html.setTitle(TAB1_ALT_TEXT);
-
+        resetTabs();
+        
 		tabPanels.add(tab0Panel);
+        tabHeadings.add(tab0Html);
 		tabPanels.add(tab1Panel);
+        tabHeadings.add(tab1Html);
+		tabPanels.add(tab2Panel);
+        tabHeadings.add(tab2Html);
+		tabPanels.add(tab3Panel);
+        tabHeadings.add(tab3Html);
 	}
 
 	/**
@@ -169,7 +182,7 @@ public class DatasetPreviewSimplePage extends CompositeWithUsername {
 	 */
 	static void showPage(DashboardDatasetList cruiseList) {
 		if ( singleton == null )
-			singleton = new DatasetPreviewSimplePage();
+			singleton = new DatasetPreviewPage();
 // 		String datasetId = cruiseList.keySet().iterator().next(); 
 		DashboardDataset dataset = cruiseList.get(cruiseList.keySet().iterator().next()); 
 		singleton.updatePreviewPlots(dataset,
@@ -247,11 +260,16 @@ public class DatasetPreviewSimplePage extends CompositeWithUsername {
 			int tab = 0;
 			Image img = null;
 			String noCache="?ts=" + System.currentTimeMillis();
-			for (List<PreviewPlotImage> tabImageFileNames : availablePlots) {
+			for (PreviewTab tabImageFileNames : availablePlots) {
 				List<Image> tabXimages = new ArrayList<Image>(); // tabImages.get(tab);
 				tabImages.add(tabXimages);
 				FlowPanel tabPanel = tabPanels.get(tab);
-				for (final PreviewPlotImage imageInfo : tabImageFileNames) {
+//                tabsPanel.add(tabPanel);
+                tabPanel.setVisible(true);
+                HTML tabHeading = tabHeadings.get(tab);
+                tabHeading.getParent().setVisible(true);
+                tabHeading.setHTML(tabImageFileNames.title());
+				for (final PreviewPlotImage imageInfo : tabImageFileNames.getPlots()) {
 					String url = imagePrefix + imageInfo.fileName + noCache;
 					img = new Image(url);
 					img.setTitle(imageInfo.imageTitle);
@@ -301,6 +319,27 @@ public class DatasetPreviewSimplePage extends CompositeWithUsername {
 			tabXimages.clear();
 		}
 		tabImages.clear();
+        resetTabs();
+	}
+    
+	private void resetTabs() {
+        // Tab HTML text
+		tab0Html.setHTML("Loading..."); // TAB0_TEXT);
+		tab1Html.setHTML("Tab1"); // TAB1_TEXT);
+		tab2Html.setHTML("Tab2"); // TAB2_TEXT);
+		tab3Html.setHTML("Tab3"); // TAB3_TEXT);
+		// Set hover helps for the tabs
+		tab0Html.setTitle(TAB0_ALT_TEXT);
+		tab1Html.setTitle(TAB1_ALT_TEXT);
+		tab2Html.setTitle(TAB2_ALT_TEXT);
+		tab3Html.setTitle(TAB3_ALT_TEXT);
+		// Hide until necessary
+        tab1Panel.setVisible(false);
+        tab1Html.getParent().setVisible(false);
+        tab2Panel.setVisible(false);
+        tab2Html.getParent().setVisible(false);
+        tab3Panel.setVisible(false);
+        tab3Html.getParent().setVisible(false);
 	}
 
 	private void resetImageUrls(boolean forceRebuild) {
@@ -320,6 +359,7 @@ public class DatasetPreviewSimplePage extends CompositeWithUsername {
 		// Forces a regeneration of the preview images.
 		availablePlots = null;
 		UploadDashboard.closePreviews(this);
+		UploadDashboard.closePopups();
 		resetImageUrls(true);
 	}
 

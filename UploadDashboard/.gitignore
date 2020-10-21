@@ -7,3 +7,5 @@
 .DS_Store
 /preview/
 /.project
+/*.war
+*.swp

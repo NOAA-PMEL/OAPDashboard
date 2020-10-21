@@ -80,9 +80,7 @@ public class SocatTool extends Thread {
 				temp.mkdirs();
 			}
 
-			String driver = // dsgType != null ?
-                    		// 	getDsgPlotsDriverScript() :
-            			        ferret.getDriverScript(action);
+			String driver = ferret.getDriverScript(action);
             String driverTemplate = driver+".template";
             driver = createDriverScript(driverTemplate, temp);
             
@@ -205,6 +203,26 @@ public class SocatTool extends Thread {
         } else {
             replacements.put("TIMESERIES_PLOTS", "");  // nothing to plot...
         }
+        StringBuilder propertiesPlots = new StringBuilder("! Property-property plots \n");
+        // Leaving this out for now
+//        DoubleDashDataType pco2 = (DoubleDashDataType)stdUser.findDataColumn("pCO2_water_sst_100humidity_uatm");
+//        logger.debug("Found pco2:"+pco2);
+//        DoubleDashDataType ph = (DoubleDashDataType)stdUser.findDataColumn("ph_total");
+//        logger.debug("Found ph:"+ph);
+//        DoubleDashDataType sst = (DoubleDashDataType)stdUser.findDataColumn("sea_surface_temperature");
+//        logger.debug("Found sst:"+sst);
+//        DoubleDashDataType o2 = (DoubleDashDataType)stdUser.findDataColumn("ctd_oxygen");
+//        logger.debug("Found o2:"+o2);
+//        if ( pco2 != null && ph != null ) {
+//            propertiesPlots.append("go OA2_thumbnail_pair " + pco2.getVarName() + " " + ph.getVarName() + "\n");
+//        }
+//        if ( ph != null && sst != null ) {
+//            propertiesPlots.append("go OA2_thumbnail_pair " + ph.getVarName() + " " + sst.getVarName() + "\n");
+//        }
+//        if ( o2 != null && sst != null ) {
+//            propertiesPlots.append("go OA2_thumbnail_pair " + o2.getVarName() + " " + sst.getVarName() + "\n");
+//        }
+        replacements.put("PROPERTIES_PLOTS", propertiesPlots.toString()); 
         String driverContent = template.getContent(replacements);
         try ( FileWriter fout = new FileWriter(driverFile)) {
             fout.write(driverContent);
@@ -249,17 +267,6 @@ public class SocatTool extends Thread {
                                 DsgNcFile.SAMPLE_DEPTH_VARNAME;
         replacements.put("DEPTH_VAR_NAME", depthVarName);
         
-        /*
-        StringBuilder timeseriesPlots = new StringBuilder();
-        if ( plottableVarNames != null ) {
-            for ( String varname : plottableVarNames) {
-                timeseriesPlots.append("go OA_trajectory_plot ").append(varname).append("\n");
-            }
-            replacements.put("TRAJECTORY_PLOTS", timeseriesPlots.toString());
-        } else {
-            replacements.put("TRAJECTORY_PLOTS", "");  // nothing to plot...
-        }
-        */
         String driverContent = template.getContent(replacements);
         try ( FileWriter fout = new FileWriter(driverFile)) {
             fout.write(driverContent);

@@ -9,6 +9,8 @@ import java.util.List;
 
 import com.google.gwt.user.client.rpc.IsSerializable;
 
+import lombok.Singular;
+
 /**
  * @author kamb
  *
@@ -17,27 +19,28 @@ public class PreviewPlotResponse implements Serializable, IsSerializable {
 	
 	private static final long serialVersionUID = 5360711782787243232L;
 
-	private boolean finished;
+	private boolean _finished;
 	
-	private List<List<PreviewPlotImage>> tabs;
+    @Singular
+	private List<PreviewTab> _tabs;
 
 	@SuppressWarnings("unused") // for GWT
 	private PreviewPlotResponse() {
-		tabs = new ArrayList<List<PreviewPlotImage>>();
+		_tabs = new ArrayList<PreviewTab>();
 	}
 	
-	public PreviewPlotResponse(List<List<PreviewPlotImage>>plotTabs, boolean isFinished) {
-		finished = isFinished;
-		tabs = plotTabs != null ? plotTabs : new ArrayList<List<PreviewPlotImage>>();
+	public PreviewPlotResponse(List<PreviewTab>plotTabs, boolean isFinished) {
+		_finished = isFinished;
+		_tabs = plotTabs != null ? plotTabs : new ArrayList<PreviewTab>();
 	}
-	public boolean isFinished() { return finished; }
-	public List<List<PreviewPlotImage>> getPlotTabs() {
-		return tabs;
+	public boolean isFinished() { return _finished; }
+	public List<PreviewTab> getPlotTabs() {
+		return _tabs;
 	}
 	
-	public void setFinished(boolean isFinished) { finished = isFinished; }
-	public void setPlotTabs(List<List<PreviewPlotImage>> plotTabs) { tabs = plotTabs; }
-	public void addPlotTab(List<PreviewPlotImage> tab) {
-		tabs.add(tab);
+	public void setFinished(boolean isFinished) { _finished = isFinished; }
+	public void setPlotTabs(List<PreviewTab> plotTabs) { _tabs = plotTabs; }
+	public void addPlotTab(PreviewTab tab) {
+		_tabs.add(tab);
 	}
 }

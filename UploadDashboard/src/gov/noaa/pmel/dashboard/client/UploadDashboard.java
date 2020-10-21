@@ -466,7 +466,7 @@ public class UploadDashboard implements EntryPoint, ValueChangeHandler<String> {
             			AddlDocsManagerPage.redisplayPage(currentPage.getUsername());
                         break;
                     case PREVIEW_DATASET:
-            			DatasetPreviewProfilePage.redisplayPage(currentPage.getUsername());
+            			DatasetPreviewPage.redisplayPage(currentPage.getUsername());
                         break;
                     case SUBMIT_FOR_QC:
             			SubmitForQCPage.redisplayPage(currentPage.getUsername());
