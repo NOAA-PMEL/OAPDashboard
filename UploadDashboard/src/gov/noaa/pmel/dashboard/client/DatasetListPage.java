@@ -1108,10 +1108,10 @@ public class DatasetListPage extends CompositeWithUsername {
         switch (dataset.getFeatureType()) {
             case TIMESERIES:
             case TRAJECTORY:
-        		DatasetPreviewSimplePage.showPage(selectedDatasets);
-                break;
+//        		DatasetPreviewSimplePage.showPage(selectedDatasets);
+//                break;
             case PROFILE:
-        		DatasetPreviewProfilePage.showPage(selectedDatasets);
+        		DatasetPreviewPage.showPage(selectedDatasets);
                 break;
             default:
 				UploadDashboard.showMessage(dataset.getFeatureTypeName() + 

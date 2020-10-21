@@ -34,8 +34,11 @@ public class PreviewPlotImage implements Serializable, IsSerializable {
 
 	private static String buildTitle(String plotFileName) {
 		int extIdx = plotFileName.lastIndexOf('.');
+        if ( extIdx < 0 ) { return plotFileName; }
 		String name = plotFileName.substring(0, extIdx);
-		name = name.substring(name.indexOf('_')+1);
+        int subIdx = name.indexOf('_');
+        if ( subIdx < 0 ) { return name; }
+		name = name.substring(subIdx+1);
 		if ( isSpecial(name)) {
 			return specialCase(name);
 		}
@@ -53,5 +56,10 @@ public class PreviewPlotImage implements Serializable, IsSerializable {
 			return "Observation dates";
 		}
 		return name;
+	}
+    
+	@Override
+	public String toString() {
+	    return imageTitle + ":" + fileName;
 	}
 }

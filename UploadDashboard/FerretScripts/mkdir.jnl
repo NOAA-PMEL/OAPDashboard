@@ -1,0 +1,28 @@
+ ! mkdir.jnl
+ ! Attempt to create directory $1
+ ! Sets dir_exists to true if created or exists
+ !
+ ! NOAA/PMEL TMAP
+ ! PyFerret v7.6 (optimized)
+ ! Darwin 18.7.0 - 09/22/20
+ ! 14-Oct-20 09:17     
+
+set mode verify
+
+DEFINE SYMBOL dir = $1
+
+LET dexists = {"no", spawn:"ls ($dir)"}
+LET n = `dexists[i=@ngd]`
+IF `n EQ 1` THEN
+	LET makeit = SPAWN("mkdir ($dir); echo $?")
+	LET madeit = `makeit[i=2]`
+	if `madeit NE 0` then
+		say Failed to make directory ($dir)
+		let dir_exists = 0
+	else
+		let dir_exists = 1
+	endif
+ELSE
+	let dir_exists = 1
+ENDIF
+

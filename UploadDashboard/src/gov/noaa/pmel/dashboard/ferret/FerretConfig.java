@@ -17,6 +17,8 @@ import java.util.List;
 import org.jdom2.Document;
 import org.jdom2.Element;
 
+import gov.noaa.pmel.tws.util.ApplicationConfiguration;
+
 /**
  * This class manages the Ferret Config XML file that is used to run the Ferret IO Service Provider 
  * for the Java netCDF library.
@@ -249,6 +251,7 @@ public class FerretConfig extends Document {
      * 		the desired action of this configuration
      */
     public String getDriverScript(Action actionEnum) {
+        String ng = ApplicationConfiguration.getProperty("oap.preview.ng", "");
         Element invoker = this.getRootElement().getChild("invoker");
         if ( invoker != null ) {
         	String driver;
@@ -257,11 +260,11 @@ public class FerretConfig extends Document {
         	else if ( actionEnum.equals(Action.DECIMATE) )
         		driver = invoker.getAttributeValue("decimate_driver");
         	else if ( actionEnum.equals(Action.profile_PLOTS) )
-        		driver = invoker.getAttributeValue("profile_plots_driver");
+        		driver = invoker.getAttributeValue(ng+"profile_plots_driver");
         	else if ( actionEnum.equals(Action.trajectory_PLOTS) )
-        		driver = invoker.getAttributeValue("trajectory_plots_driver");
+        		driver = invoker.getAttributeValue(ng+"trajectory_plots_driver");
         	else if ( actionEnum.equals(Action.timeseries_PLOTS) )
-        		driver = invoker.getAttributeValue("timeseries_plots_driver");
+        		driver = invoker.getAttributeValue(ng+"timeseries_plots_driver");
         	else
         		driver = null;
             if ( driver != null ) {

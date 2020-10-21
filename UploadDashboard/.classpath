@@ -6,7 +6,6 @@
 	<classpathentry kind="con" path="org.eclipse.jdt.junit.JUNIT_CONTAINER/4"/>
 	<classpathentry kind="con" path="com.google.gwt.eclipse.core.GWT_CONTAINER"/>
 	<classpathentry kind="con" path="com.gwtplugins.gwt.eclipse.core.GWT_CONTAINER/GWT 2.8.1"/>
-	<classpathentry kind="con" path="org.eclipse.jdt.USER_LIBRARY/servlet_lib"/>
 	<classpathentry kind="lib" path="lib/tws_client.jar"/>
 	<classpathentry kind="con" path="org.eclipse.jst.j2ee.internal.web.container"/>
 	<classpathentry kind="output" path="war/WEB-INF/classes"/>

@@ -6,9 +6,12 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.SortedSet;
+import java.util.TreeSet;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -30,6 +33,7 @@ import gov.noaa.pmel.dashboard.shared.DashboardUtils;
 import gov.noaa.pmel.dashboard.shared.DataColumnType;
 import gov.noaa.pmel.dashboard.shared.FeatureType;
 import gov.noaa.pmel.dashboard.shared.PreviewPlotImage;
+import gov.noaa.pmel.dashboard.shared.PreviewTab;
 
 
 public class PreviewPlotsHandler {
@@ -129,10 +133,19 @@ public class PreviewPlotsHandler {
 		File datasetPlotsParent = new File(plotsFilesDir, stdId.substring(0,4));
 		File datasetPlotsDir = new File(datasetPlotsParent, stdId);
         logger.debug("Plots dir:"+datasetPlotsDir);
+        return datasetPlotsDir;
+	}
+	
+	public File createDatasetPreviewPlotsDir(File datasetPlotsDir) throws IllegalArgumentException {
 		if ( datasetPlotsDir.exists() ) {
 			if ( ! datasetPlotsDir.isDirectory() ) {
-				throw new IllegalArgumentException("Plots directory exists but is not a directory: " + 
-						datasetPlotsDir.getPath());
+				logger.warn("Plots directory exists but is not a directory: " + datasetPlotsDir.getPath());
+                if ( ! datasetPlotsDir.delete()) {
+        			throw new IllegalArgumentException("Failed to delete preview plots directory (file):" + 
+    					datasetPlotsDir.getPath());
+                }
+			} else {
+                clearDir(datasetPlotsDir);
 			}
 		}
 		else if ( ! datasetPlotsDir.mkdirs() ) {
@@ -233,12 +246,13 @@ public class PreviewPlotsHandler {
 		
 		boolean GENERATE_PLOTS = true;
 		if ( GENERATE_PLOTS ) {
+            cruisePlotsDir = createDatasetPreviewPlotsDir(cruisePlotsDir);
 			// Call Ferret to generate the plots from the preview DSG file
-			if ( ! cruisePlotsDir.exists() ) {
-				cruisePlotsDir.mkdirs();
-			} else if ( cruisePlotsDir.list().length != 0 ) {
-				clearDir(cruisePlotsDir);
-			}
+//			if ( ! cruisePlotsDir.exists() ) {
+//				cruisePlotsDir.mkdirs();
+//			} else if ( cruisePlotsDir.list().length != 0 ) {
+//				clearDir(cruisePlotsDir);
+//			}
 			SocatTool tool = new SocatTool(ferretConfig);
 			ArrayList<String> scriptArgs = new ArrayList<String>(1);
 			scriptArgs.add(dsgFileName);
@@ -355,6 +369,7 @@ public class PreviewPlotsHandler {
 		for (File f : cruisePlotsDir.listFiles()) {
 			if ( f.isDirectory()) {
 				clearDir(f);
+                f.delete();
 			} else {
 				f.delete();
 			}
@@ -377,14 +392,15 @@ public class PreviewPlotsHandler {
 		}
 	}
 
-	public List<List<PreviewPlotImage>> getPreviewPlots(final String datasetId, FeatureType featureType) {
+	public List<PreviewTab> getPreviewPlots(final String datasetId, FeatureType featureType) {
         switch(featureType) {
             case TIMESERIES:
-                return getSimplePreviewPlots(datasetId);
+//                return getSimplePreviewPlots(datasetId);
             case TRAJECTORY:
-                return getSimplePreviewPlots(datasetId);
+//                return getSimplePreviewPlots(datasetId);
             case PROFILE:
-                return getProfilePreviewPlots(datasetId);
+                return getGeneralizedPreviewPlots(datasetId);
+//                return getProfilePreviewPlots(datasetId);
             case TIMESERIES_PROFILE:
             case TRAJECTORY_PROFILE:
             case OTHER:
@@ -397,79 +413,96 @@ public class PreviewPlotsHandler {
      * @param datasetId
      * @return
      */
-    private List<List<PreviewPlotImage>> getSimplePreviewPlots(String datasetId) {
-		List<List<PreviewPlotImage>> plotTabs = new ArrayList<>();
+    private List<PreviewTab> getGeneralizedPreviewPlots(String datasetId) {
+		List<PreviewTab> plotTabs = new ArrayList<>();
 		String stdId = DashboardServerUtils.checkDatasetID(datasetId);
 		String cruisePlotsDirname = getDatasetPreviewPlotsDir(stdId).getPath();
 		File cruisePlotsDir = new File(cruisePlotsDirname);
-		ArrayList<String> plotFiles = new ArrayList<>(Arrays.asList(cruisePlotsDir.list(new FilenameFilter() {
-			@Override
-			public boolean accept(File dir, String name) {
-				return name.startsWith(datasetId) && name.endsWith(".gif") || name.endsWith(".png");
-			}
-		})));
-		HashMap<String, PreviewPlotImage> plotNameMap = buildNameMap(plotFiles);
-		logger.debug("Overview---");
-		List<PreviewPlotImage> tabList = // featureType.equals(FeatureType.PROFILE) ? 
-		                                    getOverviewPlots(plotNameMap, datasetId); //  :
-//		                                    buildPlotList(plotNameMap);
-		plotTabs.add(tabList);
-		logger.debug("General---");
-		tabList = buildPlotList(plotNameMap);
-		plotTabs.add(tabList);
-        return plotTabs;
-    }
-
-    public List<List<PreviewPlotImage>> getProfilePreviewPlots(final String datasetId) {
-		List<List<PreviewPlotImage>> plotTabs = new ArrayList<>();
-		String stdId = DashboardServerUtils.checkDatasetID(datasetId);
-		String cruisePlotsDirname = getDatasetPreviewPlotsDir(stdId).getPath();
-		File cruisePlotsDir = new File(cruisePlotsDirname);
-		ArrayList<String> plotFiles = new ArrayList<>(Arrays.asList(cruisePlotsDir.list(new FilenameFilter() {
-			@Override
-			public boolean accept(File dir, String name) {
-				return name.startsWith(datasetId) && name.endsWith(".gif") || name.endsWith(".png");
-			}
-		})));
-		HashMap<String, PreviewPlotImage> plotNameMap = buildNameMap(plotFiles);
-		
-		logger.debug("Overview---");
-		List<PreviewPlotImage> tabList = // featureType.equals(FeatureType.PROFILE) ? 
-		                                    getOverviewPlots(plotNameMap, datasetId); //  :
-//		                                    buildPlotList(plotNameMap);
-		plotTabs.add(tabList);
-		logger.debug("General---");
-		tabList = getGeneralPlots(plotNameMap, datasetId);
-		plotTabs.add(tabList);
-		logger.debug("BioGeo---");
-		tabList = getBioGeoChemPlots(plotNameMap, datasetId);
-		plotTabs.add(tabList);
-		logger.debug("Remain---");
-		tabList = getRemainingPlots(plotNameMap, datasetId);
-		plotTabs.add(tabList);
-//		int count = 0;
-//		int plotsPerPage = 6;
-//		List<String> tabList = new ArrayList<>();
-//		for (File plotFile : plots) {
-//			String plotFileName = plotFile.getName();
-//			tabList.add(plotFileName);
-//			if ( ++count % plotsPerPage == 0 ) {
-//				plotTabs.add(tabList);
-//				tabList = new ArrayList<>();
-//			}
-//		}
-//		plotTabs.add(tabList);
+        SortedSet<File> sortedPlotDirs = new TreeSet<>(new Comparator<File>() {
+            @Override
+            public int compare(File o1, File o2) {
+                return o1.getName().compareTo(o2.getName());
+            }
+        });
+        sortedPlotDirs.addAll(Arrays.asList(cruisePlotsDir.listFiles()));
+        for (File dir : sortedPlotDirs) {
+            if ( dir.isDirectory() && dir.list().length > 0 ) {
+                PreviewTab tab = getTabPlots(dir);
+                plotTabs.add(tab);
+            }
+        }
 		return plotTabs;
-	}
+    }
+//    private List<PreviewTab> getSimplePreviewPlots(String datasetId) {
+//		List<PreviewTab> plotTabs = new ArrayList<>();
+//		String stdId = DashboardServerUtils.checkDatasetID(datasetId);
+//		String cruisePlotsDirname = getDatasetPreviewPlotsDir(stdId).getPath();
+//		File cruisePlotsDir = new File(cruisePlotsDirname);
+//		ArrayList<String> plotFiles = new ArrayList<>(Arrays.asList(cruisePlotsDir.list(new FilenameFilter() {
+//			@Override
+//			public boolean accept(File dir, String name) {
+//				return name.startsWith(datasetId) && name.endsWith(".gif") || name.endsWith(".png");
+//			}
+//		})));
+//		HashMap<String, PreviewPlotImage> plotNameMap = buildNameMap(plotFiles);
+//		logger.debug("Overview---");
+//		PreviewTab tabList = getOverviewPlots(plotNameMap, datasetId); //  :
+//		plotTabs.add(tabList);
+//		logger.debug("General---");
+//		tabList = buildPlotList(plotNameMap);
+//		plotTabs.add(tabList);
+//        return plotTabs;
+//    }
+
+//    public List<PreviewTab> getProfilePreviewPlots(final String datasetId) {
+//		List<PreviewTab> plotTabs = new ArrayList<>();
+//		String stdId = DashboardServerUtils.checkDatasetID(datasetId);
+//		String cruisePlotsDirname = getDatasetPreviewPlotsDir(stdId).getPath();
+//		File cruisePlotsDir = new File(cruisePlotsDirname);
+//		ArrayList<String> plotFiles = new ArrayList<>(Arrays.asList(cruisePlotsDir.list(new FilenameFilter() {
+//			@Override
+//			public boolean accept(File dir, String name) {
+//				return name.startsWith(datasetId) && name.endsWith(".gif") || name.endsWith(".png");
+//			}
+//		})));
+//		HashMap<String, PreviewPlotImage> plotNameMap = buildNameMap(plotFiles);
+//		
+//		logger.debug("Overview---");
+//		PreviewTab tab = getOverviewPlots(plotNameMap, datasetId); //  :
+//		plotTabs.add(tab);
+//		logger.debug("General---");
+//		tab = getProfileGeneralPlots(plotNameMap, datasetId);
+//		plotTabs.add(tab);
+//		logger.debug("BioGeo---");
+//		tab = getBioGeoChemPlots(plotNameMap, datasetId);
+//		plotTabs.add(tab);
+////		logger.debug("Remain---");
+////		tab = getRemainingPlots(plotNameMap, datasetId);
+////		plotTabs.add(tab);
+//        
+////		int count = 0;
+////		int plotsPerPage = 6;
+////		List<String> tabList = new ArrayList<>();
+////		for (File plotFile : plots) {
+////			String plotFileName = plotFile.getName();
+////			tabList.add(plotFileName);
+////			if ( ++count % plotsPerPage == 0 ) {
+////				plotTabs.add(tabList);
+////				tabList = new ArrayList<>();
+////			}
+////		}
+////		plotTabs.add(tabList);
+//		return plotTabs;
+//	}
 
 	/**
      * @param plotNameMap
      * @return
      */
-    private static List<PreviewPlotImage> buildPlotList(HashMap<String, PreviewPlotImage> plotNameMap) {
-		List<PreviewPlotImage> plotList = new ArrayList<>();
+    private static PreviewTab buildPlotList(HashMap<String, PreviewPlotImage> plotNameMap) {
+		PreviewTab plotList = new PreviewTab("PlotList");
         for (String plot : plotNameMap.keySet()) {
-            plotList.add(plotNameMap.get(plot));
+            plotList.addPlot(plotNameMap.get(plot));
         }
         return plotList;
     }
@@ -484,9 +517,9 @@ public class PreviewPlotsHandler {
 		return nameMap;
 	}
 
-	private static boolean checkAddAndRemove(String plotName, Map<String, PreviewPlotImage>plotsMap, List<PreviewPlotImage> plotList) {
+	private static boolean checkAddAndRemove(String plotName, Map<String, PreviewPlotImage>plotsMap, PreviewTab plotList) {
 		if ( plotsMap.containsKey(plotName)) {
-			plotList.add(plotsMap.get(plotName));
+			plotList.addPlot(plotsMap.get(plotName));
 			plotsMap.remove(plotName);
 			logger.debug(plotName);
 			return true;
@@ -494,6 +527,21 @@ public class PreviewPlotsHandler {
 			logger.info(plotName + " NOT FOUND.");
 		}
 		return false;
+	}
+	private static String plotTitle(String plotFilePath) {
+	    String plotFileName = plotFilePath.indexOf("/") > -1 ?
+	                            plotFilePath.substring(plotFilePath.lastIndexOf("/")+1) :
+	                            plotFilePath;
+        int firstIdx = plotFileName.indexOf('_');
+        String varString = plotFileName.substring(firstIdx+1);
+        if ( varString.indexOf('.') > 0 ) {
+            varString = varString.substring(0, varString.lastIndexOf('.'));
+        }
+        String[] vars = varString.split("__");
+        if ( vars.length == 2 ) {
+            return vars[0].replaceAll("_", " ") + " vs " + vars[1].replaceAll("_", " ");
+        }
+        return vars[0].replaceAll("_", " ");
 	}
 	private static String plotName(String datasetId, String... vars) {
 		StringBuilder bldr = new StringBuilder(datasetId);
@@ -504,8 +552,21 @@ public class PreviewPlotsHandler {
 		}
 		return bldr.toString();
 	}
-	private static List<PreviewPlotImage> getOverviewPlots(HashMap<String, PreviewPlotImage> plotNameMap, String datasetId) {
-		List<PreviewPlotImage> plotList = new ArrayList<>();
+    private static PreviewTab getTabPlots(File directory) {
+        String tabTitle = directory.getName();
+        String dirName = tabTitle+"/";
+        if ( tabTitle.matches("\\d+_[a-zA-Z].*")) {
+            tabTitle = tabTitle.substring(tabTitle.indexOf('_')+1);
+        }
+		PreviewTab plotList = new PreviewTab(tabTitle);
+        for (String plotFileName : directory.list()) {
+            String plotPath = dirName + plotFileName;
+            plotList.addPlot(new PreviewPlotImage(plotPath, plotTitle(plotPath)));
+        }
+		return plotList;
+    }
+	private static PreviewTab getOverviewPlots(HashMap<String, PreviewPlotImage> plotNameMap, String datasetId) {
+		PreviewTab plotList = new PreviewTab("Overview");
 		String plotName = plotName(datasetId,"map");
 		checkAddAndRemove(plotName, plotNameMap, plotList);
 		plotName = plotName(datasetId, "profile_time", "show_time");
@@ -518,8 +579,8 @@ public class PreviewPlotsHandler {
     private static final String pressureVarName = DsgNcFile.SAMPLE_PRESSURE_VARNAME;
     private static final String depthVarName = DsgNcFile.SAMPLE_DEPTH_VARNAME;
     
-	private static List<PreviewPlotImage> getGeneralPlots(HashMap<String, PreviewPlotImage> plotNameMap, String datasetId) {
-		List<PreviewPlotImage> plotList = new ArrayList<>();
+	private static PreviewTab getProfileGeneralPlots(HashMap<String, PreviewPlotImage> plotNameMap, String datasetId) {
+		PreviewTab plotList = new PreviewTab("Profilactic");
 		String pressureDepth = pressureVarName;
 		String plotName = plotName(datasetId, "ctd_temperature", pressureVarName);
 		if ( ! checkAddAndRemove(plotName, plotNameMap, plotList)) {
@@ -543,8 +604,8 @@ public class PreviewPlotsHandler {
 		return plotList;
 	}
 	
-	private List<PreviewPlotImage> getBioGeoChemPlots(HashMap<String,PreviewPlotImage> plotNameMap, String datasetId) {
-		List<PreviewPlotImage> plotList = new ArrayList<>();
+	private PreviewTab getBioGeoChemPlots(HashMap<String,PreviewPlotImage> plotNameMap, String datasetId) {
+		PreviewTab plotList = new PreviewTab("BGC");
 		String plotName = plotName(datasetId, "ctd_salinity", "alkalinity");
 		checkAddAndRemove(plotName, plotNameMap, plotList);
 		plotName = plotName(datasetId, "ctd_oxygen", "inorganic_carbon");
@@ -567,8 +628,8 @@ public class PreviewPlotsHandler {
 		return plotList;
 	}
 
-	private static List<PreviewPlotImage> getRemainingPlots(HashMap<String, PreviewPlotImage> plotNameMap, String datasetId) {
-		List<PreviewPlotImage> plotList = new ArrayList<>(plotNameMap.values());
+	private static PreviewTab getRemainingPlots(HashMap<String, PreviewPlotImage> plotNameMap, String datasetId) {
+		PreviewTab plotList = new PreviewTab("Nutrients", new ArrayList<>(plotNameMap.values()));
 		logger.debug(plotList);
 		return plotList;
 	}
