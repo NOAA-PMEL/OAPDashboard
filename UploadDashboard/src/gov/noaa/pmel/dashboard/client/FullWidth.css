@@ -42,9 +42,15 @@ html, body {
     display:inline-block;
 }
 .archiveStatusPanel {
+    border: 1px solid black;
+    bottom: unset !important;
+    border-radius: .25em;
+    padding: 0em 1em 1em;
+    margin: 3em 2em 3em 1em;
+    background: whitesmoke;
 }
 .archiveStatusLabel {
-    margin-top: 2em;
+    /* margin-top: 2em; */
 }
 .archiveStatusLabel h3 {
     margin-block-end: .5em !important;
