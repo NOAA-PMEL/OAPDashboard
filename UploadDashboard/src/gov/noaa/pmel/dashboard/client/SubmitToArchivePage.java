@@ -65,6 +65,7 @@ public class SubmitToArchivePage extends CompositeWithUsername implements DataSu
     @UiField HTML fileListLabel;
     @UiField HTML fileListHtml;
     @UiField HTML submitCommentLabel;
+    @UiField FlowPanel statusPanel;
     @UiField HTML statusLabel;
     @UiField Label submissionTime;
     @UiField HTML statusListPanel;
