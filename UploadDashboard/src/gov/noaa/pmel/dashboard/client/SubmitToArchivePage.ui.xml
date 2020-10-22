@@ -93,7 +93,7 @@
     			</g:FlowPanel>
             </g:FlowPanel>
         </g:center>
-        <g:east size="32" >
+        <g:east size="28" >
             <g:FlowPanel ui:field="statusPanel" addStyleNames="{style.archiveStatusPanel}">
                 <g:HTML ui:field="statusLabel"  addStyleNames="{style.archiveStatusLabel}" ></g:HTML>
                 <g:Label ui:field="submissionTime"  addStyleNames="{style.archiveStatusSubmitTime}" ></g:Label>

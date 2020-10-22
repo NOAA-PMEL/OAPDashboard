@@ -30,7 +30,7 @@ html, body {
 	margin-left: 3em;
 }
 .archiveFileListPanel {
-    padding: 1.2em 2em .5em;
+    padding: 1.2em 0em .5em;
 }
 .archiveFileListLabel {
     display:inline-block;
@@ -46,7 +46,7 @@ html, body {
     bottom: unset !important;
     border-radius: .25em;
     padding: 0em 1em 1em;
-    margin: 3em 2em 3em 1em;
+    margin: 1.5em 1.5em;
     background: whitesmoke;
 }
 .archiveStatusLabel {
@@ -498,7 +498,7 @@ hr .hline {
 }
 .submit_msg_scroll {
     display: inline-block;
-    padding-right: 3em;
+    padding-right: 1.5em;
     flex: 1;
 }
 .submit_msg_text {
