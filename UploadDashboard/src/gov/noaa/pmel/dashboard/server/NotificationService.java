@@ -11,6 +11,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
 import java.util.Date;
+import java.util.List;
 
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
@@ -23,6 +24,7 @@ import org.apache.http.client.methods.HttpGet;
 import org.apache.http.impl.client.HttpClients;
 import org.apache.log4j.Logger;
 
+import gov.noaa.ncei.oads.xml.v_a0_2_2.BaseVariableType;
 import gov.noaa.ncei.oads.xml.v_a0_2_2.OadsMetadataDocumentType;
 import gov.noaa.pmel.dashboard.handlers.DataFileHandler;
 import gov.noaa.pmel.dashboard.handlers.MetadataFileHandler;
@@ -110,6 +112,7 @@ public class NotificationService extends HttpServlet {
     		String timestamp = TimeUtils.formatUTC(new Date(), "yyyy-MM-dd HH:mm Z");
             DataFileHandler df = DashboardConfigStore.get().getDataFileHandler();
             DashboardDataset dataset = df.getDatasetFromInfoFile(datasetId);
+            checkMetadataDataColumns(dataset, metadata);
             dataset.setMdTimestamp(timestamp);
             dataset.setMdStatus(validationMessage);
             String msg = new Date() + " Updating metadata timestamp on user upload metadata file.";
@@ -117,7 +120,28 @@ public class NotificationService extends HttpServlet {
             df.saveDatasetInfoToFile(dataset, msg);
 	}
 	
-	private static OadsMetadataDocumentType saveXmlFromStream(String datasetId, InputStream in) throws Exception {
+	/**
+     * @param dataset
+     * @param metadata
+     */
+    private static void checkMetadataDataColumns(DashboardDataset dataset, OadsMetadataDocumentType metadata) {
+        List<String> userColumns = (List<String>)dataset.getUserColNames().clone();
+        for ( BaseVariableType var : metadata.getVariables()) {
+            if ( ! userColumns.contains(var.getDatasetVarName())) {
+                logger.warn(dataset.getRecordId() + ": Metadata has variable " + toString(var) + " which doesn't exist in dataset.");
+            } else {
+                userColumns.remove(var.getDatasetVarName());
+            }
+        }
+        for ( String missingColumn : userColumns) {
+            logger.info(dataset.getRecordId() + ": Metadata does not have variable for user data column " + missingColumn);
+        }
+    }
+
+    private static String toString(BaseVariableType var) {
+        return "["+var.getDatasetVarName()+"] " + var.getFullName();
+    }
+    private static OadsMetadataDocumentType saveXmlFromStream(String datasetId, InputStream in) throws Exception {
         MetadataFileHandler metaHandler = DashboardConfigStore.get().getMetadataFileHandler();
         File metaFile = metaHandler.getMetadataFile(datasetId);
         Path metaFilePath = metaFile.toPath();
