@@ -570,6 +570,7 @@ public class DatasetListPage extends CompositeWithUsername {
 		initWidget(uiBinder.createAndBindUi(this));
         boolean showManagerFields = datasets.isManager();
 		singleton = this;
+        selectedDatasets = new DashboardDatasetList(datasets.getUsername());
 
 		buildDatasetListTable(showManagerFields);
 
@@ -687,6 +688,11 @@ public class DatasetListPage extends CompositeWithUsername {
         };
 	}
 
+    private static List<String> selectedCruises = null;
+	static void showPage(ArrayList<String> cruiseIDs) {
+        selectedCruises = cruiseIDs;
+	    showPage();
+	}
 	/**
 	 * Display the dataset list page in the RootLayoutPanel 
 	 * with the latest information from the server.
@@ -699,8 +705,10 @@ public class DatasetListPage extends CompositeWithUsername {
 			@Override
 			public void onSuccess(DashboardServiceResponse<DashboardDatasetList> result) {
                 DashboardDatasetList cruises = result.response();
-				if ( singleton == null )
+				if ( singleton == null ) {
 					singleton = new DatasetListPage(cruises);
+				}
+                
                 UploadDashboard.setAppBuildVersion(result.getVersion());
 				UploadDashboard.updateCurrentPage(singleton);
 				singleton.updateDatasets(cruises);
@@ -786,11 +794,14 @@ public class DatasetListPage extends CompositeWithUsername {
 		providerList.clear();
 		providerList.addAll(newList.values());
 		for ( DashboardDataset dataset : providerList ) {
-			if ( selectedDatasets.containsKey(dataset.getRecordId()) )
-				dataset.setSelected(true);
-			else
-				dataset.setSelected(false);
+            if ( selectedCruises != null ) {
+                 dataset.setSelected( selectedCruises.contains(dataset.getRecordId()));
+            } else {
+				dataset.setSelected(selectedDatasets.containsKey(dataset.getRecordId()));
+            }
 		}
+        selectedCruises = null;
+        selectedDatasets.clear();
 		updateAvailableButtons();
 		datasetsGrid.setRowCount(providerList.size());
 		datasetsGrid.setVisibleRange(0, providerList.size());

@@ -574,7 +574,7 @@ public class DataUploadPage extends CompositeWithUsername {
 		// Process any successes
 		if ( ! cruiseIDs.isEmpty() ) {
 			DatasetListPage.resortTable();
-            DatasetListPage.showPage();
+            DatasetListPage.showPage(cruiseIDs);
 		}
 		return wasCompleteSuccess;
 	}
