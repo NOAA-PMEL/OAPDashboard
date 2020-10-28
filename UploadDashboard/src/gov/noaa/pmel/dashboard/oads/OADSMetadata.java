@@ -16,8 +16,10 @@ import java.nio.file.Path;
 import java.nio.file.attribute.BasicFileAttributeView;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
 
@@ -117,7 +119,7 @@ public class OADSMetadata {
 	
 	private static String[] requiredVars = new String[] {
 			"inorganic_carbon",
-			"alkalinity",
+			"total_alkalinity",
 			"ph_total",
 			"pCO2/fCO2 (autonomous)",
 			"pCO2/fCO2 (discrete)"
@@ -167,22 +169,35 @@ public class OADSMetadata {
 		                         .endDate(new Date((long)(1000*gtExtents.timeExtents.maxValue)))
 		                         .build());
 		                                    
-        if ( ApplicationConfiguration.getProperty("oap.metadata.extract_variables", false) && mdDoc.getVariables().isEmpty()) {
+        if ( ApplicationConfiguration.getProperty("oap.metadata.extract_variables", false) ) { // && mdDoc.getVariables().isEmpty()) {
             
             // XXX TODO: This is just a mess.
             // XXX What to do with unknowns and other/ignored, 
             // XXX plus putting data variables first and others last
             
+            Map<String, BaseVariableType> existgVarsByColumnName = new HashMap<String, BaseVariableType>();
+            Map<String, BaseVariableType> existgVarsByStandardName = new HashMap<String, BaseVariableType>();
+            for (BaseVariableType var : mdDoc.getVariables()) {
+                existgVarsByColumnName.put(var.getDatasetVarName(), var);
+                existgVarsByStandardName.put(var.getName(), var);
+            }
+                    
 //            Set<String> existgVars = checkExistgVars(mdDoc, stdArray);
     		Set<String> addVars = new HashSet<>();
     		for (String varname : requiredVars ) {
-//                if ( existgVars.contains(varname)) continue;
+                 if ( ! stdArray.hasDataColumn(varname)) {
+                    logger.info("Dataset does not have data column defined for " + varname);
+                    if ( existgVarsByStandardName.containsKey(varname)) {
+                        logger.warn("Metadata contains entry for " + varname + " but dataset does not have data column defined.");
+                        // mdDoc.getVariables().remove(existgVarsByStandardName.get(varname));
+                    }
+                    continue;
+                }
     			try {
     				String addName = addVariable(varname, mdDoc, stdArray);
     				addVars.add(addName);
     			} catch (NoSuchFieldException e) {
-    				System.err.println(e);
-    				logger.info("No data column found for variable " + varname);
+                    logger.warn(e);
     			}
     		}
     		for (int i = 0; i < stdArray.getNumDataCols(); i++ ) {
@@ -191,19 +206,21 @@ public class OADSMetadata {
 //                    continue;
 //                }
     			String userColName = stdArray.getUserColumnTypeName(i);
-    			String uunits = stdArray.getUserColumnUnits(i);
-    			String stdName = DashboardUtils.isEmptyOrNull(colType.getStandardName()) ?
-    			                    userColName :
-    			                    colType.getStandardName();
+    			String uunits = stdArray.getUserColumnUnits(i) != null ?
+                                stdArray.getUserColumnUnits(i) :
+                                "";
+    			String stdName = colType.getStandardName();
     			String fullName = colType.getDisplayName();
-                if ( colType.getVarName().equals(DashboardUtils.UNKNOWN_VARNAME)) {
-                    fullName = "Unspecified column type";
+                if ( colType.getVarName().equals(DashboardUtils.UNKNOWN_VARNAME) ||
+                     colType.getVarName().equals(DashboardUtils.OTHER_VARNAME)) {
+                    stdName = colType.getVarName();
+                    fullName = colType.getDescription();
                 }
     			if ( ! ( exclude(userColName, colType) ||
 //                         existgVars.contains(stdName) || 
     				     addVars.contains(userColName))) {
 //                    addVariable(stdName, mdDoc, stdArray);
-                    addVariable(userColName, stdName, fullName, uunits, mdDoc, stdArray);
+                    addVariable(stdName, userColName, fullName, uunits, mdDoc, stdArray);
     //				oads.addVariable(new Variable().abbreviation(username).unit(uunits).fullName(fullName));
     			}
     		}
@@ -265,7 +282,7 @@ public class OADSMetadata {
 //	}
 
 	private static boolean exclude(String username, DashDataType<?> colType) {
-		return false;
+        return "sample num".equals(username) || "WOCE autocheck".equals(username);
 	}
 
 	private static String addVariable(String varname, OadsMetadataDocumentType oads, StdUserDataArray stdArray) 
@@ -273,18 +290,19 @@ public class OADSMetadata {
 		String fullname;
 		String abbrev;
 		String units;
-		int colIdx;
-		DashDataType<?> dataCol = stdArray.findDataColumn(varname);
-		if ( dataCol != null) {
-			colIdx = stdArray.findDataColumnIndex(varname);
+		int colIdx = stdArray.findDataColumnIndex(varname);
+		if ( colIdx >= 0 ) {
+            DashDataType<?> dataCol = stdArray.getDataTypes().get(colIdx);
 			fullname = DashboardUtils.isEmptyOrNull(dataCol.getStandardName()) ?
 												  dataCol.getDescription() : 
 												  dataCol.getStandardName();
     		abbrev = stdArray.getUserColumnTypeName(colIdx);
     		units = stdArray.getUserColumnUnits(colIdx);
     		addVariable(varname, abbrev, fullname, units, oads, stdArray);
+		} else {
+            throw new NoSuchFieldException(stdArray.getDatasetName() + ": Did not find variable for " + varname);
 		}
-        return varname;
+        return abbrev;
 	}
         
 /**
@@ -294,7 +312,7 @@ public class OADSMetadata {
      * @param mdDoc
      * @param stdArray
      */
-    private static void addVariable(String userColName, String stdName, String fullName, String uunits, 
+    private static void addVariable(String stdName, String userColName, String fullName, String uunits, 
                                     OadsMetadataDocumentType mdDoc, StdUserDataArray stdArray) {
         BaseVariableType v = getVariableFor(stdName);
         
@@ -309,10 +327,11 @@ public class OADSMetadata {
         switch (varname.toLowerCase()) {
             case "inorganic_carbon":
             case "dissolved_inorganic_carbon":
-            case "Dissolved Inorganic Carbon":
+            case "dissolved inorganic carbon":
                 return new DicVariableType();
             case "alkalinity":
-            case "Total Alkalinity":
+            case "total_alkalinity":
+            case "total alkalinity":
                 return new TaVariableType();
             case "ph_total":
             case "ph":

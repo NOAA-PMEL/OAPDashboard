@@ -213,7 +213,7 @@ public class DashboardUtils {
 	 */
 	public static final String UNKNOWN_VARNAME = "unknown";
 	public static final DataColumnType UNKNOWN = new DataColumnType(UNKNOWN_VARNAME, 
-			0.0, "(unknown)", "unknown type of data", false, NO_UNITS);
+			0.0, "(unknown)", "Unspecified data type", false, NO_UNITS);
 
 	/**
 	 * OTHER is for supplementary data in the user's original data file but 
@@ -223,7 +223,7 @@ public class DashboardUtils {
 	 */
 	public static final String OTHER_VARNAME = "other";
 	public static final DataColumnType OTHER = new DataColumnType(OTHER_VARNAME,
-			1.0, "IGNORED", "unused and unchecked supplementary data", false, NO_UNITS);
+			1.0, "IGNORED", "Unused or unchecked supplementary data", false, NO_UNITS);
 
 	/**
 	 * User-provided name of the cruise/dataset
