@@ -3,6 +3,10 @@
  */
 package gov.noaa.pmel.dashboard.server.util;
 
+import java.io.ByteArrayOutputStream;
+import java.io.OutputStream;
+import java.io.PrintStream;
+
 import javax.mail.Message.RecipientType;
 
 import org.apache.logging.log4j.LogManager;
@@ -26,6 +30,9 @@ public class Notifications {
 
 	private static final int MAX_SMS_MSG_LENGTH = 160;
 
+    private static final String DEFAULT_EMAIL = "sdis.pmel@noaa.gov";
+    private static final String ADMIN_EMAIL = "oar.pmel.sdis.admin@noaa.gov";
+    
 //	public static void SendSMS(String message, Iterable<String> phoneNumbers) {
 //		for (String phoneNumber : phoneNumbers) {
 //			SendSMS(message, phoneNumber);
@@ -65,8 +72,26 @@ public class Notifications {
 		return addrList.toString();
 	}
 
+    public static void Alert(String subject, Throwable t) {
+        SendEmail(subject, buildExceptionMessage(t), "linus.kamb@noaa.gov");
+    }
+        
+    /**
+     * @param t
+     * @return
+     */
+    private static String buildExceptionMessage(Throwable t) {
+        StringBuilder b = new StringBuilder(String.valueOf(t));
+        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+        PrintStream ps = new PrintStream(baos);
+        t.printStackTrace(ps);
+        String trace = new String(baos.toByteArray());
+        b.append(trace);
+        return b.toString();
+    }
+
     public static void AdminEmail(String subject, String message) {
-        String defaultAdmin = ApplicationConfiguration.getProperty("oap.email.from", "\"OAP Dashboard System\" <sdis.pmel@noaa.gov>");
+        String defaultAdmin = ApplicationConfiguration.getProperty("oap.email.from", "\"OAP Dashboard System\" <"+DEFAULT_EMAIL+">");
         String adminList = ApplicationConfiguration.getLatestProperty("oap.admin.email.list", defaultAdmin);
         SendEmail(subject, message, adminList);
     }
@@ -80,7 +105,7 @@ public class Notifications {
 	}
 	
 	public static void SendEmail(String subject, String message, String toList) {
-        String from = ApplicationConfiguration.getProperty("oap.email.from", "\"OAP Dashboard System\" <sdis.pmel@noaa.gov>");
+        String from = ApplicationConfiguration.getProperty("oap.email.from", "\"OAP Dashboard System\" <"+DEFAULT_EMAIL+">");
         SendEmail(subject, message, toList, from);
 	}
 	public static void SendEmail(String subject, String message, String toList, String from) {
