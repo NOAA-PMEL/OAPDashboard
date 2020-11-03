@@ -159,6 +159,7 @@ public class DashboardServices extends RemoteServiceServlet implements Dashboard
 			// Probably null pointer exception
 			return false;
 		}
+        logger.debug(username.length());
 		if ( (pageUsername != null) && ! pageUsername.equals(username) )
 			return false;
 

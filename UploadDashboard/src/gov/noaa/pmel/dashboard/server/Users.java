@@ -1,9 +1,6 @@
 
 package gov.noaa.pmel.dashboard.server;
 
-import java.io.File;
-import java.io.FileWriter;
-import java.io.IOException;
 import java.security.GeneralSecurityException;
 import java.security.NoSuchAlgorithmException;
 import java.sql.SQLException;
@@ -143,19 +140,6 @@ public class Users {
         }
     }
         
-//    private static void addUserToDashboardConfig(User user, UserRole role) throws Exception {
-//        File configFile = DashboardConfigStore.getConfigFile();
-//        try ( FileWriter cfgWriter = new FileWriter(configFile, true); ) {
-//            String userCfgLine = "RoleFor_"+user.username() + "=" + role.roleKey() + "\n";
-//            cfgWriter.write(userCfgLine);
-//        }
-//    }
-//    
-//    private static void removeDashboardConfigUser(User user) throws IOException {
-//        DashboardConfigStore cfg = DashboardConfigStore.get(false);
-//        cfg.removeUser(user.username());
-//    }
-    
     public static User getUser(String userid) throws DashboardException {
         UsersDao udao = DaoFactory.UsersDao();
         try {
@@ -291,7 +275,7 @@ public class Users {
 	private static Map<String,DashboardUserInfo> _userInfoMap;
     private synchronized static Map<String, DashboardUserInfo> getUserMap() {
 		// Read and assign the authorized users 
-        if ( _userInfoMap == null ) {
+//        if ( _userInfoMap == null ) {  // XXX for now, always fetch, otherwise new users aren't found until restart
     		_userInfoMap = new HashMap<String,DashboardUserInfo>();
             try {
                 List<User> users = getAllUsers();
@@ -310,7 +294,7 @@ public class Users {
     		for ( DashboardUserInfo info : _userInfoMap.values() ) {
     			logger.info("    user info: " + info.toString());
     		}
-        }
+//        }
         return _userInfoMap;
     }
 	/**
@@ -367,12 +351,10 @@ public class Users {
 	 * 		(regardless of whether there is anyone else in the group)
 	 */
 	public static boolean isManager(String username) {
-        if ( username.contains("linus") || username.contains("kamb") ) { return true; }
-        else { return false; }
-//		DashboardUserInfo userInfo = getUserMap().get(DashboardUtils.cleanUsername(username));
-//		if ( userInfo == null )
-//			return false;
-//		return userInfo.isManager();
+		DashboardUserInfo userInfo = getUserMap().get(DashboardUtils.cleanUsername(username));
+		if ( userInfo == null )
+			return false;
+		return userInfo.isManager();
 	}
 
 	/**

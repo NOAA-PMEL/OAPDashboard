@@ -42,6 +42,15 @@
         <property name="password" value="${matisse.my_password}"/>
       </dataSource>
     </environment>
+    <environment id="matisse">
+      <transactionManager type="JDBC"/>
+      <dataSource type="POOLED">
+        <property name="driver" value="${my.driver}"/>
+        <property name="url" value="${my.url}"/>
+        <property name="username" value="${matisse.my_username}"/>
+        <property name="password" value="${matisse.my_password}"/>
+      </dataSource>
+    </environment>
     <environment id="prod"> <!-- For adding users from other machines. -->
       <transactionManager type="JDBC"/>
       <dataSource type="POOLED">
