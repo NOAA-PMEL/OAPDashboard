@@ -97,7 +97,6 @@ public class DashboardConfigStore {
 	private static final String COLUMN_NAME_TYPE_FILE_TAG = "ColumnNameTypeFile";
 	private static final String FERRET_CONFIG_FILE_NAME_TAG = "FerretConfigFile";
 	private static final String DATABASE_CONFIG_FILE_NAME_TAG = "DatabaseConfigFile";
-	private static final String USER_ROLE_NAME_TAG_PREFIX = "RoleFor_";
 
 	private static final String CONFIG_FILE_INFO_MSG = 
 			"This configuration file should look something like: \n" +
@@ -128,9 +127,6 @@ public class DashboardConfigStore {
 			COLUMN_NAME_TYPE_FILE_TAG + "=/Path/To/Column/Name/To/Type/PropsFile \n" +
 			FERRET_CONFIG_FILE_NAME_TAG + "=/Path/To/FerretConfig/XMLFile \n" +
 			DATABASE_CONFIG_FILE_NAME_TAG + "=/Path/To/DatabaseConfig/PropsFile \n" + 
-			USER_ROLE_NAME_TAG_PREFIX + "SomeUserName=MemberOf1,MemberOf2 \n" +
-			USER_ROLE_NAME_TAG_PREFIX + "SomeManagerName=ManagerOf1,MemberOf2 \n" +
-			USER_ROLE_NAME_TAG_PREFIX + "SomeAdminName=Admin \n" +
 			"# ------------------------------ \n" +
 			"The EncryptionKey should be 24 random integer values in [-128,127] \n" +
 			"The hexidecimal keys for users can be generated using the mkpasshash.sh script. \n";
@@ -657,32 +653,6 @@ public class DashboardConfigStore {
 		}
 	}
 
-    public static void addUser(String username, String roleName) throws Exception {
-        DashboardUserInfo dbUser = new DashboardUserInfo(username);
-        dbUser.addUserRoles(roleName);
-//        _userInfoMap.put(username, dbUser);  // XXX TODO: Needs to be added somehow
-        String configProp = USER_ROLE_NAME_TAG_PREFIX+username;
-//        configProps.put(configProp, roleName);
-        try ( FileWriter cfgWriter = new FileWriter(getConfigFile(), true); ) {
-            String userCfgLine = configProp + "=" + roleName + "\n";
-            cfgWriter.write(userCfgLine);
-        }
-    }
-    public static void removeUser(String username) throws IOException {
-        throw new UnsupportedOperationException("RemoveUser not yet implemented.");
-    }
-    public String getProperty(String propertyName) {
-        return getProperty(propertyName, null);
-    }
-    public String getProperty(String propertyName, String defaultValue) {
-        String propertyValue = defaultValue;
-        if ( _configProps.containsKey(propertyName)) {
-            propertyValue = (String)_configProps.get(propertyName);
-        } else {
-            logger.warn("No property found for name:"+propertyName+", returning default:"+defaultValue);
-        }
-        return propertyValue;
-    }
 	private static String getPreviewDirName(File baseDir, String serverAppName) {
 		
 		String dirname = tryProperty("PREVIEW_DIR");
