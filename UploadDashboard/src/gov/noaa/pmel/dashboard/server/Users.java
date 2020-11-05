@@ -271,32 +271,32 @@ public class Users {
         return sb.toString();
     }
     
-    // Map of username to user info
-	private static Map<String,DashboardUserInfo> _userInfoMap;
-    private synchronized static Map<String, DashboardUserInfo> getUserMap() {
-		// Read and assign the authorized users 
-//        if ( _userInfoMap == null ) {  // XXX for now, always fetch, otherwise new users aren't found until restart
-    		_userInfoMap = new HashMap<String,DashboardUserInfo>();
-            try {
-                List<User> users = getAllUsers();
-                for (User u : users) {
-                    DashboardUserInfo ui = new DashboardUserInfo(u.username());
-                    String userRoles = "";
-                    for (String role: u.roles()) {
-                        userRoles += " " + role;
-                    }
-                    ui.addUserRoles(userRoles.trim());
-                    _userInfoMap.put(u.username(), ui);
-                }
-            } catch (DashboardException dex) {
-                logger.warn(dex,dex);
-            }
-    		for ( DashboardUserInfo info : _userInfoMap.values() ) {
-    			logger.info("    user info: " + info.toString());
-    		}
-//        }
-        return _userInfoMap;
-    }
+//    // Map of username to user info
+//	private static Map<String,DashboardUserInfo> _userInfoMap;
+//    private synchronized static Map<String, DashboardUserInfo> getUserMap() {
+//		// Read and assign the authorized users 
+////        if ( _userInfoMap == null ) {  // XXX for now, always fetch, otherwise new users aren't found until restart
+//    		_userInfoMap = new HashMap<String,DashboardUserInfo>();
+//            try {
+//                List<User> users = getAllUsers();
+//                for (User u : users) {
+//                    DashboardUserInfo ui = new DashboardUserInfo(u.username());
+//                    String userRoles = "";
+//                    for (String role: u.roles()) {
+//                        userRoles += " " + role;
+//                    }
+//                    ui.addUserRoles(userRoles.trim());
+//                    _userInfoMap.put(u.username(), ui);
+//                }
+//            } catch (DashboardException dex) {
+//                logger.warn(dex,dex);
+//            }
+//    		for ( DashboardUserInfo info : _userInfoMap.values() ) {
+//    			logger.info("    user info: " + info.toString());
+//    		}
+////        }
+//        return _userInfoMap;
+//    }
 	/**
 	 * Validate a username from the user info map
 	 *  
@@ -309,7 +309,7 @@ public class Users {
 		if ( (username == null) || username.isEmpty() )
 			return false;
 		String name = DashboardUtils.cleanUsername(username);
-		DashboardUserInfo userInfo = getUserMap().get(name);
+		DashboardUserInfo userInfo = getUserInfo(name);
 		if ( userInfo == null )
 			return false;
 		return true;
@@ -317,6 +317,28 @@ public class Users {
 
 
 	/**
+     * @param name
+     * @return
+	 * @throws DashboardException 
+     */
+    private static DashboardUserInfo getUserInfo(String name) {
+        User u = null;
+        try {
+            u = getUser(name);
+        } catch (DashboardException ex) {
+            ex.printStackTrace();
+            return null;
+        }
+        if ( u == null ) { return null; }
+        DashboardUserInfo ui = new DashboardUserInfo(u.username());
+        String userRoles = "";
+        for (String role: u.roles()) {
+            userRoles += " " + role;
+        }
+        ui.addUserRoles(userRoles.trim());
+        return ui;
+    }
+    /**
 	 * Determines if username has manager privilege over othername. 
 	 * This can be from username being an administrator, a manager
 	 * of a group othername belongs to, having the same username,
@@ -351,7 +373,7 @@ public class Users {
 	 * 		(regardless of whether there is anyone else in the group)
 	 */
 	public static boolean isManager(String username) {
-		DashboardUserInfo userInfo = getUserMap().get(DashboardUtils.cleanUsername(username));
+		DashboardUserInfo userInfo = getUserInfo(DashboardUtils.cleanUsername(username));
 		if ( userInfo == null )
 			return false;
 		return userInfo.isManager();
@@ -368,10 +390,6 @@ public class Users {
         User user = getUser(username);
         if ( user == null ) { return false; }
         return user.hasRole(UserRole.Admin.roleKey());
-//		DashboardUserInfo userInfo = getUserMap().get(DashboardUtils.cleanUsername(username));
-//		if ( userInfo == null )
-//			return false;
-//		return userInfo.isAdmin();
 	}
 
     public static void main(String[] args) {
