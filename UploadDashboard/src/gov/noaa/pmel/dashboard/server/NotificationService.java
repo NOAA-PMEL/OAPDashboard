@@ -112,12 +112,12 @@ public class NotificationService extends HttpServlet {
     		String timestamp = TimeUtils.formatUTC(new Date(), "yyyy-MM-dd HH:mm Z");
             DataFileHandler df = DashboardConfigStore.get().getDataFileHandler();
             DashboardDataset dataset = df.getDatasetFromInfoFile(datasetId);
-            checkMetadataDataColumns(dataset, metadata);
             dataset.setMdTimestamp(timestamp);
             dataset.setMdStatus(validationMessage);
             String msg = new Date() + " Updating metadata timestamp on user upload metadata file.";
             logger.info(msg);
             df.saveDatasetInfoToFile(dataset, msg);
+            checkMetadataDataColumns(dataset, metadata);
 	}
 	
 	/**
