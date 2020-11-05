@@ -169,7 +169,7 @@ public class OADSMetadata {
 		                         .endDate(new Date((long)(1000*gtExtents.timeExtents.maxValue)))
 		                         .build());
 		                                    
-        if ( ApplicationConfiguration.getProperty("oap.metadata.extract_variables", false) ) { // && mdDoc.getVariables().isEmpty()) {
+        if ( ApplicationConfiguration.getProperty("oap.metadata.extract_variables", false) && mdDoc.getVariables().isEmpty()) {
             
             // XXX TODO: This is just a mess.
             // XXX What to do with unknowns and other/ignored, 
