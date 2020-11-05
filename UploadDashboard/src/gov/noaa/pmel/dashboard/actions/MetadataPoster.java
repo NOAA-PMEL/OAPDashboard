@@ -29,8 +29,8 @@ import gov.noaa.pmel.dashboard.oads.OADSMetadata;
 import gov.noaa.pmel.dashboard.server.DashboardConfigStore;
 import gov.noaa.pmel.dashboard.shared.MetadataPreviewInfo;
 import gov.noaa.pmel.dashboard.shared.NotFoundException;
+import gov.noaa.pmel.oads.util.StringUtils;
 import gov.noaa.pmel.tws.util.ApplicationConfiguration;
-import gov.noaa.pmel.tws.util.FileUtils;
 import gov.noaa.pmel.tws.util.Logging;
 
 /**
@@ -40,6 +40,9 @@ import gov.noaa.pmel.tws.util.Logging;
 public class MetadataPoster {
 
     private static Logger logger = Logging.getLogger(MetadataPoster.class);
+    
+    private static final String STANDARD_POST_POINT = "MetadataEditor/document/postit/";
+    private static final String STANDARD_EDITOR_PAGE = "MetadataEditor/OAPMetadataEditor.html";
     
     /**
      * 
@@ -115,9 +118,12 @@ public class MetadataPoster {
         System.out.println("get ME post point request: " + requestUrl);
         String context = request.getContextPath();
         System.out.println("get ME post point context: " + context);
-        String meUrlProp = ApplicationConfiguration.getProperty(DashboardConfigStore.METADATA_EDITOR_POST_ENDPOINT);
+        String meUrlProp = ApplicationConfiguration.getOptionalProperty(DashboardConfigStore.METADATA_EDITOR_POST_ENDPOINT);
         String url;
-        if ( meUrlProp.toLowerCase().startsWith("http")) {
+        if ( StringUtils.emptyOrNull(meUrlProp)) {
+            url = requestUrl.substring(0, requestUrl.indexOf("Dashboard"));
+            url = url + STANDARD_POST_POINT;
+        } else if ( meUrlProp.toLowerCase().startsWith("http")) {
             url = meUrlProp;
         } else {
             String requestBase = requestUrl.substring(0, requestUrl.indexOf(context));
@@ -134,20 +140,32 @@ public class MetadataPoster {
 	// And notification URL should be http://dunkel.pmel.noaa.gov:5680/oa/Dashboard/DashboardUpdateService/notify/<datasetId>
     private static String getNotificationUrl(String requestUrl, String datasetId) {
         System.out.println("get notify URL request: " + requestUrl);
-        String notifyUrl = null;
-        if ( requestUrl.indexOf("pmel") > 0 ) {
+        String notifyUrl = revise(requestUrl, "OAPUploadDashboard", "DashboardUpdateService/notify/"+datasetId);
+        logger.debug("revise url: " + notifyUrl);
+        if ( requestUrl.indexOf("www.pmel") > 0 ) {
+            notifyUrl = revise(requestUrl, "OAPUploadDashboard", "DashboardUpdateService/notify/"+datasetId);
             // requests through the F5/Kemp come as http:
             notifyUrl = "https://www.pmel.noaa.gov" + 
                             requestUrl.substring(requestUrl.indexOf("/sdig"),
                                                  requestUrl.indexOf("OAPUploadDashboard"));
-            logger.debug("n1: " + notifyUrl);
+            logger.debug("https url: " + notifyUrl);
             notifyUrl = notifyUrl + "DashboardUpdateService/notify/"+datasetId;
         } else {
             notifyUrl = requestUrl.substring(0, requestUrl.lastIndexOf("OAPUploadDashboard"));
             notifyUrl = notifyUrl + "DashboardUpdateService/notify/"+datasetId;
         }
-        System.out.println("nofity url: " + notifyUrl);
+        logger.debug("nofity url: " + notifyUrl);
         return notifyUrl;
+    }
+    private static String revise(String url, String from, String to) {
+        logger.debug("revise url: " + url);
+        int idx1 = url.indexOf(":") + 3;
+        int idx2 = url.indexOf('/', idx1);
+        int idx3 = url.indexOf(from);
+        String base = url.substring(0, idx3);
+        String revised = base + to;
+        logger.debug("revised: " + revised );
+        return revised;
     }
 
     // inside url typically looks like <host>//<root context>/Dashboard
@@ -156,9 +174,12 @@ public class MetadataPoster {
         System.out.println("get ME page request: " + requestUrl);
         String context = request.getContextPath();
         System.out.println("get ME context: " + context);
-        String meUrlProp = ApplicationConfiguration.getProperty(DashboardConfigStore.METADATA_EDITOR_URL);
+        String meUrlProp = ApplicationConfiguration.getOptionalProperty(DashboardConfigStore.METADATA_EDITOR_URL);
         String url;
-        if ( meUrlProp.toLowerCase().startsWith("http")) {
+        if ( StringUtils.emptyOrNull(meUrlProp)) {
+            url = requestUrl.substring(0, requestUrl.indexOf("Dashboard"));
+            url = url + STANDARD_EDITOR_PAGE;
+        } else if ( meUrlProp.toLowerCase().startsWith("http")) {
             url = meUrlProp;
         } else {
             String requestBase = requestUrl.substring(0, requestUrl.indexOf(context));
