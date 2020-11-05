@@ -38,11 +38,19 @@ body {
 	margin-bottom: 1em;
     /* align-content: center; */
 }
+.horizontalpanel ul {
+	margin-block-start: 0;
+}
 .adjustingbutton {
     display: inline-block;
     text-align: center;
 	margin-left: 2.5em;
 	margin-right: 2.5em;
+}
+.narrowadjustingbutton {
+    display: inline-block;
+    text-align: center;
+	margin-left: 2.75em;
 }
 .horizontalbutton {
 	width: 5em;
