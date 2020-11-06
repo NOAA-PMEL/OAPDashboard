@@ -155,7 +155,11 @@ public class ApplicationHeaderTemplate extends Composite {
     private static String extractCruiseIds(DashboardDatasetList cruises) {
         List<String> names = new ArrayList<>(cruises.values().size()); 
         for (DashboardDataset dd : cruises.values()) {
-            names.add(dd.getUserDatasetName());
+            String dsname = dd.getUserDatasetName();
+            if ( dsname.equals(dd.getRecordId())) {
+                dsname = dd.getUploadFilename();
+            }
+            names.add(dsname);
         }
         return extractCruiseIds(names);
     }
