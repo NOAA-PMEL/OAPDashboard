@@ -85,7 +85,7 @@ public class MetadataUploadService extends HttpServlet {
 		String datasetIds = null;
 		String uploadTimestamp = null;
 		String isSupToken = null;
-		FileItem metadataItem = null;
+		List<FileItem> fileList = null;
         File uploadFile = null;
 		try {
 			Map<String,List<FileItem>> paramMap = metadataUpload.parseParameterMap(request);
@@ -107,16 +107,16 @@ public class MetadataUploadService extends HttpServlet {
 					isSupToken = itemList.get(0).getString();
 				}
 				
-				itemList = paramMap.get("metadataupload");
-				if ( (itemList != null) && (itemList.size() == 1) ) {
-					metadataItem = itemList.get(0);
-				}
+				fileList = paramMap.get("metadataupload");
+//				if ( (itemList != null) && (itemList.size() == 1) ) {
+//					metadataItem = itemList.get(0);
+//				}
 				
 			} finally {
 				// Delete everything except for the uploaded metadata file
 				for ( List<FileItem> itemList : paramMap.values() ) {
-					for ( FileItem item : itemList ) {
-						if ( ! item.equals(metadataItem) ) {
+					if ( ! itemList.equals(fileList) ) {
+    					for ( FileItem item : itemList ) {
 							item.delete();
 						}
 					}
@@ -125,9 +125,12 @@ public class MetadataUploadService extends HttpServlet {
 			// Verify page contents seem okay
 			DashboardConfigStore configStore = DashboardConfigStore.get(true);
 			if ( (username == null) || (datasetIds == null) || (uploadTimestamp == null) ||
-				 (metadataItem == null) || ! Users.validateUser(username) ) {
-				if ( metadataItem != null )
-					metadataItem.delete();
+				 (fileList == null) || ! Users.validateUser(username) ) {
+				if ( fileList != null ) {
+					for ( FileItem item : fileList ) {
+						item.delete();
+					}
+				}
 				sendErrMsg(response, "Invalid request contents for this service.");
 				return;
 			}
@@ -139,34 +142,36 @@ public class MetadataUploadService extends HttpServlet {
 				throw new IllegalArgumentException("Dataset metadata document can only be uploaded for one dataset.");
 			}
 			String version = configStore.getUploadVersion();
-			String uploadFilename = DashboardUtils.baseName(metadataItem.getName());
-            uploadFile = getUploadedFile(metadataItem);
-			for (String datasetId : idList) {
-                try ( InputStream is = new FileInputStream(uploadFile);) {
-    				String filename = isSupplemental ? uploadFilename : MetadataFileHandler.metadataFilename(datasetId); 
-    				MetadataFileHandler metadataHandler = configStore.getMetadataFileHandler();
-    				// TODO: backup existing ?
-                    
-                    DashboardMetadata metadata = 
-                                metadataHandler.saveMetadataFileItem(datasetId, username, uploadTimestamp, 
-    			                                                     filename, version, is);
-    				// TODO: validate metadata XML
-    				// TODO: generate PDF
-    				
-    				if ( isSupplemental ) {
-    					DataFileHandler cruiseHandler = configStore.getDataFileHandler();
-    					cruiseHandler.addAddlDocTitleToDataset(datasetId, metadata);
-    				} else {
-    					DataFileHandler df = configStore.getDataFileHandler();
-    					DashboardDataset dataset = df.getDatasetFromInfoFile(datasetId);
-    					dataset.setMdTimestamp(uploadTimestamp);
-    					df.saveDatasetInfoToFile(dataset, "Updating metadata timestamp on user upload metadata file.");
-    				}
-    			}
-            }
-            if ( uploadFile != null ) {
-                uploadFile.delete();
-                uploadFile = null;
+            for ( FileItem metadataItem : fileList ) {
+    			String uploadFilename = DashboardUtils.baseName(metadataItem.getName());
+                uploadFile = getUploadedFile(metadataItem);
+    			for (String datasetId : idList) {
+                    try ( InputStream is = new FileInputStream(uploadFile);) {
+        				String filename = isSupplemental ? uploadFilename : MetadataFileHandler.metadataFilename(datasetId); 
+        				MetadataFileHandler metadataHandler = configStore.getMetadataFileHandler();
+        				// TODO: backup existing ?
+                        
+                        DashboardMetadata metadata = 
+                                    metadataHandler.saveMetadataFileItem(datasetId, username, uploadTimestamp, 
+        			                                                     filename, version, is);
+        				// TODO: validate metadata XML
+        				// TODO: generate PDF
+        				
+        				if ( isSupplemental ) {
+        					DataFileHandler cruiseHandler = configStore.getDataFileHandler();
+        					cruiseHandler.addAddlDocTitleToDataset(datasetId, metadata);
+        				} else {
+        					DataFileHandler df = configStore.getDataFileHandler();
+        					DashboardDataset dataset = df.getDatasetFromInfoFile(datasetId);
+        					dataset.setMdTimestamp(uploadTimestamp);
+        					df.saveDatasetInfoToFile(dataset, "Updating metadata timestamp on user upload metadata file.");
+        				}
+        			}
+                }
+                if ( uploadFile != null ) {
+                    uploadFile.delete();
+                    uploadFile = null;
+                }
             }
 			
 			// Send the success response

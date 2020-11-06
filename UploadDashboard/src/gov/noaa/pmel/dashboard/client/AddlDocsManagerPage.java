@@ -26,6 +26,7 @@ import com.google.gwt.user.cellview.client.ColumnSortEvent;
 import com.google.gwt.user.cellview.client.ColumnSortEvent.ListHandler;
 import com.google.gwt.user.cellview.client.DataGrid;
 import com.google.gwt.user.cellview.client.TextColumn;
+import com.google.gwt.user.client.DOM;
 import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.google.gwt.user.client.ui.Button;
@@ -175,6 +176,7 @@ public class AddlDocsManagerPage extends CompositeWithUsername {
 		uploadButton.setText(UPLOAD_TEXT);
 		uploadButton.setEnabled(false);
 		uploadButton.setTitle(UPLOAD_HOVER_HELP);
+        docUpload.getElement().setPropertyString("multiple", "multiple");
         docUpload.addChangeHandler(new ChangeHandler() {
             @Override
             public void onChange(ChangeEvent event) {
