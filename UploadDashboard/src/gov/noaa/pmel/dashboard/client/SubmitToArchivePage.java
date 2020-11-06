@@ -744,12 +744,13 @@ public class SubmitToArchivePage extends CompositeWithUsername implements DataSu
                     page.statusListPanel.setHTML("There was a problem retrieving package archive status.");
 				}
 			});
-		UploadDashboard.showMessageWithContinuation("Dataset submitted.", new OAPAsyncCallback<Void>() {
-            @Override
-            public void onSuccess(Void arg0) {
-                DatasetListPage.showPage();
-            }
-        });
+		UploadDashboard.showMessage("Dataset submitted.");
+//		UploadDashboard.showMessageWithContinuation("Dataset submitted.", new OAPAsyncCallback<Void>() {
+//            @Override
+//            public void onSuccess(Void arg0) {
+//                DatasetListPage.showPage();
+//            }
+//        });
     }
     private static void getStatus(SubmitToArchivePage page) {
         UploadDashboard.logToConsole("getStatus for " + page._datasetRecordId);
