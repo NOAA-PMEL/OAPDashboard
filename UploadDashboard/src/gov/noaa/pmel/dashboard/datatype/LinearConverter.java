@@ -73,6 +73,9 @@ public class LinearConverter extends ValueConverter<Double> {
 		SLOPES_MAP.put(key, 0.689475728);
 		INTERCEPTS_MAP.put(key, 0.0);
 
+		key = "from \"mmol/mol\" to \"umol/mol\"";
+        SLOPES_MAP.put(key, 1000.0);
+		INTERCEPTS_MAP.put(key, 0.0);
 		// TODO: add more linear unit conversions
 	}
 
