@@ -667,9 +667,10 @@ public class SubmitToArchivePage extends CompositeWithUsername implements DataSu
     private static String[] checkMetadata(DashboardDataset dataset) {
         String[] messages = EMPTY_MESSAGES;
         String status = dataset.getMdStatus();
-        if ( dataset.getMdTimestamp().isEmpty() ||
-             status.isEmpty() || 
-             status.contains("incomplete")) {
+//        if ( dataset.getMdTimestamp().isEmpty() ||
+//             status.isEmpty() || 
+//             status.contains("incomplete")) {
+        if ( ! "Validated".equals(status)) {
             messages = new String[] { "Missing or incomplete metadata." };
         }
         return messages;
