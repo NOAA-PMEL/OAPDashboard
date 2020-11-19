@@ -64,7 +64,7 @@
                 </g:FlowPanel>
                 <g:HorizontalPanel ui:field="genDoiPanel" addStyleNames="{style.notification_msg_panel}">
                     <g:CheckBox ui:field="genDoiChkBx" addStyleNames="{style.notificationChkBx}"/>
-                    <g:Label ui:field="genDoiText" addStyleNames="{style.notificationText}">Have NCEI generate DOI for submitted dataset.</g:Label>
+                    <g:Label ui:field="genDoiText" addStyleNames="{style.notificationText}">Request NCEI generate DOI for submitted dataset.</g:Label>
                 </g:HorizontalPanel>
                 <g:HTML><hr style="width:40%; margin:0 2em .5em;"/></g:HTML>
                 <g:HorizontalPanel ui:field="versionSubmitPanel" addStyleNames="{style.notification_msg_panel}">
