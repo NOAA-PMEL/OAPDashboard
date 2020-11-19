@@ -530,10 +530,10 @@ public abstract class DashDataType<T extends Comparable<T>> implements Comparabl
         }
 
 		// But to be complete....
-		result = displayName.compareTo(other.displayName);
+		result = displayName.toLowerCase().compareTo(other.displayName.toLowerCase());
 		if ( result != 0 )
 			return result;
-		result = varName.compareTo(other.varName);
+		result = varName.toLowerCase().compareTo(other.varName.toLowerCase());
 		if ( result != 0 )
 			return result;
 		result = Boolean.valueOf(isCritical).compareTo(Boolean.valueOf(other.isCritical));
