@@ -491,17 +491,21 @@ public class DatasetSubmitter {
         String locChkMsg = "";
         if ( ! dataset.getFeatureType().isDSG()) {
             dataChkMsg = "CANNOT_CHECK:OBSERVATION_TYPE";
-            locChkMsg = "LOCATIONS_UNAVAILABLE";
+            locChkMsg = "LOCATIONS_UNAVAILABLE:OBSERVATION_TYPE";
         } else if ( ! dataset.getFileType().equals(FileType.DELIMITED)) {
             dataChkMsg = "CANNOT_CHECK:FILE_TYPE";
-            locChkMsg = "LOCATIONS_UNAVAILABLE";
+            locChkMsg = "LOCATIONS_UNAVAILABLE:FILE_TYPE";
         } else if ( dataChkMsg == "" ) {
             dataChkMsg = "DATA_CHECK_NOT_PERFORMED";
-            locChkMsg = "LOCATIONS_UNAVAILABLE";
+            locChkMsg = "LOCATIONS_UNAVAILABLE:NOT_CHECKED";
+        } else if ( dataChkMsg.startsWith("Critical")) {
+            locChkMsg = "LOCATIONS_UNAVAILABLE:CRITICAL_ERRORS";
         } else {
             try {
                 if ( DashboardConfigStore.get(false).getMetadataFileHandler().getMetadataFile(datasetId, "lonlat.tsv").exists()) {
                     locChkMsg = "LOCATION_FILE_AVAILABLE";
+                } else {
+                    locChkMsg = "LOCATIONS_UNAVAILABLE:UNKNOWN";
                 }
             } catch (Exception ex) {
                 logger.warn(ex,ex);
