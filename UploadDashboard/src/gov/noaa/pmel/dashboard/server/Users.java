@@ -210,8 +210,12 @@ public class Users {
      * @return
      */
     private static String getPasswordResetMessage(User user, String newPassword) {
-        return "Password has been reset for user " + user.firstName() + " " + user.lastName() + ".\n" +
-                "New password is " + newPassword;
+        return "Password has been reset for user " + user.username() + ".\n" +
+                "New password is " + newPassword + "\n\n" +
+//				"You will be required to reset your password when you login. \n\n" + 
+				"If you did not request your password to be reset, please email the system administrator at" +
+				"<a href='mailto:oar.pmel.sdis.admin@noaa.gov'>oar.pmel.sdis.admin@noaa.gov</a> immediately.";
+//				"<a href='mailto:oar.pmel.sdis.admin@noaa.gov'>oar.pmel.sdis.admin@noaa.gov</a> immediately.";
     }
     /**
      * @param username
