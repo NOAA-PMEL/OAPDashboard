@@ -5,6 +5,9 @@ package gov.noaa.pmel.dashboard.server;
 
 import java.io.IOException;
 import java.security.Principal;
+import java.sql.SQLException;
+import java.util.HashSet;
+import java.util.Set;
 
 import javax.servlet.Filter;
 import javax.servlet.FilterChain;
@@ -12,11 +15,16 @@ import javax.servlet.FilterConfig;
 import javax.servlet.ServletException;
 import javax.servlet.ServletRequest;
 import javax.servlet.ServletResponse;
+import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
 
 import org.apache.log4j.Logger;
 
+import gov.noaa.pmel.dashboard.server.db.dao.DaoFactory;
+import gov.noaa.pmel.dashboard.server.db.dao.UsersDao;
+import gov.noaa.pmel.dashboard.server.model.User;
 import gov.noaa.pmel.tws.util.Logging;
 
 /**
@@ -27,13 +35,14 @@ public class LoginDetectionFilter implements Filter {
 
     private Logger logger = Logging.getLogger(LoginDetectionFilter.class);
 
+    private static Set<String> requiredPasswordChange = new HashSet<>();
+    
     /* (non-Javadoc)
      * @see javax.servlet.Filter#destroy()
      */
     @Override
     public void destroy() {
         // TODO Auto-generated method stub
-
     }
 
     /* (non-Javadoc)
@@ -44,16 +53,81 @@ public class LoginDetectionFilter implements Filter {
         throws IOException, ServletException 
     {
         HttpServletRequest request = (HttpServletRequest) req;
-        Principal user = request.getUserPrincipal();
+        HttpServletResponse response = (HttpServletResponse) resp;
+        Principal principal = request.getUserPrincipal();
         HttpSession session = request.getSession(false);
 
-        if (user != null && (session == null || session.getAttribute("user") == null)) {
-            request.getSession().setAttribute("user", user);
-
-            logger.info("Login by " + user);
-        }
+        logger.debug(request.getRequestURL().toString());
+        if (principal != null) {
+            if (session == null || session.getAttribute("user") == null) {
+                request.getSession().setAttribute("user", principal);
+                logger.info("Login by " + principal);
+                try {
+                    UsersDao udao = DaoFactory.UsersDao();
+                    User user = udao.retrieveUser(principal.getName());
+                    udao.userLogin(user);
+                    if ( user.requiresPasswordChange()) {
+                        System.out.println("redirecting for request: "+ request);
+                        synchronized (requiredPasswordChange) {
+                            requiredPasswordChange.add(user.username());
+                        }
+                        response.addCookie(new Cookie("sdisuid", user.requiresPwChange()));
+                        response.sendRedirect(getPasswordChangeUrl(request));
+                        return;
+                    }
+                } catch (SQLException ex) {
+                    logger.warn(ex,ex);
+                    response.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Error retrieving user information.");
+                    return;
+                }
+            } else if ( requiredPasswordChange.contains(principal.getName()) &&
+                        shouldBeRedirected(request)) {
+                try {
+                    logger.info("Redirecting attempted bypass by " + principal.getName() + 
+                                " to " + request.getRequestURL().toString());
+                    UsersDao udao = DaoFactory.UsersDao();
+                    User user = udao.retrieveUser(principal.getName());
+                    if ( user.requiresPasswordChange()) {
+                        System.out.println("redirecting for request: "+ request);
+                        response.addCookie(new Cookie("sdisuid", user.requiresPwChange()));
+                        response.sendRedirect(getPasswordChangeUrl(request));
+                        return;
+                    } else {
+                        synchronized (requiredPasswordChange) {
+                            requiredPasswordChange.remove(principal.getName());
+                        }
+                    }
+                } catch (SQLException ex) {
+                    logger.warn(ex,ex);
+                    response.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Error retrieving user information.");
+                    return;
+                }
+            } 
+        } 
 
         chain.doFilter(req, resp);
+    }
+
+    /**
+     * @param request
+     * @return
+     */
+    private boolean shouldBeRedirected(HttpServletRequest request) {
+        String uri = request.getRequestURI();
+        String context = request.getContextPath();
+        String remainder = uri.substring(context.length());
+        logger.debug("redirect remainder:"+remainder);
+        return remainder.isEmpty() || remainder.equals("/") || remainder.contains("Dashboard");
+    }
+
+    /**
+     * @param request
+     * @return
+     */
+    private String getPasswordChangeUrl(HttpServletRequest request) {
+        String root = request.getContextPath(); // request.getServletPath();
+        logger.debug("setpass context path:" + root);
+        return root + "/setpassword.html";
     }
 
     /* (non-Javadoc)

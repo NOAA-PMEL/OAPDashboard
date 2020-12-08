@@ -31,6 +31,8 @@ public class User {
     
     private String _username;
     private Date _lastLogin;
+    private Date _lastPwChange;
+    private String _requiresPwChange;
     
     private String _firstName;
     private String _middle;
@@ -59,7 +61,7 @@ public class User {
                 .createTime(_createTime)
                 .modifiedTime(_modifiedTime)
                 .username(_username)
-                .lastLogin(_lastLogin)
+                .requiresPwChange(_requiresPwChange)
                 .firstName(_firstName)
                 .lastName(_lastName)
                 .middle(_middle)
@@ -90,5 +92,12 @@ public class User {
         }
         phone.append(",ext:").append(_telExtension);
         return phone.toString();
+    }
+
+    /**
+     * @return
+     */
+    public boolean requiresPasswordChange() {
+        return _requiresPwChange != null;
     }
 }

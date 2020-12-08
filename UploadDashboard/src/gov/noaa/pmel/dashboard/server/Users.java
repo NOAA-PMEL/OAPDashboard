@@ -9,6 +9,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.UUID;
 
 import javax.security.auth.login.AccountNotFoundException;
 import javax.security.auth.login.CredentialException;
@@ -61,6 +62,7 @@ public class Users {
         try {
             validateUser(user);
             String cryptPasswd = PasswordCrypt.generateTomcatPasswd(plainTextPasswd);
+            // This is just a sanity check.  It shouldn't really be necessary.
             if ( ! PasswordCrypt.tomcatPasswdMatches(cryptPasswd, plainTextPasswd)) {
                 throw new GeneralSecurityException("Match Fail!");
             }
@@ -95,7 +97,8 @@ public class Users {
         }
     }
     
-    public static User validateUser(String username, String plainTextPasswd) throws DashboardException, LoginException {
+    public static User validateUser(String username, String plainTextPasswd) 
+            throws DashboardException, LoginException {
         User user = null;
         try {
             UsersDao udao = DaoFactory.UsersDao();
@@ -103,7 +106,7 @@ public class Users {
             if ( user != null ) {
                 String crypt = udao.retrieveUserAuthString(user.dbId().intValue());
                 if ( ! ( crypt.equals(plainTextPasswd) || PasswordCrypt.tomcatPasswdMatches(crypt, plainTextPasswd))) {
-                    throw new CredentialException("User password does not match.");
+                    throw new LoginException("User password does not match.");
                 }
             } else {
                 throw new AccountNotFoundException("No user found for username \""+username+"\"");
@@ -118,7 +121,9 @@ public class Users {
      * @param username
      * @param password
      */
-    public static void changeUserPassword(String username, String currentPlainTextPasswd, String newPlainTextPasswd) throws DashboardException {
+    public static void changeUserPassword(String username, String currentPlainTextPasswd, 
+                                          String newPlainTextPasswd) 
+            throws DashboardException {
         try {
             User user = validateUser(username, currentPlainTextPasswd);
             setUserPassword(user, newPlainTextPasswd);
@@ -128,16 +133,29 @@ public class Users {
         }
     }
     
-    public static void setUserPassword(User user, String newPlainTextPasswd) throws DashboardException {
+    public static void setUserPassword(User user, String newPlainTextPasswd) 
+            throws CredentialException, DashboardException {
         try {
             PasswordUtils.validatePasswordStrength(newPlainTextPasswd);
-            String newCryptPasswd = PasswordCrypt.generateTomcatPasswd(newPlainTextPasswd);
-            UsersDao udao = DaoFactory.UsersDao();
-            udao.setUserPassword(user.dbId().intValue(), newCryptPasswd);
-        } catch (Exception ex) {
+            _setUserPassword(user, newPlainTextPasswd);
+        } catch (SQLException | GeneralSecurityException ex) {
             System.err.println(ex);
             throw new DashboardException(ex);
         }
+    }
+    
+    public static void _setUserPassword(User user, String newPlainTextPasswd) 
+            throws GeneralSecurityException, SQLException {
+        String newCryptPasswd = PasswordCrypt.generateTomcatPasswd(newPlainTextPasswd);
+        UsersDao udao = DaoFactory.UsersDao();
+        udao.setUserPassword(user.dbId().intValue(), newCryptPasswd);
+    }
+        
+    public static void _resetUserPassword(User user, String newPlainTextPasswd) 
+            throws GeneralSecurityException, SQLException {
+        String newCryptPasswd = PasswordCrypt.generateTomcatPasswd(newPlainTextPasswd);
+        UsersDao udao = DaoFactory.UsersDao();
+        udao.resetUserPassword(user.dbId().intValue(), newCryptPasswd);
     }
         
     public static User getUser(String userid) throws DashboardException {
@@ -159,7 +177,6 @@ public class Users {
         }
     }
     
-    
     public static void updateUser(User changedUser) throws DashboardException {
         UsersDao udao = DaoFactory.UsersDao();
         try {
@@ -169,11 +186,19 @@ public class Users {
         }
     }
     
+    public static void userLogin(User user) throws DashboardException {
+        UsersDao udao = DaoFactory.UsersDao();
+        try {
+            udao.userLogin(user);
+        } catch (SQLException ex) {
+            throw new DashboardException(ex);
+        }
+    }
+    
     public static void deleteUser(String userid) throws DashboardException {
         UsersDao udao = DaoFactory.UsersDao();
         try {
             udao.deleteUserByUsername(userid);
-            udao.removeAccessRole(userid);
         } catch (SQLException ex) {
             throw new DashboardException(ex);
         }
@@ -196,7 +221,7 @@ public class Users {
             }
             String newPassword = PasswordUtils.generateSecurePassword();
             String email = user.email();
-            setUserPassword(user, newPassword);
+            _resetUserPassword(user, newPassword);
             String notificationMsg = getPasswordResetMessage(user, newPassword);
             Notifications.SendEmail("OAP Dashboard password reset", notificationMsg, email, Notifications.OADB_RETURN_ADDR);
         } catch (Exception ex) {
@@ -210,12 +235,11 @@ public class Users {
      * @return
      */
     private static String getPasswordResetMessage(User user, String newPassword) {
-        return "Password has been reset for user " + user.username() + ".\n" +
-                "New password is " + newPassword + "\n\n" +
-//				"You will be required to reset your password when you login. \n\n" + 
-				"If you did not request your password to be reset, please email the system administrator at" +
-				"<a href='mailto:oar.pmel.sdis.admin@noaa.gov'>oar.pmel.sdis.admin@noaa.gov</a> immediately.";
-//				"<a href='mailto:oar.pmel.sdis.admin@noaa.gov'>oar.pmel.sdis.admin@noaa.gov</a> immediately.";
+        return "The password has been reset for user " + user.username() + ".\n" +
+                "Th new password is " + newPassword + "\n\n" +
+				"You will be required to change your password when you login. \n\n" + 
+				"If you did not request your password to be reset, please contact the system administrator at" +
+				"oar.pmel.sdis.admin@noaa.gov immediately.";
     }
     /**
      * @param username
@@ -396,12 +420,18 @@ public class Users {
         return user.hasRole(UserRole.Admin.roleKey());
 	}
 
+    public static String getRequirePwChangeFlag() {
+        return UUID.randomUUID().toString().replaceAll("-", "");
+    }
+    
     public static void main(String[] args) {
         try {
             
             UsersDao udao = DaoFactory.UsersDao();
+            User user = getUser("jqpone");
+            System.out.println(user);
+            System.out.println("User is admin: " + isAdmin("jqpone"));
 //            deleteUser("jqpone");
-//            udao.insertUser(newUser);
 //            User newUser = User.builder()
 //                    .username("jqpone")
 //                    .firstName("Johnny")
@@ -412,10 +442,10 @@ public class Users {
 //            addUser(newUser, "foobar", UserRole.Groupie);
             List<User> users = udao.retrieveAll();
             System.out.println(users);
-            User u = udao.retrieveUser("linus");
-            System.out.println(u + " : " + u.hasRole(UserRole.Admin.roleKey()));
-            u = udao.retrieveUserByEmail("linus.kamb@noaa.gov");
-            System.out.println(u + " : " + u.hasRole(UserRole.Admin.roleKey()));
+//            User u = udao.retrieveUser("linus");
+//            System.out.println(u + " : " + u.hasRole(UserRole.Admin.roleKey()));
+//            u = udao.retrieveUserByEmail("linus.kamb@noaa.gov");
+//            System.out.println(u + " : " + u.hasRole(UserRole.Admin.roleKey()));
         } catch (Exception ex) {
             ex.printStackTrace();
             // TODO: handle exception

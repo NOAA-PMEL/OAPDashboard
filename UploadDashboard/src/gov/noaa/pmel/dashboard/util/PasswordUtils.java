@@ -28,7 +28,7 @@ public class PasswordUtils {
     }
     
     public static String passwordRules() {
-        return "Passord must be at least 12 characters long, and it must contain at least one each of\n" +
+        return "Passord must be at least " + PW_MIN_LENGTH + " characters long, and it must contain at least one each of\n" +
                 "\t lower-case characters\n" +
                 "\t upper-case characters\n" +
                 "\t numbers\n" +
