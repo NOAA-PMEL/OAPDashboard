@@ -25,11 +25,11 @@
 			<arg column="last_name" javaType="java.lang.String" />
 			<arg column="email" javaType="java.lang.String" />
         -->
-			<!-- arg column="last_changed" javaType="java.util.Date"/> -->
-			<!--arg column="auth_string" javaType="java.lang.String" />  -->
 		</constructor>
 		<result property="_username" column="username"/>
 		<result property="_lastLogin" column="last_login"/>
+		<result property="_lastPwChange" column="last_pw_change"/>
+		<result property="_requiresPwChange" column="requires_pw_change"/>
 		<result property="_firstName" column="first_name"/>
 		<result property="_middle" column="middle_name"/>
 		<result property="_lastName" column="last_name"/>
@@ -37,12 +37,10 @@
 		<result property="_telephone" column="telephone"/>
 		<result property="_telExtension" column="extension"/>
 		<result property="_organization" column="organization"/>
+	</resultMap>
+	<resultMap type="User" extends="UserMap" id="UserRoleMap">
         <collection property="_roles" ofType="java.lang.String" javaType="ArrayList" 
             column="db_id" select="getRolesForUser" />
-        <!--
-		<result property="_lastPasswordChange" column="last_changed" />
-		<result property="_authString" column="auth_string" />
-         --> 
 	</resultMap>
 	
 	<sql id="insertFrag">insert into <include refid="USERS_TABLE_NAME"/> </sql>
@@ -74,7 +72,7 @@
 			<include refid="${db_col}"/>
 			modified_time,
 			username,
-			last_login,
+			requires_pw_change,
 			first_name,
 			last_name,
             middle_name,
@@ -86,7 +84,7 @@
 			<include refid="${db_field}"/>
 			now(),
 			#{_username},
-			#{_lastLogin},
+			#{_requiresPwChange},
 			#{_firstName},
 			#{_lastName},
 			#{_middle},
@@ -101,6 +99,8 @@
 			modified_time = now(),
 			username = #{_username},
 			last_login = #{_lastLogin},
+			last_pw_change = #{_lastPwChange},
+			requires_pw_change = #{_requiresPwChange},
 			first_name = #{_firstName},
 			last_name = #{_lastName},
             middle_name = #{_middle},
@@ -109,12 +109,15 @@
 			extension = #{_telExtension},
 			organization = #{_organization}
 	</sql>
+  
 	<sql id="pgParameterizedInsertOrUpdate">
 		<include refid="${insert_or_update}"/> (
 			<include refid="${db_col}"/>
 			modified_time,
 			username,
 			last_login,
+            last_pw_change,
+            requires_pw_change,
 			first_name,
 			last_name,
 			middle_name,
@@ -127,6 +130,8 @@
 			now(),
 			#{_username},
 			#{_lastLogin},
+			#{_lastPwChange},
+			#{_requiresPwChange},
 			#{_firstName},
 			#{_lastName},
 			#{_middle},
@@ -136,7 +141,7 @@
 			#{_organization}
 		)
 	</sql>
-	
+  
     <sql id="insertUserGeneratedId">
 		<include refid="pgParameterizedInsertOrUpdate">
 			<property name="insert_or_update" value="insertFrag"/>
@@ -186,10 +191,20 @@
         </choose>
     </insert>
     <delete id="removeAccessRole">
-        delete from <include refid="ROLES_TABLE_NAME"/> 
+        delete from <include refid="TOMCAT_ROLES_TABLE_NAME"/> 
         where username = #{param1} and userrole = #{param2}
     </delete>
 	
+    <update id="updateUserLastLogin" >
+      update users set last_login = #{param2}
+      where username = ${param1}
+    </update>
+    
+    <update id="updateUserRequiresPwChange">
+      update users set requires_pw_change = #{param2}
+      where username = ${param1}
+    </update>
+    
 	<update id="updateUser" parameterType="User" >
         <if test="_databaseId == 'mysql'">
     		<include refid="myParameterizedUpdate">
@@ -258,6 +273,10 @@
 			<property name="paramNames" value="fieldParams"/>
 		</include>
     </insert>
+    <delete id="removeAuthUser" >
+        delete from <include refid="AUTH_TABLE_NAME"/>
+        where username = #{param1}
+    </delete>
 	
     <insert id="insertReviewer" >
         insert into reviewers (username, realname, email)
@@ -290,6 +309,7 @@
 	</insert>
 	
 	<select id="retrieveAll" resultMap="UserMap">select <include refid="USERS_TABLE_NAME"/>.* from <include refid="USERS_TABLE_NAME"/> </select>
+	<select id="retrieveAllWithRoles" resultMap="UserRoleMap">select <include refid="USERS_TABLE_NAME"/>.* from <include refid="USERS_TABLE_NAME"/> </select>
 	
 	<!-- remove ua.auth_string as auth_string  -->
 	<sql id="select_full_profile">select u.*, ua.modified_time as last_changed, null as auth_string from <include refid="USERS_TABLE_NAME"/> u, user_auth ua </sql>
@@ -298,13 +318,13 @@
 	<select id="retrieveFullAll" resultMap="UserMap">
 		<include refid="select_full_profile"/>  where u.db_id = ua.db_id
 	</select>
-	<select id="retrieveByUserId" parameterType="int" resultMap="UserMap">
+	<select id="retrieveByUserId" parameterType="int" resultMap="UserRoleMap">
 		<include refid="select_full_profile"/> where u.db_id = #{_userId} and u.db_id = ua.db_id
 	</select>
-	<select id="retrieveByUsername" parameterType="String" resultMap="UserMap">
+	<select id="retrieveByUsername" parameterType="String" resultMap="UserRoleMap">
 		<include refid="select_user"/> where username = #{_username} 
 	</select>
-    <select id="retrieveByEmail" parameterType="String" resultMap="UserMap">
+    <select id="retrieveByEmail" parameterType="String" resultMap="UserRoleMap">
 		<include refid="select_user"/> where email = #{_email} 
     </select>
     <sql id="tomcat_getRolesForUser">
@@ -353,6 +373,12 @@
 			auth_string = #{param2,javaType=String}
 		where db_id = #{param1,javaType=int}
 	</update>
+    <update id="updateUserChangedPassword" >
+        update users set
+            last_pw_change = now(),
+            requires_pw_change = #{param2}
+        where db_id = #{param1,javaType=int}
+    </update>
 	
 	<update id="updateLastLogin" parameterType="int" >
 		update users set

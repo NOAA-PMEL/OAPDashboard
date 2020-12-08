@@ -94,6 +94,16 @@ public class AdminClient extends CLClient {
                                                 .option(opt_noop)
                                                 .build();
     
+    @SuppressWarnings("unused") // found by reflection
+    private static CLCommand cmd_deleteUser = CLCommand.builder().name("delete_user")
+                                                .command("delete")
+                                                .description("Delete a user from the dashboard.")
+                                                .option(opt_username)
+                                                .option(opt_target)
+                                                .option(opt_batch)
+                                                .option(opt_noop)
+                                                .build();
+    
     private CLOptions _clOptions;
 
     /**
@@ -141,15 +151,18 @@ public class AdminClient extends CLClient {
                 throw new IllegalStateException("User " + userid + " exists!");
             }
             String pw = _clOptions.get(opt_password);
+            String requirePwChange = null;
             if ( pw != null ) {
                 logger.info("Checking supplied pw: " + pw);
                 PasswordUtils.validatePasswordStrength(pw);
             } else {
                 pw = PasswordUtils.generateSecurePassword();
                 System.out.println("New user " +userid + " temp password:"+pw);
+                requirePwChange = Users.getRequirePwChangeFlag();
             }
             User newUser = User.builder()
                             .username(userid)
+                            .requiresPwChange(requirePwChange)
                             .firstName(_clOptions.get(opt_firstName))
                             .middle(_clOptions.get(opt_middleName))
                             .lastName(_clOptions.get(opt_lastName))
@@ -175,6 +188,30 @@ public class AdminClient extends CLClient {
         } catch (CredentialException cex) {
             System.err.println("Password unacceptable.");
             System.err.println(PasswordUtils.passwordRules());
+        } catch (Exception ex) {
+            ex.printStackTrace();
+        }
+    }
+    
+    public void doDelete() {
+        logger.info("Delete user");
+        try {
+            String target = _clOptions.get(opt_target);
+            String userid = _clOptions.get(opt_username);
+            User existgUser = Users.getUser(userid);
+            if ( existgUser == null ) {
+                throw new IllegalStateException("User " + userid + " does not exist!");
+            }
+            if ( confirm("Delete user " + existgUser + " from target db: " + target)) {
+                if ( ! _clOptions.booleanValue(opt_noop, false)) {
+                    Users.deleteUser(existgUser.username());
+                    System.out.println("User " + userid + " deleted.");
+                } else {
+                    System.out.println("No-op requested.  User not added.");
+                }
+            } else {
+                logger.info("User not deleted.");
+            }
         } catch (Exception ex) {
             ex.printStackTrace();
         }

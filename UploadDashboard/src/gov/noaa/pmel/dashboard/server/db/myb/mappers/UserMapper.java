@@ -17,6 +17,7 @@ public interface UserMapper {
 
 	public void insertNewUser(InsertUser user) throws SQLException;
     public void addAuthUser(InsertUser user);
+    public void removeAuthUser(String username);
     
 	public void addAccessRole(String username, String role)  throws SQLException;
     public void removeAccessRole(String username, String string);
@@ -30,6 +31,7 @@ public interface UserMapper {
 	
 	public int updateUser(User user);
 	public void updateUserAuth(int userId, String authString);
+	public void updateUserChangedPassword(int userId, String changeRequiredFlag);
 	
 	public void updateLastLogin(int userId);
 	

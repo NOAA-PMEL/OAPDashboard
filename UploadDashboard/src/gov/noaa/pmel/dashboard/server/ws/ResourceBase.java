@@ -13,7 +13,7 @@ import javax.servlet.http.HttpServletRequest;
  */
 public abstract class ResourceBase {
 
-    protected static String dumpRequest(HttpServletRequest request, String ... parameterNameValuePairs) {
+    public static String dumpRequest(HttpServletRequest request, String ... parameterNameValuePairs) {
         StringBuffer b = new StringBuffer(dumpRequest(request));
         int npv = parameterNameValuePairs.length;
         if ( npv > 0 ) { b.append(" params: "); }
@@ -23,8 +23,9 @@ public abstract class ResourceBase {
         }
         return b.toString();
     }
-    protected static String dumpRequest(HttpServletRequest request) {
-        StringBuffer b = new StringBuffer(request.getRequestURL());
+    public static String dumpRequest(HttpServletRequest request) {
+        StringBuffer b = new StringBuffer(request.getRemoteHost());
+        b.append(": ").append(request.getRequestURL());
         if ( request.getQueryString() != null ) {
             b.append("?").append(request.getQueryString());
         }
@@ -32,9 +33,9 @@ public abstract class ResourceBase {
         return b.toString();
     }
 
-    protected static String fullDump(HttpServletRequest request) {
+    public static String fullDump(HttpServletRequest request) {
         StringBuffer b = new StringBuffer(dumpRequest(request));
-        b.append("(").append(request.getRemoteHost()).append(")\n");
+        b.append("(").append(getRemoteAddress(request)).append(")\n");
         Enumeration<String>headers = request.getHeaderNames();
         while ( headers.hasMoreElements()) {
             String name = headers.nextElement();
@@ -48,7 +49,7 @@ public abstract class ResourceBase {
      * @param httpRequest
      * @return either the provided remote IP address or the x-forwarded-for address if provided
      */
-    protected static String getRemoteAddress(HttpServletRequest httpRequest) {
+    public static String getRemoteAddress(HttpServletRequest httpRequest) {
         String remoteAddr = httpRequest.getHeader("x-forwarded-for");
         if ( remoteAddr == null ) {
             remoteAddr = httpRequest.getRemoteAddr();

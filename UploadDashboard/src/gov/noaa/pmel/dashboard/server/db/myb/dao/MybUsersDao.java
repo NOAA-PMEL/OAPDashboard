@@ -5,6 +5,7 @@ import java.util.List;
 
 import org.apache.ibatis.session.SqlSession;
 
+import gov.noaa.pmel.dashboard.server.Users;
 import gov.noaa.pmel.dashboard.server.db.dao.UsersDao;
 import gov.noaa.pmel.dashboard.server.db.myb.MybatisConnectionFactory;
 import gov.noaa.pmel.dashboard.server.db.myb.mappers.UserMapper;
@@ -14,19 +15,6 @@ import gov.noaa.pmel.dashboard.server.model.User;
 
 public class MybUsersDao implements UsersDao {
 
-//	private static Logger logger = Logging.getLogger(MybUsersDao.class);
-	
-	@Override
-	public int insertUser(InsertUser user) throws SQLException {
-		try (SqlSession session = MybatisConnectionFactory.getDashboardDbSessionFactory().openSession();) {
-			UserMapper umapper = (UserMapper) session.getMapper(UserMapper.class);
-			umapper.insertNewUser(user);
-            umapper.addAuthUser(user);
-			session.commit();
-			return user.dbId().intValue();
-		}
-	}
-    
     @Override
     public void addAccessRole(String username) throws SQLException {
 		try (SqlSession session = MybatisConnectionFactory.getDashboardDbSessionFactory().openSession();) {
@@ -50,13 +38,21 @@ public class MybUsersDao implements UsersDao {
     
     @Override
     public void setUserPassword(int userId, String newAuthString) throws SQLException {
+        _setUserPassword(userId, newAuthString, null);
+    }
+    @Override
+    public void resetUserPassword(int userId, String newAuthString) throws SQLException {
+        _setUserPassword(userId, newAuthString, Users.getRequirePwChangeFlag());
+    }
+    private static void _setUserPassword(int userId, String newAuthString, String pwChangeRequiredFlag) throws SQLException {
         try (SqlSession session = MybatisConnectionFactory.getDashboardDbSessionFactory().openSession();) {
             UserMapper umapper = (UserMapper) session.getMapper(UserMapper.class);
             umapper.updateUserAuth(userId, newAuthString);
+            umapper.updateUserChangedPassword(userId, pwChangeRequiredFlag);
             session.commit();
         }
     }
-		
+    
     @Override
     public String retrieveUserAuthString(int userId) throws SQLException {
         try (SqlSession session = MybatisConnectionFactory.getDashboardDbSessionFactory().openSession();) {
@@ -111,10 +107,21 @@ public class MybUsersDao implements UsersDao {
 		}
     }
     
+    @Override
+    public void userLogin(User user) throws SQLException {
+		try (SqlSession session = MybatisConnectionFactory.getDashboardDbSessionFactory().openSession();) {
+			UserMapper umapper = (UserMapper) session.getMapper(UserMapper.class);
+			umapper.updateLastLogin(user.dbId().intValue());
+			session.commit();
+		}
+    }
+    
 	@Override
 	public void deleteUserByUsername(String username) throws SQLException {
 		try (SqlSession session = MybatisConnectionFactory.getDashboardDbSessionFactory().openSession();) {
 			UserMapper umapper = (UserMapper) session.getMapper(UserMapper.class);
+            umapper.removeAccessRole(username, "oapdashboarduser");
+            umapper.removeAuthUser(username);
 			umapper.deleteUserByUsername(username);
 			session.commit();
 		}

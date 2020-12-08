@@ -15,8 +15,6 @@ import gov.noaa.pmel.dashboard.server.model.User;
  */
 public interface UsersDao {
 
-    public int insertUser(InsertUser newUser) throws SQLException;
-    
     public void addAccessRole(String username) throws SQLException;
 
     // also adds access role in transaction
@@ -35,8 +33,18 @@ public interface UsersDao {
     public void setUserPassword(int userId, String newAuthString) throws SQLException;
     public String retrieveUserAuthString(int userId) throws SQLException;
     
+    public void userLogin(User user) throws SQLException;
+    
     public void deleteUserByUsername(String username) throws SQLException;
 
     public void removeAccessRole(String userid);
+
+    /**
+     * Sets user password, also sets need to change flag.
+     * @param intValue
+     * @param newCryptPasswd
+     * @throws SQLException 
+     */
+    public void resetUserPassword(int userid, String newCryptPasswd) throws SQLException;
 
 }
