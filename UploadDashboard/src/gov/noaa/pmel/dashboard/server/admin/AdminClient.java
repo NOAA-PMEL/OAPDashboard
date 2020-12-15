@@ -22,6 +22,7 @@ import gov.noaa.pmel.dashboard.server.Users;
 import gov.noaa.pmel.dashboard.server.Users.UserRole;
 import gov.noaa.pmel.dashboard.server.db.myb.MybatisConnectionFactory;
 import gov.noaa.pmel.dashboard.server.model.User;
+import gov.noaa.pmel.dashboard.server.util.Notifications;
 import gov.noaa.pmel.dashboard.util.PasswordUtils;
 import gov.noaa.pmel.tws.client.impl.TwsClientImpl.NoopException;
 import gov.noaa.pmel.tws.util.ApplicationConfiguration;
@@ -39,9 +40,11 @@ import gov.noaa.pmel.tws.util.cli.CommandProcessor;
  */
 public class AdminClient extends CLClient {
 
+    private static final String DEFAULT_URL = "https://www.pmel.noaa.gov/sdig/oap/Dashboard";
+
     private static Logger logger;
     
-    private static CLOption opt_batch = CLOption.builder().name("batch").flag("b").longFlag("batch")
+    private static CLOption opt_batch = CLOption.builder().name("batch").flag("y").longFlag("batch")
                                             .requiresValue(false)
                                             .description("batch mode: assume yes at prompts").build();
     
@@ -67,7 +70,10 @@ public class AdminClient extends CLClient {
                                             .requiredOption(true)
                                             .description("User email.").build();
     private static CLOption opt_phone = CLOption.builder().name("phone").flag("t").longFlag("phone")
-                                            .description("User phone. Use \"x####\" to specify an extension.").build();
+                                            .description("User phone.").build(); //  Use \"x####\" to specify an extension.").build();
+    private static CLOption opt_notify = CLOption.builder().name("notify").flag("n").longFlag("notify")
+                                            .requiresValue(false)
+                                            .description("Send new user a notification email.").build();
     private static CLOption opt_target = CLOption.builder().name("targetDb").flag("d").longFlag("db")
                                             .defaultValue("localhost")
                                             .description("Target database. Options: localhost, prod, [hostname] (which may or may not be supported.)").build();
@@ -89,6 +95,7 @@ public class AdminClient extends CLClient {
                                                 .option(opt_userOrg)
                                                 .option(opt_email)
                                                 .option(opt_phone)
+                                                .option(opt_notify)
                                                 .option(opt_target)
                                                 .option(opt_batch)
                                                 .option(opt_noop)
@@ -141,6 +148,30 @@ public class AdminClient extends CLClient {
         }
     }
 
+    private static boolean sendNewUserEmail(User newUser, String tempPass) {
+        try {
+            StringBuilder msgBldr = new StringBuilder()
+                .append("A new user account has been created for " )
+                .append(newUser.fullName()).append("\n")
+                .append("with username: ").append(newUser.username()).append("\n");
+            if ( tempPass != null ) {
+                msgBldr.append("and temporary password: ").append(tempPass).append("\n\n")
+                       .append("You will be required to change your password when you first log in.\n\n");
+            } else {
+                msgBldr.append("with the provided password.\n\n")
+                       .append("If you do not know the password, you can reset it from the login page.\n\n");
+            }
+            String url = ApplicationConfiguration.getProperty("oap.production.url", DEFAULT_URL);
+            msgBldr.append("The SDIS is at ").append(url).append("\n");
+            String message = msgBldr.toString();
+            String email = newUser.email();
+            Notifications.SendEmail("New SDIS Account", message, email);
+            return true;
+        } catch (Exception ex) {
+            ex.printStackTrace();
+            return false;
+        }
+    }
     public void doAdd() {
         logger.info("Add user");
         try {
@@ -150,13 +181,15 @@ public class AdminClient extends CLClient {
             if ( existgUser != null ) {
                 throw new IllegalStateException("User " + userid + " exists!");
             }
+            String tempPass = null;
             String pw = _clOptions.get(opt_password);
             String requirePwChange = null;
             if ( pw != null ) {
                 logger.info("Checking supplied pw: " + pw);
                 PasswordUtils.validatePasswordStrength(pw);
             } else {
-                pw = PasswordUtils.generateSecurePassword();
+                tempPass = PasswordUtils.generateSecurePassword();
+                pw = tempPass;
                 System.out.println("New user " +userid + " temp password:"+pw);
                 requirePwChange = Users.getRequirePwChangeFlag();
             }
@@ -178,6 +211,9 @@ public class AdminClient extends CLClient {
                         System.out.println(" with generated password: " + pw);
                     } else {
                         System.out.println(".");
+                    }
+                    if ( _clOptions.booleanValue(opt_notify, false)) {
+                        sendNewUserEmail(newUser, tempPass);
                     }
                 } else {
                     System.out.println("No-op requested.  User not added.");
