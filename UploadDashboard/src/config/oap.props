@@ -26,7 +26,14 @@
 
 oap.env=prod
 
-oap.admin.email.list=linus.kamb@noaa.gov
+# I don't like this here, but I don't want it hardwired
+# It's currently only for applications external to the server, such as AdminClient,
+# which normally would run not on production, but I want to have default value here.
+#
+oap.production.url=https://www.pmel.noaa.gov/sdig/oap/Dashboard
+
+oap.admin.email.list=oar.pmel.sdis.admin@noaa.gov
+# oap.admin.email.list=linus.kamb@noaa.gov
 
 oap.email.from=OAP Dashboard System <pmel.sdis@noaa.gov>
 oap.email.account=pmel.sdis@noaa.gov
@@ -73,3 +80,4 @@ oap.upload.max_size.display=~50MB
 
 oap.metadata.extract_variables=false
 
+oap.preview.ng=ng_
