@@ -4,9 +4,11 @@
   "http://mybatis.org/dtd/mybatis-3-config.dtd">
 <configuration>
   <properties resource="config/database.properties"/>
+  <!--
   <settings>
   	<setting name="logImpl" value="LOG4J2" />
   </settings>
+  --> 
   <typeAliases>
     <typeAlias type="gov.noaa.pmel.dashboard.server.db.DbItem"  alias="DbItem"/>
   	<typeAlias type="gov.noaa.pmel.dashboard.server.model.User" alias="User"/>
