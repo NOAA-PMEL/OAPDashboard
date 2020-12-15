@@ -57,17 +57,18 @@ public class LoginDetectionFilter implements Filter {
         Principal principal = request.getUserPrincipal();
         HttpSession session = request.getSession(false);
 
-        logger.debug(request.getRequestURL().toString());
+        logger.trace(request.getRequestURL().toString());
         if (principal != null) {
+            String username = principal.getName();
             if (session == null || session.getAttribute("user") == null) {
                 request.getSession().setAttribute("user", principal);
                 logger.info("Login by " + principal);
                 try {
                     UsersDao udao = DaoFactory.UsersDao();
-                    User user = udao.retrieveUser(principal.getName());
+                    User user = udao.retrieveUser(username);
                     udao.userLogin(user);
                     if ( user.requiresPasswordChange()) {
-                        System.out.println("redirecting for request: "+ request);
+                        logger.info("change password required for request by " + username + ": "+ request.getRequestURI());
                         synchronized (requiredPasswordChange) {
                             requiredPasswordChange.add(user.username());
                         }
@@ -80,21 +81,22 @@ public class LoginDetectionFilter implements Filter {
                     response.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Error retrieving user information.");
                     return;
                 }
-            } else if ( requiredPasswordChange.contains(principal.getName()) &&
+            } else if ( requiredPasswordChange.contains(username) &&
                         shouldBeRedirected(request)) {
                 try {
-                    logger.info("Redirecting attempted bypass by " + principal.getName() + 
+                    logger.info("Redirecting attempted bypass by " + username + 
                                 " to " + request.getRequestURL().toString());
                     UsersDao udao = DaoFactory.UsersDao();
-                    User user = udao.retrieveUser(principal.getName());
+                    User user = udao.retrieveUser(username);
                     if ( user.requiresPasswordChange()) {
-                        System.out.println("redirecting for request: "+ request);
+                        logger.debug("redirecting for request: "+ request);
                         response.addCookie(new Cookie("sdisuid", user.requiresPwChange()));
                         response.sendRedirect(getPasswordChangeUrl(request));
                         return;
                     } else {
                         synchronized (requiredPasswordChange) {
-                            requiredPasswordChange.remove(principal.getName());
+                            logger.info("removeing " + username + " from changePassword cache.");
+                            requiredPasswordChange.remove(username);
                         }
                     }
                 } catch (SQLException ex) {

@@ -4,11 +4,6 @@
 package gov.noaa.pmel.dashboard.server;
 
 import java.io.IOException;
-import java.io.UnsupportedEncodingException;
-import java.nio.charset.Charset;
-import java.nio.charset.StandardCharsets;
-import java.util.Collection;
-import java.util.HashMap;
 import java.util.Map;
 
 import javax.security.auth.login.CredentialException;
@@ -17,15 +12,11 @@ import javax.servlet.MultipartConfigElement;
 import javax.servlet.ServletException;
 import javax.servlet.annotation.MultipartConfig;
 import javax.servlet.http.Cookie;
-import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-import javax.servlet.http.Part;
 import static javax.servlet.http.HttpServletResponse.*;
 
-import org.apache.commons.io.IOUtils;
 import org.apache.log4j.Logger;
-import org.eclipse.jetty.server.Request;
 
 import gov.noaa.pmel.dashboard.server.model.User;
 import gov.noaa.pmel.dashboard.server.ws.ResourceBase;
@@ -37,9 +28,9 @@ import gov.noaa.pmel.tws.util.Logging;
  *
  */
 @MultipartConfig
-public class PasswordService extends HttpServlet {
+public class PasswordService extends CommonServiceBase {
 
-	private static final Logger logger = Logging.getLogger(NotificationService.class);
+	static final Logger logger = Logging.getLogger(NotificationService.class);
     
 	private static final MultipartConfigElement MULTI_PART_CONFIG = new MultipartConfigElement("/var/tmp/oap");
 	
@@ -76,20 +67,7 @@ public class PasswordService extends HttpServlet {
                 response.sendError(HttpServletResponse.SC_BAD_REQUEST);
                 return;
             }
-            Map<String, String[]> params;
-            String contentType = request.getHeader("Content-Type");
-            if ( ! contentType.startsWith("multipart/form-data")) {
-                params = request.getParameterMap();
-            } else {
-                params = new HashMap<String, String[]>();
-                // For Content-Type: multipart/form-data
-                Collection<Part> parts = request.getParts();
-                for (Part part : parts) {
-                    String pname = part.getName();
-                    String pcontent = IOUtils.toString(part.getInputStream(), StandardCharsets.UTF_8);
-                    params.put(pname, new String[] { pcontent });
-                }
-            }
+            Map<String, String[]> params = getFormParams(request);
             String username = getUsername(request);
             String p0 = params.get("pw0")[0];
             User user = Users.validateUser(username, p0);
@@ -107,40 +85,30 @@ public class PasswordService extends HttpServlet {
                 sendPasswordChangedRedirect(response, location);
             }
         } catch (CredentialException cex) { // bad password complexity
-            sendMsgResponse(response, SC_BAD_REQUEST, "New password does not meet complexity requirements." );
+            sendErrResponse(response, SC_BAD_REQUEST, "New password does not meet complexity requirements." );
         } catch (DashboardException dex) {
             request.getSession().invalidate();
-            sendMsgResponse(response, HttpServletResponse.SC_INTERNAL_SERVER_ERROR,
+            sendErrResponse(response, HttpServletResponse.SC_INTERNAL_SERVER_ERROR,
                             "There was an error changing your password.<br/>"
                             + "Please try again later.");
         } catch (LoginException lex) {
-            sendMsgResponse(response, HttpServletResponse.SC_BAD_REQUEST, "Incorrect password.");
+            sendErrResponse(response, HttpServletResponse.SC_BAD_REQUEST, "Incorrect password.");
         } catch (IllegalStateException iex) { // username not found
             request.getSession().invalidate();
             logger.warn(iex,iex);
-            sendMsgResponse(response, HttpServletResponse.SC_BAD_REQUEST,
+            sendErrResponse(response, HttpServletResponse.SC_BAD_REQUEST,
                             "There was an error changing your password.<br/>"
                             + "Please try again later.");
         } catch (Throwable t) {
-            logger.warn(t,t);
+            response.sendError(SC_INTERNAL_SERVER_ERROR, SERVER_ERROR );
         }
     }
     
-    protected static String getUsername(HttpServletRequest request) {
-        try {
-            String username = request.getUserPrincipal().getName();
-            return username;
-        } catch (Exception ex) {
-            logger.info(ex);
-            throw new IllegalStateException("No user found.");
-        }
-    }
-
     /**
      * @param response
      * @throws IOException 
      */
-    private void sendPasswordChangedRedirect(HttpServletResponse response, String location) throws IOException {
+    private void sendPasswordChangedRedirect(HttpServletResponse response, String location) throws Exception {
         String successMsg = buildSuccessMessage(response, location);
         sendJsonResponse(response, SC_OK, successMsg);
     }
@@ -149,22 +117,10 @@ public class PasswordService extends HttpServlet {
      * @param location2 
      * @return
      */
-    private String buildSuccessMessage(HttpServletResponse response, String location) {
+    private static String buildSuccessMessage(HttpServletResponse response, String location) {
         StringBuilder msg = new StringBuilder("{")
             .append("\"").append("message").append("\":").append("\"Your password has been changed.\"").append(",")
             .append("\"").append("location").append("\":\"").append(location).append("\"}");
         return msg.toString();
-    }
-    private void sendMsgResponse(HttpServletResponse response, int responseStatus, String msgText) {
-            String jsonMsg = "{\"message\":\""+msgText+"\"}";
-            sendJsonResponse(response, responseStatus, jsonMsg);
-    }
-    private void sendJsonResponse(HttpServletResponse response, int responseStatus, String json) {
-        try {
-            response.setStatus(responseStatus);
-            response.getOutputStream().write(json.getBytes("UTF8"));
-        } catch (Throwable t) {
-            logger.warn(t,t);
-        }
     }
 }

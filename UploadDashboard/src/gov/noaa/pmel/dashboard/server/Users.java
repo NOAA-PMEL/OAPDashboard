@@ -208,7 +208,7 @@ public class Users {
      * @throws Exception 
      * 
      */
-    public static void resetPassword(String username_or_email) throws Exception {
+    public static void resetPassword(String username_or_email) throws DashboardException {
         try {
             if ( StringUtils.emptyOrNull(username_or_email)) {
                 throw new IllegalArgumentException("No username or email address provided.");
@@ -226,7 +226,26 @@ public class Users {
             Notifications.SendEmail("OAP Dashboard password reset", notificationMsg, email, Notifications.OADB_RETURN_ADDR);
         } catch (Exception ex) {
             logger.info(ex);
-            throw ex;
+            throw new DashboardException(ex.getMessage(), ex);
+        }
+    }
+    public static void sendUsername(String username_or_email) throws DashboardException {
+        try {
+            if ( StringUtils.emptyOrNull(username_or_email)) {
+                throw new IllegalArgumentException("No username or email address provided.");
+            }
+            User user = username_or_email.indexOf('@') > 0 ?
+                            findUserByEmail(username_or_email) :
+                            findUserByUsername(username_or_email);
+            if ( user == null ) {
+                throw new IllegalStateException("No user found for " + username_or_email);
+            }
+            String email = user.email();
+            String notificationMsg = getUsernameMessage(user);
+            Notifications.SendEmail("OAP Dashboard user", notificationMsg, email, Notifications.OADB_RETURN_ADDR);
+        } catch (Exception ex) {
+            logger.info(ex);
+            throw new DashboardException(ex.getMessage(), ex);
         }
     }
     /**
@@ -235,10 +254,15 @@ public class Users {
      * @return
      */
     private static String getPasswordResetMessage(User user, String newPassword) {
-        return "The password has been reset for user " + user.username() + ".\n" +
-                "Th new password is " + newPassword + "\n\n" +
+        return "Your password has been reset.\n" +
+                "The temporary password is " + newPassword + "\n\n" +
 				"You will be required to change your password when you login. \n\n" + 
-				"If you did not request your password to be reset, please contact the system administrator at" +
+				"If you did not request your password to be reset, please contact the system administrator at " +
+				"oar.pmel.sdis.admin@noaa.gov immediately.";
+    }
+    private static String getUsernameMessage(User user) {
+        return "The username for this account is: " + user.username() + ".\n" +
+				"If you did not request your username, please contact the system administrator at " +
 				"oar.pmel.sdis.admin@noaa.gov immediately.";
     }
     /**
