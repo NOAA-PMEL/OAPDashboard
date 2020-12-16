@@ -139,6 +139,7 @@
       <url-pattern>/passwordhelp.html</url-pattern>
       <url-pattern>/passwordreset.html</url-pattern>
       <url-pattern>/requestlogin.html</url-pattern>
+      <url-pattern>/username.html</url-pattern>
       <url-pattern>/tx/*</url-pattern>
       <url-pattern>/tws/*</url-pattern>
       <url-pattern>/twx/*</url-pattern>
