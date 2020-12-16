@@ -55,6 +55,8 @@ public class DatasetSubmitter {
 
 	static Logger logger = LogManager.getLogger(DatasetSubmitter.class);
     
+    public static final String LONLAT_FILE_NAME = "lonlat.txt";
+    
 //    public static final String USER_COMMENT_HEADER = "==== User Submission Comments ====";
 
 	DataFileHandler dataHandler;
@@ -502,7 +504,7 @@ public class DatasetSubmitter {
             locChkMsg = "LOCATIONS_UNAVAILABLE:CRITICAL_ERRORS";
         } else {
             try {
-                if ( DashboardConfigStore.get(false).getMetadataFileHandler().getMetadataFile(datasetId, "lonlat.tsv").exists()) {
+                if ( DashboardConfigStore.get(false).getMetadataFileHandler().getMetadataFile(datasetId, LONLAT_FILE_NAME).exists()) {
                     locChkMsg = "LOCATION_FILE_AVAILABLE";
                 } else {
                     locChkMsg = "LOCATIONS_UNAVAILABLE:UNKNOWN";
