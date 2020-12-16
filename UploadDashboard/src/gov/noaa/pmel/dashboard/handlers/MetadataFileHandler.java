@@ -28,6 +28,7 @@ import gov.noaa.ncei.oads.xml.v_a0_2_2.OadsMetadataDocumentType;
 import gov.noaa.ncei.oads.xml.v_a0_2_2.PersonContactInfoType;
 import gov.noaa.ncei.oads.xml.v_a0_2_2.PersonNameType;
 import gov.noaa.ncei.oads.xml.v_a0_2_2.PersonType;
+import gov.noaa.pmel.dashboard.actions.DatasetSubmitter;
 import gov.noaa.pmel.dashboard.dsg.StdUserDataArray;
 import gov.noaa.pmel.dashboard.oads.DashboardOADSMetadata;
 import gov.noaa.pmel.dashboard.oads.OADSMetadata;
@@ -1026,18 +1027,14 @@ public class MetadataFileHandler extends VersionedFileHandler {
      * @throws IOException 
      */
     public void saveLocationsFile(StdUserDataArray stdArray) throws IOException {
-        File lonLatFile = new File(getMetadataDirectory(stdArray.getDatasetName()), "lonlat.tsv");
+        File lonLatFile = new File(getMetadataDirectory(stdArray.getDatasetName()), DatasetSubmitter.LONLAT_FILE_NAME);
         try ( PrintWriter lonLatFileWriter = new PrintWriter(new FileWriter(lonLatFile))) {
             Double[] lats = stdArray.getSampleLatitudes();
             Double[] lons = stdArray.getSampleLongitudes();
             for (int idx = 1; idx < stdArray.getNumSamples(); idx++) {
-                lonLatFileWriter.println(lons[idx] + "\t" + lats[idx]);
+                lonLatFileWriter.println(lons[idx] + " " + lats[idx]);
             }
         }
-    }
-
-    public static String _autoExtractedMdFilename(String datasetId) {
-    	return "extracted_"+metadataFilename(datasetId);
     }
 
     public static String metadataFilename(String datasetId, String extension) {
