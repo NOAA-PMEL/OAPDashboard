@@ -40,6 +40,8 @@ oap.email.account=pmel.sdis@noaa.gov
 oap.archive.notification.list=linus.kamb@noaa.gov
 # ,john.relph@noaa.gov
 
+oap.archive.submit_ocads=true
+
 oap.archive.mode=sftp
 oap.archive.sftp.hostname=sftp.pmel.noaa.gov
 oap.archive.sftp.username=oap_sftp

@@ -56,9 +56,10 @@ import gov.loc.repository.bagit.exceptions.VerificationException;
 import gov.loc.repository.bagit.hash.StandardSupportedAlgorithms;
 import gov.loc.repository.bagit.verify.BagVerifier;
 import gov.loc.repository.bagit.writer.BagWriter;
-
+import gov.noaa.pmel.dashboard.actions.DatasetSubmitter;
 import gov.noaa.pmel.dashboard.server.DashboardConfigStore;
 import gov.noaa.pmel.dashboard.server.submission.status.SubmissionRecord;
+import gov.noaa.pmel.oads.xml.a0_2_2.Transform;
 import gov.noaa.pmel.tws.util.ApplicationConfiguration;
 import gov.noaa.pmel.tws.util.FileUtils;
 import gov.noaa.pmel.tws.util.StringUtils;
@@ -181,9 +182,14 @@ public class Bagger implements ArchiveBundler {
             })) 
         {
            if (mfile.getName().startsWith("extracted_")) { continue; } // Ignore auto extracted metadata file
-           if (mfile.getName().equals("lonlat.tsv") // XXX TODO: Maybe we skip the whole "supplemental" files distinction
+           if (mfile.getName().equals(DatasetSubmitter.LONLAT_FILE_NAME) // XXX TODO: Maybe we skip the whole "supplemental" files distinction
                || mfile.getAbsoluteFile().equals(metaFile.getAbsoluteFile())) {
                writeFileTo(mfile, meta); 
+               if ( ApplicationConfiguration.getProperty("oap.archive.submit_ocads", false)) {
+                   String ocadsFileName = mfile.getName().replace("OADS", "OCADS");
+                   File ocadsFile = new File(meta, ocadsFileName);
+                   Transform.main(new String[] { mfile.getPath(), ocadsFile.getPath() });
+               }
            } else {
                writeFileTo(mfile, supl);
            }
