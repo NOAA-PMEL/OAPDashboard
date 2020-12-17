@@ -213,8 +213,8 @@ public class OADSMetadata {
     			String fullName = colType.getDisplayName();
                 if ( colType.getVarName().equals(DashboardUtils.UNKNOWN_VARNAME) ||
                      colType.getVarName().equals(DashboardUtils.OTHER_VARNAME)) {
-                    stdName = colType.getVarName();
-                    fullName = colType.getDescription();
+                    stdName = userColName;
+                    fullName = userColName;
                 }
     			if ( ! ( exclude(userColName, colType) ||
 //                         existgVars.contains(stdName) || 
