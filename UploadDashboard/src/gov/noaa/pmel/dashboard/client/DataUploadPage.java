@@ -408,6 +408,7 @@ public class DataUploadPage extends CompositeWithUsername {
 
 	@UiHandler("submitButton") 
 	void submitButtonOnClick(ClickEvent event) {
+        submitButton.setEnabled(false);
 		String namesString = getInputFileNames(uploadElement).trim();
 		if (  namesString.isEmpty() ) {
 			UploadDashboard.showMessage(NO_FILE_ERROR_MSG);
@@ -420,6 +421,7 @@ public class DataUploadPage extends CompositeWithUsername {
         }
         if ( errorMessage != null ) {
 			UploadDashboard.showMessage(errorMessage);
+            submitButton.setEnabled(true);
             return;
         }
 //		if ( overwriteRadio.getValue().booleanValue() )
