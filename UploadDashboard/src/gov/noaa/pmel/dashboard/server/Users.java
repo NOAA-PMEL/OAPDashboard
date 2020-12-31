@@ -257,6 +257,10 @@ public class Users {
         return "Your password has been reset.\n" +
                 "The temporary password is " + newPassword + "\n\n" +
 				"You will be required to change your password when you login. \n\n" + 
+                "To log in, go to the SDIS login page at " + 
+				    ApplicationConfiguration.getProperty("oap.production.url", 
+                                                          "https://www.pmel.noaa.gov/sdig/oap/Dashboard") +
+                    "\n\n" +
 				"If you did not request your password to be reset, please contact the system administrator at " +
 				"oar.pmel.sdis.admin@noaa.gov immediately.";
     }
