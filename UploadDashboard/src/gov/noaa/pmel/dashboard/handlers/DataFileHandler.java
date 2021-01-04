@@ -1077,10 +1077,11 @@ public class DataFileHandler extends VersionedFileHandler {
         datasetProps.setProperty(USER_DATASET_NAME, dataset.getUserDatasetName());
 		// Owner of the dataset
 		datasetProps.setProperty(DATA_OWNER_ID, dataset.getOwner());
-        // DSG feature type
-		datasetProps.setProperty(FEATURE_TYPE_ID, dataset.getFeatureTypeName());
         // user observation type
 		datasetProps.setProperty(OBSERVATION_TYPE_ID, dataset.getUserObservationType());
+        // DSG feature type
+		datasetProps.setProperty(FEATURE_TYPE_ID, 
+		                         ObservationType.featureTypeOf(dataset.getUserObservationType()).name());
         // file format
 		datasetProps.setProperty(FILE_TYPE_ID, dataset.getFileTypeName());
 		// Version 
