@@ -336,11 +336,12 @@ public class TimeseriesDsgFile extends DsgNcFile {
         var = addLongitudeVariable(ncFile, FEATURE_LON_VARNAME , "Timeseries Longitude", _featureDimList, true);
         _typeSpecificVariables.put(var.getShortName(), var);
         // prefer depth to pressure
-        if ( _stdUser.hasDataColumn(FEATURE_PRESSURE_VARNAME)) {
-            var = addPressureVariable(ncFile, FEATURE_PRESSURE_VARNAME, "Timeseries Pressure", _featureDimList, true);
+        if ( _stdUser.hasSamplePressure()) {
+            var = addPressureVariable(ncFile, FEATURE_PRESSURE_VARNAME, "Timeseries Pressure", _featureDimList, false);
             _typeSpecificVariables.put(var.getShortName(), var);
-        } else if ( _stdUser.hasDataColumn(FEATURE_DEPTH_VARNAME)) {
-            var = addDepthVariable(ncFile, FEATURE_DEPTH_VARNAME, "Timeseries Depth", _featureDimList, true);
+        } else 
+        if ( _stdUser.hasSampleDepth()) {
+            var = addDepthVariable(ncFile, FEATURE_DEPTH_VARNAME, "Timeseries Depth", _featureDimList, false);
             _typeSpecificVariables.put(var.getShortName(), var);
         }
     }
@@ -385,15 +386,15 @@ public class TimeseriesDsgFile extends DsgNcFile {
         ArrayDouble.D1 a_lon = new ArrayDouble.D1(getNumFeatures());
         Variable v_PresDep = null;
         ArrayDouble.D1 a_PresDep = null;
-        if ( _stdUser.hasSampleDepth()) {
+        if ( _stdUser.hasSamplePressure()) {
+            presDep = _stdUser.getSamplePressure(0);
+            v_PresDep = getVariable(ncFile, FEATURE_PRESSURE_VARNAME);
+            a_PresDep = new ArrayDouble.D1(getNumFeatures());
+        } else if ( _stdUser.hasSampleDepth()) {
             presDep = _stdUser.getSampleDepth(0);
             v_PresDep = getVariable(ncFile, FEATURE_DEPTH_VARNAME);
             a_PresDep = new ArrayDouble.D1(getNumFeatures());
-        } else if ( _stdUser.hasSamplePressure()) {
-            presDep = _stdUser.getSamplePressure(0);
-            v_PresDep = getVariable(ncFile, FEATURE_DEPTH_VARNAME);
-            a_PresDep = new ArrayDouble.D1(getNumFeatures());
-        }
+        } 
         
 //        for (int row=0; row<_numObservations; row++) {
 //            a_time.set(row, times[row].doubleValue());
