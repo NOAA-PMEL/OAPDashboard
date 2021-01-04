@@ -116,6 +116,9 @@ public class DashboardDataset implements Serializable, IsSerializable {
 		dataColTypes = new ArrayList<DataColumnType>();
 		checkerFlags = new TreeSet<QCFlag>();
 		userFlags = new TreeSet<QCFlag>();
+        fileType = DashboardUtils.STRING_MISSING_VALUE;
+        featureType = DashboardUtils.STRING_MISSING_VALUE;
+        userObservationType = DashboardUtils.STRING_MISSING_VALUE;
 	}
 
 	public boolean isArchived() {
@@ -712,6 +715,9 @@ XXX This allows the possibility that numDataRows != the actual number of data ro
 		result = result * prime + dataColTypes.hashCode();
 		result = result * prime + checkerFlags.hashCode();
 		result = result * prime + userFlags.hashCode();
+		result = result * prime + fileType.hashCode();
+		result = result * prime + featureType.hashCode();
+		result = result * prime + userObservationType.hashCode();
 		return result;
 	}
 
@@ -769,6 +775,12 @@ XXX This allows the possibility that numDataRows != the actual number of data ro
 			return false;
 		if ( ! userFlags.equals(other.userFlags) ) 
 			return false;
+		if ( ! fileType.equals(other.fileType) ) 
+			return false;
+		if ( ! featureType.equals(other.featureType) ) 
+			return false;
+		if ( ! userObservationType.equals(other.userObservationType) ) 
+			return false;
 		return true;
 	}
 
@@ -778,6 +790,9 @@ XXX This allows the possibility that numDataRows != the actual number of data ro
 				",\n    version = " + version +
 				",\n    owner=" + owner + 
 				",\n    recordId=" + recordId + 
+				",\n    fileType=" + fileType + 
+				",\n    featureType=" + featureType + 
+				",\n    userObservationType=" + userObservationType + 
 				",\n    dataCheckStatus=" + dataCheckStatus +
 				",\n    omeTimestamp=" + mdTimestamp + 
 				",\n    addlDocs=" + addlDocs.toString() +
