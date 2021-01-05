@@ -332,7 +332,13 @@ public class ProfileDatasetChecker extends BaseDatasetChecker implements Dataset
             logger.info("No CastID column found for dataset " + stdData.getDatasetName());
             if ( !stdData.hasStationIdColumn()) {
                 logger.warn("No CastID OR StationID found for dataset: " + stdData.getDatasetName());
-                throw new IllegalStateException("No station or cast identifier found.");
+                ADCMessage msg = new ADCMessage();
+                msg.setSeverity(Severity.ERROR);
+                msg.setGeneralComment("missing column");
+                msg.setDetailedComment("The dataset has no profile identifier specified. Profiles cannot be checked.");
+                stdData.addStandardizationMessage(msg);
+                return;
+//                throw new IllegalStateException("No station or cast identifier found.");
             }
 		}
 //		try {
