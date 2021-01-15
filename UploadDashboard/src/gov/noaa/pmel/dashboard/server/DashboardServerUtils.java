@@ -177,7 +177,7 @@ public class DashboardServerUtils {
 	 * Used when merging files of different data types measured for a sample.
 	 */
 	public static final StringDashDataType SAMPLE_ID = new StringDashDataType(DashboardUtils.SAMPLE_ID, 
-			null, IDENTIFIER_CATEGORY, null, null, null, null, null);
+			"sample_id", IDENTIFIER_CATEGORY, null, null, null, null, null);
 
 	public static final DoubleDashDataType LONGITUDE = new DoubleDashDataType(DashboardUtils.LONGITUDE, 
 			"longitude", LOCATION_CATEGORY, "degrees_east", "-540.0", "-180.0", "360.0", "540.0");
