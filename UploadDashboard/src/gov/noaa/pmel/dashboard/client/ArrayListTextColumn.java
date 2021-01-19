@@ -135,6 +135,7 @@ import gov.noaa.pmel.dashboard.shared.QCFlag.Severity;
     		if ( addedTitle ) closeTitle(sb);
             return;
         }
+        
 //		TreeSet<QCFlag> checkerFlags = cruise.getCheckerFlags();
 //		QCFlag woceCell = new QCFlag(null, null, Severity.ERROR, colNum-1, rowIdx);
 //		QCFlag woceRow = new QCFlag(null, null, Severity.ERROR, null, rowIdx);
@@ -206,7 +207,7 @@ import gov.noaa.pmel.dashboard.shared.QCFlag.Severity;
 //			if ( addedTitle ) closeTitle(sb);
 //			return;
 //		}
-		if ( addedTitle ) closeTitle(sb);
+//		if ( addedTitle ) closeTitle(sb);
 		// Render normally
 		super.render(ctx, obj, sb);
 	}
