@@ -11,7 +11,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.TreeSet;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -325,7 +324,7 @@ public class DataColumnSpecsPage extends CompositeWithUsername {
 						if ( actualStart < 0 )
 							actualStart = range.getStart();
 						updateRowData(actualStart, newData);
-						updateScroll(true);
+						updateScroll(true, false);
 						UploadDashboard.showAutoCursor();
 					}
 					@Override
@@ -366,7 +365,7 @@ public class DataColumnSpecsPage extends CompositeWithUsername {
 				int top = event.getClientY();
 				String msg = amsg.getDetailedComment();
 				final PopupMsg pu = new PopupMsg(msg);
-				pu.row = amsg.getRowIndex();
+				pu.row = amsg.getRowNumber();
 				pu.col = amsg.getColNumber();
 				pu.addDomHandler(new DoubleClickHandler() {
 					@Override
@@ -375,7 +374,7 @@ public class DataColumnSpecsPage extends CompositeWithUsername {
 						Integer row = puSrc.row;
 						Integer col = puSrc.col;
 						if ( col != null ) { 
-							setView(row, col);
+							setView(row, col, true);
 						}
 						puSrc.setVisible(false);
 					}
@@ -401,36 +400,57 @@ public class DataColumnSpecsPage extends CompositeWithUsername {
 	Integer scrollToRow = null;
 	Integer scrollToCol = null;
 	
-	private void updateScroll(boolean pageChanged) {
-        int rowAdjustment = pageChanged ? 4 : 0;
-        int colAdjustment = -2;
-        int rowIdx = 0;
-        int colIdx = 0;
-	    try {
-			if ( scrollToRow != null ) {
-				rowIdx = scrollToRow != null ? scrollToRow.intValue() + rowAdjustment : 0;
-				colIdx = scrollToCol != null ? scrollToCol.intValue() : 0;
-                if ( colIdx >= 3 ) {
-                    colIdx += colAdjustment;
+	private void updateScroll(boolean pageChanged, boolean fromClick) {
+        int rowIdx = scrollToRow != null ? scrollToRow.intValue() : 0;
+        int colIdx = scrollToCol != null ? scrollToCol.intValue() : 0;
+        
+        GWT.log("Window:"+Window.getClientHeight()+"x"+Window.getClientWidth());
+        int whackyCorrection = -4;
+        try {
+            int windowWidth = Window.getClientWidth();
+			TableRowElement row = dataGrid.getRowElement(0);
+            if ( row != null ) {
+                int cellWidth = row.getCells().getItem(1).getOffsetWidth(); // 0 is row number
+                int nCells = windowWidth/cellWidth;
+                double dCells = ((double)windowWidth)/cellWidth;
+                double dd = dCells - nCells;
+                if ( dd < .75 ) {
+                    nCells -= 1;
                 }
+                GWT.log("ww:"+windowWidth+", cw:"+cellWidth+", nCells:"+nCells +", dCells:"+dCells);
+                whackyCorrection = -1*nCells;
+            }
+        } catch (Exception ex) {
+            GWT.log("Exception getting nCells:"+ex);
+        }
+        
+        int rowAdjustment = ! fromClick && rowIdx > visibleRows() ? 4 : 0;
+        int colAdjustment = pageChanged || fromClick ? 2: whackyCorrection;
+	    try {
+				rowIdx = rowIdx + rowAdjustment;
+				colIdx = colIdx + colAdjustment;
+				
                 // TODO: Adjust row and column indexes to put row&cell +/- center
                 UploadDashboard.logToConsole("scrollRow:" + scrollToRow + ", scrollCol:"+ scrollToCol);
+                UploadDashboard.logToConsole("rowAdjust:" + rowAdjustment + ", colAdjust:"+ colAdjustment);
                 UploadDashboard.logToConsole("currentPage:"+ gridPager.getPage() + ", start: " + gridPager.getPageStart() + ", size: "+ gridPager.getPageSize());
                 Range range = dataGrid.getVisibleRange();
                 int start = range.getStart();
                 rowIdx = rowIdx - start;
+				rowIdx = Math.min(rowIdx, range.getLength()-1);
+				rowIdx = Math.max(0, rowIdx);
                 UploadDashboard.logToConsole("Range start: "+ range.getStart() + ", length:" + range.getLength());
 				TableRowElement row;
                 row = dataGrid.getRowElement(rowIdx);
                 if ( row != null ) {
                     colIdx = Math.min(colIdx, row.getCells().getLength()-1);
+                    colIdx = Math.max(0, colIdx);
                     UploadDashboard.logToConsole("getRow:col:"+rowIdx + ":"+ colIdx);
     				TableCellElement cell = row.getCells().getItem(colIdx);
     				cell.scrollIntoView();
                 } else {
                     UploadDashboard.logToConsole("Failed to get row " + rowIdx );
                 }
-			}
 	    } catch (Exception ex) {
             UploadDashboard.logToConsole(String.valueOf(ex));
             String msg = "page:"+gridPager.getPage() + ", rowIdx:"+rowIdx + ", showRow:"+ scrollToRow + ", colIdx: " + colIdx + " : " + ex;
@@ -447,7 +467,15 @@ public class DataColumnSpecsPage extends CompositeWithUsername {
 //		selectionModel.setSelected(al, true);
 	}
 	
-	/**
+    /**
+     * @return
+     */
+    private int visibleRows() {
+        // TODO Auto-generated method stub
+        return 10;
+    }
+
+    /**
 	 * Display the cruise data column specifications page for a cruise
 	 * with the latest cruise data column specifications from the server.
 	 * Adds this page to the page history.
@@ -545,11 +573,11 @@ public class DataColumnSpecsPage extends CompositeWithUsername {
 		}
 		else {
 			UploadDashboard.updateCurrentPage(singleton);
-			singleton.setView(rowNumber, columnNumber);
+			singleton.setView(rowNumber, columnNumber, false);
 		}
 	}
 	
-	void setView(Integer rowNumber, Integer columnNumber) {
+	void setView(Integer rowNumber, Integer columnNumber, boolean fromClick) {
 		int showColumnIdx = columnNumber == null || columnNumber.equals(DashboardUtils.INT_MISSING_VALUE) ? 
 								0 : columnNumber.intValue() - 1;
 		int showRowIdx = rowNumber == null || rowNumber.equals(DashboardUtils.INT_MISSING_VALUE) ? 
@@ -576,7 +604,7 @@ public class DataColumnSpecsPage extends CompositeWithUsername {
 		} 
 		else {
     		try {
-    			updateScroll(false);
+    			updateScroll(false, fromClick);
     		} catch (Exception ex) {
                 UploadDashboard.logToConsole(String.valueOf(ex));
                 String msg = "page:"+gridPager.getPage() + ", rowIdx:"+showRowIdx + ", showRow:"+ pageRow + ", colIdx: " + showColumnIdx + " : " + ex;
