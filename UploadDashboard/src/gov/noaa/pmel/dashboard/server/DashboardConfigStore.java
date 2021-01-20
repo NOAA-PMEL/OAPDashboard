@@ -36,6 +36,7 @@ import gov.noaa.pmel.dashboard.actions.DatasetSubmitter;
 import gov.noaa.pmel.dashboard.actions.checker.MinimalDatasetChecker;
 import gov.noaa.pmel.dashboard.actions.checker.OpaqueDatasetChecker;
 import gov.noaa.pmel.dashboard.actions.checker.ProfileDatasetChecker;
+import gov.noaa.pmel.dashboard.actions.checker.TimeseriesProfileDatasetChecker;
 import gov.noaa.pmel.dashboard.actions.checker.TrajectoryDatasetChecker;
 import gov.noaa.pmel.dashboard.datatype.DashDataType;
 import gov.noaa.pmel.dashboard.datatype.KnownDataTypes;
@@ -145,9 +146,10 @@ public class DashboardConfigStore {
 	private ArchiveFilesBundler archiveFilesBundler;
 	private DsgNcFileHandler dsgNcFileHandler;
 	private FerretConfig ferretConf;
-	private OpaqueDatasetChecker opaqueDatasetChecker;
-	private ProfileDatasetChecker profileDatasetChecker;
-	private TrajectoryDatasetChecker trajectoryDatasetChecker;
+	private OpaqueDatasetChecker opaqueChecker;
+	private ProfileDatasetChecker profileChecker;
+	private TrajectoryDatasetChecker trajectoryChecker;
+    private TimeseriesProfileDatasetChecker timeseriesProfileChecker;
 	private MinimalDatasetChecker minimalDatasetChecker;
 	private PreviewPlotsHandler plotsHandler;
 	private DatasetSubmitter datasetSubmitter;
@@ -625,9 +627,10 @@ public class DashboardConfigStore {
 		}
 
 		// SanityChecker initialization from this same properties file 
-		opaqueDatasetChecker = new OpaqueDatasetChecker();
-		profileDatasetChecker = new ProfileDatasetChecker(knownUserDataTypes, checkerMsgHandler);
-		trajectoryDatasetChecker = new TrajectoryDatasetChecker(knownUserDataTypes, checkerMsgHandler);
+		opaqueChecker = new OpaqueDatasetChecker();
+		profileChecker = new ProfileDatasetChecker(knownUserDataTypes, checkerMsgHandler);
+		trajectoryChecker = new TrajectoryDatasetChecker(knownUserDataTypes, checkerMsgHandler);
+        timeseriesProfileChecker = new TimeseriesProfileDatasetChecker(knownUserDataTypes, checkerMsgHandler);
 		minimalDatasetChecker = new MinimalDatasetChecker(knownUserDataTypes, checkerMsgHandler);
 
 		String previewDirname = getPreviewDirName(baseDir, serverAppName);
@@ -947,13 +950,15 @@ public class DashboardConfigStore {
 		DatasetChecker datasetChecker;
         switch (featureType) {
             case PROFILE:
-                datasetChecker = profileDatasetChecker;
+                datasetChecker = profileChecker;
                 break;
             case TRAJECTORY:
-                datasetChecker = trajectoryDatasetChecker;
+                datasetChecker = trajectoryChecker;
+                break;
+            case TIMESERIES_PROFILE:
+                datasetChecker = timeseriesProfileChecker;
                 break;
             case TIMESERIES:
-            case TIMESERIES_PROFILE:
             case TRAJECTORY_PROFILE:
             case OTHER:
             default:
