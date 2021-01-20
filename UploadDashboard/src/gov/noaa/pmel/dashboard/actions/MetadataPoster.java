@@ -122,6 +122,10 @@ public class MetadataPoster {
         String url;
         if ( StringUtils.emptyOrNull(meUrlProp)) {
             url = requestUrl.substring(0, requestUrl.indexOf("Dashboard"));
+            if ( url.contains("www.pmel.noaa.gov") && // XXX TODO: Configurable
+                 ! url.toLowerCase().startsWith("https")) {
+                url = "https" + url.substring(url.indexOf(':'));
+            }
             url = url + STANDARD_POST_POINT;
         } else if ( meUrlProp.toLowerCase().startsWith("http")) {
             url = meUrlProp;
@@ -154,7 +158,7 @@ public class MetadataPoster {
             notifyUrl = requestUrl.substring(0, requestUrl.lastIndexOf("OAPUploadDashboard"));
             notifyUrl = notifyUrl + "DashboardUpdateService/notify/"+datasetId;
         }
-        logger.debug("nofity url: " + notifyUrl);
+        System.out.println("nofity url: " + notifyUrl);
         return notifyUrl;
     }
     private static String revise(String url, String from, String to) {
@@ -179,6 +183,10 @@ public class MetadataPoster {
         if ( StringUtils.emptyOrNull(meUrlProp)) {
             url = requestUrl.substring(0, requestUrl.indexOf("Dashboard"));
             url = url + STANDARD_EDITOR_PAGE;
+            if ( url.contains("www.pmel.noaa.gov") && // XXX TODO: Configurable
+                 ! url.toLowerCase().startsWith("https")) {
+                url = "https" + url.substring(url.indexOf(':'));
+            }
         } else if ( meUrlProp.toLowerCase().startsWith("http")) {
             url = meUrlProp;
         } else {
