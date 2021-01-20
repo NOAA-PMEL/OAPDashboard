@@ -77,6 +77,13 @@ public class LinearConverter extends ValueConverter<Double> {
         SLOPES_MAP.put(key, 1000.0);
 		INTERCEPTS_MAP.put(key, 0.0);
 		// TODO: add more linear unit conversions
+        
+		key = "from \"mg/m3\" to \"ug/L\"";
+        SLOPES_MAP.put(key, 1.0);
+		INTERCEPTS_MAP.put(key, 0.0);
+		key = "from \"ug/L\" to \"mg/m3\"";
+        SLOPES_MAP.put(key, 1.0);
+		INTERCEPTS_MAP.put(key, 0.0);
 	}
 
 	Double slope;
