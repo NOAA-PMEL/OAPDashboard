@@ -36,6 +36,7 @@ public class ApplicationHeaderTemplate extends Composite {
 	public static final String LOGOUT_TEXT = "Logout";
 	
     @UiField Label titleLabel;
+    @UiField Label versionLabel;
     @UiField FlowPanel headerRightPanel;
     @UiField Label userInfoLabel;
     @UiField MenuBar menuBar;
