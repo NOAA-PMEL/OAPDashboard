@@ -169,7 +169,7 @@ public class OADSMetadata {
 		                         .endDate(new Date((long)(1000*gtExtents.timeExtents.maxValue)))
 		                         .build());
 		                                    
-        if ( ApplicationConfiguration.getProperty("oap.metadata.extract_variables", false) && mdDoc.getVariables().isEmpty()) {
+        if ( ApplicationConfiguration.getProperty("oap.metadata.extract_variables", true) && mdDoc.getVariables().isEmpty()) {
             
             // XXX TODO: This is just a mess.
             // XXX What to do with unknowns and other/ignored, 
@@ -214,7 +214,7 @@ public class OADSMetadata {
                 if ( colType.getVarName().equals(DashboardUtils.UNKNOWN_VARNAME) ||
                      colType.getVarName().equals(DashboardUtils.OTHER_VARNAME)) {
                     stdName = userColName;
-                    fullName = userColName;
+                    fullName = null;
                 }
     			if ( ! ( exclude(userColName, colType) ||
 //                         existgVars.contains(stdName) || 
