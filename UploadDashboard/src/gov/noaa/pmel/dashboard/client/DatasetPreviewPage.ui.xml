@@ -56,8 +56,8 @@
         <g:south size="5.5">
             <g:FlowPanel>
     			<g:FlowPanel addStyleNames="{style.horizontalbuttonpanel}">
-    				<g:Button addStyleNames="{style.horizontalbutton}" ui:field="refreshButton" />
     				<g:Button addStyleNames="{style.horizontalbutton}" ui:field="doneButton" />
+    				<g:Button addStyleNames="{style.horizontalbutton}" ui:field="refreshButton" />
     			</g:FlowPanel>
                 <oap:ApplicationFooter ui:field="footer"/>
             </g:FlowPanel>
