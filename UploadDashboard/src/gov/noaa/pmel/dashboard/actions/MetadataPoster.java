@@ -122,7 +122,7 @@ public class MetadataPoster {
         String url;
         if ( StringUtils.emptyOrNull(meUrlProp)) {
             url = requestUrl.substring(0, requestUrl.indexOf("Dashboard"));
-            if ( url.contains("www.pmel.noaa.gov") && // XXX TODO: Configurable
+            if ( isPublicUrl(url) && 
                  ! url.toLowerCase().startsWith("https")) {
                 url = "https" + url.substring(url.indexOf(':'));
             }
@@ -146,10 +146,10 @@ public class MetadataPoster {
         System.out.println("get notify URL request: " + requestUrl);
         String notifyUrl = revise(requestUrl, "OAPUploadDashboard", "DashboardUpdateService/notify/"+datasetId);
         logger.debug("revise url: " + notifyUrl);
-        if ( requestUrl.indexOf("www.pmel") > 0 ) {
+        if ( isPublicUrl(requestUrl)) { 
             notifyUrl = revise(requestUrl, "OAPUploadDashboard", "DashboardUpdateService/notify/"+datasetId);
             // requests through the F5/Kemp come as http:
-            notifyUrl = "https://www.pmel.noaa.gov" + 
+            notifyUrl = "https://" + getPublicHost() +
                             requestUrl.substring(requestUrl.indexOf("/sdig"),
                                                  requestUrl.indexOf("OAPUploadDashboard"));
             logger.debug("https url: " + notifyUrl);
@@ -161,6 +161,22 @@ public class MetadataPoster {
         System.out.println("nofity url: " + notifyUrl);
         return notifyUrl;
     }
+    /**
+     * @param requestUrl
+     * @return
+     */
+    private static boolean isPublicUrl(String requestUrl) {
+        return requestUrl.contains(getPublicHost());
+    }
+    private static String publicHost = null;
+    private static final String DEFAULT_PUBLIC_HOST = "data.pmel.noaa.gov";
+    private static String getPublicHost() {
+        if ( publicHost == null ) {
+            publicHost = ApplicationConfiguration.getProperty("oap.url.host", DEFAULT_PUBLIC_HOST);
+        }
+        return publicHost;
+    }
+
     private static String revise(String url, String from, String to) {
         logger.debug("revise url: " + url);
         int idx1 = url.indexOf(":") + 3;
@@ -183,7 +199,7 @@ public class MetadataPoster {
         if ( StringUtils.emptyOrNull(meUrlProp)) {
             url = requestUrl.substring(0, requestUrl.indexOf("Dashboard"));
             url = url + STANDARD_EDITOR_PAGE;
-            if ( url.contains("www.pmel.noaa.gov") && // XXX TODO: Configurable
+            if ( isPublicUrl(url) &&  
                  ! url.toLowerCase().startsWith("https")) {
                 url = "https" + url.substring(url.indexOf(':'));
             }
