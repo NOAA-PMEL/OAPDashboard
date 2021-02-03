@@ -18,9 +18,9 @@
                         <g:Label addStyleNames="{style.titlereset}" />
                         <!--  oa:MyMenuBar addStyleNames="{style.headerMenuBar}" ui:field="menuBar" >-->
                         <g:MenuBar addStyleNames="{style.headerMenuBar}" ui:field="menuBar" >
-                            <g:MenuItem addStyleNames="{style.normalText}" ui:field="sendFeedbackBtn" >Send Feedback</g:MenuItem>
+                            <g:MenuItem addStyleNames="{style.headerMenuItem},{style.normalText}" ui:field="sendFeedbackBtn" >Send Feedback</g:MenuItem>
                             <g:MenuItemSeparator/>
-                            <g:MenuItem addStyleNames="{style.normalText}" >Preferences
+                            <g:MenuItem addStyleNames="{style.headerMenuItem},{style.normalText}" >Preferences
                                 <!-- <g:MenuBar vertical="true" ui:field="changePasswordMenuBar"> -->
                                 <oa:MyMenuBar ui:field="changePasswordMenuBar"> <!-- vertical="true"  -->
                                     <!-- <g:MenuItem ui:field="userInfoBtn">User Profile</g:MenuItem> -->
@@ -28,9 +28,9 @@
                                 </oa:MyMenuBar>
                             </g:MenuItem>
                             <g:MenuItemSeparator/>
-                            <g:MenuItem addStyleNames="{style.headerMenuSeparator}"  ui:field="logoutSeparator" > </g:MenuItem>
+                            <g:MenuItem addStyleNames="{style.headerMenuItem},{style.headerMenuSeparator}"  ui:field="logoutSeparator" >&nbsp;</g:MenuItem>
                             <g:MenuItemSeparator/>
-                            <g:MenuItem addStyleNames="{style.normalText}" ui:field="logoutBtn" >Logout</g:MenuItem>
+                            <g:MenuItem addStyleNames="{style.headerMenuItem},{style.normalText}" ui:field="logoutBtn" >Logout</g:MenuItem>
                         </g:MenuBar>
                     </g:FlowPanel>
                     </g:FlowPanel>

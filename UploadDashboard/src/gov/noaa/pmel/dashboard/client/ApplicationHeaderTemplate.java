@@ -67,7 +67,7 @@ public class ApplicationHeaderTemplate extends Composite {
                 doLogout();
             }
         });
-        logoutSeparator.setEnabled(false);
+        logoutSeparator.setEnabled(true);
         changePasswordBtn.setScheduledCommand(new Scheduler.ScheduledCommand() {
             @Override
             public void execute() {
