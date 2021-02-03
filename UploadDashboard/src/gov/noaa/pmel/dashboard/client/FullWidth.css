@@ -532,11 +532,15 @@ hr .hline {
     font-weight: normal !important;
 }
 .headerMenuBar {
+    border-radius: 5px;
     /* display: inline; 
     margin-right: .3em;*/
 }
+.headerMenuItem {
+	padding: 1px 8px !important;
+}
 .headerMenuSeparator {
-    margin: 0em 1em;
+    margin: 0em .5em;
     border-width: 0px 1px;
     border-color: rgb(204, 204, 204);
 }
