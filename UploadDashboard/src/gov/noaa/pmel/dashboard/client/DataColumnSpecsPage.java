@@ -397,14 +397,21 @@ public class DataColumnSpecsPage extends CompositeWithUsername {
 //		}, DoubleClickEvent.getType());
 	}
 
+    // These are calculated in setView() from the dataset row and column to show.
 	Integer scrollToRow = null;
 	Integer scrollToCol = null;
 	
+    // A whole lot of whackiness here and in setView due to both inconsistent behavior
+	// of the cell.scrollIntoView() method, and the lack of a scrollToCenter() behavior.
 	private void updateScroll(boolean pageChanged, boolean fromClick) {
         int rowIdx = scrollToRow != null ? scrollToRow.intValue() : 0;
         int colIdx = scrollToCol != null ? scrollToCol.intValue() : 0;
         
         GWT.log("Window:"+Window.getClientHeight()+"x"+Window.getClientWidth());
+        // Normally, scrollIntoView() puts the cell at the right edge of the display window.
+        // However, under certain circumstances, it will put the cell at the left edge
+        // of the display window.  In order to approximate consistent behavior, we have to
+        // adjust which cell to select to scrollIntoView().
         int whackyCorrection = -4;
         try {
             int windowWidth = Window.getClientWidth();
@@ -424,33 +431,32 @@ public class DataColumnSpecsPage extends CompositeWithUsername {
             GWT.log("Exception getting nCells:"+ex);
         }
         
-        int rowAdjustment = ! fromClick && rowIdx > visibleRows() ? 4 : 0;
-        int colAdjustment = pageChanged || fromClick ? 2: whackyCorrection;
 	    try {
-				rowIdx = rowIdx + rowAdjustment;
-				colIdx = colIdx + colAdjustment;
-				
-                // TODO: Adjust row and column indexes to put row&cell +/- center
-                UploadDashboard.logToConsole("scrollRow:" + scrollToRow + ", scrollCol:"+ scrollToCol);
-                UploadDashboard.logToConsole("rowAdjust:" + rowAdjustment + ", colAdjust:"+ colAdjustment);
-                UploadDashboard.logToConsole("currentPage:"+ gridPager.getPage() + ", start: " + gridPager.getPageStart() + ", size: "+ gridPager.getPageSize());
-                Range range = dataGrid.getVisibleRange();
-                int start = range.getStart();
-                rowIdx = rowIdx - start;
-				rowIdx = Math.min(rowIdx, range.getLength()-1);
-				rowIdx = Math.max(0, rowIdx);
-                UploadDashboard.logToConsole("Range start: "+ range.getStart() + ", length:" + range.getLength());
-				TableRowElement row;
-                row = dataGrid.getRowElement(rowIdx);
-                if ( row != null ) {
-                    colIdx = Math.min(colIdx, row.getCells().getLength()-1);
-                    colIdx = Math.max(0, colIdx);
-                    UploadDashboard.logToConsole("getRow:col:"+rowIdx + ":"+ colIdx);
-    				TableCellElement cell = row.getCells().getItem(colIdx);
-    				cell.scrollIntoView();
-                } else {
-                    UploadDashboard.logToConsole("Failed to get row " + rowIdx );
-                }
+            // adjustments to try to bring the row and cell away from the very edge of the display
+            int rowAdjustment = ! fromClick && rowIdx > visibleRows() ? 4 : 0;
+            int colAdjustment = pageChanged || fromClick ? 2: whackyCorrection;
+			rowIdx = rowIdx + rowAdjustment;
+			colIdx = colIdx + colAdjustment;
+                
+            UploadDashboard.logToConsole("scrollRow:" + scrollToRow + ", scrollCol:"+ scrollToCol);
+            UploadDashboard.logToConsole("rowAdjust:" + rowAdjustment + ", colAdjust:"+ colAdjustment);
+            UploadDashboard.logToConsole("currentPage:"+ gridPager.getPage() + ", start: " + gridPager.getPageStart() + ", size: "+ gridPager.getPageSize());
+			
+            Range range = dataGrid.getVisibleRange();
+			rowIdx = Math.min(rowIdx, range.getLength()-1);
+			rowIdx = Math.max(0, rowIdx);
+            UploadDashboard.logToConsole("Range start: "+ range.getStart() + ", length:" + range.getLength());
+			TableRowElement row;
+            row = dataGrid.getRowElement(rowIdx);
+            if ( row != null ) {
+                colIdx = Math.min(colIdx, row.getCells().getLength()-1);
+                colIdx = Math.max(0, colIdx);
+                UploadDashboard.logToConsole("scroll to row:col:"+rowIdx + ":"+ colIdx);
+				TableCellElement cell = row.getCells().getItem(colIdx);
+				cell.scrollIntoView();
+            } else {
+                UploadDashboard.logToConsole("Failed to get row " + rowIdx );
+            }
 	    } catch (Exception ex) {
             UploadDashboard.logToConsole(String.valueOf(ex));
             String msg = "page:"+gridPager.getPage() + ", rowIdx:"+rowIdx + ", showRow:"+ scrollToRow + ", colIdx: " + colIdx + " : " + ex;
@@ -580,22 +586,21 @@ public class DataColumnSpecsPage extends CompositeWithUsername {
 	void setView(Integer rowNumber, Integer columnNumber, boolean fromClick) {
 		int showColumnIdx = columnNumber == null || columnNumber.equals(DashboardUtils.INT_MISSING_VALUE) ? 
 								0 : columnNumber.intValue() - 1;
-		int showRowIdx = rowNumber == null || rowNumber.equals(DashboardUtils.INT_MISSING_VALUE) ? 
-								0 : rowNumber.intValue() - 1;
-        UploadDashboard.logToConsole("colIdx:"+showColumnIdx +", rowIdx:"+ showRowIdx);
+		int showRowNum = rowNumber == null || rowNumber.equals(DashboardUtils.INT_MISSING_VALUE) ? 
+								0 : rowNumber.intValue(); //  - 1;
+        UploadDashboard.logToConsole("colIdx:"+showColumnIdx +", rowNum:"+ showRowNum);
 		int nPages = gridPager.getPageCount();
 		int pageSize = gridPager.getPageSize();
-		int showPage = showRowIdx / pageSize;
-		int pageRow = showRowIdx > pageSize ? showRowIdx % pageSize : showRowIdx;
+		int showPage = showRowNum / pageSize;
+		int pageRowIdx = showRowNum >= pageSize ? showRowNum % pageSize : showRowNum -1;
 		int pageMaxIdx = pageSize - 1;
 		if ( showPage == nPages - 1) {
 			int totalRows = dataGrid.getRowCount();
 			pageMaxIdx = ( totalRows % pageSize ) - 1;
+    		pageRowIdx = Math.min(pageRowIdx, pageMaxIdx);
 		}
-		pageRow = Math.min(pageRow, pageMaxIdx);
-        pageRow = pageRow + ( pageSize * showPage );
-//        int nCols = dataGrid.getRowElement(0).getCells().getLength();
-		scrollToRow = new Integer(pageRow);
+		pageRowIdx = Math.max(pageRowIdx, 0);
+		scrollToRow = new Integer(pageRowIdx);
 		scrollToCol = new Integer(showColumnIdx);
 		int cPage = gridPager.getPage();
 		if ( cPage != showPage ) {
@@ -607,7 +612,7 @@ public class DataColumnSpecsPage extends CompositeWithUsername {
     			updateScroll(false, fromClick);
     		} catch (Exception ex) {
                 UploadDashboard.logToConsole(String.valueOf(ex));
-                String msg = "page:"+gridPager.getPage() + ", rowIdx:"+showRowIdx + ", showRow:"+ pageRow + ", colIdx: " + showColumnIdx + " : " + ex;
+                String msg = "page:"+gridPager.getPage() + ", rowNum:"+showRowNum + ", pageRowIdx:"+ pageRowIdx + ", colIdx: " + showColumnIdx + " : " + ex;
                 UploadDashboard.logToConsole(msg);
     		}
 		}
