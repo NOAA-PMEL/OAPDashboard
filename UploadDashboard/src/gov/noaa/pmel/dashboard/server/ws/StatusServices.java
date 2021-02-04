@@ -3,7 +3,6 @@
  */
 package gov.noaa.pmel.dashboard.server.ws;
 
-import java.io.File;
 import java.util.List;
 
 import javax.servlet.ServletContext;
@@ -27,11 +26,11 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import gov.noaa.pmel.dashboard.server.Archive;
-import gov.noaa.pmel.dashboard.server.db.dao.DaoFactory;
-import gov.noaa.pmel.dashboard.server.db.dao.SubmissionsDao;
 import gov.noaa.pmel.dashboard.server.submission.status.StatusState;
+import gov.noaa.pmel.dashboard.server.submission.status.StatusUpdater;
 import gov.noaa.pmel.dashboard.server.submission.status.SubmissionRecord;
 import gov.noaa.pmel.dashboard.server.util.Notifications;
+import gov.noaa.pmel.dashboard.shared.NotFoundException;
 import gov.noaa.pmel.tws.util.StringUtils;
 
 /**
@@ -203,22 +202,13 @@ public class StatusServices extends ResourceBase {
             String notificationTitle = "Status update for " + p_sid;
             String logMessage = notificationTitle + " from " + getRemoteAddress(httpRequest) + " to " + sstate + ":" + message;
             logger.info(logMessage);
-            SubmissionsDao sdao = DaoFactory.SubmissionsDao();
-            if ( Archive.isRecordKey(p_sid)) {
-                srec = sdao.getLatestByKey(p_sid);
-            } else {
-                srec = sdao.getLatestForDataset(p_sid);
-            }
-            if ( srec == null ) {
-                response = Response.status(HttpServletResponse.SC_NOT_FOUND)
-                            .entity("No submission record found for id " + p_sid).build();
-                notificationTitle = "FAILED: " + notificationTitle;
-                logMessage = "No record found.\n" + logMessage;
-            } else {
-                Archive.updateStatus(srec, sstate, message);
-                response = Response.ok("Status updated for " + p_sid).build();
-            }
-            Notifications.AdminEmail(notificationTitle, logMessage);
+            
+            srec = StatusUpdater.updateStatus(p_sid, sstate, message);
+            response = Response.ok("Status updated for " + p_sid).build();
+            
+        } catch (NotFoundException nfex) {
+            response = Response.status(HttpServletResponse.SC_NOT_FOUND)
+                        .entity("No submission record found for id " + p_sid).build();
         } catch (Exception ex) {
             logger.warn(ex, ex);
             Notifications.AdminEmail("Status update FAILED!", ex.toString());

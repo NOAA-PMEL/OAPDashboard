@@ -67,7 +67,8 @@ public class SubmissionRecord {
     
     public StatusRecord status() {
         return _statusHistory != null && ! _statusHistory.isEmpty() ?
-                _statusHistory.get(0) : null;
+                    _statusHistory.get(0) : 
+                    StatusRecord.NOT_SUBMITTED;
     }
     
     public void updateStatus(StatusRecord newStatus) {
@@ -84,7 +85,7 @@ public class SubmissionRecord {
         }
         return _statusHistory;
     }
-
+    
     public SubmissionRecord newVersion(String submitMsg) {
         _version = new Integer(_version.intValue()+1);
         _statusHistory = new ArrayList<>(); // builder creates unmodifiable list.

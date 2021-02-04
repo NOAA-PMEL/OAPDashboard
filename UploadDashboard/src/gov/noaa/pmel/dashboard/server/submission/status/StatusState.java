@@ -9,6 +9,7 @@ package gov.noaa.pmel.dashboard.server.submission.status;
  * ###### NOTE: This needs to be kept in sync with DasboardClient/g.n.p.d.client.status.StatusState ######
  */
 public enum StatusState {
+    NOT_SUBMITTED("Not submitted"),
     INITIAL("Initiated"),
     STAGED("Staged for delivery"),
     SUBMITTED("Submitted to archive"),

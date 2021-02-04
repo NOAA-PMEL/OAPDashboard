@@ -28,6 +28,12 @@ import lombok.Setter;
 @Builder(toBuilder=true)
 public class StatusRecord {
 
+    public static StatusRecord NOT_SUBMITTED = 
+            StatusRecord.builder().status(StatusState.NOT_SUBMITTED)
+                                  .submissionId(new Long(-1))
+                                  .message("This dataset has not been submitted.")
+                                  .build();
+    
     private transient Long _dbId;
     
     @NonNull
