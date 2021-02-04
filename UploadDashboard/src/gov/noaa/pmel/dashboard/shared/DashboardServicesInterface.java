@@ -398,4 +398,7 @@ public interface DashboardServicesInterface extends RemoteService {
 	 */
 	DashboardDatasetData saveDataColumnSpecs(String pageUsername, DashboardDataset newSpecs) 
 					throws IllegalArgumentException;
+    
+	void updateDataset(String pageUsername, DashboardDataset update) 
+					throws IllegalArgumentException;
 }
