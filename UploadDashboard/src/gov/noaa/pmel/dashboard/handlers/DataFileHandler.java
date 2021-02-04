@@ -774,7 +774,8 @@ public class DataFileHandler extends VersionedFileHandler {
      * @return
      */
     private static boolean isEndTag(String[] record) {
-        return ( record[0].toUpperCase().contains("END"));
+        return record[0].toUpperCase().contains("END") ||
+               record[0].toUpperCase().contains("EOF");
     }
 
     /**
