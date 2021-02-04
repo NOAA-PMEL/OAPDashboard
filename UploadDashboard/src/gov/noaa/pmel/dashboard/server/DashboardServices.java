@@ -487,6 +487,28 @@ public class DashboardServices extends RemoteServiceServlet implements Dashboard
 	}
 
 	@Override
+	public void updateDataset(String pageUsername, DashboardDataset update)
+			throws IllegalArgumentException {
+		// Get the dashboard data store and current username, and validate that username
+		if ( ! validateRequest(pageUsername) ) 
+			throw new IllegalArgumentException("Invalid user request");
+        
+        DataFileHandler dfh = configStore.getDataFileHandler();
+		// Retrieve the current info
+		DashboardDataset dataset = dfh.getDatasetFromInfoFile(update.getRecordId());
+		if ( ! dataset.isEditable() )
+			throw new IllegalArgumentException(update.getRecordId() + 
+					" has been submitted for QC; data column types cannot be modified.");
+        try {
+            dfh.saveDatasetInfoToFile(update, "user dataset update for " + update.getRecordId() +
+                                      " by " + pageUsername);
+        } catch (Exception ex) {
+            logger.warn("Exception updating dataset " + update.getRecordId(), ex);
+            throw new IllegalArgumentException("Service Error updating dataset information.");
+        }
+	}
+
+	@Override
 	public DashboardDatasetData saveDataColumnSpecs(String pageUsername, DashboardDataset newSpecs)
 			throws IllegalArgumentException {
 		// Get the dashboard data store and current username, and validate that username
@@ -818,15 +840,6 @@ public class DashboardServices extends RemoteServiceServlet implements Dashboard
 		if ( ! plotsDir.exists()) { 
 			return true; 
 		}
-		File[] plots = plotsDir.listFiles(new FilenameFilter() {
-			@Override
-			public boolean accept(File dir, String name) {
-				return name.startsWith(datasetId);
-			}
-		});
-		if ( plots == null || plots.length < 10 ) { 
-			return true; 
-		}
 		long plotsTime = plotsDir.lastModified();
 		DataFileHandler dfh = configStore.getDataFileHandler();
 		File dataFile = dfh.datasetDataFile(datasetId);
@@ -843,7 +856,24 @@ public class DashboardServices extends RemoteServiceServlet implements Dashboard
 		return false;
 	}
 
-	@Override
+    private static final String PREVIEW_PLOT_FILE_SUFFIX = ".png";
+	/**
+     * @param plotsDir
+     * @return
+     */
+    private List<File> getAllPlots(File plotsDir) {
+        List<File>allPlots = new ArrayList<>();
+        for (File file : plotsDir.listFiles()) {
+            if (file.isDirectory()) {
+                allPlots.addAll(getAllPlots(file));
+            } else if ( file.getName().toLowerCase().endsWith(PREVIEW_PLOT_FILE_SUFFIX)) {
+                allPlots.add(file);
+            }
+        }
+        return allPlots;
+    }
+
+    @Override
 	public void submitDatasetsForQC(String pageUsername, HashSet<String> idsSet, String archiveStatus, 
 			String timestamp, boolean repeatSend) throws IllegalArgumentException {
         logger.warn(pageUsername + "calling submitForQC");

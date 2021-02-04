@@ -249,7 +249,6 @@ public interface DashboardServicesInterfaceAsync {
 	 * 		if the dataset does not exist, or if there are problems 
 	 * 		obtaining or evaluating the data for the dataset
 	 */
-    	
 	void saveDataColumnSpecs(String username, DashboardDataset newSpecs, 
 			AsyncCallback<DashboardDatasetData> callback);
 
@@ -385,4 +384,6 @@ public interface DashboardServicesInterfaceAsync {
 	 */
 	void suspendDatasets(String username, Set<String> datasetIds,String localTimestamp, AsyncCallback<Void> callback);
 
+	void updateDataset(String username, DashboardDataset update, 
+			AsyncCallback<Void> callback);
 }
