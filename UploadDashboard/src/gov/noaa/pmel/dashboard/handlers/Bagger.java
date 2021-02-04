@@ -181,9 +181,9 @@ public class Bagger implements ArchiveBundler {
                 }
             })) 
         {
-           if (mfile.getName().startsWith("extracted_")) { continue; } // Ignore auto extracted metadata file
-           if (mfile.getName().equals(DatasetSubmitter.LONLAT_FILE_NAME) // XXX TODO: Maybe we skip the whole "supplemental" files distinction
-               || mfile.getAbsoluteFile().equals(metaFile.getAbsoluteFile())) {
+           if (mfile.getName().equals(DatasetSubmitter.LONLAT_FILE_NAME)) { // XXX TODO: Maybe we skip the whole "supplemental" files distinction
+               writeFileTo(mfile, meta); 
+           } else if (mfile.getAbsoluteFile().equals(metaFile.getAbsoluteFile())) {
                writeFileTo(mfile, meta); 
                if ( ApplicationConfiguration.getProperty("oap.archive.submit_ocads", false)) {
                    String ocadsFileName = mfile.getName().replace("OADS", "OCADS");
