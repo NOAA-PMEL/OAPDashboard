@@ -590,6 +590,7 @@ public class StdDataArray {
 		GregorianCalendar cal = new GregorianCalendar(TimeZone.getTimeZone("UTC"));
 		cal.setLenient(false);
 		Double[] sampleTimes = new Double[numSamples];
+        boolean hasErrorMsg = false;
 
 		if ( isUsableIndex(yearIndex) && isUsableIndex(monthOfYearIndex) && 
 			 isUsableIndex(dayOfMonthIndex) && isUsableIndex(hourOfDayIndex) && 
@@ -620,8 +621,25 @@ public class StdDataArray {
 					cal.set(year, GregorianCalendar.JANUARY+month-1, day, hour, min, sec);
 					cal.set(GregorianCalendar.MILLISECOND, millisec);
 					sampleTimes[j] = Double.valueOf( cal.getTimeInMillis() / 1000.0 );
+                    hasErrorMsg = false;
 				} catch ( Exception ex ) {
 					sampleTimes[j] = null;
+                    if ( !hasErrorMsg ) {
+                        StackTraceElement[] stack = ex.getStackTrace();
+                        StackTraceElement frame = stack != null && stack.length > 0 ? stack[0] : null;
+                        String className = frame != null ? frame.getClassName() : "N/A";
+                        String line = frame != null ? String.valueOf(frame.getLineNumber()) : "N/A";
+                        logger.info("Error parsing dataset " + getDatasetId(j) + " timestamp at row " + 
+                                    j + ": " + ex + " in " + className + " @ " + line);
+                        ADCMessage msg = new ADCMessage();
+                        msg.setSeverity(Severity.CRITICAL);
+                        msg.setRowIndex(j);
+                        String comment = "Error parsing date and time ";
+                        msg.setGeneralComment(comment);
+                        msg.setDetailedComment(comment);
+                        ((StdUserDataArray)this).getStandardizationMessages().add(msg);
+                        hasErrorMsg = true;
+                    }
 				}
 			}
 		}
@@ -647,8 +665,25 @@ public class StdDataArray {
 					cal.set(year, GregorianCalendar.JANUARY+month-1, day, hour, min, sec);
 					cal.set(GregorianCalendar.MILLISECOND, millisec);
 					sampleTimes[j] = Double.valueOf( cal.getTimeInMillis() / 1000.0 );
+                    hasErrorMsg = false;
 				} catch ( Exception ex ) {
 					sampleTimes[j] = null;
+                    if ( !hasErrorMsg ) {
+                        StackTraceElement[] stack = ex.getStackTrace();
+                        StackTraceElement frame = stack != null && stack.length > 0 ? stack[0] : null;
+                        String className = frame != null ? frame.getClassName() : "N/A";
+                        String line = frame != null ? String.valueOf(frame.getLineNumber()) : "N/A";
+                        logger.info("Error parsing dataset " + getDatasetId(j) + " timestamp at row " + 
+                                    j + ": " + ex + " in " + className + " @ " + line);
+                        ADCMessage msg = new ADCMessage();
+                        msg.setSeverity(Severity.CRITICAL);
+                        msg.setRowIndex(j);
+                        String comment = "Error parsing date and time ";
+                        msg.setGeneralComment(comment);
+                        msg.setDetailedComment(comment);
+                        ((StdUserDataArray)this).getStandardizationMessages().add(msg);
+                        hasErrorMsg = true;
+                    }
 				}
 			}
 		}
@@ -683,8 +718,25 @@ public class StdDataArray {
 					cal.set(GregorianCalendar.SECOND, sec);
 					cal.set(GregorianCalendar.MILLISECOND, millisec);
 					sampleTimes[j] = Double.valueOf( cal.getTimeInMillis() / 1000.0 );
+                    hasErrorMsg = false;
 				} catch ( Exception ex ) {
 					sampleTimes[j] = null;
+                    if ( !hasErrorMsg ) {
+                        StackTraceElement[] stack = ex.getStackTrace();
+                        StackTraceElement frame = stack != null && stack.length > 0 ? stack[0] : null;
+                        String className = frame != null ? frame.getClassName() : "N/A";
+                        String line = frame != null ? String.valueOf(frame.getLineNumber()) : "N/A";
+                        logger.info("Error parsing dataset " + getDatasetId(j) + " timestamp at row " + 
+                                    j + ": " + ex + " in " + className + " @ " + line);
+                        ADCMessage msg = new ADCMessage();
+                        msg.setSeverity(Severity.CRITICAL);
+                        msg.setRowIndex(j);
+                        String comment = "Error parsing date and time ";
+                        msg.setGeneralComment(comment);
+                        msg.setDetailedComment(comment);
+                        ((StdUserDataArray)this).getStandardizationMessages().add(msg);
+                        hasErrorMsg = true;
+                    }
 				}
 			}
 		}
@@ -715,8 +767,25 @@ public class StdDataArray {
 					cal.set(year, GregorianCalendar.JANUARY+month-1, day, hour, min, sec);
 					cal.set(GregorianCalendar.MILLISECOND, millisec);
 					sampleTimes[j] = Double.valueOf( cal.getTimeInMillis() / 1000.0 );
+                    hasErrorMsg = false;
 				} catch ( Exception ex ) {
 					sampleTimes[j] = null;
+                    if ( !hasErrorMsg ) {
+                        StackTraceElement[] stack = ex.getStackTrace();
+                        StackTraceElement frame = stack != null && stack.length > 0 ? stack[0] : null;
+                        String className = frame != null ? frame.getClassName() : "N/A";
+                        String line = frame != null ? String.valueOf(frame.getLineNumber()) : "N/A";
+                        logger.info("Error parsing dataset " + getDatasetId(j) + " timestamp at row " + 
+                                    j + ": " + ex + " in " + className + " @ " + line);
+                        ADCMessage msg = new ADCMessage();
+                        msg.setSeverity(Severity.CRITICAL);
+                        msg.setRowIndex(j);
+                        String comment = "Error parsing date and time ";
+                        msg.setGeneralComment(comment);
+                        msg.setDetailedComment(comment);
+                        ((StdUserDataArray)this).getStandardizationMessages().add(msg);
+                        hasErrorMsg = true;
+                    }
 				}
 			}
 		}
@@ -728,7 +797,7 @@ public class StdDataArray {
 				try {
 					String stdYMD = (String) stdObjects[j][dateIndex];
 					if ( DashboardUtils.isEmptyOrNull(stdYMD)) {
-                        String msg = "Invalid (empty or null) date string (possibly due to wrong time format specified) at row: " + j;
+                        String msg = "Invalid (empty or null) date string (possibly due to wrong time format specified) at data row: " + (j+1);
 						throw new IllegalStateException(msg);
 					}
 					String[] ymd = stdYMD.split("-");
@@ -739,7 +808,7 @@ public class StdDataArray {
 					int day = Integer.parseInt(ymd[2]);
 					String stdHMS = (String) stdObjects[j][timeOfDayIndex];
 					if ( DashboardUtils.isEmptyOrNull(stdHMS)) {
-                        String msg = "Invalid (empty or null) time string (possibly due to wrong time format specified) at row: " + j;
+                        String msg = "Invalid (empty or null) time string (possibly due to wrong time format specified) at data row: " + (j+1);
 						throw new IllegalStateException(msg);
 					}
 					String[] hms = stdHMS.split(":");
@@ -766,8 +835,25 @@ public class StdDataArray {
 					cal.set(year, GregorianCalendar.JANUARY+month-1, day, hour, min, sec);
 					cal.set(GregorianCalendar.MILLISECOND, millisec);
 					sampleTimes[j] = Double.valueOf( cal.getTimeInMillis() / 1000.0 );
+                    hasErrorMsg = false;
 				} catch ( Exception ex ) {
 					sampleTimes[j] = null;
+                    if ( !hasErrorMsg ) {
+                        StackTraceElement[] stack = ex.getStackTrace();
+                        StackTraceElement frame = stack != null && stack.length > 0 ? stack[0] : null;
+                        String className = frame != null ? frame.getClassName() : "N/A";
+                        String line = frame != null ? String.valueOf(frame.getLineNumber()) : "N/A";
+                        logger.info("Error parsing dataset " + getDatasetId(j) + " timestamp at row " + 
+                                    j + ": " + ex + " in " + className + " @ " + line);
+                        ADCMessage msg = new ADCMessage();
+                        msg.setSeverity(Severity.CRITICAL);
+                        msg.setRowIndex(j);
+                        String comment = "Error parsing date and time ";
+                        msg.setGeneralComment(comment);
+                        msg.setDetailedComment(comment);
+                        ((StdUserDataArray)this).getStandardizationMessages().add(msg);
+                        hasErrorMsg = true;
+                    }
 				}
 			}
 		}
@@ -778,9 +864,16 @@ public class StdDataArray {
 			boolean hasSec = isUsableIndex(secondOfMinuteIndex);
 			for (int j = 0; j < numSamples; j++) {
 				try {
+					String stdYMD = (String) stdObjects[j][dateIndex];
+					if ( DashboardUtils.isEmptyOrNull(stdYMD)) {
+                        String msg = "Invalid (empty or null) date string (possibly due to wrong time format specified) at data row: " + (j+1);
+						throw new IllegalStateException(msg);
+					}
 					String[] ymd = ((String) stdObjects[j][dateIndex]).split("-");
-					if ( ymd.length != 3 )
-						throw new Exception();
+					if ( ymd.length != 3 ) {
+                        String msg = "Invalid date string (possibly due to wrong time format specified) at data row: " + (j+1);
+						throw new IllegalStateException(msg);
+					}
 					int year = Integer.parseInt(ymd[0]);
 					int month = Integer.parseInt(ymd[1]);
 					int day = Integer.parseInt(ymd[2]);
@@ -803,8 +896,25 @@ public class StdDataArray {
 					cal.set(year, GregorianCalendar.JANUARY+month-1, day, hour, min, sec);
 					cal.set(GregorianCalendar.MILLISECOND, millisec);
 					sampleTimes[j] = Double.valueOf( cal.getTimeInMillis() / 1000.0 );
+                    hasErrorMsg = false;
 				} catch ( Exception ex ) {
 					sampleTimes[j] = null;
+                    if ( !hasErrorMsg ) {
+                        StackTraceElement[] stack = ex.getStackTrace();
+                        StackTraceElement frame = stack != null && stack.length > 0 ? stack[0] : null;
+                        String className = frame != null ? frame.getClassName() : "N/A";
+                        String line = frame != null ? String.valueOf(frame.getLineNumber()) : "N/A";
+                        logger.info("Error parsing dataset " + getDatasetId(j) + " timestamp at row " + 
+                                    j + ": " + ex + " in " + className + " @ " + line);
+                        ADCMessage msg = new ADCMessage();
+                        msg.setSeverity(Severity.CRITICAL);
+                        msg.setRowIndex(j);
+                        String comment = "Error parsing date and time ";
+                        msg.setGeneralComment(comment);
+                        msg.setDetailedComment(comment);
+                        ((StdUserDataArray)this).getStandardizationMessages().add(msg);
+                        hasErrorMsg = true;
+                    }
 				}
 			}
 		}
@@ -836,8 +946,25 @@ public class StdDataArray {
 					cal.set(GregorianCalendar.SECOND, sec);
 					cal.set(GregorianCalendar.MILLISECOND, millisec);
 					sampleTimes[j] = Double.valueOf( cal.getTimeInMillis() / 1000.0 );
+                    hasErrorMsg = false;
 				} catch ( Exception ex ) {
 					sampleTimes[j] = null;
+                    if ( !hasErrorMsg ) {
+                        StackTraceElement[] stack = ex.getStackTrace();
+                        StackTraceElement frame = stack != null && stack.length > 0 ? stack[0] : null;
+                        String className = frame != null ? frame.getClassName() : "N/A";
+                        String line = frame != null ? String.valueOf(frame.getLineNumber()) : "N/A";
+                        logger.info("Error parsing dataset " + getDatasetId(j) + " timestamp at row " + 
+                                    j + ": " + ex + " in " + className + " @ " + line);
+                        ADCMessage msg = new ADCMessage();
+                        msg.setSeverity(Severity.CRITICAL);
+                        msg.setRowIndex(j);
+                        String comment = "Error parsing date and time ";
+                        msg.setGeneralComment(comment);
+                        msg.setDetailedComment(comment);
+                        ((StdUserDataArray)this).getStandardizationMessages().add(msg);
+                        hasErrorMsg = true;
+                    }
 				}
 			}
 		}
