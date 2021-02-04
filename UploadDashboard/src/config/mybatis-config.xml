@@ -40,6 +40,9 @@
         <property name="url" value="${my.url}"/>
         <property name="username" value="${matisse.my_username}"/>
         <property name="password" value="${matisse.my_password}"/>
+        <property name="poolPingQuery" value="SELECT 1"/>
+        <property name="poolPingEnabled" value="true"/>
+        <property name="poolPingConnectionsNotUsedFor" value="28000000"/>
       </dataSource>
     </environment>
     <environment id="matisse">
@@ -49,21 +52,12 @@
         <property name="url" value="${my.url}"/>
         <property name="username" value="${matisse.my_username}"/>
         <property name="password" value="${matisse.my_password}"/>
-      </dataSource>
-    </environment>
-    <environment id="prod"> <!-- For adding users from other machines. -->
-      <transactionManager type="JDBC"/>
-      <dataSource type="POOLED">
-        <property name="driver" value="${db.driver}"/>
-        <property name="url" value="${nb.url}"/>
-        <property name="username" value="${db.username}"/>
-        <property name="password" value="${db.password}"/>
         <property name="poolPingQuery" value="SELECT 1"/>
         <property name="poolPingEnabled" value="true"/>
         <property name="poolPingConnectionsNotUsedFor" value="28000000"/>
       </dataSource>
     </environment>
-    <environment id="production"> <!-- configuration for running locally on new-bock -->
+    <environment id="production"> <!-- configuration for running locally on production machine -->
       <transactionManager type="JDBC"/>
       <dataSource type="POOLED">
         <property name="driver" value="${db.driver}"/>
@@ -87,6 +81,7 @@
         <property name="poolPingConnectionsNotUsedFor" value="28000000"/>
       </dataSource>
     </environment>
+    <!-- environments for connecting remotely to specific machines (eq with adminClient) -->
     <environment id="dunkel">
       <transactionManager type="JDBC"/>
       <dataSource type="POOLED">
@@ -99,7 +94,19 @@
         <property name="poolPingConnectionsNotUsedFor" value="28000000"/>
       </dataSource>
     </environment>
-    <environment id="new-bock">
+    <environment id="hazy"> <!-- For adding users from other machines. -->
+      <transactionManager type="JDBC"/>
+      <dataSource type="POOLED">
+        <property name="driver" value="${hazy.driver}"/>
+        <property name="url" value="${hazy.url}"/>
+        <property name="username" value="${db.username}"/>
+        <property name="password" value="${db.password}"/>
+        <property name="poolPingQuery" value="SELECT 1"/>
+        <property name="poolPingEnabled" value="true"/>
+        <property name="poolPingConnectionsNotUsedFor" value="28000000"/>
+      </dataSource>
+    </environment>
+    <environment id="new-bock"> 
       <transactionManager type="JDBC"/>
       <dataSource type="POOLED">
         <property name="driver" value="${db.driver}"/>

@@ -31,9 +31,7 @@ public class MybatisConnectionFactory {
     
     private static String DEFAULT_CONFIG_FILE = "config/mybatis-config.xml";
  
-    private static final String My_dashboardDb = "my-dashboard";
-    
-    private static final String DEFAULT_DB_ENVIRONMENT = My_dashboardDb;
+    private static final String DEFAULT_DB_ENVIRONMENT = "oapdashboard";
 
     public static final String DB_ENV_PROPERTY = "oap.db.environment";
     public static final String DB_CONFIG_FILE_PROPERTY = "oap.db.config.file";
