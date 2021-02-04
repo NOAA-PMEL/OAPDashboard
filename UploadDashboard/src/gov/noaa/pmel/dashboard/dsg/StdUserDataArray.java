@@ -41,6 +41,7 @@ public class StdUserDataArray extends StdDataArray {
 	private String[] userColNames;
 	private String[] userUnits;
 	private String[] userMissVals;
+    
 	/**
 	 * Tri-state flag representing a column's standarization state.
 	 * Boolean.TRUE = column's data has been standardized,<br/>
@@ -273,6 +274,16 @@ public class StdUserDataArray extends StdDataArray {
 		} while ( needsAnotherPass );
 	}
 
+	private boolean _timesOk = true;
+	private boolean _timesChecked = false;
+	private boolean _locationsOk = true;
+	private boolean _locationsChecked = false;
+    
+    public boolean timesAreOk() { return _timesChecked && _timesOk; }
+    public boolean timesHaveBeenChecked() { return _timesChecked; }
+    public boolean locationsAreOk() { return _locationsChecked && _locationsOk; }
+    public boolean locationsHaveBeenChecked() { return _locationsChecked; }
+    
 	/**
 	 * Check for missing longitude, latitude, depth, and time columns 
 	 * or data values.  Any problems found generate messages that are added 
@@ -284,12 +295,12 @@ public class StdUserDataArray extends StdDataArray {
 	 * 		were problems computing the sample time
 	 */
 	public boolean checkMissingLonLatTime() {
-		boolean isOk = true;
 		try {
+            _locationsChecked = true;
 			Double[] longitudes = getSampleLongitudes();
 			for (int rowIdx = 0; rowIdx < numSamples; rowIdx++) {
 				if ( longitudes[rowIdx] == null ) {
-					isOk = false;
+					_locationsOk = false;
 					ADCMessage msg = new ADCMessage();
 					msg.setSeverity(Severity.CRITICAL);
 					msg.setRowIndex(rowIdx);
@@ -302,7 +313,7 @@ public class StdUserDataArray extends StdDataArray {
 				}
 			}
 		} catch ( Exception ex ) {
-			isOk = false;
+			_locationsOk = false;
 			ADCMessage msg = new ADCMessage();
 			msg.setSeverity(Severity.CRITICAL);
 			String comment = "no longitude column";
@@ -315,7 +326,7 @@ public class StdUserDataArray extends StdDataArray {
 			Double[] latitudes = getSampleLatitudes();
 			for (int rowIdx = 0; rowIdx < numSamples; rowIdx++) {
 				if ( latitudes[rowIdx] == null ) {
-					isOk = false;
+					_locationsOk = false;
 					ADCMessage msg = new ADCMessage();
 					msg.setSeverity(Severity.CRITICAL);
 					msg.setRowIndex(rowIdx);
@@ -328,7 +339,7 @@ public class StdUserDataArray extends StdDataArray {
 				}
 			}
 		} catch ( Exception ex ) {
-			isOk = false;
+			_locationsOk = false;
 			ADCMessage msg = new ADCMessage();
 			msg.setSeverity(Severity.CRITICAL);
 			String comment = "no latitude column";
@@ -371,10 +382,11 @@ public class StdUserDataArray extends StdDataArray {
 
 		Double[] times = null;
 		try {
+            _timesChecked = true;
 			times = getSampleTimes();
 			for (int rowIdx = 0; rowIdx < numSamples; rowIdx++) {
 				if ( times[rowIdx] == null ) {
-					isOk = false;
+					_timesOk = false;
                     // XXX Messages are now added during the data standarization phase
 					// in the StdUserDataArray constructor.
 //					ADCMessage msg = new ADCMessage();
@@ -387,7 +399,7 @@ public class StdUserDataArray extends StdDataArray {
 				}
 			}
 		} catch ( Exception ex ) {
-			isOk = false;
+			_timesOk = false;
 			ex.printStackTrace();
 			ADCMessage msg = new ADCMessage();
 			msg.setSeverity(Severity.CRITICAL);
@@ -397,9 +409,12 @@ public class StdUserDataArray extends StdDataArray {
 			stdMsgList.add(msg);
 		}
 
-		return isOk;
+		return _locationsOk && _timesOk;
 	}
 
+    private boolean _reordered = false;
+    public boolean isReordered() { return _reordered; }
+    
 	/**
 	 * Reorders the data rows as best possible so that the data is
 	 * 		(1) ascending in time (old to new),
@@ -416,6 +431,7 @@ public class StdUserDataArray extends StdDataArray {
 	 * 		can be null to indicate sample times are not fully specified
 	 */
 	public void reorderData(Double[] times) {
+        _reordered = false;
 		Double[] longitudes;
 		try {
 			longitudes = getSampleLongitudes();
@@ -460,15 +476,23 @@ public class StdUserDataArray extends StdDataArray {
 		// Just assign the new order of the object arrays; no need to duplicate the objects themselves
 		Object[][] orderedRows = new Object[numSamples][];
 		int rowIdx = 0;
+        boolean actuallyReordered = false;
 		for ( DataLocation dataLoc : orderedSet ) {
 			// getRowNumber returns the row index assigned above
 			orderedRows[rowIdx] = stdObjects[dataLoc.getRowIndex()];
+            if ( rowIdx != dataLoc.getRowIndex()) {
+                actuallyReordered = true;
+            }
 			rowIdx++;
 		}
+        if ( actuallyReordered ) {
+            logger.info("dataset " + this.getDatasetName() + " was reordered by time.");
+        }
 		// Update the array of array of objects to the new ordering
 		stdObjects = orderedRows;
         // force refetch of sample times
         _sampleTimes = null;
+        _reordered = true;
 	}
 
 	/**
@@ -1144,5 +1168,43 @@ public class StdUserDataArray extends StdDataArray {
         }
         return false;
     }
-	
+
+    private Boolean _crossesDateLine = null;
+    public synchronized boolean crossesDateLine() {
+        if ( _crossesDateLine == null ) {
+            if ( ! ( _timesChecked && _timesOk && _locationsChecked && _locationsOk )) {
+                throw new IllegalStateException("Cannot check date line: times and/or locations are bad.");
+            }
+            if ( ! _reordered ) {
+                reorderData(getSampleTimes());
+            }
+            boolean crosses = false;
+            Double[] longitudes = getSampleLongitudes();
+            if ( longitudes == null || longitudes.length == 0 ) {
+                throw new IllegalStateException("No longitude information in dataset.");
+            }
+            double maxLon = Double.NEGATIVE_INFINITY;
+            double minLon = Double.POSITIVE_INFINITY;
+            double lowestPos = Double.POSITIVE_INFINITY;
+            double highestNeg = Double.NEGATIVE_INFINITY;
+            double lastLon = 0.0;
+            int row = 0;
+            for (Double dlon : longitudes) {
+                double lon = dlon.doubleValue();
+                if ( lon > maxLon ) maxLon = lon;
+                if ( lon < minLon ) minLon = lon;
+                if ( lon > 0 && lon < lowestPos ) lowestPos = lon;
+                if ( lon < 0 && lon > highestNeg ) highestNeg = lon;
+                if (( lon < 0 && lastLon > 0 ) ||
+                    ( lon > 0 && lastLon < 0)) {
+                    logger.info("Cross-over at row: " + row ); // + "original row:"+ getSampleNum(row));
+                    crosses = true;
+                }
+                lastLon = lon;
+                row++;
+            }
+            _crossesDateLine = new Boolean(crosses);
+        }
+        return _crossesDateLine.booleanValue();
+    }
 }
