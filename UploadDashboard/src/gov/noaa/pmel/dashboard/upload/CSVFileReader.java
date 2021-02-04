@@ -56,7 +56,8 @@ public class CSVFileReader implements RecordOrientedFileReader {
         dataParser = new CsvParser(settings);
         dataParser.beginParsing(dataReader);
         fileFormat = dataParser.getDetectedFormat();
-        logger.info("Detected file format: " + fileFormat);
+        logger.info("Detected delimiter: '" + fileFormat.getDelimiter() + "'.");
+        logger.debug("Detected file format: " + fileFormat);
         return dataParser.iterate(dataReader).iterator();
     }
     
