@@ -95,6 +95,8 @@ public class OADSMetadata {
 		double minLat = Double.POSITIVE_INFINITY;
 		double maxLon = Double.NEGATIVE_INFINITY;
 		double minLon = Double.POSITIVE_INFINITY;
+        double lowestPos = Double.POSITIVE_INFINITY;
+        double leastNeg = Double.NEGATIVE_INFINITY;
 		double maxTime = Double.NEGATIVE_INFINITY;
 		double minTime = Double.POSITIVE_INFINITY;
 		Double[] lats = stdArray.getSampleLatitudes();
@@ -108,11 +110,21 @@ public class OADSMetadata {
 			if ( ! Double.isNaN(lat) && lat < minLat ) { minLat = lat; }
 			if ( ! Double.isNaN(lon) && lon > maxLon ) { maxLon = lon; }
 			if ( ! Double.isNaN(lon) && lon < minLon ) { minLon = lon; }
+            if ( ! Double.isNaN(lon) && lon > 0 && lon < lowestPos ) lowestPos = lon;
+            if ( ! Double.isNaN(lon) && lon < 0 && lon > leastNeg ) leastNeg = lon;
 			if ( ! Double.isNaN(time) && time > maxTime ) { maxTime = time; }
 			if ( ! Double.isNaN(time) && time < minTime ) { minTime = time; }
 		}
+        double easternExtents, westernExtents;
+        if ( stdArray.crossesDateLine()) {
+            easternExtents = leastNeg;
+            westernExtents = lowestPos;
+        } else {
+            easternExtents = maxLon;
+            westernExtents = minLon;
+        }
 		GeoTemporalExtents extents = new GeoTemporalExtents(new Extents(maxLat, minLat), 
-		                                                    new Extents(maxLon, minLon), 
+		                                                    new Extents(easternExtents, westernExtents), 
 		                                                    new Extents(maxTime, minTime));
 		return extents;
 	}
