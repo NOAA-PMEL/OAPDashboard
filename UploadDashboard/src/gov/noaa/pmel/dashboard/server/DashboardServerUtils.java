@@ -475,6 +475,31 @@ public class DashboardServerUtils {
 		return date;
     }
     
+    public static String exceptionToString(Throwable t) {
+        StringBuilder b = new StringBuilder();
+        b.append(t.toString()).append("\n");
+        StackTraceElement[] stackTrace = t.getStackTrace();
+        if ( stackTrace == null || stackTrace.length == 0 ) {
+            b.append("No stack trace available.");
+        } else {
+            for (StackTraceElement frame : stackTrace) {
+                b.append(frame.toString()).append("\n");
+            }
+        }
+        return b.toString();
+    }
+    /**
+     * @param stackTrace
+     * @return
+     */
+    public static String stackTraceToString(StackTraceElement[] stackTrace) {
+        StringBuilder b = new StringBuilder();
+        for (StackTraceElement frame : stackTrace) {
+            b.append(frame.toString()).append("\n");
+        }
+        return b.toString();
+    }
+
     /*
      * XXX NOT TESTED.  
      * From: https://stackoverflow.com/questions/35693333/how-to-shutdown-a-single-application-in-tomcat
