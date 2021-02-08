@@ -1,11 +1,11 @@
 
 package gov.noaa.pmel.dashboard.server;
 
+import java.io.IOException;
 import java.security.GeneralSecurityException;
 import java.security.NoSuchAlgorithmException;
 import java.sql.SQLException;
 import java.util.Date;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -23,6 +23,7 @@ import gov.noaa.pmel.dashboard.server.db.dao.UsersDao;
 import gov.noaa.pmel.dashboard.server.model.InsertUser;
 import gov.noaa.pmel.dashboard.server.model.User;
 import gov.noaa.pmel.dashboard.server.util.Notifications;
+import gov.noaa.pmel.dashboard.shared.DashboardDataset;
 import gov.noaa.pmel.dashboard.shared.DashboardUtils;
 import gov.noaa.pmel.dashboard.util.PasswordCrypt;
 import gov.noaa.pmel.dashboard.util.PasswordUtils;
@@ -452,6 +453,21 @@ public class Users {
         return UUID.randomUUID().toString().replaceAll("-", "");
     }
     
+    /**
+     * @param datasetId
+     * @return
+     * @throws IOException 
+     * @throws IllegalArgumentException 
+     * @throws DashboardException 
+     */
+    public static User getDataSubmitter(String datasetId) 
+            throws IllegalArgumentException, IOException, DashboardException {
+        DashboardDataset dataset = DashboardConfigStore.get().getDataFileHandler().getDatasetFromInfoFile(datasetId);
+        String owner = dataset.getOwner();
+        User user = Users.getUser(owner);
+        return user;
+    }
+
     public static void main(String[] args) {
         try {
             
