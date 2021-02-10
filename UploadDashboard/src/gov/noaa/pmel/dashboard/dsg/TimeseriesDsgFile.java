@@ -367,7 +367,11 @@ public class TimeseriesDsgFile extends DsgNcFile {
         Variable v_time = getVariable(ncFile, SAMPLE_TIME_VARNAME);
         ArrayDouble.D1 a_time = new ArrayDouble.D1(_numObservations);
         for (int row=0; row<_numObservations; row++) {
-            a_time.set(row, times[row].doubleValue());
+            Double time = times[row];
+            if ( time == null || time.isNaN() || time.isInfinite()) {
+                time = DashboardUtils.FP_MISSING_VALUE;
+            }
+            a_time.set(row, time.doubleValue());
         }
 		ncFile.write(v_time, a_time);
 	}
@@ -388,10 +392,16 @@ public class TimeseriesDsgFile extends DsgNcFile {
         ArrayDouble.D1 a_PresDep = null;
         if ( _stdUser.hasSamplePressure()) {
             presDep = _stdUser.getSamplePressure(0);
+            if ( presDep == null || presDep.isNaN() || presDep.isInfinite()) {
+                presDep = DashboardUtils.FP_MISSING_VALUE;
+            }
             v_PresDep = getVariable(ncFile, FEATURE_PRESSURE_VARNAME);
             a_PresDep = new ArrayDouble.D1(getNumFeatures());
         } else if ( _stdUser.hasSampleDepth()) {
             presDep = _stdUser.getSampleDepth(0);
+            if ( presDep == null || presDep.isNaN() || presDep.isInfinite()) {
+                presDep = DashboardUtils.FP_MISSING_VALUE;
+            }
             v_PresDep = getVariable(ncFile, FEATURE_DEPTH_VARNAME);
             a_PresDep = new ArrayDouble.D1(getNumFeatures());
         } 

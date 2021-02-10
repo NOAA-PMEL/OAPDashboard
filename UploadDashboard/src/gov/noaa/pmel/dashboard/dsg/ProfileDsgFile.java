@@ -11,6 +11,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import gov.noaa.pmel.dashboard.datatype.CastSet;
+import gov.noaa.pmel.dashboard.shared.DashboardUtils;
 import gov.noaa.pmel.dashboard.shared.FeatureType;
 import ucar.ma2.ArrayChar;
 import ucar.ma2.ArrayDouble;
@@ -182,7 +183,11 @@ public class ProfileDsgFile extends DsgNcFile {
         if ( presDep != null ) {
             for (int row=0; row<_numObservations; row++) {
                 if ( a_PresDep != null ) {
-                    a_PresDep.set(row, presDep[row].doubleValue());
+                    Double pdv = presDep[row];
+                    if ( pdv == null || pdv.isNaN() || pdv.isInfinite()) {
+                        pdv = DashboardUtils.FP_MISSING_VALUE;
+                    }
+                    a_PresDep.set(row, pdv.doubleValue());
                 }
             }
             ncFile.write(v_PresDep, a_PresDep);
