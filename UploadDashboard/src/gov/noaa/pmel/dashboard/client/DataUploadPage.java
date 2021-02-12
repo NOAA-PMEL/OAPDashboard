@@ -51,10 +51,15 @@ public class DataUploadPage extends CompositeWithUsername {
             + "Any file can be uploaded for archival.  However, only ASCII-delimited (CSV, etc.) files and Excel spreadsheets can be sanity-checked and QC'd."
             + "<br style=\"padding-bottom: .5em;\"/>To be checked, a delimited file must include:"
 			+ "<ul style=\"list-style-type:disk\">"
-			+ "  <li>a header line of data column names,</li>"
-			+ "  <li>an optional header line of data column units,</li>"
+			+ "  <li>A complete header line with <span style=\"font-weight:bold;\">column names for every column</span>,</li>"
+			+ "  <li>an optional header line of data column units where appropriate,</li>"
 			+ "  <li>followed by any number of lines of data values.</li>"
-			+ "</ul>"
+			+ "</ul><br/>"
+            + "In addition, a file may contain:"
+			+ "<ul style=\"list-style-type:disk\">"
+			+ "  <li>Any number of comment lines that begin with the hash (\'#\') character.</li>"
+			+ "  <li>Any number of textual lines before the data column header row, provided they do not contain more than 5 columns.</li>"
+			+ "</ul><br/>"
             ;
 	private static final String MORE_HELP_HTML = 
 			"<p>The first few lines of a comma-separated upload datafile " + 
