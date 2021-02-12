@@ -11,7 +11,7 @@ package gov.noaa.pmel.dashboard.shared;
 public class ObservationType {
 
     // Should be consistent with MetadataEditor.OracleController.ncei_observationTypes .. Maybe.
-    public static final String[] proposedTypes = new String[] {
+    public static final String[] types = new String[] {
             "Time-series (moorings, etc.)",
             "Surface measurements (underway, discrete)",
             "Profile (CTD, bottle, etc.)",
@@ -25,7 +25,7 @@ public class ObservationType {
             "Marine mammal observation",
             "Other"
     };
-    public static final String[] types = new String[] {
+    public static final String[] oldTypes = new String[] {
             "Surface underway",
             "Surface (discrete samples)",
             "Profile (CTD continuous)",
