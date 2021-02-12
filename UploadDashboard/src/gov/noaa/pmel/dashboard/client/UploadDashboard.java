@@ -105,7 +105,7 @@ public class UploadDashboard implements EntryPoint, ValueChangeHandler<String> {
 	static final String USER_WARNING_COLOR = "#FFEE99";
 	static final String USER_ERROR_COLOR = "#FFCCCC";
 	
-	static final String CHECKER_WARNING_CELL_COLOR = "#FFFED4";
+	static final String CHECKER_WARNING_CELL_COLOR = "#FEDD53"; // "#FFFED4";
 	static final String CHECKER_ERROR_CELL_COLOR = "#FF6D70";
 	static final String CHECKER_CRITICAL_CELL_COLOR = CHECKER_ERROR_COLOR;
 
