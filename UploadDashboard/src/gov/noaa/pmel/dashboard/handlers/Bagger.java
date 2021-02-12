@@ -186,7 +186,7 @@ public class Bagger implements ArchiveBundler {
            } else if (mfile.getAbsoluteFile().equals(metaFile.getAbsoluteFile())) {
                writeFileTo(mfile, meta); 
                if ( ApplicationConfiguration.getProperty("oap.archive.submit_ocads", false)) {
-                   String ocadsFileName = mfile.getName().replace("OADS", "OCADS");
+                   String ocadsFileName = mfile.getName().replace("metadata", "machineUse");
                    File ocadsFile = new File(meta, ocadsFileName);
                    Transform.main(new String[] { mfile.getPath(), ocadsFile.getPath() });
                }

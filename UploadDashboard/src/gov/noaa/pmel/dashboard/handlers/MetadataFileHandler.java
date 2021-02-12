@@ -1041,7 +1041,7 @@ public class MetadataFileHandler extends VersionedFileHandler {
     	if ( DashboardUtils.isEmptyNullOrNull(datasetId))
     		throw new IllegalArgumentException("Empty or null dataset ID");
     	String stdId = DashboardServerUtils.checkDatasetID(datasetId);
-    	return stdId + "_OADS" + extension;
+    	return stdId + "_metadata" + extension;
     }
 
     public static String metadataFilename(String datasetId) {
