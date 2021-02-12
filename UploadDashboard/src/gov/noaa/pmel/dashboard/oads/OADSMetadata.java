@@ -181,7 +181,7 @@ public class OADSMetadata {
 		                         .endDate(new Date((long)(1000*gtExtents.timeExtents.maxValue)))
 		                         .build());
 		                                    
-        if ( ApplicationConfiguration.getProperty("oap.metadata.extract_variables", true) && mdDoc.getVariables().isEmpty()) {
+        if ( ApplicationConfiguration.getLatestProperty("oap.metadata.extract_variables", true) && mdDoc.getVariables().isEmpty()) {
             
             // XXX TODO: This is just a mess.
             // XXX What to do with unknowns and other/ignored, 
@@ -457,8 +457,7 @@ public class OADSMetadata {
 		// Check and standardize the dataset
 		String stdId = DashboardServerUtils.checkDatasetID(datasetId);
 		DashboardConfigStore configStore = DashboardConfigStore.get(false);
-		File parentDir = configStore.getMetadataFileHandler().getMetadataFile(stdId, stdId).getParentFile();
-		File metadataFile = new File(parentDir, stdId + "_OADS.xml");
+		File metadataFile = configStore.getMetadataFileHandler().getMetadataFile(stdId);
 		return metadataFile;
 	}
 	public static String getMetadataXml(String datasetId, File mdFile) throws IOException {
