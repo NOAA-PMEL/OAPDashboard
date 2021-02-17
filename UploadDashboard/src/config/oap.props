@@ -30,7 +30,11 @@ oap.env=prod
 # It's currently only for applications external to the server, such as AdminClient,
 # which normally would run not on production, but I want to have default value here.
 #
-oap.production.url=https://www.pmel.noaa.gov/sdig/oap/Dashboard
+oap.URL_HOST=data.pmel.noaa.gov
+oap.url.host={URL_HOST}
+oap.URL_BASE=https://{URL_HOST}
+oap.url.base={URL_BASE}
+oap.production.url={URL_BASE}/sdig/oap/Dashboard
 
 oap.admin.email.list=oar.pmel.sdis.admin@noaa.gov
 # oap.admin.email.list=linus.kamb@noaa.gov
@@ -80,6 +84,6 @@ tws.pkauth.certificates_dir=/usr/local/src/oads/apache-tomcat-8.5.34/content/OAP
 oap.upload.max_size=51200000
 oap.upload.max_size.display=~50MB
 
-oap.metadata.extract_variables=false
+oap.metadata.extract_variables=true
 
 oap.preview.ng=ng_

@@ -8,3 +8,5 @@ oap.email.password=bkhadoryyjbrpgfe
 
 oap.archive.notification.list=linus.kamb@noaa.gov
 #,john.relph@noaa.gov
+
+oap.URL_HOST=data.pmel.noaa.gov
