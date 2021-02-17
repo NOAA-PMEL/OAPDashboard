@@ -141,7 +141,7 @@ public class TrajectoryDatasetChecker extends BaseDatasetChecker implements Data
 		}
 		
 		// Check for missing lon/lat/time 
-		boolean timesAreOk = stdUserData.checkMissingLonLatTime();
+		stdUserData.checkMissingLonLatTime();
 
 		// Bounds check the standardized data values
 		stdUserData.checkBounds();
@@ -156,9 +156,12 @@ public class TrajectoryDatasetChecker extends BaseDatasetChecker implements Data
 		// IMPORTANT: DO THIS ONLY AFTER ALL DATA CHECKS HAVE BEEN COMPLETED!
 		// INCLUDING processing the CheckerMessages (since that pulls in User QC flags.)
 		// Reorder the data as best possible
-		if ( timesAreOk ) {
+		if ( stdUserData.timesAreOk() ) {
 			Double[] sampleTimes = stdUserData.getSampleTimes();
 			stdUserData.reorderData(sampleTimes);
+            if ( stdUserData.locationsAreOk() ) {
+                stdUserData.crossesDateLine();
+            }
 		}
 		
 		// Get the indices values the PI marked as bad.

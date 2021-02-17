@@ -290,9 +290,7 @@ public class StdUserDataArray extends StdDataArray {
 	 * to the internal list of messages.
 	 * 
 	 * @return
-	 * 		the sample times for the data;  may be null if there was incomplete 
-	 * 		specification of sample time, or may contain null values if there 
-	 * 		were problems computing the sample time
+     *  whether all Lat/Lon/Time were ok.
 	 */
 	public boolean checkMissingLonLatTime() {
 		try {

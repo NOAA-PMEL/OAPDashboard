@@ -101,7 +101,8 @@ public class MinimalDatasetChecker extends BaseDatasetChecker implements Dataset
 		checkForUnknownColumns(stdUserData);
 		
 		// Check for missing lon/lat/time 
-		boolean timesAreOk = stdUserData.checkMissingLonLatTime();
+		stdUserData.checkMissingLonLatTime();
+        boolean timesAreOk = stdUserData.timesAreOk();
 //        boolean depthsOk = stdUserData.checkForMissingValues(DashboardServerUtils.SAMPLE_DEPTH) || 
 //                           stdUserData.checkForMissingValues(DashboardServerUtils.CTD_PRESSURE);
 
@@ -122,6 +123,9 @@ public class MinimalDatasetChecker extends BaseDatasetChecker implements Dataset
 		if ( timesAreOk ) {
 			Double[] sampleTimes = stdUserData.getSampleTimes();
 			stdUserData.reorderData(sampleTimes);
+			if ( stdUserData.locationsAreOk() ) {
+			    stdUserData.crossesDateLine();
+			}
 		}
 		
 		// Get the indices values the PI marked as bad.
