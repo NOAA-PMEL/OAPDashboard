@@ -26,7 +26,7 @@ COPY_DIRS=(server shared util)
 COPY_DIRS=(actions datatype dsg ferret handlers server shared util)
 
 LIBS_DIR=war/WEB-INF/lib
-LIB_JARS=(catalina commons jackson log4j mybatis mysql tomcat tws)
+LIB_JARS=(catalina commons jackson log4j mybatis mysql tomcat tws javax.mail)
 
 if [ -e ${DEST_DIR} ] ; then
 	debug Deleting ${DEST_DIR}
