@@ -103,7 +103,8 @@ public class ProfileDatasetChecker extends BaseDatasetChecker implements Dataset
 		}
 		
 		// Check for missing lon/lat/time 
-		boolean timesOk = stdUserData.checkMissingLonLatTime();
+		stdUserData.checkMissingLonLatTime();
+        boolean timesOk = stdUserData.timesAreOk();
         boolean depthsOk = checkForMissingPressureOrDepth(stdUserData);
 
 		// Bounds check the standardized data values
@@ -140,6 +141,9 @@ public class ProfileDatasetChecker extends BaseDatasetChecker implements Dataset
 		if ( timesOk ) {
 			Double[] sampleTimes = stdUserData.getSampleTimes();
 			stdUserData.reorderData(sampleTimes);
+            if ( stdUserData.locationsAreOk() ) {
+                stdUserData.crossesDateLine();
+            }
 		}
 		
 		// Get the indices values the PI marked as bad.
