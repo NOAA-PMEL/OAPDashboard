@@ -193,7 +193,7 @@ public class Task {
 						if (outstream.ready()) {
 							int charsRead = outstream.read(buffer);
                             String read = new String(buffer, 0, charsRead);
-                            logger.debug(read);
+                            logger.trace(read);
 							output.append(read);
 						}
 					} catch (IOException ioe) {
@@ -203,7 +203,7 @@ public class Task {
 						if (errstream.ready()) {
 							int charsRead = errstream.read(buffer);
                             String read = new String(buffer, 0, charsRead);
-                            logger.debug(read);
+                            logger.info("err: " + read);
 							stderr.append(read);
 						}
 					} catch (IOException ioe) {
@@ -219,7 +219,7 @@ public class Task {
 
 					// check if the request was canceled
 					if (cancel != null && cancel.exists()) {
-						logger.debug("Backend request canceled: "+cmdString);
+						logger.info("Backend request canceled: "+cmdString);
 						process.destroy();
 						cancel.delete();
 						throw new Exception("Process canceled.");
@@ -242,7 +242,7 @@ public class Task {
 				while (errstream.ready()) {
 					int charsRead = errstream.read(buffer);
                     String read = new String(buffer, 0, charsRead);
-                    logger.debug(read);
+                    logger.warn(read);
 					stderr.append(read);
 				}
 			} catch (IOException ioe) {

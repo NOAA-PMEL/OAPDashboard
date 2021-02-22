@@ -71,7 +71,14 @@ public class SocatTool extends Thread {
 		done = false;
 		error = false;
 		try {
-
+		    if ( logger.isDebugEnabled()) {
+		        logger.debug("Running socat tool with:");
+		        logger.debug("\t action:"+action);
+		        logger.debug("\t datasetId:"+dataset.getRecordId());
+		        logger.debug("\t ferret base:"+ferret.getBaseDir());
+		        logger.debug("\t ferret executable:"+ferret.getExecutable());
+		        logger.debug("\t ferret args:"+ferret.getArgs());
+		    }
 			String temp_dir = ferret.getTempDir();
 			if ( !temp_dir.endsWith(File.separator) ) temp_dir = temp_dir + "/";
 			
