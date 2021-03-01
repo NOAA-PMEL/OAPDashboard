@@ -20,7 +20,6 @@ import com.google.gwt.safehtml.shared.SafeHtmlUtils;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.uibinder.client.UiHandler;
-import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.google.gwt.user.client.ui.Anchor;
 import com.google.gwt.user.client.ui.Button;
@@ -29,10 +28,11 @@ import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.HTML;
 import com.google.gwt.user.client.ui.HorizontalPanel;
 import com.google.gwt.user.client.ui.Label;
+import com.google.gwt.user.client.ui.RadioButton;
 import com.google.gwt.user.client.ui.TextArea;
+import com.google.gwt.user.client.ui.TextBox;
 import com.google.gwt.user.client.ui.Widget;
 
-import gov.noaa.pmel.dashboard.client.DashboardAskPopup.QuestionType;
 import gov.noaa.pmel.dashboard.client.UploadDashboard.PagesEnum;
 import gov.noaa.pmel.dashboard.shared.DashboardDataset;
 import gov.noaa.pmel.dashboard.shared.DashboardDatasetList;
@@ -96,6 +96,11 @@ public class SubmitToArchivePage extends CompositeWithUsername implements DataSu
     @UiField CheckBox policyAgreementChkBx;
     @UiField Label policyAgreementText;
     @UiField Anchor showPolicyAgreement;
+    @UiField RadioButton newSubmitButton;
+    @UiField RadioButton updateSubmitButton;
+    @UiField RadioButton appendSubmitButton;
+//    @UiField TextBox updateAccnBox;
+    @UiField TextBox accnNumberBox;
     
     boolean blocked = false; // Cannot submit.
     
@@ -149,6 +154,15 @@ public class SubmitToArchivePage extends CompositeWithUsername implements DataSu
         + "<div id='submitCommentLabelLine3'>Its use is solely to communicate special information or archiving considerations to the archive staff.</div>"
         + "</div>";
     
+    private ValueChangeHandler<Boolean> submitTypeHandler = new ValueChangeHandler<Boolean>() {
+        @Override
+        public void onValueChange(ValueChangeEvent<Boolean> event) {
+            RadioButton source = (RadioButton)event.getSource();
+//            GWT.log(String.valueOf(source));
+//            updateAccnBox.setEnabled(source == updateSubmitButton);
+            accnNumberBox.setEnabled(source == updateSubmitButton || source == appendSubmitButton);
+        }
+    };
     private ValueChangeHandler<Boolean> agreementHandler = new ValueChangeHandler<Boolean>() {
         @Override
         public void onValueChange(ValueChangeEvent<Boolean> event) {
@@ -211,6 +225,10 @@ public class SubmitToArchivePage extends CompositeWithUsername implements DataSu
         dataIssuesChkBx.addValueChangeHandler(noticesHandler);
         metadataIssuesChkBx.addValueChangeHandler(noticesHandler);
         policyAgreementChkBx.addValueChangeHandler(agreementHandler);
+        
+        newSubmitButton.addValueChangeHandler(submitTypeHandler);
+        updateSubmitButton.addValueChangeHandler(submitTypeHandler);
+        appendSubmitButton.addValueChangeHandler(submitTypeHandler);
 		
 		_allColumnChkBoxes = new ArrayList<>();
 		_columnBoxMap = new HashMap<>();
@@ -413,10 +431,21 @@ public class SubmitToArchivePage extends CompositeWithUsername implements DataSu
         genDoiChkBx.setValue(dataset.getArchiveDOIrequested());
     }
 
+//    @UiHandler("updateSubmitButton")
+//    public void onValueChanged(ValueChangeEvent cevent) {
+//        Window.alert("changed to: "+ updateSubmitButton.getValue());
+//    }
+    
     /**
      * 
      */
     private void reset() {
+        newSubmitButton.setValue(Boolean.TRUE);
+//        updateAccnBox.setText("");
+//        updateAccnBox.setEnabled(false);
+        accnNumberBox.setText("");
+        accnNumberBox.setEnabled(false);
+        
         submitButton.setEnabled(false);
         cancelButton.setText("Cancel");
         _submitIdsList.clear();
@@ -505,6 +534,7 @@ public class SubmitToArchivePage extends CompositeWithUsername implements DataSu
         versionSubmitText.setText("Check to confirm submission of newer dataset file.");
         versionSubmitPanel.setVisible(true);
         versionCheck = true;
+        setUpdateSubmit(dataset);
         enablePolicyAndSubmit(false);
     }
 
@@ -512,7 +542,13 @@ public class SubmitToArchivePage extends CompositeWithUsername implements DataSu
         versionSubmitText.setText("Dataset has already been submitted. Check to confirm resubmission.");
         versionSubmitPanel.setVisible(true);
         versionCheck = true;
+        setUpdateSubmit(dataset);
         enablePolicyAndSubmit(false);
+    }
+    
+    private void setUpdateSubmit(DashboardDataset dataset) {
+        updateSubmitButton.setValue(Boolean.TRUE);
+        accnNumberBox.setEnabled(true);
     }
 
     private void enablePolicyAndSubmit(boolean enable) {
@@ -821,7 +857,7 @@ public class SubmitToArchivePage extends CompositeWithUsername implements DataSu
         StringBuilder b = new StringBuilder();
         b.append("<ul>");
         addLine(b, "Data File", dataset.getUploadFilename());
-        addLine(b, "Metadata File", dataset.getRecordId()+"_OADS.xml");
+        addLine(b, "Metadata File", dataset.getRecordId()+"_metadata.xml");
         if ( dataset.getAddlDocs().size() > 0 ) {
             b.append("<li>Supplemental Documents<ul>");
             for (String f : dataset.getAddlDocs()) {
@@ -941,13 +977,20 @@ public class SubmitToArchivePage extends CompositeWithUsername implements DataSu
 		String localTimestamp = DateTimeFormat.getFormat("yyyy-MM-dd HH:mm Z").format(new Date());
 		String archiveStatus = null;
 		buildSubmitColumnList();
+        if ( newSubmitButton.getValue().booleanValue() ) {
+            archiveStatus = "NEW_SUBMISSION";
+        } else if ( updateSubmitButton.getValue().booleanValue() ) {
+            archiveStatus = "UPDATE_SUBMISSION:" + accnNumberBox.getValue().trim();
+        } else if ( appendSubmitButton.getValue().booleanValue()) {
+            archiveStatus = "APPEND_SUBMISSION:" + accnNumberBox.getValue().trim();
+        }
 //		if ( laterRadio.getValue() ) {
 //			// Archive with the next release
 //			archiveStatus = DashboardUtils.ARCHIVE_STATUS_WITH_NEXT_RELEASE;
 //		}
 //		else if ( nowRadio.getValue() ) {
 //			// Archive now
-			archiveStatus = DashboardUtils.ARCHIVE_STATUS_SENT_FOR_ARCHIVAL;
+//			archiveStatus = DashboardUtils.ARCHIVE_STATUS_SENT_FOR_ARCHIVAL;
 //		}
 //		else if ( ownerRadio.getValue() ) {
 //			// Owner will archive

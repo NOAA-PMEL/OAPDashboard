@@ -25,6 +25,44 @@
         .messages_panel {
             padding: 0em 0em 1.5em 4.5em;
         }
+        .submit_acknowledgements_panel {
+	       padding-top: .75em;
+        }
+        .submit_type_panel {
+            margin: 1em 1em 1em 6.5em;
+            padding: .5em 1.5em 1em;
+            border: solid 1px black;
+        }
+        .submit_type_line_panel {
+            padding: .75em 0em .75em;
+            font-size: larger;
+        }
+        .submit_type_button {
+        }
+        table.submit_type_panel > tbody > tr > td { /* :first-child  */
+            padding: .5em 0em .75em 0em;
+    	}
+        div.submit_button_panel > button:first-child {
+	       margin-left: 1.5em;
+        }
+        .submit_button {
+	       margin-left: 3.75em;
+        }
+        .accn_box_label {
+            margin-top: .2em;
+	        padding: 0em 1em 0em .5em;
+        }
+        .largerText {
+	        font-size: larger;
+        }
+        .accn_box {
+            margin-top: -.75em;
+        }
+        .button_panel {
+            margin-top: 2em;
+	        padding-left: 3em;
+            padding-bottom: 1em;
+        }
         .notification_msg_panel {
             padding: 0em 0em 1em 2em;
         }
@@ -37,6 +75,16 @@
         }
         .policyAgreementPanel {
             padding: 1em 0em 0em 2em;
+        }
+        .oap_search {
+            margin-top: -1em;
+        	text-align:center
+        }
+        .hidden {
+	       visible=false;
+        }
+        table.type_and_acks_panel > tbody > tr > td { /* :first-child  */
+	       vertical-align: bottom !important;
         }
 	</ui:style>
 	
@@ -62,38 +110,68 @@
                         <g:TextArea  ui:field="submitCommentTextArea" addStyleNames="{style.submit_msg_text}"/>
                     </g:ScrollPanel>
                 </g:FlowPanel>
-                <g:HorizontalPanel ui:field="genDoiPanel" addStyleNames="{style.notification_msg_panel}">
-                    <g:CheckBox ui:field="genDoiChkBx" addStyleNames="{style.notificationChkBx}"/>
-                    <g:Label ui:field="genDoiText" addStyleNames="{style.notificationText}">Request NCEI generate DOI for submitted dataset.</g:Label>
+                <g:HTMLPanel width="100%">
+                    <g:HTML><hr class="notification_divider_line"/></g:HTML>
+                </g:HTMLPanel>
+                <g:HorizontalPanel addStyleNames="{style.type_and_acks_panel}">
+                    <g:VerticalPanel addStyleNames="{style.submit_type_panel}">
+                            <g:RadioButton name="submissionType" ui:field="newSubmitButton" value="true"
+                                addStyleNames="{style.submit_type_button},{style.largerText}">New Submission</g:RadioButton>
+                            <g:RadioButton name="submissionType" ui:field="updateSubmitButton" 
+                               addStyleNames="{style.submit_type_button},{style.largerText}">Update A Prior Submission</g:RadioButton>
+                               <!--
+                        <g:HorizontalPanel addStyleNames="{style.submit_type_line_panel}">
+                            <g:Label addStyleNames="{style.accn_box_label},{style.largerText}">Accession #</g:Label>
+                            <g:TextBox ui:field="updateAccnBox" addStyleNames="{style.accn_box}"/>
+                        </g:HorizontalPanel>
+                          -->
+                            <g:RadioButton name="submissionType" ui:field="appendSubmitButton" 
+                                addStyleNames="{style.submit_type_button},{style.largerText}">Append Prior Submission</g:RadioButton>
+                        <g:HorizontalPanel addStyleNames="{style.submit_type_line_panel}">
+                            <g:Label addStyleNames="{style.accn_box_label},{style.largerText}">Accession&nbsp;#</g:Label>
+                            <g:TextBox ui:field="accnNumberBox" addStyleNames="{style.accn_box}"/>
+                        </g:HorizontalPanel>
+                        <g:HTMLPanel addStyleNames="{style.oap_search}">
+                            <a href="https://www.ncei.noaa.gov/access/oads/" target="_blank">Search OA Data Portal.
+                            <img src="images/external_site_icon.png" height="16"/></a><br/>
+                            <div style="padding-top:.5em">NOTE: You can search by last name<br/>in the "Additional Terms" field.</div>
+                        </g:HTMLPanel>
+                    </g:VerticalPanel>
+                    <g:VerticalPanel>
+                        <g:FlowPanel addStyleNames="{style.submit_acknowledgements_panel}">
+                            <g:HorizontalPanel ui:field="genDoiPanel" addStyleNames="{style.notification_msg_panel}">
+                                <g:CheckBox ui:field="genDoiChkBx" addStyleNames="{style.notificationChkBx}"/>
+                                <g:Label ui:field="genDoiText" addStyleNames="{style.notificationText}">Request NCEI generate DOI for submitted dataset.</g:Label>
+                            </g:HorizontalPanel>
+                            <g:HTML><hr class="notification_divider_line"/></g:HTML>
+                            <g:HorizontalPanel ui:field="versionSubmitPanel" addStyleNames="{style.notification_msg_panel}">
+                                <g:CheckBox ui:field="versionSubmitChkBx" addStyleNames="{style.notificationChkBx}"/>
+                                <g:Label ui:field="versionSubmitText" addStyleNames="{style.notificationText}">Placeholder: Enable to resubmit.</g:Label>
+                            </g:HorizontalPanel>
+                            <g:HorizontalPanel ui:field="dataIssuesPanel" addStyleNames="{style.notification_msg_panel}">
+                                <g:CheckBox ui:field="dataIssuesChkBx" addStyleNames="{style.notificationChkBx}"/>
+                                <g:Label ui:field="dataIssuesText" addStyleNames="{style.notificationText}">Placeholder: Enable to submit with data issues.</g:Label>
+                            </g:HorizontalPanel>
+                            <g:HorizontalPanel ui:field="metadataIssuesPanel" addStyleNames="{style.notification_msg_panel}">
+                                <g:CheckBox ui:field="metadataIssuesChkBx" addStyleNames="{style.notificationChkBx}"/>
+                                <g:Label ui:field="metadataIssuesText" addStyleNames="{style.notificationText}">Placeholder: Enable to submit with metadata issues.</g:Label>
+                            </g:HorizontalPanel>
+                            <g:HTML ui:field="ackChecksHr"><hr visible="false" class="notification_divider_line"/></g:HTML>
+                            <g:HorizontalPanel ui:field="policyAgreementPanel" addStyleNames="{style.notification_msg_panel}">
+                                <g:CheckBox ui:field="policyAgreementChkBx" addStyleNames="{style.notificationChkBx}"/>
+                                <g:Label ui:field="policyAgreementText" addStyleNames="{style.notificationText}">I agree to the&nbsp;</g:Label>
+                                <g:Anchor ui:field="showPolicyAgreement" addStyleNames="{style.notificationText}">Publication Policy Agreement.</g:Anchor>
+                            </g:HorizontalPanel>
+                        </g:FlowPanel>
+            			<g:FlowPanel addStyleNames="{style.submit_button_panel},{style.button_panel}">
+            				<g:Button addStyleNames="{style.horizontalbutton}" ui:field="cancelButton" />
+            				<g:Button addStyleNames="{style.horizontalbutton},{style.submit_button}" ui:field="submitButton" />
+            			</g:FlowPanel>
+                    </g:VerticalPanel>
                 </g:HorizontalPanel>
-                <g:HTML><hr style="width:40%; margin:0 2em .5em;"/></g:HTML>
-                <g:HorizontalPanel ui:field="versionSubmitPanel" addStyleNames="{style.notification_msg_panel}">
-                    <g:CheckBox ui:field="versionSubmitChkBx" addStyleNames="{style.notificationChkBx}"/>
-                    <g:Label ui:field="versionSubmitText" addStyleNames="{style.notificationText}">Placeholder: Enable to resubmit.</g:Label>
-                </g:HorizontalPanel>
-                <g:HorizontalPanel ui:field="dataIssuesPanel" addStyleNames="{style.notification_msg_panel}">
-                    <g:CheckBox ui:field="dataIssuesChkBx" addStyleNames="{style.notificationChkBx}"/>
-                    <g:Label ui:field="dataIssuesText" addStyleNames="{style.notificationText}">Placeholder: Enable to submit with data issues.</g:Label>
-                </g:HorizontalPanel>
-                <g:HorizontalPanel ui:field="metadataIssuesPanel" addStyleNames="{style.notification_msg_panel}">
-                    <g:CheckBox ui:field="metadataIssuesChkBx" addStyleNames="{style.notificationChkBx}"/>
-                    <g:Label ui:field="metadataIssuesText" addStyleNames="{style.notificationText}">Placeholder: Enable to submit with metadata issues.</g:Label>
-                </g:HorizontalPanel>
-                <g:HTML ui:field="ackChecksHr"><hr visible="false" style="width:40%; margin:0 2em .5em;"/></g:HTML>
-                <g:HorizontalPanel ui:field="policyAgreementPanel" addStyleNames="{style.notification_msg_panel}">
-                    <g:CheckBox ui:field="policyAgreementChkBx" addStyleNames="{style.notificationChkBx}"/>
-                    <g:Label ui:field="policyAgreementText" addStyleNames="{style.notificationText}">I agree to the&nbsp;</g:Label>
-                    <g:Anchor ui:field="showPolicyAgreement" addStyleNames="{style.notificationText}">Publication Policy Agreement.</g:Anchor>
-                </g:HorizontalPanel>
-    			<g:FlowPanel addStyleNames="{style.horizontalbuttonpanel}">
-    				<g:Button addStyleNames="{style.horizontalbutton}"
-    					ui:field="submitButton" />
-    				<g:Button addStyleNames="{style.horizontalbutton}"
-    					ui:field="cancelButton" />
-    			</g:FlowPanel>
             </g:FlowPanel>
         </g:center>
-        <g:east size="28" >
+        <g:east size="26" >
             <g:FlowPanel ui:field="statusPanel" addStyleNames="{style.archiveStatusPanel}">
                 <g:HTML ui:field="statusLabel"  addStyleNames="{style.archiveStatusLabel}" ></g:HTML>
                 <g:Label ui:field="submissionTime"  addStyleNames="{style.archiveStatusSubmitTime}" ></g:Label>
