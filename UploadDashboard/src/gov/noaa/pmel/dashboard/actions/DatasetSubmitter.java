@@ -273,7 +273,7 @@ public class DatasetSubmitter {
 				try {
                     DashboardDataset dataset = _configStore.getDataFileHandler().getDatasetFromInfoFile(datasetId);
                     SubmissionRecord sRecord = getSubmissionRecord(datasetId, submitMsg, submitter);
-                    File archiveBundle = getArchiveBundle(sRecord, datasetId, dataset, columnsList, submitMsg, generateDOI);
+                    File archiveBundle = getArchiveBundle(sRecord, datasetId, dataset, archiveStatus, columnsList, submitMsg, generateDOI);
                     sRecord.archiveBag(archiveBundle.getPath());
                     insertNewSubmissionRecord(sRecord);
                     doSubmitAchiveBundleFile(sRecord, datasetId, archiveBundle, userRealName, userEmail);
@@ -485,7 +485,7 @@ public class DatasetSubmitter {
 	 * @throws Exception
      */
     private static File getArchiveBundle(SubmissionRecord submitRecord, String datasetId, 
-                                         DashboardDataset dataset,
+                                         DashboardDataset dataset, String submissionTypeInfo,
                                          List<String> columnsList, String submitMsg, 
                                          boolean generateDOI) throws Exception {
         File archiveBundle = null;
@@ -517,6 +517,7 @@ public class DatasetSubmitter {
                     
 ////        if ( ApplicationConfiguration.getProperty("oap.archive.use_bagit", true)) {
         Map<String, String> submissionProps = new HashMap<>();
+        submissionProps.put("submission_type", submissionTypeInfo);
         submissionProps.put("generate_doi", String.valueOf(generateDOI));
         submissionProps.put("submission_record_id", submitRecord.submissionKey());
 //        submissionProps.put("user_dataset_id", datasetId);
