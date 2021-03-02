@@ -81,6 +81,9 @@ public class AdminClient extends CLClient {
     private static CLOption opt_noop = CLOption.builder().name("no-op").flag("x").longFlag("noop")
                                             .requiresValue(false)
                                             .description("Do not perform requested operation.  Output options and parameters and exit.").build();
+    private static CLOption opt_verbose = CLOption.builder().name("verbose").flag("v").longFlag("verbose")
+                                            .requiresValue(false)
+                                            .description("Verbose (limited) output.").build();
     
     
     @SuppressWarnings("unused") // found by reflection
@@ -99,6 +102,7 @@ public class AdminClient extends CLClient {
                                                 .option(opt_target)
                                                 .option(opt_batch)
                                                 .option(opt_noop)
+                                                .option(opt_verbose)
                                                 .build();
     
     @SuppressWarnings("unused") // found by reflection
@@ -109,6 +113,7 @@ public class AdminClient extends CLClient {
                                                 .option(opt_target)
                                                 .option(opt_batch)
                                                 .option(opt_noop)
+                                                .option(opt_verbose)
                                                 .build();
     
     private CLOptions _clOptions;
@@ -343,6 +348,13 @@ public class AdminClient extends CLClient {
 //            args = new String[] { "add", "-u", "test", "-pw", "ch@ngeM3s00n", "-fn", "Testy", "-ln", "Testarosa", "-e", "nobody@noaa.gov", "-d", "newbock", "-b" };
 //            System.out.println("Running AdminClient");
             List<String> filteredArgs = preprocessArgs(args); // sets system property and removes -D args
+            if ( filteredArgs.contains("-v")) {
+                int i = 0;
+                System.out.println("Arguments:");
+                for (String arg: args) {
+                    System.out.println(i++ + " : " + arg);
+                }
+            }
 //            if ( filteredArgs.contains(opt_target.flag()) ||
 //                 filteredArgs.contains(opt_target.longFlag())) {
 //                int idx = filteredArgs.indexOf(opt_target.flag());
