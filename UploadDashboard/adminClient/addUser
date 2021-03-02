@@ -41,6 +41,7 @@ echo client jar: $CLIENT_JAR
 
 cmd="java ${DEBUG_CONFIG} ${OA_DOC_PROP} ${OAP_ENV} -jar ${CLIENT_JAR} add $@"
 echo cmd: $cmd
-$cmd
+java ${DEBUG_CONFIG} ${OA_DOC_PROP} ${OAP_ENV} -jar ${CLIENT_JAR} add "$@"
+
 
 
