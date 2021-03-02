@@ -20,6 +20,7 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.Properties;
 
+import org.apache.commons.io.FileUtils;
 import org.apache.log4j.Logger;
 import org.apache.tomcat.util.http.fileupload.IOUtils;
 import org.tmatesoft.svn.core.SVNException;
@@ -38,7 +39,6 @@ import gov.noaa.pmel.dashboard.server.model.User;
 import gov.noaa.pmel.dashboard.shared.DashboardMetadata;
 import gov.noaa.pmel.dashboard.shared.DashboardUtils;
 import gov.noaa.pmel.oads.xml.a0_2_2.OadsXmlWriter;
-import gov.noaa.pmel.tws.util.FileUtils;
 import gov.noaa.pmel.tws.util.Logging;
 import gov.noaa.pmel.tws.util.TimeUtils;
 
@@ -764,7 +764,6 @@ public class MetadataFileHandler extends VersionedFileHandler {
 	public void deleteMetadataFile(String username, String datasetId,
         						   String metafileName) throws IllegalArgumentException {
 		File metadataFile = getMetadataFile(datasetId, metafileName);
-        File backupDir = getBackupDir(metadataFile);
 		File propsFile = new File(metadataFile.getPath() + INFOFILE_SUFFIX);
 //        File extractedInfoFile = getAutoExtractedMetadataFile(datasetId);
 		// Do not throw an error if the props file does not exist
@@ -772,7 +771,6 @@ public class MetadataFileHandler extends VersionedFileHandler {
 			// Throw an exception if not allowed to overwrite
 			verifyOkayToDelete(username, datasetId, metafileName);
 			try {
-                backupFile(propsFile, backupDir, "."+TimeUtils.format_ISO_COMPRESSED(new Date())+"_bak");
 				deleteVersionedFile(propsFile, "Deleted metadata properties " + propsFile.getPath());
 			} catch ( Exception ex ) {
 				throw new IllegalArgumentException(
@@ -783,7 +781,6 @@ public class MetadataFileHandler extends VersionedFileHandler {
 		// If the props file does not exist, assume it is okay to delete the metadata file.
 		if ( metadataFile.exists() ) { 
 			try {
-                backupFile(metadataFile, backupDir, "."+TimeUtils.format_ISO_COMPRESSED(new Date())+"_bak");
 				deleteVersionedFile(metadataFile, "Deleted metadata document " + metadataFile.getPath());
 			} catch ( Exception ex ) {
 				throw new IllegalArgumentException(
@@ -803,63 +800,28 @@ public class MetadataFileHandler extends VersionedFileHandler {
 	public void deleteAllMetadata(String username, String datasetId) throws IllegalArgumentException {
         File metaFile = getMetadataFile(datasetId);
         File metaDir = metaFile.getParentFile();
-        File backupDir = getBackupDir(metaFile);
-        boolean deletedAllFiles = true;
         try {
-            for (File f : metaDir.listFiles()) {
-                backupFile(f, backupDir, "."+TimeUtils.format_ISO_COMPRESSED(new Date()));
-                deletedAllFiles = f.delete() && deletedAllFiles;
-            }
-            if ( ! deletedAllFiles ) {
-                logger.warn("Failed to delete all files from " + metaDir.getPath());
-            }
-        } catch (Exception ex) {
-            logger.warn("Exception deleting files from " + metaDir.getPath());
+            FileUtils.forceDelete(metaDir);
+        } catch (IOException ioex) {
+            logger.warn("Failed to delete metadata directory " + metaDir.getPath(), ioex);
         }
-        if ( deletedAllFiles ) {
+        File abbrevDir = metaDir.getParentFile();
+        boolean abbrevIsEmpty = true;
+        for (File f : abbrevDir.listFiles()) {
+            if ( ! f.getName().equals(".svn")) {
+                abbrevIsEmpty = false;
+                break;
+            }
+        }
+        if ( abbrevIsEmpty ) {
             try {
-                if ( !metaDir.delete()) {
-                    logger.warn("Failed to delete metadata directory " + metaDir.getPath());
-                }
-            } catch (Exception ex) {
-                logger.warn("Exception deleting metadata directory " + metaDir.getPath());
+                FileUtils.forceDelete(abbrevDir);
+            } catch (IOException ioex) {
+                logger.warn("Failed to delete metadata parent directory " + abbrevDir.getPath(), ioex);
             }
         }
 	}
     
-	/**
-     * @param metadataFile
-     * @return
-     */
-    private static File getBackupDir(File metadataFile) {
-        File parent = metadataFile.getParentFile();
-        File backupRoot = new File(parent.getParentFile(), parent.getName() + "_bak");
-        if ( ! backupRoot.exists()) {
-            backupRoot.mkdir();
-        }
-        String backupDirName = new SimpleDateFormat("yyyyMMddHHmmss").format(new Date());
-        return new File(backupRoot, backupDirName);
-    }
-
-    /**
-     * @param propsFile
-     * @param path
-     * @param string
-	 * @throws IOException 
-     */
-    private static void backupFile(File file, File backupDir, String backupExtension) throws IOException {
-        String dotExtension = backupExtension.startsWith(".") ? backupExtension : "." + backupExtension;
-        if ( ! backupDir.exists()) {
-            boolean created = backupDir.mkdirs();
-            if ( !created ) {
-                logger.warn("Failed to create backup dir: " + backupDir.getAbsolutePath());
-                return;
-            }
-        }
-        File outFile = new File(backupDir, file.getName()+dotExtension);
-        FileUtils.copyFile(file, outFile);
-    }
-
     /* *
 	 * Save the OME XML document created by {@link DashboardOmeMetadata#createOmeXmlDoc()} 
 	 * as the document file for this metadata.  The parent directory for this file is 

@@ -213,6 +213,18 @@ public class DashboardConfigStore {
         return webappDir;
     }
     
+    public static File getContentDir(String dirname) throws RuntimeException {
+        File appContentDir = getAppContentDir();
+        File theDir = new File(appContentDir, dirname);
+        if ( !theDir.exists()) {
+            if ( !theDir.mkdirs()) {
+                throw new RuntimeException("Unable to create content dir " + theDir.getAbsolutePath());
+            }
+        }
+        return theDir;
+    }
+    
+    
     public static File getAppContentDir() throws RuntimeException {
         if ( _appContentDir == null ) {
             File baseDir = getBaseDir();
