@@ -9,10 +9,12 @@ import java.io.File;
 import java.io.FileFilter;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
 import java.io.FileReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.io.OutputStream;
 import java.io.PrintWriter;
 import java.nio.file.Files;
 import java.text.ParseException;
@@ -26,7 +28,10 @@ import java.util.TreeMap;
 import java.util.TreeSet;
 import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipOutputStream;
 
+import org.apache.commons.io.FileUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.tmatesoft.svn.core.SVNException;
@@ -53,6 +58,7 @@ import gov.noaa.pmel.dashboard.shared.FileType;
 import gov.noaa.pmel.dashboard.shared.ObservationType;
 import gov.noaa.pmel.dashboard.shared.QCFlag;
 import gov.noaa.pmel.dashboard.upload.RecordOrientedFileReader;
+import gov.noaa.pmel.tws.util.ApplicationConfiguration;
 import gov.noaa.pmel.tws.util.StringUtils;
 
 /**
@@ -1568,10 +1574,13 @@ public class DataFileHandler extends VersionedFileHandler {
 	 * 		if the dataset ID is invalid, 
 	 * 		if there are problems reading the dataset properties file
 	 */
-	public DashboardDataset verifyOkayToDeleteDataset(String datasetId, String username) 
-													throws IllegalArgumentException {
-		// Get the dataset information
-		DashboardDataset dataset = getDatasetFromInfoFile(datasetId);
+	public DashboardDataset verifyOkayToDeleteDataset(String datasetId, String username)
+			throws IllegalArgumentException {
+        return verifyOkayToDeleteDataset(getDatasetFromInfoFile(datasetId), username);
+	}
+    
+	public DashboardDataset verifyOkayToDeleteDataset(DashboardDataset dataset, String username) 
+			throws IllegalArgumentException {
 		// Check if the dataset is in a submitted or published state
 		if ( ! Boolean.TRUE.equals(dataset.isEditable()) )
 			throw new IllegalArgumentException("dataset status is " + dataset.getSubmitStatus());
@@ -1602,10 +1611,10 @@ public class DataFileHandler extends VersionedFileHandler {
 	 */
 	public void deleteDatasetFiles(String datasetId, String username, 
                         			boolean deleteMetadata) throws IllegalArgumentException {
-		// Verify this cruise can be deleted
-		DashboardDataset dataset;
+		// Get the dataset information
+		DashboardDataset dataset = getDatasetFromInfoFile(datasetId);
 		try {
-			dataset = verifyOkayToDeleteDataset(datasetId, username);
+			verifyOkayToDeleteDataset(dataset, username);
 		} catch ( IllegalArgumentException ex ) {
 			throw new IllegalArgumentException("Not permitted to delete dataset " + 
 					datasetId + ": " + ex.getMessage());
@@ -1627,53 +1636,186 @@ public class DataFileHandler extends VersionedFileHandler {
             logger.warn(ex,ex);
         }
 
-		// If it exists, delete the messages file
-		configStore.getCheckerMsgHandler().deleteMsgsFile(datasetId);
-			
-		// Delete the cruise data file
-		String commitMsg = "Cruise file for " + datasetId + " owned by " + 
-				dataset.getOwner() + " deleted by " + username;
-        File datasetDataFile = datasetDataFile(datasetId);
-		try {
-			deleteVersionedFile(datasetDataFile, commitMsg);
-		} catch ( SVNException sex ) {
-            logger.warn("Exception deleting versioned file: " + sex);
-		} catch ( Exception ex ) {
-			throw new IllegalArgumentException("Problems deleting the cruise data file: " + 
-					ex.getMessage());
-		}
-		// Delete the cruise information file
-		try {
-			deleteVersionedFile(datasetInfoFile(datasetId, true), commitMsg);
-		} catch ( SVNException sex ) {
-            logger.warn("Exception deleting versioned file: " + sex);
-		} catch ( Exception ex ) {
-			throw new IllegalArgumentException("Problems deleting the cruise information file: " + 
-					ex.getMessage());
-		}
-        File parentDir = datasetDataFile.getParentFile();
-        for (File file : parentDir.listFiles()) {
-            logger.info("Deleting extraneous file " + file.getPath());
-            if ( ! file.delete()) {
-                logger.warn("Failed to delete extraneous file " + file.getPath());
+        boolean doArchive = ApplicationConfiguration.getProperty("oap.dataset.archive_on_delete", true);
+        if ( doArchive ) {
+            File archiveRoot = configStore.getContentDir("Attic/" + dataset.getOwner());
+            File archiveBase = new File(archiveRoot, dataset.getRecordId());
+            File cruiseDir = datasetDataDir(datasetId);
+            File cruiseArchive = new File(archiveBase, "CruiseFiles");
+            try {
+                FileUtils.moveDirectoryToDirectory(cruiseDir, cruiseArchive, true);
+                File abbrevDir = cruiseDir.getParentFile();
+                boolean abbrevIsEmpty = true;
+                for (File f : abbrevDir.listFiles()) {
+                    if ( ! f.getName().equals(".svn")) {
+                        abbrevIsEmpty = false; 
+                        break;
+                    }
+                }
+                if ( abbrevIsEmpty ) {
+                    try {
+                        FileUtils.forceDelete(abbrevDir);
+                    } catch (IOException ex) {
+                        logger.warn("Exception deleting data abbrev directory " + abbrevDir.getAbsolutePath(), ex);
+                    }
+                }
+            } catch (IOException ex) {
+                logger.warn("Failed to archive dataset cruise dir " + cruiseDir.getAbsolutePath() +
+                            " to " + cruiseArchive, ex);
+                logger.warn("Forcibly deleting cruise dir : " + cruiseDir.getAbsolutePath());
+                try {
+                    FileUtils.forceDelete(cruiseDir);
+                } catch (IOException ex1) {
+                    logger.warn("Failed to forcibly delete dataset cruise dir " + 
+                                 cruiseDir.getAbsolutePath(), ex1);
+                }
             }
+            if ( deleteMetadata ) {
+                File metadataDir = configStore.getMetadataFileHandler().getMetadataDirectory(datasetId);
+                File metadataArchive = new File(archiveBase, "MetadataDocs");
+                try {
+                    FileUtils.moveDirectoryToDirectory(metadataDir, metadataArchive, true);
+                    File abbrevDir = metadataDir.getParentFile();
+                    boolean abbrevIsEmpty = true;
+                    for (File f : abbrevDir.listFiles()) {
+                        if ( ! f.getName().equals(".svn")) {
+                            abbrevIsEmpty = false; 
+                            break;
+                        }
+                    }
+                    if ( abbrevIsEmpty ) {
+                        try {
+                            FileUtils.forceDelete(abbrevDir);
+                        } catch (IOException ex) {
+                            logger.warn("Exception deleting data abbrev directory " + abbrevDir.getAbsolutePath(), ex);
+                        }
+                    }
+                } catch (IOException ex) {
+                    logger.warn("Failed to archive dataset metadata dir " + metadataDir.getAbsolutePath() +
+                                " to " + metadataArchive, ex);
+                    logger.warn("Forcibly deleting metadata dir : " + metadataDir.getAbsolutePath());
+                    try {
+                        FileUtils.forceDelete(metadataDir);
+                    } catch (IOException ex1) {
+                        logger.warn("Failed to forcibly delete dataset metadata dir " + 
+                                     metadataDir.getAbsolutePath(), ex1);
+                    }
+                }
+            }
+            try {
+                zipUp(archiveBase);
+                FileUtils.forceDelete(archiveBase);
+            } catch (Exception ex) {
+                logger.warn("Exception zipping or deleting " + archiveBase.getAbsolutePath(), ex);
+            }
+        } else {
+    		// If it exists, delete the messages file
+    		configStore.getCheckerMsgHandler().deleteMsgsFile(datasetId);
+    			
+    		// Delete the cruise data file
+    		String commitMsg = "Cruise file for " + datasetId + " owned by " + 
+    				dataset.getOwner() + " deleted by " + username;
+            File datasetDataFile = datasetDataFile(datasetId);
+    		try {
+    			deleteVersionedFile(datasetDataFile, commitMsg);
+    		} catch ( SVNException sex ) {
+                logger.warn("Exception deleting versioned file: " + sex);
+    		} catch ( Exception ex ) {
+    			throw new IllegalArgumentException("Problems deleting the cruise data file: " + 
+    					ex.getMessage());
+    		}
+    		// Delete the cruise information file
+    		try {
+    			deleteVersionedFile(datasetInfoFile(datasetId, true), commitMsg);
+    		} catch ( SVNException sex ) {
+                logger.warn("Exception deleting versioned file: " + sex);
+    		} catch ( Exception ex ) {
+    			throw new IllegalArgumentException("Problems deleting the cruise information file: " + 
+    					ex.getMessage());
+    		}
+            File parentDir = datasetDataFile.getParentFile();
+            try {
+                FileUtils.forceDelete(parentDir);
+            } catch (IOException ioex) {
+                logger.warn("Failed to delete dataset directory " + parentDir.getPath(), ioex);
+            }
+            File abbrevDir = parentDir.getParentFile();
+            boolean abbrevIsEmpty = true;
+            for (File f : abbrevDir.listFiles()) {
+                if ( ! f.getName().equals(".svn")) {
+                    abbrevIsEmpty = false; 
+                    break;
+                }
+            }
+            if ( abbrevIsEmpty ) {
+                try {
+                    FileUtils.forceDelete(abbrevDir);
+                } catch (IOException ex) {
+                    logger.warn("Exception deleting data abbrev directory " + abbrevDir.getAbsolutePath(), ex);
+                }
+            }
+    		if ( deleteMetadata ) {
+    			// Delete the metadata and additional documents associated with this cruise
+    			MetadataFileHandler metadataHandler = configStore.getMetadataFileHandler();
+    			try {
+    				metadataHandler.deleteAllMetadata(username, datasetId);
+    			} catch (Exception ex) {
+    				// Ignore - may not exist
+    			}
+    		}
         }
-        if ( ! parentDir.delete()) {
-            logger.warn("Failed to delete directory " + parentDir.getPath());
-        }
-
-		if ( deleteMetadata ) {
-			// Delete the metadata and additional documents associated with this cruise
-			MetadataFileHandler metadataHandler = configStore.getMetadataFileHandler();
-			try {
-				metadataHandler.deleteAllMetadata(username, datasetId);
-			} catch (Exception ex) {
-				// Ignore - may not exist
-			}
-		}
 	}
 
 	/**
+     * @param archiveBase
+	 * @throws Exception 
+     */
+    private static void zipUp(File archiveBase) throws Exception {
+        File zipFile = new File(archiveBase.getParentFile(), archiveBase.getName()+".zip");
+        try ( FileOutputStream fos = new FileOutputStream(zipFile);
+              ZipOutputStream zout = new ZipOutputStream(fos); ) {
+            zipDir(archiveBase, zout);
+        }
+    }
+    
+    /**
+     * @param archiveBase
+     * @param zout
+     * @throws Exception 
+     */
+    private static void zipDir(File dir, ZipOutputStream zout) throws Exception {
+        String basePath = dir.getAbsolutePath();
+        basePath = basePath.substring(0, basePath.lastIndexOf(File.separator)+1);
+        for (File f : dir.listFiles()) {
+            zipFile(f, zout, basePath);
+        }
+    }
+
+    private static void zipFile(File file, ZipOutputStream zout, String basePath) throws Exception {
+        String relativeName = file.getAbsolutePath().substring(basePath.length());
+        if ( file.isDirectory()) {
+            for (File f : file.listFiles()) {
+                zipFile(f, zout, basePath);
+            }
+        } else {
+            try ( FileInputStream fin = new FileInputStream( file )) {
+                ZipEntry ze = new ZipEntry(relativeName);
+                zout.putNextEntry(ze);
+                copy(fin, zout);
+                zout.closeEntry();
+            }
+        }
+    }
+    
+    private static void copy(InputStream in, OutputStream out) throws IOException {
+        byte[] buffer = new byte[1024 * 10];
+        int read = 0;
+        while ((read = in.read(buffer)) > 0 ) {
+            out.write(buffer, 0, read);
+        }
+    }
+
+    /**
 	 * Assigns a DashboardDataset (or DashboardDatasetData) from the 
 	 * dataset properties file.  The ID of the dataset is obtained 
 	 * from the DashboardDataset. 
