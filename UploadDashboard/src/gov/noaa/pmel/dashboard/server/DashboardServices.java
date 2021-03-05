@@ -59,6 +59,7 @@ import gov.noaa.pmel.dashboard.shared.PreviewTab;
 import gov.noaa.pmel.dashboard.shared.SessionException;
 import gov.noaa.pmel.dashboard.shared.ADCMessageList;
 import gov.noaa.pmel.dashboard.shared.TypesDatasetDataPair;
+import gov.noaa.pmel.dashboard.shared.UserInfo;
 import gov.noaa.pmel.tws.util.ApplicationConfiguration;
 import gov.noaa.pmel.tws.util.StringUtils;
 import gov.noaa.pmel.tws.util.TimeUtils;
@@ -122,9 +123,9 @@ public class DashboardServices extends RemoteServiceServlet implements Dashboard
     }
 
     @Override
-    public DashboardServiceResponse changePassword(String pageUsername, String currentpw, String newpw) {
+    public DashboardServiceResponse<Void> changePassword(String pageUsername, String currentpw, String newpw) {
         validateRequest(pageUsername);
-        DashboardServiceResponseBuilder response = DashboardServiceResponse.builder();
+        DashboardServiceResponseBuilder<Void> response = DashboardServiceResponse.builder();
         logger.info("Changing password for user: " + pageUsername);
         boolean changed = false;
         try {
@@ -973,4 +974,77 @@ public class DashboardServices extends RemoteServiceServlet implements Dashboard
 			df.saveDatasetInfoToFile(ds, message);
 		}
 	}
+
+    /* (non-Javadoc)
+     * @see gov.noaa.pmel.dashboard.shared.DashboardServicesInterface#getUserProfile(java.lang.String)
+     */
+    @Override
+    public DashboardServiceResponse<UserInfo> getUserProfile(String userid) throws IllegalArgumentException {
+        logger.info("get user profile info for " + userid);
+		if ( ! validateRequest(userid) ) 
+			throw new IllegalArgumentException("Invalid user request");
+        
+        DashboardServiceResponse<UserInfo> response;
+        DashboardServiceResponseBuilder<UserInfo> responseBldr = DashboardServiceResponse.builder();
+        try {
+            User user = Users.getUser(userid);
+            if ( user == null ) {
+                response = responseBldr.error("User not found!")
+                                        .wasSuccessful(false)
+                                        .build();
+            } else {
+                response = responseBldr.response(user.asUserInfo()).build();
+            }
+        } catch (Exception ex) {
+            logger.warn(ex,ex);
+            response = responseBldr.error("There was an error retrieving user profile information.")
+                                    .wasSuccessful(false)
+                                    .build();
+        }
+        return response;
+    }
+
+    /* (non-Javadoc)
+     * @see gov.noaa.pmel.dashboard.shared.DashboardServicesInterface#updateUserProfile(gov.noaa.pmel.dashboard.shared.UserInfo)
+     */
+    @Override
+    public DashboardServiceResponse<Void> updateUserProfile(UserInfo userInfo) throws IllegalArgumentException {
+        DashboardServiceResponse<Void> response = null;
+        DashboardServiceResponseBuilder<Void> responseBldr = DashboardServiceResponse.builder();
+        if ( userInfo == null ) {
+            logger.warn("Null userInfo!");
+            return responseBldr.wasSuccessful(false)
+                                .error("No user profile info provided.")
+                                .build();
+        }
+		if ( ! validateRequest(userInfo.username()) ) 
+			throw new IllegalArgumentException("Invalid user request");
+        
+        try {
+            User user = Users.getUser(userInfo.username());
+            if ( user == null ) {
+                response = responseBldr.error("User not found!")
+                                        .wasSuccessful(false)
+                                        .build();
+            } else {
+                User updatedUser = user.toBuilder()
+                                    .firstName(userInfo.firstName())
+                                    .middle(userInfo.middle())
+                                    .lastName(userInfo.lastName())
+                                    .email(userInfo.email())
+                                    .telephone(userInfo.telephone())
+                                    .telExtension(userInfo.telExtension())
+                                    .organization(userInfo.organization())
+                                    .build();
+                Users.updateUser(updatedUser);
+                response = responseBldr.message("Profile information updated for user.").build();
+            }
+        } catch (Exception ex) {
+            logger.warn(ex,ex);
+            response = responseBldr.error("There was an error updating user profile information.")
+                                    .wasSuccessful(false)
+                                    .build();
+        }
+        return response;
+    }
 }

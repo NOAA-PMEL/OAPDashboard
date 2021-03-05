@@ -47,6 +47,7 @@ import gov.noaa.pmel.dashboard.shared.DashboardServicesInterfaceAsync;
 import gov.noaa.pmel.dashboard.shared.PreviewPlotImage;
 import gov.noaa.pmel.dashboard.shared.SessionServicesInterface;
 import gov.noaa.pmel.dashboard.shared.SessionServicesInterfaceAsync;
+import gov.noaa.pmel.dashboard.shared.UserInfo;
 
 public class UploadDashboard implements EntryPoint, ValueChangeHandler<String> {
 
@@ -140,6 +141,7 @@ public class UploadDashboard implements EntryPoint, ValueChangeHandler<String> {
 
     private DashboardFeedbackPopup feedbackPopup;
     private ChangePasswordPopup changePasswordPopup;
+    private EditProfilePopup userInfoPopup;
     
     private static String buildVersion = "n/a";
     
@@ -677,6 +679,91 @@ public class UploadDashboard implements EntryPoint, ValueChangeHandler<String> {
         singleton.feedbackPopup.reset();
 		singleton.feedbackPopup.show();
     }
+    public static void showUserInfoPopup() {
+        GWT.log("pinging before change password");
+        pingService(new OAPAsyncCallback<Void>() {
+            @Override
+            public void onSuccess(Void arg0) {
+                GWT.log("successful pinging before change password");
+                _getUserInfoForPopup();
+            }
+            @Override
+            public void customFailure(Throwable t) {
+                GWT.log("ping fail: "+ t);
+            }
+        });
+    }
+    private static void _getUserInfoForPopup() {
+        GWT.log("get user info");
+        getSingleton();
+        service.getUserProfile(singleton.currentPage.getUsername(), 
+               new AsyncCallback<DashboardServiceResponse<UserInfo>>() {
+                    @Override
+                    public void onFailure(Throwable caught) {
+                        GWT.log("Retrieve Profile Info failed: " + caught);
+                        showFailureMessage("There was an error retrieving your profile information.", caught);
+                    }
+                    @Override
+                    public void onSuccess(DashboardServiceResponse<UserInfo> result) {
+                        GWT.log("retrieved user profile information:" + result);
+                        if ( result.wasSuccessful()) {
+                            _showUserInfoPopup(result.response());
+                        } else {
+                            showFailureMessage("There was a problem retrieving your profile information:\n" + result.error(), null);
+                        }
+                    }
+        });
+    }
+    private static void _showUserInfoPopup(UserInfo userInfo) {
+        GWT.log("show user info");
+        getSingleton();
+		if ( singleton.userInfoPopup == null ) {
+			singleton.userInfoPopup = new EditProfilePopup(new AsyncCallback<Boolean>() {
+                @Override
+                public void onSuccess(Boolean sendIt) {
+                    if ( sendIt.booleanValue()) {
+                        EditProfilePopup popup = singleton.userInfoPopup;
+                        UserInfo updatedInfo = new UserInfo(userInfo.username(), 
+                                                            popup.getFirstName(), 
+                                                            popup.getMiddle(), 
+                                                            popup.getLastName(), 
+                                                            popup.getEmail(), 
+                                                            popup.getTelephone(), 
+                                                            popup.getExtension(), 
+                                                            popup.getOrganization());
+                        service.updateUserProfile(updatedInfo,
+                                           new AsyncCallback<DashboardServiceResponse<Void>>() {
+                            @Override
+                            public void onFailure(Throwable arg0) {
+                                GWT.log("Update Profile Info failed: " + arg0);
+                                showFailureMessage("There was an error updating your profile information.", arg0);
+                            }
+
+                            @Override
+                            public void onSuccess(DashboardServiceResponse<Void> updated) {
+                                GWT.log("Update Profile Info onSuccess:" + updated);
+                                if ( updated.wasSuccessful()) {
+                                    showMessage("Profile has been updated.");
+                                } else {
+                                    showFailureMessage("Failed to update profile information:\n" + updated.error(), null);
+                                }
+                            }
+                        });
+                    } else {
+                        GWT.log("Update Profile cancelled");
+                    }
+                }
+                @Override
+                public void onFailure(Throwable arg0) {
+                    GWT.log("Update Profile failure: " + arg0);
+                    showFailureMessage("There was a service error updating your profile information.", arg0);
+                }
+            });
+		}
+        singleton.userInfoPopup.reset();
+		singleton.userInfoPopup.show(userInfo);
+    }
+    
     public static void showChangePasswordPopup() {
         GWT.log("pinging before change password");
         pingService(new OAPAsyncCallback<Void>() {

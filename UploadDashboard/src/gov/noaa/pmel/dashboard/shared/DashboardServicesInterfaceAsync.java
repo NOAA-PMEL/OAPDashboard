@@ -386,4 +386,8 @@ public interface DashboardServicesInterfaceAsync {
 
 	void updateDataset(String username, DashboardDataset update, 
 			AsyncCallback<Void> callback);
+    
+	void getUserProfile(String username, AsyncCallback<DashboardServiceResponse<UserInfo>> callback);
+	void updateUserProfile(UserInfo username, AsyncCallback<DashboardServiceResponse<Void>> callback);
+	
 }

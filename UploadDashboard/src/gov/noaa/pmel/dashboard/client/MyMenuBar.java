@@ -3,14 +3,13 @@
  */
 package gov.noaa.pmel.dashboard.client;
 
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.Element;
 
 import com.google.gwt.user.client.DOM;
 import com.google.gwt.user.client.Event;
 import com.google.gwt.user.client.ui.MenuBar;
 import com.google.gwt.user.client.ui.MenuItem;
-
-import static gov.noaa.pmel.dashboard.client.UploadDashboard.logToConsole;
 
 /**
  * @author kamb
@@ -28,10 +27,10 @@ public class MyMenuBar extends MenuBar {
     }
     @Override
     public void onBrowserEvent(Event event) {
-        logToConsole(String.valueOf(event)+":"+event.getType());
-            if ( event.getType().equals("mouseout")) {
+        GWT.log(String.valueOf(event)+":"+event.getType());
+        if ( event.getType().equals("mouseout")) {
             MenuItem item = findItem(DOM.eventGetTarget(event));
-            logToConsole("MenuItem:"+String.valueOf(item));
+            GWT.log("MenuItem:"+String.valueOf(item));
             if ( item != null && item.getElement().getId().equals("changePasswordBtn")) {
                 parentMenu.closeAllChildren(false);
             }
