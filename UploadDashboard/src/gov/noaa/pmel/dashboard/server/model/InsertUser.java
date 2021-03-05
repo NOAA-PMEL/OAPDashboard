@@ -3,15 +3,13 @@
  */
 package gov.noaa.pmel.dashboard.server.model;
 
-import java.util.Date;
-import java.util.List;
 
 import lombok.AccessLevel;
-import lombok.Builder;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.Setter;
 import lombok.ToString;
+import lombok.experimental.SuperBuilder;
 
 /**
  * @author kamb
@@ -21,19 +19,12 @@ import lombok.ToString;
 @Setter(AccessLevel.NONE)
 @ToString(exclude="_authString")
 @EqualsAndHashCode(callSuper=true)
+@SuperBuilder(toBuilder=true,builderMethodName="newUser")
 public class InsertUser extends User {
 
-    String _authString;
-
-    @Builder(builderMethodName="newUser")
-    public InsertUser(Long dbId, Date createTime, Date modifiedTime, String username, 
-                      Date lastLogin, Date lastPwChange, String requiresPwChange,
-                      String firstName, String middle, String lastName, String email, 
-                      String telephone, String telExt, String organization, String authString, List<String> _roles) {
-        super(dbId, createTime, modifiedTime, username, lastLogin, lastPwChange, requiresPwChange,
-              firstName, middle, lastName, 
-              email, telephone, telExt, organization, _roles);
-        _authString = authString;
-    }
+    /* generated */
+    private static final long serialVersionUID = 4690911395566060351L;
+    
+    private String _authString;
     
 }

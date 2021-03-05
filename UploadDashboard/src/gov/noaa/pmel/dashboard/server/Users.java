@@ -83,14 +83,12 @@ public class Users {
     }
     private static int _addUser(User user, String cryptPasswd, UserRole role) throws DashboardException {
         UsersDao udao = DaoFactory.UsersDao();
-        boolean dConfig = false;
         try {
-            InsertUser inUser = user.asInsertUser()
+            InsertUser inUser = (InsertUser) user.asInsertUser()
                                     .authString(cryptPasswd)
                                     .createTime(new Date())
                                     .build();
             int dbId = udao.addUser(inUser);
-            dConfig = true;
             return dbId;
         } catch (Exception ex) {
             logger.warn(ex,ex);

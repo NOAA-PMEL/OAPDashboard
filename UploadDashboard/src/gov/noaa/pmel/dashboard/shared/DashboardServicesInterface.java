@@ -401,4 +401,10 @@ public interface DashboardServicesInterface extends RemoteService {
     
 	void updateDataset(String pageUsername, DashboardDataset update) 
 					throws IllegalArgumentException;
+    
+	DashboardServiceResponse<UserInfo> getUserProfile(String userid)
+					throws IllegalArgumentException;
+    
+	DashboardServiceResponse<Void> updateUserProfile(UserInfo userInfo)
+					throws IllegalArgumentException;
 }

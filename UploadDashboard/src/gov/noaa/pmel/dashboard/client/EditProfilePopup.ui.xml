@@ -1,0 +1,57 @@
+<!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
+<ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
+	xmlns:g="urn:import:com.google.gwt.user.client.ui">
+	<ui:style src="FixedWidth.css" >
+        .ext_label {
+	       padding-left: 4.2em;
+        }
+        .button_panel {
+	       padding-right: 4em;
+        }
+        table.infoTableRow > tbody > tr > td {
+	       vertical-align: bottom !important;
+        }
+    </ui:style>
+
+	<g:VerticalPanel addStyleNames="{style.infopanel}" > <!--horizontalAlignment="ALIGN_CENTER"  -->
+        <g:Label ui:field="prologue" addStyleNames="{style.infoTableRow}" />
+        <g:HorizontalPanel addStyleNames="{style.infoTableRow}" >
+            <g:Label width="8em" addStyleNames="{style.infoPanelLeftLabel}" ui:field="fnLbl">First Name:</g:Label>
+            <g:TextBox width="20em" addStyleNames="{style.infoPanelTextBox}" ui:field="fnBox"/>
+        </g:HorizontalPanel>
+        <g:HorizontalPanel addStyleNames="{style.infoTableRow}" >
+            <g:Label width="8em" addStyleNames="{style.infoPanelLeftLabel}" ui:field="mnLbl">Middle:</g:Label>
+            <g:TextBox width="20em" addStyleNames="{style.infoPanelTextBox}" ui:field="mnBox"/>
+        </g:HorizontalPanel>
+        <g:HorizontalPanel addStyleNames="{style.infoTableRow}" >
+            <g:Label width="8em" addStyleNames="{style.infoPanelLeftLabel}" ui:field="lnLbl">Last Name:</g:Label>
+            <g:TextBox width="20em" addStyleNames="{style.infoPanelTextBox}" ui:field="lnBox"/>
+        </g:HorizontalPanel>
+        <g:HorizontalPanel addStyleNames="{style.infoTableRow}" >
+            <g:Label width="8em" addStyleNames="{style.infoPanelLeftLabel}" ui:field="emailLbl">Email:</g:Label>
+            <g:TextBox width="20em" addStyleNames="{style.infoPanelTextBox}" ui:field="emailBox"/>
+        </g:HorizontalPanel>
+        <g:HorizontalPanel addStyleNames="{style.infoTableRow}" >
+            <g:Label width="8em" addStyleNames="{style.infoPanelLeftLabel}" ui:field="telLbl">Telephone:</g:Label>
+            <g:TextBox width="8em" addStyleNames="{style.infoPanelTextBox}" ui:field="telBox"/>
+        <!-- </g:HorizontalPanel>
+        <g:HorizontalPanel addStyleNames="{style.infoTableRow}" >
+        --> 
+            <g:Label width="3em" addStyleNames="{style.infoPanelLeftLabel},{style.ext_label}" ui:field="extLbl">Ext:</g:Label>
+            <g:TextBox width="4em" addStyleNames="{style.infoPanelTextBox}" ui:field="extBox"/>
+        </g:HorizontalPanel>
+        <g:HorizontalPanel addStyleNames="{style.infoTableRow}" >
+            <g:Label width="8em" addStyleNames="{style.infoPanelLeftLabel}" ui:field="orgLbl">Organization:</g:Label>
+            <g:TextBox width="20em" addStyleNames="{style.infoPanelTextBox}" ui:field="orgBox"/>
+        </g:HorizontalPanel>
+    		<g:FlowPanel addStyleNames="{style.horizontalpanel},{style.floatRight},{style.button_panel}">
+    			<g:Button addStyleNames="{style.narrowadjustingbutton}" ui:field="noButton" />
+    			<g:Button addStyleNames="{style.narrowadjustingbutton}" ui:field="yesButton" />
+    		</g:FlowPanel>
+        <!--
+        <g:HorizontalPanel>
+        </g:HorizontalPanel>
+          -->
+	</g:VerticalPanel>
+
+</ui:UiBinder>

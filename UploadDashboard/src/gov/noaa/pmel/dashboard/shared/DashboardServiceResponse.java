@@ -40,7 +40,8 @@ public class DashboardServiceResponse<R> implements Serializable, IsSerializable
         _version = version;
     }
 
-    private boolean _wasSuccessful;
+    @Builder.Default
+    private boolean _wasSuccessful = true;
     public boolean wasSuccessful() {
         return _wasSuccessful;
     }

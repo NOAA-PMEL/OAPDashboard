@@ -41,7 +41,8 @@ public class ApplicationHeaderTemplate extends Composite {
     @UiField Label userInfoLabel;
     @UiField MenuBar menuBar;
     @UiField MenuItem sendFeedbackBtn;
-    @UiField MyMenuBar changePasswordMenuBar;
+    @UiField MyMenuBar preferencesMenuBar;
+    @UiField MenuItem userInfoBtn;
     @UiField MenuItem changePasswordBtn;
     @UiField MenuItem logoutSeparator;
     @UiField MenuItem logoutBtn;
@@ -56,8 +57,9 @@ public class ApplicationHeaderTemplate extends Composite {
     public ApplicationHeaderTemplate() {
         initWidget(uiBinder.createAndBindUi(this));
         menuBar.setAutoOpen(true);
+        userInfoBtn.getElement().setId("userInfoBtn");
         changePasswordBtn.getElement().setId("changePasswordBtn");
-        changePasswordMenuBar.setParentMenu(menuBar);
+        preferencesMenuBar.setParentMenu(menuBar);
 		logoutBtn.setText(LOGOUT_TEXT);
 		logoutBtn.setTitle(LOGOUT_TEXT);
         logoutBtn.setScheduledCommand(new Scheduler.ScheduledCommand() {
@@ -68,6 +70,12 @@ public class ApplicationHeaderTemplate extends Composite {
             }
         });
         logoutSeparator.setEnabled(true);
+        userInfoBtn.setScheduledCommand(new Scheduler.ScheduledCommand() {
+            @Override
+            public void execute() {
+                showUserInfoPopup();
+            }
+        });
         changePasswordBtn.setScheduledCommand(new Scheduler.ScheduledCommand() {
             @Override
             public void execute() {
@@ -126,8 +134,13 @@ public class ApplicationHeaderTemplate extends Composite {
         UploadDashboard.showFeedbackPopup();
     }
 
+    private static void showUserInfoPopup() {
+        GWT.log("show user info popoup");
+        UploadDashboard.showUserInfoPopup();
+    }
+    
     private static void showChangePasswordPopup() {
-        GWT.log("show change password popoupa");
+        GWT.log("show change password popoup");
         UploadDashboard.showChangePasswordPopup();
     }
     
