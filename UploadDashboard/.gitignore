@@ -9,3 +9,5 @@
 /.project
 /*.war
 *.swp
+/delomed/
+/ssh/

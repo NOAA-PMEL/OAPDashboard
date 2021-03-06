@@ -990,12 +990,12 @@ public abstract class DsgNcFile extends File {
 			String varName = dtype.getVarName();
 			Variable var = ncFile.findVariable(varName);
 			if ( var == null ) {
-				System.err.println("Did not find Variable for " + varName);
+				logger.info(_datasetId + ": DsgFile: Did not find Variable for " + varName);
 				continue;
 			}
 			int dataColumnIdx = _stdUser.findDataColumnIndex(varName);
 			if ( dataColumnIdx == -1 ) {
-				System.err.println("Did not find data column for " + varName);
+				logger.warn(_datasetId + ": Did not find data column for " + varName);
 				continue;
 			}
             if ( _stdUser.isStandardized(dataColumnIdx)) {

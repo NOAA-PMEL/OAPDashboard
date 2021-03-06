@@ -248,12 +248,13 @@ private ExcelFileReader(Workbook workbook) throws IOException {
         // for ( Cell cell : row ) {   // cell iterator doesn't return empty cells
         int definedCellCount = row.getPhysicalNumberOfCells();
         int rowCellCount = row.getLastCellNum();
-        logger.debug("Row " + row.getRowNum() + " cell count: " + rowCellCount + ", defined:" + definedCellCount);
+        logger.trace("Row " + row.getRowNum() + " cell count: " + rowCellCount + ", defined:" + definedCellCount);
         for ( int cellIdx = 0; cellIdx < rowCellCount; cellIdx ++ ) {
             String cellValue;
             Cell cell = row.getCell(cellIdx, Row.MissingCellPolicy.CREATE_NULL_AS_BLANK);
             try { // some types of cells (Date-type in particular) throw an exception on getCellType
-                if ( cell.getCellType() == CellType.FORMULA ) {
+                CellType type = cell.getCellType();
+                if ( type == CellType.FORMULA ) {
                     switch (cell.getCachedFormulaResultType()) {
                         case BOOLEAN:
                             cellValue = String.valueOf(cell.getBooleanCellValue());

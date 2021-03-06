@@ -53,13 +53,6 @@
   <servlet>
     <servlet-name>DashboardDataUploadServlet</servlet-name>
     <servlet-class>gov.noaa.pmel.dashboard.server.DataUploadService</servlet-class>
-    <!-- This is just a reminder of this.  
-         We're currently limiting this in the servlet, so we can control the response.
-        <multipart-config>
-            <max-file-size>1048576</max-file-size>
-            <max-request-size>104857600</max-request-size>
-        </multipart-config>
-     -->
   </servlet>
   <servlet-mapping>
     <servlet-name>DashboardDataUploadServlet</servlet-name>
@@ -147,7 +140,6 @@
       <url-pattern>/passwordreset.html</url-pattern>
       <url-pattern>/requestlogin.html</url-pattern>
       <url-pattern>/username.html</url-pattern>
-      <url-pattern>/_landing_page.html</url-pattern>
       <url-pattern>/tx/*</url-pattern>
       <url-pattern>/tws/*</url-pattern>
       <url-pattern>/twx/*</url-pattern>
