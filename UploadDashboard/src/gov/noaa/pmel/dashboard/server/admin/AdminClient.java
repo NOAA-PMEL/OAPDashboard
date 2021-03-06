@@ -70,7 +70,7 @@ public class AdminClient extends CLClient {
                                             .requiredOption(true)
                                             .description("User email.").build();
     private static CLOption opt_phone = CLOption.builder().name("phone").flag("t").longFlag("phone")
-                                            .description("User phone.").build(); //  Use \"x####\" to specify an extension.").build();
+                                            .description("User phone.  Use \"x####\" to specify an extension.").build(); //  Use \"x####\" to specify an extension.").build();
     private static CLOption opt_notify = CLOption.builder().name("notify").flag("n").longFlag("notify")
                                             .requiresValue(false)
                                             .description("Send new user a notification email.").build();
@@ -198,6 +198,13 @@ public class AdminClient extends CLClient {
                 System.out.println("New user " +userid + " temp password:"+pw);
                 requirePwChange = Users.getRequirePwChangeFlag();
             }
+            String phone = _clOptions.get(opt_phone);
+            String extension = null;
+            if ( phone != null && phone.contains("x")) {
+                int idx = phone.indexOf("x");
+                extension = phone.substring(idx+1);
+                phone = phone.substring(0, idx);
+            }
             User newUser = User.builder()
                             .username(userid)
                             .requiresPwChange(requirePwChange)
@@ -206,7 +213,8 @@ public class AdminClient extends CLClient {
                             .lastName(_clOptions.get(opt_lastName))
                             .organization(_clOptions.get(opt_userOrg))
                             .email(_clOptions.get(opt_email))
-                            .telephone(_clOptions.get(opt_phone))
+                            .telephone(phone)
+                            .telExtension(extension)
                             .build();
             if ( confirm("Add user " + newUser + " to target db: " + target)) {
                 if ( ! _clOptions.booleanValue(opt_noop, false)) {
