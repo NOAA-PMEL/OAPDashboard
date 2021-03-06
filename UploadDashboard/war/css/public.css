@@ -43,6 +43,13 @@
         color: white;
         float: left;
     }
+    .landingheadertitle {
+        position: absolute;
+        font-size: xx-large;
+        color: white;
+        left: 38%;
+        top: .25em;
+    }
     .headersoftwaretitle {
         position: absolute;
         font-size: x-large;

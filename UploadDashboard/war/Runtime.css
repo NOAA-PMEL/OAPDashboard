@@ -127,6 +127,10 @@
 .showInline {
     display: inline;
 }
+.notification_divider_line {
+	width:90%; 
+	margin:0 4.5em .5em;
+}
 /* .hide {
 	display: none;
 } */

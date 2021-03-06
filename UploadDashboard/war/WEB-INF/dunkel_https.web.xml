@@ -84,6 +84,14 @@
     <url-pattern>/DashboardUpdateService/EditFlags/*</url-pattern>
   </servlet-mapping>
   <servlet>
+    <servlet-name>PasswordServlet</servlet-name>
+    <servlet-class>gov.noaa.pmel.dashboard.server.PasswordService</servlet-class>
+  </servlet>
+  <servlet-mapping>
+    <servlet-name>PasswordServlet</servlet-name>
+    <url-pattern>/pw/*</url-pattern>
+  </servlet-mapping>
+  <servlet>
     <servlet-name>NotificationServlet</servlet-name>
     <servlet-class>gov.noaa.pmel.dashboard.server.NotificationService</servlet-class>
   </servlet>
@@ -131,6 +139,7 @@
       <url-pattern>/passwordhelp.html</url-pattern>
       <url-pattern>/passwordreset.html</url-pattern>
       <url-pattern>/requestlogin.html</url-pattern>
+      <url-pattern>/username.html</url-pattern>
       <url-pattern>/tx/*</url-pattern>
       <url-pattern>/tws/*</url-pattern>
       <url-pattern>/twx/*</url-pattern>
