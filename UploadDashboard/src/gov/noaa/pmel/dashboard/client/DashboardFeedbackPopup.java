@@ -21,7 +21,9 @@ import com.google.gwt.user.client.ui.Image;
 import com.google.gwt.user.client.ui.ListBox;
 import com.google.gwt.user.client.ui.PopupPanel;
 import com.google.gwt.user.client.ui.TextArea;
+import com.google.gwt.user.client.ui.UIObject;
 import com.google.gwt.user.client.ui.Widget;
+import com.google.gwt.user.client.ui.PopupPanel.AnimationType;
 
 /**
  * An question embedded within a PopupPanel.
@@ -95,9 +97,27 @@ public class DashboardFeedbackPopup extends Composite {
 		});
 	}
 
+    public PopupPanel getPopupPanel() {
+        return parentPanel;
+    }
+    
 	void show() {
 		feedbackChoiceBox.setFocus(true);
 		parentPanel.center();
+	}
+
+    void show(int x, int y) {
+        parentPanel.setAnimationType(AnimationType.ONE_WAY_CORNER);
+        parentPanel.setAnimationEnabled(true);
+        parentPanel.setPopupPosition(x, y);
+        parentPanel.show();
+        UploadDashboard.logToConsole("visible? " + parentPanel.isShowing());
+    }
+	void show(UIObject from) {
+		feedbackChoiceBox.setFocus(true);
+        parentPanel.setAnimationType(AnimationType.ONE_WAY_CORNER);
+        parentPanel.setAnimationEnabled(true);
+		parentPanel.showRelativeTo(from);
 	}
 
 	@UiHandler("yesButton")

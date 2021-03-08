@@ -36,6 +36,7 @@ import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.google.gwt.user.client.ui.Button;
 import com.google.gwt.user.client.ui.Label;
+import com.google.gwt.user.client.ui.UIObject;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.gwt.view.client.AsyncDataProvider;
 import com.google.gwt.view.client.CellPreviewEvent;
@@ -531,6 +532,25 @@ public class DataColumnSpecsPage extends CompositeWithUsername {
 			}
 		});
 	}
+    
+//    public static void showDataTypeSelector(UIObject from) {
+//        UploadDashboard.logToConsole(from.toString());
+//        UploadDashboard.logToConsole("visible:"+from.isVisible());
+//        UploadDashboard.logToConsole("absLeft:"+from.getAbsoluteLeft() + ", top:" + from.getAbsoluteTop());
+//        DataTypeSelectorWidget dfp = 
+//             new DataTypeSelectorWidget(new AsyncCallback<DataColumnType>() {
+//                @Override
+//                public void onSuccess(DataColumnType sendIt) {
+//                        GWT.log("feedback cancelled");
+//                }
+//                @Override
+//                public void onFailure(Throwable arg0) {
+//                    GWT.log("Feedback failure: " + arg0);
+//                }
+//            });
+//        dfp.show(from);
+//    }
+
 
 	/**
      * @param expocodes2
