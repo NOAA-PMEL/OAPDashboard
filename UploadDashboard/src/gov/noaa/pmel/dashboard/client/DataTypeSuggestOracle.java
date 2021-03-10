@@ -111,7 +111,7 @@ public class DataTypeSuggestOracle extends SuggestOracle {
 		for (int i = 0; i < items.size(); i++) {
 			String itemStr = (String)items.get(i);
 			String itemValue = itemStr.toLowerCase();
-			logger.info("itemStr: " + itemStr); // display value
+//			logger.info("itemStr: " + itemStr); // display value
 		
 			if (filter!=null && !filter.equals("")) {
 				itemValue = itemStr.toLowerCase();
@@ -125,14 +125,14 @@ public class DataTypeSuggestOracle extends SuggestOracle {
 			}
 		}
 //		logger.info("filteredItems: " + filteredItems);
-		logger.info("itemsDisplay: " + itemsDisplay.entrySet());
+//		logger.info("itemsDisplay: " + itemsDisplay.entrySet());
 		
 		if(request.getQuery().isEmpty()) {
 			request.setQuery(null);
             super.requestDefaultSuggestions(request, callback);
 		}
 		
-		if ( (request != null) && !request.getQuery().isEmpty() ) {
+		if ( (request != null) && request.getQuery().length() >= 2 ) {
 //			int limit = 72;
 //			if (request.getLimit() > 0) {
 //				limit = request.getLimit();
@@ -157,7 +157,7 @@ public class DataTypeSuggestOracle extends SuggestOracle {
 			
 			for (Entry<String, String> elem : itemsDisplay.entrySet()) { 
 				if (elem.getValue().contains(query.toLowerCase())) {
-					logger.info("elem: " + elem.getValue());
+//					logger.info("elem: " + elem.getValue());
 					suggestions.add(new ContainsSuggestion(
 							elem.getKey(), 
 							OptionSuggestion(elem.getKey(), elem.getValue(), query)

@@ -1,22 +1,19 @@
 package gov.noaa.pmel.dashboard.client;
 
-import java.io.*;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.HashMap;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.Properties;
 import java.util.TreeMap;
 import java.util.logging.Logger;
+
+import com.google.gwt.cell.client.ValueUpdater;
 
 //import org.json.simple.JSONArray;
 //import org.json.simple.JSONObject;
 //import org.json.simple.parser.JSONParser;	
 //import org.json.simple.parser.ParseException;
 
-import com.google.gwt.core.client.EntryPoint;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.Element;
@@ -44,11 +41,6 @@ import com.google.gwt.event.logical.shared.SelectionEvent;
 import com.google.gwt.event.logical.shared.SelectionHandler;
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.event.logical.shared.ValueChangeHandler;
-import com.google.gwt.http.client.Request;
-import com.google.gwt.http.client.RequestBuilder;
-import com.google.gwt.http.client.RequestCallback;
-import com.google.gwt.http.client.RequestException;
-import com.google.gwt.http.client.Response;
 
 import com.google.gwt.user.client.Window;
 //import com.google.gwt.user.client.Window;
@@ -80,24 +72,36 @@ import com.google.gwt.user.client.ui.SuggestBox.SuggestionDisplay;
 public class DataTypeSelectorWidget extends DialogBox {
 
 	private static Logger logger = Logger.getLogger(DataTypeSelectorWidget.class.getName());
-    private AsyncCallback<DataColumnType> callback;
+    private AsyncCallback<UpdateInformation> callback;
     private Map<String, DataColumnType> knownTypes;
-    private DataColumnType selectedType;
+    private DataColumnType currentType;
+    private ValueUpdater<String> updater;
+    
+    public static int WIDTH = 430;
 	
+    public static class UpdateInformation {
+        public DataColumnType newType;
+        public ValueUpdater<String> updater;
+        public UpdateInformation(DataColumnType newType, ValueUpdater<String> updater) {
+            this.newType = newType;
+            this.updater = updater;
+        }
+    }
 	/**
 	 * This is the entry point method.
 	 */
     public DataTypeSelectorWidget(final Map<String, DataColumnType> knownTypes,
-                                  final DataColumnType selectedType,
-                                  final AsyncCallback<DataColumnType> callback) {
+                                  final AsyncCallback<UpdateInformation> callback) {
         super();
         this.knownTypes = knownTypes;
-        this.selectedType = selectedType;
         init();
         this.callback = callback;
     }
     
-    void show(int x, int y) {
+    void show(DataColumnType columnType, ValueUpdater<String> contextUpdater, int x, int y) {
+        GWT.log("Show : " + columnType);
+        this.currentType = columnType;
+        this.updater = contextUpdater;
         this.setAnimationType(AnimationType.ONE_WAY_CORNER);
         this.setAnimationEnabled(true);
         this.setPopupPosition(x, y);
@@ -119,40 +123,8 @@ public class DataTypeSelectorWidget extends DialogBox {
 		Map<String, List<String>> unitsLookup = new TreeMap<String, List<String>>(String.CASE_INSENSITIVE_ORDER);
         for (DataColumnType type : knownTypes.values()) {
             dataTypeLookup.put(type.getDisplayName(), type);
-            unitsLookup.put(type.getVarName(), type.getUnits());
+            unitsLookup.put(type.getDisplayName(), new ArrayList<>(type.getUnits()));
         }
-//		data1lookup.put( "AA", "DescriptionA" );
-//		data1lookup.put( "BB", "Descriptionb" );
-//		data1lookup.put( "BC AABB", "Descriptionbc aabb" );
-//		data1lookup.put( "CC", "Descriptionc" );
-//		data1lookup.put( "DD", "Descriptiond" );
-//		data1lookup.put( "DDA", "Descriptiondda" );
-//		data1lookup.put( "DDB", "DescriptionddB" );
-//		data1lookup.put( "DDC", "" );
-//		data1lookup.put( "DDD", null );
-//		data1lookup.put( "EE", "Descriptione" );
-//		data1lookup.put( "FF", "Descriptionf" );
-//		data1lookup.put( "HH", "Descriptiong" );
-//		data1lookup.put( "II", "Descriptionh" );
-//		data1lookup.put( "AA BBAACC", "DescriptionAA BBAACC" );
-//		data1lookup.put( "BB AABBCC", "DescriptionBB AABBCC" );
-//		data1lookup.put( "BC AABCEE", "DescriptionBC AABCEE" );
-//		data1lookup.put( "CC CCSSEE", "DescriptionCC CCSSEE" );
-//		data1lookup.put( "DDA ADDV", "DescriptionDDA ADDV" );
-//		data1lookup.put( "EE", "DescriptionEE2" );
-		
-//		data2lookup.put("AA", new ArrayList<String>(Arrays.asList("unita1","unita2")));
-//		data2lookup.put("BB", new ArrayList<String>(Arrays.asList("unitb1","unitb2","unitb3")));
-//		data1lookup.put( "BC AABB", "Descriptionb" );
-//		data2lookup.put("CC", new ArrayList<String>(Arrays.asList("unitc1","unitc2")));
-//		data2lookup.put("DD", new ArrayList<String>(Arrays.asList("")));
-//		data2lookup.put("DDA", null);
-//		data2lookup.put("DDB", new ArrayList<String>(Arrays.asList()));
-//		data2lookup.put("DDD", new ArrayList<String>(Arrays.asList("unitd1","unitd2","unitd3","unitd4")));
-//		data2lookup.put("EE", new ArrayList<String>(Arrays.asList("unite1","unite2")));
-//		data2lookup.put("FF", new ArrayList<String>(Arrays.asList("unitf1","unitf2")));
-//		data2lookup.put("HH", new ArrayList<String>(Arrays.asList("unitg1","unitg2")));
-//		data2lookup.put("II", new ArrayList<String>(Arrays.asList("unith1","unith2")));
 		
 		final Button sendButton = new Button("Send");
 //		final TextBox dataTypeField = new TextBox();
@@ -187,15 +159,24 @@ public class DataTypeSelectorWidget extends DialogBox {
 		SuggestBox dataTypeSuggestionBox = new SuggestBox(getDataOracle(dataTypeLookup));
 //		SuggestionDisplay display = data1suggestionBox.getSuggestionDisplay();
 
-		
 		//set width
-		dataTypeSuggestionBox.setWidth("450");
+		dataTypeSuggestionBox.setWidth("90%");
 		
 		// Add suggestionbox to the root panel. 
 		HorizontalPanel data1Panel = new HorizontalPanel();
 		data1Panel.add(dataTypeSuggestionBox);
 		
 		final ListBox unitsListBox = new ListBox();
+        unitsListBox.addChangeHandler(new ChangeHandler() {
+            @Override
+            public void onChange(ChangeEvent event) {
+                ListBox unitsList = (ListBox)event.getSource();
+                GWT.log("unitChange:["+unitsList.getSelectedIndex()+"]"+unitsList.getSelectedItemText());
+                // not implemented yet
+//                if ( "OTHER".equals(unitsList.getSelectedItemText()) {
+//                    showAddUnitWidget();
+            }
+        });
 		final HorizontalPanel listPanel = new HorizontalPanel();
 		listPanel.add(unitsListBox);
 		
@@ -211,7 +192,6 @@ public class DataTypeSelectorWidget extends DialogBox {
 				descrText.setHTML(getDataDescription(temp, dataTypeLookup));
 				descriptionPanel.add(descrText);
 				
-				
 				// Testing
 				SuggestionDisplay temp2 = dataTypeSuggestionBox.getSuggestionDisplay();
 				logger.info("temp2: "+ temp2.toString());
@@ -220,19 +200,17 @@ public class DataTypeSelectorWidget extends DialogBox {
 				// set listBox with units for datatype
 				unitsListBox.clear();
 				
-				List<String> unitsList = getData2(event.getSelectedItem().getReplacementString(), unitsLookup);
-				if (unitsList.isEmpty()) {
+				List<String> unitsList = getUnitsList(event.getSelectedItem().getReplacementString(), unitsLookup);
+				if (unitsList == null || unitsList.isEmpty()) {
 					listPanel.setVisible(false);
 				}
 				else {
-					for ( String data : getData2(event.getSelectedItem().getReplacementString(), unitsLookup) ){
+					for ( String data : unitsList ) {
 						unitsListBox.addItem(data);
 			        }
-
 					listPanel.setVisible(true);
 				}
 			}
-			
 		});
 		
 		
@@ -261,6 +239,7 @@ public class DataTypeSelectorWidget extends DialogBox {
 		
 
 	    VerticalPanel dialogVPanel = new VerticalPanel();
+        dialogVPanel.setWidth("100%");
 	    
 		dialogVPanel.addStyleName("dialogVPanel");
 		dialogVPanel.add(new HTML("<b>Description:</b>"));
@@ -273,13 +252,13 @@ public class DataTypeSelectorWidget extends DialogBox {
 		dialogVPanel.add(new HTML("<br>"));
 		
 		dialogVPanel.addStyleName("dialogVPanel");
+        dialogVPanel.setWidth(WIDTH+"px");
 		dialogVPanel.add(new HTML("<b>Units:</b>"));
 		dialogVPanel.add(listPanel);
 		dialogVPanel.add(new HTML("<br>"));
-		this.setWidth("450px");
 		final HorizontalPanel buttonPanel = new HorizontalPanel();
 		buttonPanel.setWidth("100%");
-		buttonPanel.setHorizontalAlignment(HorizontalPanel.ALIGN_RIGHT);
+		buttonPanel.setHorizontalAlignment(HorizontalPanel.ALIGN_CENTER);
 		buttonPanel.add(cancelButton);
 		buttonPanel.add(selectButton);
 		dialogVPanel.add(buttonPanel);
@@ -291,10 +270,15 @@ public class DataTypeSelectorWidget extends DialogBox {
 		selectButton.addClickHandler(new ClickHandler() {
 			public void onClick(ClickEvent event) {
 				dialogBox.hide();
+                GWT.log("currentType:"+currentType);
 				String textFromSuggestBox = dataTypeSuggestionBox.getText();
-                GWT.log("text box" + textFromSuggestBox);
+                GWT.log("text box: " + textFromSuggestBox);
                 DataColumnType newSelectedType = dataTypeLookup.get(textFromSuggestBox);
                 GWT.log("column type: " + newSelectedType);
+                if ( currentType.equals(newSelectedType)) {
+                    GWT.log("No change.");
+                    return;
+                }
 				String textFromUnitsList = unitsListBox.getSelectedItemText();
 				
 				String selectedDataType = "";
@@ -310,8 +294,22 @@ public class DataTypeSelectorWidget extends DialogBox {
 					selectedDataType += " " + textFromUnitsList;
 				}
 				
+                if ( newSelectedType == null ) {
+                    Double sortOrder = 102.;
+                    String displayName = textFromSuggestBox;
+                    String newDescription = textFromSuggestBox;
+                    boolean isCritical = false;
+                    newSelectedType = new DataColumnType(textFromSuggestBox, sortOrder, 
+                                                         displayName, newDescription, isCritical, 
+                                                         Arrays.asList(new String[] {textFromUnitsList}));
+                } else {
+                    if ( ! newSelectedType.setSelectedUnit(textFromUnitsList)) {
+                        GWT.log("Unknown unit " + textFromUnitsList + " for var " + newSelectedType.getDisplayName());
+                    }
+                }
+                currentType = newSelectedType;
+                callback.onSuccess(new UpdateInformation(newSelectedType, updater));
 //				dataTypeField.setText(selectedDataType);
-
 			}
 		});
 		
@@ -346,7 +344,7 @@ public class DataTypeSelectorWidget extends DialogBox {
 			@Override
 			public void onFocus(FocusEvent event) {
 				// TODO Auto-generated method stub
-				logger.info("event.getSource() focus: " + event.getSource());
+				logger.fine("event.getSource() focus: " + event.getSource());
 				unitsListBox.clear();
 				listPanel.setVisible(false);
 				
@@ -367,19 +365,17 @@ public class DataTypeSelectorWidget extends DialogBox {
 				logger.info("event.getSource() value: " + ((TextBox)event.getSource()).getValue());
 				String checkValue = (String)((TextBox)event.getSource()).getValue();
 				
-				List<String> unitsList = getData2(checkValue, unitsLookup);
+				List<String> unitsList = getUnitsList(checkValue, unitsLookup);
+				unitsListBox.clear();
 				
 				if (unitsList.isEmpty()) {
-					unitsListBox.clear();
 					listPanel.setVisible(false);
+				} else {
+					for ( String data : unitsList ) {
+						unitsListBox.addItem(data);
+			        }
+					listPanel.setVisible(true);
 				}
-//				else {
-//					for ( String data : unitsList ){
-//						listBox.addItem(data);
-//			        }
-//		
-//					listPanel.setVisible(true);
-//				}
 
 				
 			}
@@ -421,8 +417,8 @@ public class DataTypeSelectorWidget extends DialogBox {
 			@Override
 			public void onMouseOver(MouseOverEvent event) {
 				// TODO Auto-generated method stub
-				logger.info("event.getSource() mouseover: " + event.getSource());
-				logger.info("onMouseOver " + dataTypeSuggestionBox.getValueBox().toString());
+//				logger.fine("event.getSource() mouseover: " + event.getSource());
+//				logger.fine("onMouseOver " + dataTypeSuggestionBox.getValueBox().toString());
 				
 //				data1suggestionBox.showSuggestionList();
 				boolean suggestionShowing = dataTypeSuggestionBox.getSuggestionDisplay().isSuggestionListShowing();
@@ -523,24 +519,26 @@ public class DataTypeSelectorWidget extends DialogBox {
         return itemDescription;
     }
 	
-	private List<String> getData2(String displayName, Map<String, List<String>> data2lookup) {
+	private List<String> getUnitsList(String displayName, Map<String, List<String>> unitsLookup) {
 
-		List<String> datalist = new ArrayList<String>();
-		logger.info("displayName: "+ data2lookup.get(displayName));
+		List<String> unitsList = unitsLookup.containsKey(displayName) ?
+		                            unitsLookup.get(displayName) :
+		                            new ArrayList<>();
+		logger.info("units list for " + displayName + " : "+ unitsList);
 
-		if (data2lookup.get(displayName) != null || (data2lookup.get(displayName) != null && data2lookup.containsKey(displayName))) {
-			for ( String item : data2lookup.get(displayName) ){
-				if (isEmptyString(item)) {
-					data2lookup.get(displayName).remove(item);
-				}
-	        }
-			datalist = data2lookup.get(displayName);
-		}
+		for ( String item : unitsList ) {
+			if (isEmptyString(item)) {
+                // remove it from the selection box list, 
+			    // but NOT from the type definition.
+                // Because shit depends on there being an empty string in the units list.
+				unitsList.remove(item);
+			}
+        }
 		
-		return datalist;
+		return unitsList;
 	}
 	
-	boolean isEmptyString(String string) {
+	static boolean isEmptyString(String string) {
 	    return string == null || string.isEmpty();
 	}
 	
