@@ -39,6 +39,7 @@ public abstract class DashDataType<T extends Comparable<T>> implements Comparabl
 	public static final String QUESTIONABLY_LARGE_MSG = " is more than the acceptable limit of ";
 	public static final String UNREASONABLY_LARGE_MSG = " is more than the reasonable limit of ";
 
+	public static final String VAR_NAME_TAG = "var_name";
 	public static final String DATA_CLASS_NAME_TAG = "data_class";
 	public static final String SORT_ORDER_TAG = "sort_order";
 	public static final String DISPLAY_NAME_TAG = "display_name";
