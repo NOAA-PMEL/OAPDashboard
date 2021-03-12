@@ -7,8 +7,10 @@ import java.io.Serializable;
 
 import com.google.gwt.user.client.rpc.IsSerializable;
 
+import gov.noaa.pmel.dashboard.server.model.User;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -20,7 +22,7 @@ import lombok.experimental.SuperBuilder;
  */
 @Data
 @Setter(AccessLevel.NONE)
-@SuperBuilder(toBuilder=true)
+@Builder(toBuilder=true)
 public class UserInfo implements Serializable, IsSerializable {
     
     /* generated */
@@ -70,5 +72,14 @@ public class UserInfo implements Serializable, IsSerializable {
     public String telExtension() { return _telExtension; }
 
     public String organization() { return _organization; }
+
+    /**
+     * @param user
+     * @return
+     */
+    public static UserInfo from(User user) {
+        return new UserInfo(user.username(), user.firstName(), user.middle(), user.lastName(), 
+                            user.email(), user.telephone(), user.telExtension(), user.organization());
+    }
 
 }
