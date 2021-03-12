@@ -6,12 +6,10 @@ package gov.noaa.pmel.dashboard.server.model;
 import java.util.Date;
 import java.util.List;
 
-import gov.noaa.pmel.dashboard.shared.UserInfo;
 import gov.noaa.pmel.oads.util.StringUtils;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.Data;
-import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.experimental.SuperBuilder;
@@ -21,33 +19,32 @@ import lombok.experimental.SuperBuilder;
  *
  */
 @Data
-@EqualsAndHashCode(callSuper=true)
 @Setter(AccessLevel.NONE)
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
 @AllArgsConstructor
 @SuperBuilder(toBuilder=true)
-public class User extends UserInfo {
+public class User {
 
     private transient Long _dbId;
     private transient Date _createTime;
     private transient Date _modifiedTime;
     
-//    private String _username;
+    private String _username;
     
     private Date _lastLogin;
     private Date _lastPwChange;
     private String _requiresPwChange;
     
-//    private String _firstName;
-//    private String _middle;
-//    private String _lastName;
+    private String _firstName;
+    private String _middle;
+    private String _lastName;
     
-//    private String _email;
+    private String _email;
     
-//    private String _telephone;
-//    private String _telExtension;
+    private String _telephone;
+    private String _telExtension;
     
-//    private String _organization;
+    private String _organization;
     
     private List<String> _roles;
     
@@ -73,11 +70,6 @@ public class User extends UserInfo {
                 .telephone(_telephone)
                 .telExtension(_telExtension)
                 .organization(_organization);
-    }
-    
-    public UserInfo asUserInfo() {
-        return new UserInfo(_username, _firstName, _middle, _lastName, 
-                            _email, _telephone, _telExtension, _organization);
     }
     
     public boolean hasRole(String roleName) {
