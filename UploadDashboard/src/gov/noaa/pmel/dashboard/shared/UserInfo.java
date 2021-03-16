@@ -73,13 +73,4 @@ public class UserInfo implements Serializable, IsSerializable {
 
     public String organization() { return _organization; }
 
-    /**
-     * @param user
-     * @return
-     */
-    public static UserInfo from(User user) {
-        return new UserInfo(user.username(), user.firstName(), user.middle(), user.lastName(), 
-                            user.email(), user.telephone(), user.telExtension(), user.organization());
-    }
-
 }

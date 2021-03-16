@@ -993,7 +993,7 @@ public class DashboardServices extends RemoteServiceServlet implements Dashboard
                                         .wasSuccessful(false)
                                         .build();
             } else {
-                response = responseBldr.response(UserInfo.from(user)).build();
+                response = responseBldr.response(User.userInfo(user)).build();
             }
         } catch (Exception ex) {
             logger.warn(ex,ex);

@@ -6,6 +6,7 @@ package gov.noaa.pmel.dashboard.server.model;
 import java.util.Date;
 import java.util.List;
 
+import gov.noaa.pmel.dashboard.shared.UserInfo;
 import gov.noaa.pmel.oads.util.StringUtils;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
@@ -101,4 +102,14 @@ public class User {
     public boolean requiresPasswordChange() {
         return _requiresPwChange != null;
     }
+    
+    /**
+     * @param user
+     * @return
+     */
+    public static UserInfo userInfo(User user) {
+        return new UserInfo(user.username(), user.firstName(), user.middle(), user.lastName(), 
+                            user.email(), user.telephone(), user.telExtension(), user.organization());
+    }
+
 }
