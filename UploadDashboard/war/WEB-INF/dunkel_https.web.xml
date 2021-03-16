@@ -150,12 +150,12 @@
       <web-resource-name>OAP Dashboard</web-resource-name>
       <url-pattern>/*</url-pattern>
     </web-resource-collection>
-    <user-data-constraint>
-        <transport-guarantee>CONFIDENTIAL</transport-guarantee>
-    </user-data-constraint>
     <auth-constraint>
       <role-name>oapdashboarduser</role-name>
     </auth-constraint>
+    <user-data-constraint>
+        <transport-guarantee>CONFIDENTIAL</transport-guarantee>
+    </user-data-constraint>
   </security-constraint>
   <login-config>
     <auth-method>FORM</auth-method>
