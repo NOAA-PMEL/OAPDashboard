@@ -24,18 +24,20 @@ import com.google.gwt.dom.client.TableRowElement;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.DoubleClickEvent;
 import com.google.gwt.event.dom.client.DoubleClickHandler;
+import com.google.gwt.event.dom.client.ScrollEvent;
+import com.google.gwt.event.dom.client.ScrollHandler;
 import com.google.gwt.logging.client.ConsoleLogHandler;
 import com.google.gwt.text.client.IntegerParser;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.uibinder.client.UiHandler;
-import com.google.gwt.user.cellview.client.DataGrid;
 import com.google.gwt.user.cellview.client.RowStyles;
 import com.google.gwt.user.cellview.client.SimplePager;
 import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.google.gwt.user.client.ui.Button;
 import com.google.gwt.user.client.ui.Label;
+import com.google.gwt.user.client.ui.ScrollPanel;
 import com.google.gwt.user.client.ui.UIObject;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.gwt.view.client.AsyncDataProvider;
@@ -195,7 +197,7 @@ public class DataColumnSpecsPage extends CompositeWithUsername {
 			GWT.create(DashboardServicesInterface.class);
 
     @UiField ApplicationHeaderTemplate header;
-	@UiField DataGrid<ArrayList<String>> dataGrid;
+	@UiField MyDataGrid<ArrayList<String>> dataGrid;
 	@UiField Label pagerLabel;
 	@UiField Label messagesLabel;
 	@UiField SimplePager gridPager;
@@ -215,6 +217,7 @@ public class DataColumnSpecsPage extends CompositeWithUsername {
 	// Dataset associated with and updated by this page
 	private DashboardDataset cruise;
 	// List of DatasetDataColumn objects associated with the column Headers
+//	private ArrayList<DatasetDataColumn2> cruiseDataCols;
 	private ArrayList<DatasetDataColumn> cruiseDataCols;
 	// Asynchronous data provider for the data grid 
 	private AsyncDataProvider<ArrayList<String>> dataProvider;
@@ -234,6 +237,32 @@ public class DataColumnSpecsPage extends CompositeWithUsername {
 	// Singleton instance of this page
 	private static DataColumnSpecsPage singleton = null;
 
+	public static MyDataGrid<ArrayList<String>> getDataGrid() {
+        return singleton.dataGrid;
+    }
+    public static void preventScroll(boolean prevent) {
+        GWT.log("prevent: " + prevent);
+        ScrollPanel sp = singleton.dataGrid.getScrollPanel();
+        sp.setTouchScrollingDisabled(prevent);
+        GWT.log("touch disabled: "+ sp.isTouchScrollingDisabled());
+    }
+
+    class MyScrollHandler implements ScrollHandler {
+        private boolean scrollEnabled = true;
+        @Override
+        public void onScroll(ScrollEvent event) {
+            if ( ! scrollEnabled ) {
+                event.preventDefault();
+                event.stopPropagation();
+            }
+        }
+        
+        public void setScrollEnabled(boolean enabled) {
+            this.scrollEnabled = enabled;
+        }
+    }
+    public MyScrollHandler scrollHandler = new MyScrollHandler();
+    
     private static Logger logger = Logger.getLogger("DataColumnSpecsPage");
 	/**
 	 * Creates an empty cruise data column specification page.  
@@ -270,6 +299,7 @@ public class DataColumnSpecsPage extends CompositeWithUsername {
 
 		knownUserTypes = new ArrayList<DataColumnType>();
 		cruise = new DashboardDataset();
+//		cruiseDataCols = new ArrayList<DatasetDataColumn2>();
 		cruiseDataCols = new ArrayList<DatasetDataColumn>();
 		expocodes = new ArrayList<String>();
 
@@ -279,6 +309,8 @@ public class DataColumnSpecsPage extends CompositeWithUsername {
 				return item.get(0);
 			}
 		});
+//        dataGrid.getScrollPanel().addScrollHandler(scrollHandler);
+        
 		dataGrid.setRowStyles(new RowStyles<ArrayList<String>>() {
 			@Override
 			public String getStyleNames(ArrayList<String> row, int rowIndex) {
@@ -753,6 +785,7 @@ public class DataColumnSpecsPage extends CompositeWithUsername {
 			// TextColumn for displaying the data strings for this column
 			ArrayListTextColumn dataColumn = new ArrayListTextColumn(k+1, cruise, rowMsgMap);
 			// DatasetDataColumn for creating the Header cell for this column
+//			DatasetDataColumn2 cruiseColumn = new DatasetDataColumn2(knownUserTypes, cruise, k);
 			DatasetDataColumn cruiseColumn = new DatasetDataColumn(knownUserTypes, cruise, k);
 			// Maintain a reference to the DatasetDataColumn object
 			cruiseDataCols.add(cruiseColumn);
@@ -818,6 +851,7 @@ public class DataColumnSpecsPage extends CompositeWithUsername {
 	void logoutOnClick() {
 		// Check if any changes have been made
 		boolean hasChanged = false;
+//		for ( DatasetDataColumn2 dataCol : cruiseDataCols ) {
 		for ( DatasetDataColumn dataCol : cruiseDataCols ) {
 			if ( dataCol.hasChanged() ) {
 				hasChanged = true;
@@ -849,6 +883,7 @@ public class DataColumnSpecsPage extends CompositeWithUsername {
 	void _doneOnClick(ClickEvent event) {
 		// Check if any changes have been made
 		boolean hasChanged = false;
+//		for ( DatasetDataColumn2 dataCol : cruiseDataCols ) {
 		for ( DatasetDataColumn dataCol : cruiseDataCols ) {
 			if ( dataCol.hasChanged() ) {
 				hasChanged = true;
@@ -1307,6 +1342,7 @@ public class DataColumnSpecsPage extends CompositeWithUsername {
 			return;
 		}
 		boolean hasChanged = false;
+//		for ( DatasetDataColumn2 dataCol : cruiseDataCols ) {
 		for ( DatasetDataColumn dataCol : cruiseDataCols ) {
 			if ( dataCol.hasChanged() ) {
 				hasChanged = true;

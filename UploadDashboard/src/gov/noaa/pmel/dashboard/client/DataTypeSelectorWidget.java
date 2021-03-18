@@ -37,6 +37,8 @@ import com.google.gwt.event.dom.client.KeyUpEvent;
 import com.google.gwt.event.dom.client.KeyUpHandler;
 import com.google.gwt.event.dom.client.MouseOverEvent;
 import com.google.gwt.event.dom.client.MouseOverHandler;
+import com.google.gwt.event.logical.shared.CloseEvent;
+import com.google.gwt.event.logical.shared.CloseHandler;
 import com.google.gwt.event.logical.shared.SelectionEvent;
 import com.google.gwt.event.logical.shared.SelectionHandler;
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
@@ -53,6 +55,7 @@ import com.google.gwt.user.client.ui.HorizontalPanel;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.ListBox;
 import com.google.gwt.user.client.ui.MultiWordSuggestOracle;
+import com.google.gwt.user.client.ui.PopupPanel;
 import com.google.gwt.user.client.ui.SuggestOracle;
 import com.google.gwt.user.client.ui.SuggestOracle.Suggestion;
 import com.google.gwt.user.client.ui.TextArea;
@@ -76,6 +79,8 @@ public class DataTypeSelectorWidget extends DialogBox {
     private Map<String, DataColumnType> knownTypes;
     private DataColumnType currentType;
     private ValueUpdater<String> updater;
+    private int columnNumber;
+    private String userColumnHeader;
     
     public static int WIDTH = 430;
 	
@@ -91,9 +96,12 @@ public class DataTypeSelectorWidget extends DialogBox {
 	 * This is the entry point method.
 	 */
     public DataTypeSelectorWidget(final Map<String, DataColumnType> knownTypes,
+                                  final int columnIndex, final String userColumnName,
                                   final AsyncCallback<UpdateInformation> callback) {
         super();
         this.knownTypes = knownTypes;
+        this.columnNumber = columnIndex + 1;
+        this.userColumnHeader = userColumnName;
         init();
         this.callback = callback;
     }
@@ -107,6 +115,7 @@ public class DataTypeSelectorWidget extends DialogBox {
         this.setPopupPosition(x, y);
         this.show();
         UploadDashboard.logToConsole("visible? " + this.isShowing());
+        DataColumnSpecsPage.preventScroll(true);
     }
 	void show(UIObject from) {
 //		feedbackChoiceBox.setFocus(true);
@@ -118,6 +127,15 @@ public class DataTypeSelectorWidget extends DialogBox {
 
 	public void init() {
 		final DialogBox dialogBox = this;
+        dialogBox.setModal(true);
+        dialogBox.setGlassEnabled(true);
+        dialogBox.addCloseHandler(new CloseHandler<PopupPanel>() {
+            @Override
+            public void onClose(CloseEvent<PopupPanel> event) {
+                GWT.log("Closing DTS");
+                DataColumnSpecsPage.preventScroll(false);
+            }
+        });
 		
 		Map<String, DataColumnType> dataTypeLookup = new TreeMap<>(String.CASE_INSENSITIVE_ORDER);
 		Map<String, List<String>> unitsLookup = new TreeMap<String, List<String>>(String.CASE_INSENSITIVE_ORDER);
@@ -225,7 +243,7 @@ public class DataTypeSelectorWidget extends DialogBox {
 //		dataTypeField.selectAll();
 
 		// Create the popup dialog box
-		dialogBox.setText("Data Type Selector");
+		dialogBox.setText("Data Type Selector for [" + columnNumber + "] " + userColumnHeader);
 		dialogBox.setAnimationEnabled(true);
 		final Button selectButton = new Button("Select");
 		// We can set the id of a widget by accessing its Element

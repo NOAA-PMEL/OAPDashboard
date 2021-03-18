@@ -37,6 +37,7 @@ import com.google.gwt.user.cellview.client.CellWidget;
 import com.google.gwt.user.cellview.client.Header;
 import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.rpc.AsyncCallback;
+import com.google.gwt.user.client.ui.ScrollPanel;
 
 import gov.noaa.pmel.dashboard.client.DataTypeSelectorWidget.UpdateInformation;
 import gov.noaa.pmel.dashboard.shared.DashboardDataset;
@@ -185,6 +186,7 @@ public class DatasetDataColumn {
 			private ClickableTextCell theCell = null;
 //            private CellWidget<String> selectorCellWidget;
             DataTypeSelectorWidget dts = new DataTypeSelectorWidget(knownTypes, 
+                                                columnIndex, cruise.getUserColNames().get(columnIndex),
                                                 new AsyncCallback<UpdateInformation>() {
                 @Override
                 public void onSuccess(UpdateInformation info) {
@@ -216,7 +218,7 @@ public class DatasetDataColumn {
 //                            new StyledSuggestBoxCell(typeUnitStringList, "dataColumnSelectionCell") {
     					@Override
     					public void render(Cell.Context context, String value, SafeHtmlBuilder sb) {
-                            GWT.log("render: " + value);
+//                            GWT.log("render: " + value);
 //    						super.render(context, value, sb);
 //                            String ctxStr = "context:"+context.getColumn() + ", " + context.getIndex();
 //                            if ( value == null ) {
@@ -239,14 +241,21 @@ public class DatasetDataColumn {
                             int clickX = event.getClientX();
                             int clickY = event.getClientY();
                             int pageWidth = Window.getClientWidth();
-                            GWT.log("eX: " + clickX + ", eY: " + clickY + ", page: " + pageWidth);
+//                            GWT.log("eX: " + clickX + ", eY: " + clickY + ", page: " + pageWidth);
                             int offsetX = 0;
                             int offsetY = 0;
                             int fudgeX = 10;
                             int fudgeY = parent.getOffsetParent().getOffsetHeight();
                             Element selector = (Element)parent.getChild(0);
+                            ScrollPanel dgScroll = DataColumnSpecsPage.getDataGrid().getScrollPanel();
+                            int scroll = dgScroll.getHorizontalScrollPosition();
+                            GWT.log("scroll: " + scroll);
+//                            GWT.log("selector scrollLeft: " + selector.getScrollLeft() +
+//                                    ", scrollWidth: " + selector.getScrollWidth() +
+//                                    ", dataGrid: scrollLeft: " + DataColumnSpecsPage.getDataGrid().getElement().getScrollLeft() +
+//                                    ", dataGrid: scrollWidth: " + DataColumnSpecsPage.getDataGrid().getElement().getScrollWidth()
+//                            );
                             fudgeY -= selector.getOffsetHeight();
-                            GWT.log("fudgeX: " + fudgeX + ", fudgeY: " + fudgeY);
                             int selectorWidth = selector.getOffsetWidth();
                             int iconWidth = 20; // XXX
                             Element e = parent;
@@ -256,17 +265,28 @@ public class DatasetDataColumn {
 //                                GWT.log("e: " + e + ", offX: " + offsetX + ", offY: " + offsetY);
                                 e = e.getOffsetParent(); 
                             }
-                            GWT.log("offX: " + offsetX + ", offY: " + offsetY);
-//                            if ( clickX < offsetX + selectorWidth - iconWidth ) { // ignore
-//                                GWT.log("ignoring click!");
-//                                return; 
-//                            }
-                            int popupWidth = DataTypeSelectorWidget.WIDTH; // XXX FeedbackPopupWidth CHANGE_ME!
-                            int showX = offsetX + fudgeX;
-                            int showY = offsetY + fudgeY;
-                            if ( showX + popupWidth > pageWidth - 50 ) {
-                                showX = pageWidth - (popupWidth + 50);
+                            UploadDashboard.logToConsole("eX: " + clickX + ", eY: " + clickY + ", page: " + pageWidth+ ", selector: " + selectorWidth );
+//                            UploadDashboard.logToConsole("fudgeX: " + fudgeX + ", fudgeY: " + fudgeY);
+                            int adjustedX = offsetX - scroll;
+                            UploadDashboard.logToConsole("offX: " + offsetX + ", offY: " + offsetY + ", adjustedX: " + adjustedX);
+                            if ( clickX < adjustedX + selectorWidth - iconWidth ) { // ignore
+                                GWT.log("ignoring click!");
+                                return; 
                             }
+                            int popupWidth = DataTypeSelectorWidget.WIDTH; // XXX FeedbackPopupWidth CHANGE_ME!
+                            int showX = adjustedX + fudgeX;
+//                            int showX = clickX - selectorWidth;
+                            if ( showX < 25 ) {
+                                GWT.log("adjusting showX up.");
+                                showX = 25;
+                            }
+                            int showY = offsetY + fudgeY;
+                            
+                            if ( showX + popupWidth > pageWidth - 75 ) {
+                                showX = pageWidth - (popupWidth + 75);
+                                GWT.log("adjusting showX to: "+ showX);
+                            }
+                            GWT.log("showX:"+showX + ", showY: " + showY);
                             dts.show(cruise.getDataColTypes().get(columnIndex), valueUpdater, showX, showY);
 //                            int shownWidth = dts.getPopupPanel().getOffsetWidth();
 //                            UploadDashboard.logToConsole("shownWidth:"+shownWidth);
