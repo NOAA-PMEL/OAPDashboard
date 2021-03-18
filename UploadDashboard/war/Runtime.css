@@ -29,15 +29,17 @@
 	background-color: white;
 }
 .dataColumnType_name {
-    padding-left: 4px;
+    margin-bottom: 1px;
     overflow: hidden;
+    padding-left: 4px;
 }
 .dataColumnType_icon {
 	height: 12px;
+    background-color: #f1f1f1;
 	border: 1px solid black;
     border-radius: 2px;
     cursor: pointer;
-    margin: 1px;
+    margin: 2px;
     padding: 2px 2px;
 	float: right;
 }
