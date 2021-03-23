@@ -81,7 +81,7 @@
         	text-align:center
         }
         .hidden {
-	       visible=false;
+	       visible:false;
         }
         table.type_and_acks_panel > tbody > tr > td { /* :first-child  */
 	       vertical-align: bottom !important;
