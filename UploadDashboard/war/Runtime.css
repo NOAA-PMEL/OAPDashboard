@@ -6,6 +6,15 @@
 	Runtime styling needs to be available to the browser.
 */
 
+.suggestPopupContent {
+   max-height: 400px !important;
+   overflow-y: scroll !important;
+}
+/*  .gwt-SuggestBoxPopup {
+   max-height: 400px !important;
+   overflow-y: scroll !important;
+} */
+
 .underlined {
 	text-decoration: underline;
 }
