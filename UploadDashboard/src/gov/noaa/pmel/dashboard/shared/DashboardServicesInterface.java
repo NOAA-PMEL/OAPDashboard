@@ -350,7 +350,7 @@ public interface DashboardServicesInterface extends RemoteService {
 			throws IllegalArgumentException;
 
 	void submitDatasetsToArchive(String username, List<String> datasetIds, List<String> columnNames,
-								 String archiveStatus, boolean repeatSend,
+								 String archiveStatus, String accessionNum,
 								 String submitComment, boolean requestDOI)
 			throws IllegalArgumentException;
     

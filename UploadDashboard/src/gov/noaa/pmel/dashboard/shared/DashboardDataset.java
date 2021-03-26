@@ -30,6 +30,8 @@ public class DashboardDataset implements Serializable, IsSerializable {
 	private static final long serialVersionUID = 5005454171404329101L;
 
     @Builder.Default
+    protected String accession = DashboardUtils.STRING_MISSING_VALUE; 
+    @Builder.Default
 	protected boolean selected = false;
     @Builder.Default
     protected String recordId = DashboardUtils.STRING_MISSING_VALUE;
@@ -94,6 +96,7 @@ public class DashboardDataset implements Serializable, IsSerializable {
 	public DashboardDataset() {
         super();
 		selected = false;
+        accession = DashboardUtils.STRING_MISSING_VALUE;
         recordId = DashboardUtils.STRING_MISSING_VALUE;
         userDatasetName = DashboardUtils.STRING_MISSING_VALUE;
 		version = DashboardUtils.STRING_MISSING_VALUE;
@@ -121,6 +124,13 @@ public class DashboardDataset implements Serializable, IsSerializable {
         userObservationType = DashboardUtils.STRING_MISSING_VALUE;
 	}
 
+    public String getAccession() {
+        return accession;
+    }
+    public void setAccession(String accn) {
+        accession = accn;
+    }
+    
 	public boolean isArchived() {
 	    return getArchiveStatus().startsWith("Submitted");
 	}
