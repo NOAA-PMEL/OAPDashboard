@@ -245,7 +245,7 @@ public class DatasetSubmitter {
     
 	public void archiveDatasets(List<String> datasetIds, List<String> columnsList, String submitMsg, 
 	                            boolean generateDOI, String archiveStatus, 
-	                            boolean repeatSend, String submitter) {
+	                            String accnNumber, String submitter) {
 		ArrayList<String> errorMsgs = new ArrayList<String>();
 		
 		// Send dataset data and metadata for archival where user requested immediate archival
@@ -270,8 +270,8 @@ public class DatasetSubmitter {
 			    String thisStatus = archiveStatus;
 				String commitMsg = "Immediate archival of dataset " + datasetId + " requested by " + 
 						userRealName + " (" + userEmail + ") at " + timestamp;
+                DashboardDataset dataset = dataHandler.getDatasetFromInfoFile(datasetId);
 				try {
-                    DashboardDataset dataset = _configStore.getDataFileHandler().getDatasetFromInfoFile(datasetId);
                     SubmissionRecord sRecord = getSubmissionRecord(datasetId, submitMsg, submitter);
                     File archiveBundle = getArchiveBundle(sRecord, datasetId, dataset, archiveStatus, columnsList, submitMsg, generateDOI);
                     sRecord.archiveBag(archiveBundle.getPath());
@@ -294,12 +294,13 @@ public class DatasetSubmitter {
 					continue;
 				}
 				// When successful, update the archived timestamp
-				DashboardDataset cruise = dataHandler.getDatasetFromInfoFile(datasetId);
-				cruise.setArchiveStatus(thisStatus);
-				cruise.setArchiveDate(timestamp);
-                cruise.setArchiveSubmissionMessage(submitMsg);
-                cruise.setArchiveDOIrequested(generateDOI);
-				dataHandler.saveDatasetInfoToFile(cruise, commitMsg);
+//				DashboardDataset cruise = dataHandler.getDatasetFromInfoFile(datasetId);
+				dataset.setAccession(accnNumber);
+				dataset.setArchiveStatus(thisStatus);
+				dataset.setArchiveDate(timestamp);
+                dataset.setArchiveSubmissionMessage(submitMsg);
+                dataset.setArchiveDOIrequested(generateDOI);
+				dataHandler.saveDatasetInfoToFile(dataset, commitMsg);
 			}
 		} else {
             String msg = "No dataset specified for archival.";
@@ -543,9 +544,9 @@ public class DatasetSubmitter {
             String submitMsg = "test submit message";
             boolean generateDOI = true;
             String archiveStatus = "archive status";
-            boolean repeatSend = true;
+            String accn = "";
             String submitter = "lkamb";
-            ds.archiveDatasets(ids, new ArrayList<>(), submitMsg, generateDOI, archiveStatus, repeatSend, submitter);
+            ds.archiveDatasets(ids, new ArrayList<>(), submitMsg, generateDOI, archiveStatus, accn, submitter);
         } catch (Exception ex) {
             ex.printStackTrace();
             // TODO: handle exception

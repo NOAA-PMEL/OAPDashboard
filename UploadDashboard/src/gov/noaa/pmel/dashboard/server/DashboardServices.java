@@ -892,7 +892,7 @@ public class DashboardServices extends RemoteServiceServlet implements Dashboard
 
 	@Override
 	public void submitDatasetsToArchive(String pageUsername, List<String> datasetIds, List<String> columnsList, 
-	                                    String archiveStatus, boolean repeatSend,
+	                                    String archiveStatus, String accessionNumber,
 	                                    String submitMsg, boolean requestDOI) 
         throws IllegalArgumentException {
     	// Get the dashboard data store and current username, and validate that username
@@ -905,7 +905,7 @@ public class DashboardServices extends RemoteServiceServlet implements Dashboard
     	// Submit the datasets to Archive
     	configStore.getDashboardDatasetSubmitter().archiveDatasets(datasetIds, columnsList, submitMsg,
     															   requestDOI, archiveStatus, 
-    															   repeatSend, username);
+    															   accessionNumber, username);
     }
 	
     @Override
