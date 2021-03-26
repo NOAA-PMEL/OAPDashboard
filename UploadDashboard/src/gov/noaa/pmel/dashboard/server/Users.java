@@ -25,6 +25,7 @@ import gov.noaa.pmel.dashboard.server.model.User;
 import gov.noaa.pmel.dashboard.server.util.Notifications;
 import gov.noaa.pmel.dashboard.shared.DashboardDataset;
 import gov.noaa.pmel.dashboard.shared.DashboardUtils;
+import gov.noaa.pmel.dashboard.shared.UserInfo;
 import gov.noaa.pmel.dashboard.util.PasswordCrypt;
 import gov.noaa.pmel.dashboard.util.PasswordUtils;
 import gov.noaa.pmel.tws.util.ApplicationConfiguration;
@@ -58,6 +59,10 @@ public class Users {
             System.err.println(ex);
             throw new DashboardException(ex);
         }
+    }
+    public static UserInfo userInfo(User user) {
+        return new UserInfo(user.username(), user.firstName(), user.middle(), user.lastName(), 
+                            user.email(), user.telephone(), user.telExtension(), user.organization());
     }
     public static int addUser(User user, String plainTextPasswd, UserRole role) throws DashboardException {
         try {
