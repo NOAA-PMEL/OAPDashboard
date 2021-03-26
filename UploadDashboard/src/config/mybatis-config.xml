@@ -81,11 +81,23 @@
         <property name="poolPingConnectionsNotUsedFor" value="28000000"/>
       </dataSource>
     </environment>
+    <environment id="dunkel-local">
+      <transactionManager type="JDBC"/>
+      <dataSource type="POOLED">
+        <property name="driver" value="${old.driver}"/>
+        <property name="url" value="${db.url}"/>
+        <property name="username" value="${db.username}"/>
+        <property name="password" value="${db.password}"/>
+        <property name="poolPingQuery" value="SELECT 1"/>
+        <property name="poolPingEnabled" value="true"/>
+        <property name="poolPingConnectionsNotUsedFor" value="28000000"/>
+      </dataSource>
+    </environment>
     <!-- environments for connecting remotely to specific machines (eq with adminClient) -->
     <environment id="dunkel">
       <transactionManager type="JDBC"/>
       <dataSource type="POOLED">
-        <property name="driver" value="${db.driver}"/>
+        <property name="driver" value="${old.driver}"/>
         <property name="url" value="${dunkel.url}"/>
         <property name="username" value="${db.username}"/>
         <property name="password" value="${db.password}"/>
@@ -97,7 +109,7 @@
     <environment id="hazy"> <!-- For adding users from other machines. -->
       <transactionManager type="JDBC"/>
       <dataSource type="POOLED">
-        <property name="driver" value="${hazy.driver}"/>
+        <property name="driver" value="${db.driver}"/>
         <property name="url" value="${hazy.url}"/>
         <property name="username" value="${db.username}"/>
         <property name="password" value="${db.password}"/>
@@ -109,7 +121,7 @@
     <environment id="new-bock"> 
       <transactionManager type="JDBC"/>
       <dataSource type="POOLED">
-        <property name="driver" value="${db.driver}"/>
+        <property name="driver" value="${old.driver}"/>
         <property name="url" value="${nb.url}"/>
         <property name="username" value="${db.username}"/>
         <property name="password" value="${db.password}"/>
@@ -121,7 +133,7 @@
     <environment id="newbock">
       <transactionManager type="JDBC"/>
       <dataSource type="POOLED">
-        <property name="driver" value="${db.driver}"/>
+        <property name="driver" value="${old.driver}"/>
         <property name="url" value="${nb.url}"/>
         <property name="username" value="${db.username}"/>
         <property name="password" value="${db.password}"/>
@@ -130,7 +142,7 @@
         <property name="poolPingConnectionsNotUsedFor" value="28000000"/>
       </dataSource>
     </environment>
-    <environment id="OAPFlags">
+    <environment id="OAPFlags"> <!-- NOTE this is not currently used and is out of date ! -->
       <transactionManager type="JDBC"/>
       <dataSource type="POOLED">
         <property name="driver" value="${db.driver}"/>
