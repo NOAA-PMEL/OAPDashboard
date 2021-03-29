@@ -179,6 +179,10 @@
 .dialogVPanel table {
 	width: 100%;
 }
+.suggestPopupContent{
+    height: 100px;    
+    overflow-y: scroll;
+}
 /* .hide {
 	display: none;
 } */
