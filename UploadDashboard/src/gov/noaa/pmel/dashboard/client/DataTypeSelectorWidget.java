@@ -173,12 +173,15 @@ public class DataTypeSelectorWidget extends DialogBox {
 		descriptionPanel.add(descrText);
 		
 		
+		final TextBox textBox = new TextBox();
+	    final DataTypeSuggestionDisplay suggestionDisplay = new DataTypeSuggestionDisplay();
+		
 		// create the suggestion box and pass it the data created above
-		SuggestBox dataTypeSuggestionBox = new SuggestBox(getDataOracle(dataTypeLookup));
+		SuggestBox dataTypeSuggestionBox = new SuggestBox(getDataOracle(dataTypeLookup), textBox, suggestionDisplay);
 //		SuggestionDisplay display = data1suggestionBox.getSuggestionDisplay();
 
 		//set width
-		dataTypeSuggestionBox.setWidth("90%");
+		dataTypeSuggestionBox.setWidth("100%");
 		
 		// Add suggestionbox to the root panel. 
 		HorizontalPanel data1Panel = new HorizontalPanel();
