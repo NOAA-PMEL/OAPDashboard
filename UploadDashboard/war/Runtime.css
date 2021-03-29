@@ -175,14 +175,24 @@
 }
 .dialogVPanel {
   margin: 5px;
+  padding-right: 10px;
 }
 .dialogVPanel table {
 	width: 100%;
 }
-.suggestPopupContent{
+
+/* add scrollbar & set height */
+.suggestPopupContent {
     height: 100px;    
     overflow-y: scroll;
+    width: 100%;
 }
+
+/* set width for selected item highlight to span the entire width */
+.suggestPopupContent > div > table {
+	width: 420px;
+}
+
 /* .hide {
 	display: none;
 } */
