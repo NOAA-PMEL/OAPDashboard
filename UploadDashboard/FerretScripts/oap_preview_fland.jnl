@@ -36,12 +36,12 @@ IF 1 THEN ! `fland_area LT fland_cutoff` THEN
 
    DEFINE SYMBOL land_levels = (0,10000,10000)
 
-   IF `TEST_OPENDAP("http://ferret.pmel.noaa.gov/thredds/dodsC/data/PMEL/etopo2.nc") EQ 0` THEN \
-     DEFINE SYMBOL topo_url = "http://ferret.pmel.noaa.gov/thredds/dodsC/data/PMEL/etopo2.nc"
+   IF `TEST_OPENDAP("https://data.pmel.noaa.gov/pmel/thredds/dodsC/data/PMEL/etopo2.nc") EQ 0` THEN \
+     DEFINE SYMBOL topo_url = "https://data.pmel.noaa.gov/pmel/thredds/dodsC/data/PMEL/etopo2.nc"
 
    IF `fland_area LT 0.001` THEN
-     IF `TEST_OPENDAP("http://ferret.pmel.noaa.gov/thredds/dodsC/data/PMEL/etopo1.nc") EQ 0` THEN \
-        DEFINE SYMBOL topo_url = "http://ferret.pmel.noaa.gov/thredds/dodsC/data/PMEL/etopo1.nc"
+     IF `TEST_OPENDAP("https://data.pmel.noaa.gov/pmel/thredds/dodsC/data/PMEL/etopo1.nc") EQ 0` THEN \
+        DEFINE SYMBOL topo_url = "https://data.pmel.noaa.gov/pmel/thredds/dodsC/data/PMEL/etopo1.nc"
    ENDIF
 
    IF `fland_area GT fland_cutoff` THEN DEFINE SYMBOL topo_url = etopo5
