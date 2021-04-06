@@ -428,7 +428,7 @@ public class TimeseriesDsgFile extends DsgNcFile {
     @Override
     protected int getNumFeatures() {
         // TODO Auto-generated method stub
-        return 1;
+        return 1; // XXX 
     }
     /* (non-Javadoc)
      * @see gov.noaa.pmel.dashboard.dsg.DsgNcFile#checkFeatureTypeSpecificIndeces()

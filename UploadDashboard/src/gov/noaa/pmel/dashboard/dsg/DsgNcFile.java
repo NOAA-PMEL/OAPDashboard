@@ -973,6 +973,18 @@ public abstract class DsgNcFile extends File {
 		}
 	}
     
+    /**
+     * @param ncVariable
+     * @param position
+     * @param value
+     */
+    protected static void setDoubleValue(ArrayDouble.D1 ncVariable, int position, Double value) {
+        if ( value == null || value.isNaN() || value.isInfinite()) {
+            value = DashboardUtils.FP_MISSING_VALUE;
+        }
+        ncVariable.set(position, value.doubleValue());
+    }
+
 	protected void writeVariables(NetcdfFileWriter ncFile) throws Exception {
 //		writeMetadataVariables(ncFile);
 		writeFeatureTypeVariables(ncFile);

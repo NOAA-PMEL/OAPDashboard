@@ -278,12 +278,115 @@ public class StdUserDataArray extends StdDataArray {
 	private boolean _timesChecked = false;
 	private boolean _locationsOk = true;
 	private boolean _locationsChecked = false;
+	private boolean _pressuresChecked = false;
+	private boolean _pressuresOk = true;
+	private boolean _depthsChecked = false;
+	private boolean _depthsOk = true;
     
     public boolean timesAreOk() { return _timesChecked && _timesOk; }
     public boolean timesHaveBeenChecked() { return _timesChecked; }
     public boolean locationsAreOk() { return _locationsChecked && _locationsOk; }
     public boolean locationsHaveBeenChecked() { return _locationsChecked; }
+    public boolean pressuresAreOk() { return _pressuresChecked && _pressuresOk; }
+    public boolean presuresHaveBeenChecked() { return _pressuresChecked; }
+    public boolean depthsAreOk() { return _depthsChecked && _depthsOk; }
+    public boolean depthsHaveBeenChecked() { return _depthsChecked; }
     
+    public void checkPressureAndDepth() {
+        try {
+            checkPressure();
+            checkDepth();
+            if ( hasSamplePressure() && hasSampleDepth() &&
+                 ! _pressuresOk && ! _depthsOk ) {
+                ADCMessage msg = messageFor(Severity.ERROR, null, null, 
+                                            "Missing or Invalid Pressure or Depth", 
+                                            "Missing or Invalid Pressure or Depth values.");
+                addStandardizationMessage(msg);
+            }
+        } catch (Exception ex) {
+            logger.warn(ex,ex);
+        }
+    }
+    public boolean checkPressure() {
+        return checkPressure(false);
+    }
+    public boolean checkPressure(boolean force) {
+        if ( _pressuresChecked && !force ) { return _pressuresOk; }
+        if ( ! hasSamplePressure()) {
+            _pressuresOk = false;
+        } else {
+            int col = getSamplePressureIndex();
+            for (int idx = 0; idx < numSamples; idx++ ) {
+                ADCMessage msg = null;
+                try {
+                    Double pressure = getStdValAsDouble(idx, col);
+                    if ( pressure == null ) {
+                        _pressuresOk = false;
+                        msg = messageFor(Severity.WARNING, idx, col, "Missing or Invalid Pressure or Depth", "Missing or Invalid Pressure at row " + (idx+1));
+                    } else if ( DashboardUtils.FP_MISSING_VALUE.equals(pressure)) {
+                        msg = messageFor(Severity.WARNING, idx, col, "Missing or Invalid Pressure or Depth", "Missing Pressure at row " + (idx+1));
+                    }
+                } catch (Exception ex) {
+                    _pressuresOk = false;
+                    msg = messageFor(Severity.WARNING, idx, col, "Missing or Invalid Pressure or Depth", "Missing or Invalid Pressure at row " + (idx+1));
+                }
+                if ( msg != null ) {
+                    addStandardizationMessage(msg);
+                }
+            }
+        }
+        if ( ! _pressuresOk && !hasSampleDepth()) {
+            ADCMessage errorMsg = messageFor(Severity.ERROR, null, getSamplePressureIndex(), "Missing or Invalid Pressure or Depth", "Pressure values are incomplete.");
+            addStandardizationMessage(errorMsg);
+        }
+        _pressuresChecked = true;
+        return _pressuresOk;
+    }
+    public boolean checkDepth() {
+        return checkDepth(false);
+    }
+    public boolean checkDepth(boolean force) {
+        if ( _depthsChecked && !force ) { return _depthsOk; }
+        if ( ! hasSampleDepth()) {
+            _depthsOk = false;
+        } else {
+            int col = getSampleDepthIndex();
+            Double missingValue = DashboardUtils.FP_MISSING_VALUE;
+            String userMissingValue = userMissVals[col];
+            if ( !StringUtils.emptyOrNull(userMissingValue)) {
+                try {
+                    double missingV = Double.parseDouble(userMissingValue);
+                    missingValue = new Double(missingV);
+                } catch (NumberFormatException nfe) {
+                    logger.info("Bad user missing value '" + userMissingValue + "' for depth column in dataset " + getDatasetName());
+                }
+            }
+            for (int idx = 0; idx < numSamples; idx++ ) {
+                ADCMessage msg = null;
+                try {
+                    Double depth = getStdValAsDouble(idx, col);
+                    if ( depth == null ) {
+                        _depthsOk = false;
+                        msg = messageFor(Severity.WARNING, idx, col, "Missing or Invalid Pressure or Depth", "Missing or Invalid Depth at row " + (idx+1));
+                    } else if ( missingValue.equals(depth)) {
+                        msg = messageFor(Severity.WARNING, idx, col, "Missing or Invalid Pressure or Depth", "Missing Depth at row " + (idx+1));
+                    }
+                } catch (Exception ex) {
+                    _depthsOk = false;
+                    msg = messageFor(Severity.WARNING, idx, col, "Missing or Invalid Pressure or Depth", "Missing or Invalid Depth at row " + (idx+1));
+                }
+                if ( msg != null ) {
+                    addStandardizationMessage(msg);
+                }
+            }
+        }
+        if ( ! _depthsOk && !hasSamplePressure()) {
+            ADCMessage errorMsg = messageFor(Severity.ERROR, null, getSampleDepthIndex(), "Missing or Invalid Pressure or Depth", "Depth values are incomplete.");
+            addStandardizationMessage(errorMsg);
+        }
+        _depthsChecked = true;
+        return _depthsOk;
+    }
 	/**
 	 * Check for missing longitude, latitude, depth, and time columns 
 	 * or data values.  Any problems found generate messages that are added 
@@ -1064,23 +1167,23 @@ public class StdUserDataArray extends StdDataArray {
         return sampleNo -1;
     }
 
-    public ADCMessage messageFor(Severity severity, Integer row, Integer column, 
+    public ADCMessage messageFor(Severity severity, Integer rowIndex, Integer columnIndex, 
                                  String generalComment, String detailedComment) {
 		ADCMessage msg = new ADCMessage();
 		msg.setSeverity(severity);
-        if ( row != null ) { msg.setRowIndex(row); }
-		if ( column != null ) { 
-		    msg.setColIndex(column); 
-    		msg.setColName(userColNames[column.intValue()]);
+        if ( rowIndex != null ) { msg.setRowIndex(rowIndex); }
+		if ( columnIndex != null ) { 
+		    msg.setColIndex(columnIndex); 
+    		msg.setColName(userColNames[columnIndex.intValue()]);
 		}
 		msg.setGeneralComment(generalComment);
 		msg.setDetailedComment(detailedComment);
-        addTimeAndLocation(msg, row);
+        addTimeAndLocation(msg, rowIndex);
         return msg;
     }
-	public void addTimeAndLocation(ADCMessage msg, Integer row) {
-        if ( row == null ) { return; }
-        int rowIdx = row.intValue();
+	public void addTimeAndLocation(ADCMessage msg, Integer rowIndex) {
+        if ( rowIndex == null ) { return; }
+        int rowIdx = rowIndex.intValue();
         if ( hasTimeOfDay()) {
     		Date rowTime = getSampleTime(rowIdx);
             if ( rowTime != null ) {
