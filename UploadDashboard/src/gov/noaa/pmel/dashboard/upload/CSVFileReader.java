@@ -5,6 +5,8 @@ package gov.noaa.pmel.dashboard.upload;
 
 import java.io.BufferedReader;
 import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileReader;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.util.Iterator;
@@ -34,6 +36,11 @@ public class CSVFileReader implements RecordOrientedFileReader {
         this.dataReader = new BufferedReader(new InputStreamReader(inputStream)); 
         this.detectedFileType = fileType;
     }
+    public CSVFileReader(File inputFile, String fileType) throws FileNotFoundException {
+        this.dataReader = new BufferedReader(new FileReader(inputFile)); 
+        this.detectedFileType = fileType;
+    }
+    
     
     
     /* (non-Javadoc)
