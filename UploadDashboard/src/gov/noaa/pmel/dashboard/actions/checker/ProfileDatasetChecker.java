@@ -232,7 +232,7 @@ public class ProfileDatasetChecker extends BaseDatasetChecker implements Dataset
    /**
      * @return
      */
-    private static boolean checkForMissingPressureOrDepth(StdUserDataArray stdUserData) {
+    public static boolean checkForMissingPressureOrDepth(StdUserDataArray stdUserData) {
         boolean allGood = true;
         Integer depthIdx = stdUserData.lookForDataColumnIndex(DashboardUtils.SAMPLE_DEPTH_VARNAME);
         Integer pressureIdx = stdUserData.lookForDataColumnIndex(DashboardUtils.CTD_PRESSURE_VARNAME);

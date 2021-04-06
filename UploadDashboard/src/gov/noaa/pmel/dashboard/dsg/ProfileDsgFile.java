@@ -171,24 +171,20 @@ public class ProfileDsgFile extends DsgNcFile {
         Variable v_PresDep = null;
         ArrayDouble.D1 a_PresDep = null;
         Double[] presDep = null;
-        if ( _stdUser.hasSamplePressure()) {
+        if ( _stdUser.hasSamplePressure()) { //  && _stdUser.pressuresAreOk()) {
             presDep = _stdUser.getSamplePressures();
             v_PresDep = getVariable(ncFile, SAMPLE_PRESSURE_VARNAME);
             a_PresDep = new ArrayDouble.D1(_numObservations);
-        } else if ( _stdUser.hasSampleDepth()) {
+        } else if ( _stdUser.hasSampleDepth()) { //  && _stdUser.depthsAreOk()) {
             presDep = _stdUser.getSampleDepths();
             v_PresDep = getVariable(ncFile, SAMPLE_DEPTH_VARNAME);
             a_PresDep = new ArrayDouble.D1(_numObservations);
+        } else {
+            throw new IllegalStateException("No valid and/or complete pressure or depth variables found.");
         }
         if ( presDep != null ) {
             for (int row=0; row<_numObservations; row++) {
-                if ( a_PresDep != null ) {
-                    Double pdv = presDep[row];
-                    if ( pdv == null || pdv.isNaN() || pdv.isInfinite()) {
-                        pdv = DashboardUtils.FP_MISSING_VALUE;
-                    }
-                    a_PresDep.set(row, pdv.doubleValue());
-                }
+                setDoubleValue(a_PresDep, row, presDep[row]);
             }
             ncFile.write(v_PresDep, a_PresDep);
         }
