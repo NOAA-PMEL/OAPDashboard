@@ -252,6 +252,9 @@ public class DashboardConfigStore {
     				} while ( ! serverAppName.equals("WEB-INF") );
     				webAppSubDir = webAppSubDir.getParentFile();
     				serverAppName = webAppSubDir.getName();
+                    if ( "war".equals(serverAppName )) { // running in dev
+                        serverAppName = null;
+                    }
     			} catch ( Exception ex ) {
     				serverAppName = "";
     			}
@@ -451,7 +454,7 @@ public class DashboardConfigStore {
 			logger.info("Known file metadata types: ");
 			TreeSet<DashDataType<?>> knownTypes = knownMetadataTypes.getKnownTypesSet();
 			for ( DashDataType<?> dtype : knownTypes )
-				logger.info("    " + dtype.getVarName() + "=" + dtype.toPropertyValue());			
+				logger.trace("    " + dtype.getVarName() + "=" + dtype.toPropertyValue());			
 		}
 
 		try {
