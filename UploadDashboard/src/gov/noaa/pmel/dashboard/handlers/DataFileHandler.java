@@ -61,6 +61,8 @@ import gov.noaa.pmel.dashboard.upload.RecordOrientedFileReader;
 import gov.noaa.pmel.tws.util.ApplicationConfiguration;
 import gov.noaa.pmel.tws.util.StringUtils;
 
+import static gov.noaa.pmel.dashboard.shared.DashboardUtils.STRING_MISSING_VALUE;
+
 /**
  * Handles storage and retrieval of cruise data in files.
  * 
@@ -74,6 +76,7 @@ public class DataFileHandler extends VersionedFileHandler {
 	private static final String COMMA = ",";
 	private static final String TAB = "\t";
     private static final String SUBMISSION_RECORD_ID = "recordid";
+    private static final String ACCESSION_NUM = "accession";
 	private static final String DATA_OWNER_ID = "dataowner";
 	private static final String FEATURE_TYPE_ID = "featuretype";
 	private static final String OBSERVATION_TYPE_ID = "userobservationtype";
@@ -1080,6 +1083,7 @@ public class DataFileHandler extends VersionedFileHandler {
 			parentFile.mkdirs();
 		// Create the properties for this dataset information file
 		Properties datasetProps = new Properties();
+        datasetProps.setProperty(ACCESSION_NUM, dataset.getAccession());
         datasetProps.setProperty(SUBMISSION_RECORD_ID, dataset.getRecordId());
         datasetProps.setProperty(USER_DATASET_NAME, dataset.getUserDatasetName());
 		// Owner of the dataset
@@ -1941,6 +1945,11 @@ public class DataFileHandler extends VersionedFileHandler {
 		}
 		dataset.setMdStatus(value);
 
+        // Accession number
+		value = cruiseProps.getProperty(ACCESSION_NUM);
+        if ( value == null ) { value = STRING_MISSING_VALUE; }
+        dataset.setAccession(value);
+		        
 		// Metadata documents
 		value = cruiseProps.getProperty(ADDL_DOC_TITLES_ID);
 		if ( value == null )
