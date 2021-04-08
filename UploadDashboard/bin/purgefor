@@ -1,0 +1,46 @@
+#!/bin/bash
+
+function usage() {
+  echo "Remove JDBC jar from war for specified host."
+  echo "usage: `basename $0` <host_name> <war_file>"
+}
+
+if [ $# -ne 2 ] ; then
+  usage
+  exit 1
+fi
+WAR=$2
+WHICH_HOST=$1
+case $WHICH_HOST in
+	hazy)
+		JAR=mysql-connector-java-5.1.41-bin.jar
+		;;
+	new?bock|newbock|dunkel|matisse)
+		JAR=mysql-connector-java-8.0.23.jar
+		;;
+	*)
+		echo "Unknown host: " $WHICH_HOST
+		exit 2
+		;;
+esac
+
+if [ ! $JAR ] ; then
+	echo No JAR file specified
+	exit -1
+fi
+
+JAR=WEB-INF/lib/$JAR
+
+if [ -e $WAR ] ; then
+	NEW_WAR=${WAR}.$WHICH_HOST
+	echo "Removing jar $JAR from war file $WAR"
+	echo "Saving new war file $WAR as $NEW_WAR"
+	\cp $WAR $NEW_WAR
+	zip -d $NEW_WAR $JAR 
+	echo -n "MySQL jar: "
+	unzip -l $NEW_WAR | grep mysql-connector
+else
+	echo "War file $WAR NOT FOUND."
+	exit 3
+fi
+
