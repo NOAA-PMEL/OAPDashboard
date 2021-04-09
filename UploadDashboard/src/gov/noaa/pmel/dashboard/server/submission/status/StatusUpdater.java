@@ -13,9 +13,11 @@ import gov.noaa.pmel.dashboard.server.Users;
 import gov.noaa.pmel.dashboard.server.db.dao.DaoFactory;
 import gov.noaa.pmel.dashboard.server.db.dao.SubmissionsDao;
 import gov.noaa.pmel.dashboard.server.model.User;
+import gov.noaa.pmel.dashboard.server.submission.status.StatusState;
 import gov.noaa.pmel.dashboard.server.util.Notifications;
 import gov.noaa.pmel.dashboard.shared.NotFoundException;
 import gov.noaa.pmel.tws.util.ApplicationConfiguration;
+
 
 /**
  * @author kamb
@@ -23,17 +25,17 @@ import gov.noaa.pmel.tws.util.ApplicationConfiguration;
  */
 public class StatusUpdater {
 
-    private static final String DSID = "-ds";
-    private static final String KEY = "-k";
-    private static final String VERSION = "-v";
-    private static final String STATUS = "-s";
-    private static final String MESSAGE = "-m";
+    private static final String _DSID = "-i";
+    private static final String _VERSION = "-v";
+    private static final String _STATUS = "-s";
+    private static final String _MESSAGE = "-m";
+    private static final String _ACCESSION = "-a";
     
     private static String _datasetId;
-    private static String _submitKey;
     private static Integer _version;
     private static String _status;
     private static String _message;
+    private static String _accession;
     
     private static Logger logger = LogManager.getLogger(StatusUpdater.class);
     
@@ -55,7 +57,8 @@ public class StatusUpdater {
         return sb.toString();
     }
     
-    public static SubmissionRecord updateStatus(String datasetId, StatusState sstate, String message) 
+    public static SubmissionRecord updateStatusRecord(String datasetId, StatusState sstate,
+                                                      String message)
             throws NotFoundException, DashboardException {
         try {
             SubmissionRecord srec;
@@ -103,33 +106,29 @@ public class StatusUpdater {
     private static void parseArgs(String[] args) {
         for (int i = 0; i < args.length; i++) {
             switch (args[i]) {
-                case DSID:
+                case _DSID:
                     _datasetId = args[++i];
                     break;
-                case KEY:
-                    _submitKey = args[++i];
-                    break;
-                case VERSION:
+                case _VERSION:
                     String vStr = args[++i];
                     _version = new Integer(vStr);
                     break;
-                case STATUS:
+                case _STATUS:
                     _status = args[++i];
                     break;
-                case MESSAGE:
+                case _MESSAGE:
                     _message = args[++i];
+                    break;
+                case _ACCESSION:
+                    _accession = args[++i];
                     break;
             }
         }
     }
     private static void checkArgs() throws Exception {
-        if ( _datasetId == null && _submitKey == null ) {
-            System.out.println("No id or key");
-            throw new IllegalArgumentException("You must specify either submission key or dataset ID.");
-        }
-        if ( _datasetId != null && _submitKey != null ) {
-            System.out.println("Both id and key");
-            throw new IllegalArgumentException("Cannot specify both submission key and dataset ID. Please use one or the other.");
+        if ( _datasetId == null ) {
+            System.out.println("No record id");
+            throw new IllegalArgumentException("You must specify dataset record ID.");
         }
         if ( _status == null ) {
             System.out.println("No status");
@@ -145,49 +144,40 @@ public class StatusUpdater {
     /**
      * @param args
      */
-    public static void main(String[] args) {
-        try {
-            dumpArgs(args);
-            parseArgs(args);
-            checkArgs();
-            StatusState sst = getSubmissionState();
-            SubmissionsDao sdao = DaoFactory.SubmissionsDao();
-            if ( _message == null ) {
-                _message = sst.displayMsg();
-            }
-            SubmissionRecord srec = null;
-            if ( _submitKey != null ) {
-                srec = _version != null ? 
-                        sdao.getVersionByKey(_submitKey, _version) :
-                        sdao.getLatestByKey(_submitKey);
-                if ( srec == null ) {
-                    throw new IllegalArgumentException("Unable to find submission record using submisison key: " + _submitKey + " and version: " + _version);
-                }
-            } else {
-                srec = _version != null ? 
-                        sdao.getVersionForDataset(_datasetId, _version) :
-                        sdao.getLatestForDataset(_datasetId);
-                if ( srec == null ) {
-                    System.err.println("Unable to find submission record using dataset id: " + _datasetId + " and version: " + _version);
-                    System.exit(-1);
-                }
-            }
-            StatusRecord ss = StatusRecord.builder()
-                    .submissionId(srec.dbId())
-                    .status(sst)
-                    .message(_message)
-                    .build();
-            DaoFactory.SubmissionsDao().updateSubmissionStatus(ss);
-        } catch (IllegalArgumentException ex) {
-            System.err.println(ex.getMessage());
-            usage();
-            System.exit(-2);
-        } catch (Exception ex) {
-            ex.printStackTrace();
-            usage();
-            System.exit(-3);
-        }
-
-    }
+    // This is misleading, because it doesn't update everything.
+//    public static void main(String[] args) {
+//        try {
+//            dumpArgs(args);
+//            parseArgs(args);
+//            checkArgs();
+//            StatusState sst = getSubmissionState();
+//            SubmissionsDao sdao = DaoFactory.SubmissionsDao();
+//            if ( _message == null ) {
+//                _message = sst.displayMsg();
+//            }
+//            SubmissionRecord srec = null;
+//            srec = _version != null ? 
+//                    sdao.getVersionForDataset(_datasetId, _version) :
+//                    sdao.getLatestForDataset(_datasetId);
+//            if ( srec == null ) {
+//                System.err.println("Unable to find submission record using dataset id: " + _datasetId + " and version: " + _version);
+//                System.exit(-1);
+//            }
+//            StatusRecord ss = StatusRecord.builder()
+//                    .submissionId(srec.dbId())
+//                    .status(sst)
+//                    .message(_message)
+//                    .build();
+//            DaoFactory.SubmissionsDao().updateSubmissionStatus(ss);
+//        } catch (IllegalArgumentException ex) {
+//            System.err.println(ex.getMessage());
+//            usage();
+//            System.exit(-2);
+//        } catch (Exception ex) {
+//            ex.printStackTrace();
+//            usage();
+//            System.exit(-3);
+//        }
+//    }
 
 }
