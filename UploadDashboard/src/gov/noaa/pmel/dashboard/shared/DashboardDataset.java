@@ -742,6 +742,8 @@ XXX This allows the possibility that numDataRows != the actual number of data ro
 			return false;
 		DashboardDataset other = (DashboardDataset) obj;
 
+		if ( ! accession.equals(other.accession))
+			return false;
 		if ( selected != other.selected )
 			return false;
 		if ( ! version.equals(other.version) ) 
