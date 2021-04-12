@@ -190,7 +190,15 @@
 
 /* set width for selected item highlight to span the entire width */
 .suggestPopupContent > div > table {
-	width: 420px;
+	/* width: 420px; */
+	width: 100%;
+}
+/* fill in transparent boarder around popup */
+.gwt-SuggestBoxPopup .suggestPopupTopCenter,
+.gwt-SuggestBoxPopup .suggestPopupMiddleLeft,
+.gwt-SuggestBoxPopup .suggestPopupMiddleRight,
+.gwt-SuggestBoxPopup .suggestPopupBottomCenter { 
+   background-color: white;
 }
 
 /* .hide {
