@@ -81,7 +81,7 @@ public class DataTypeSelectorPopup extends Composite {
 
     private AsyncCallback<UpdateInformation> callback;
     
-    private Map<String, DataColumnType> dataTypeLookup;
+    public static Map<String, DataColumnType> dataTypeLookup;
     private Map<String, List<String>> unitsLookup;
 
 
@@ -110,7 +110,6 @@ public class DataTypeSelectorPopup extends Composite {
             dataTypeLookup.put(type.getDisplayName(), type);
             unitsLookup.put(type.getDisplayName(), new ArrayList<>(type.getUnits()));
         }
-
 		dataSelector = new MySuggestBox(getDataOracle(dataTypeLookup));
         
 		initWidget(uiBinder.createAndBindUi(this));
@@ -274,6 +273,7 @@ public class DataTypeSelectorPopup extends Composite {
     private void showAllChoices() {
         dataSelector.setText(null);  
         dataSelector.showSuggestionList();
+        dataSelector.setFocus(true);
     }
 
     public void reset() {

@@ -7,8 +7,21 @@
 */
 
 .suggestPopupContent {
-   max-height: 400px !important;
-   overflow-y: scroll !important;
+   /*  background: #d8f7fd !important; */
+    max-height: 400px !important;
+    overflow-y: scroll !important;
+}
+.suggestPopupTopCenter {
+	background: white !important;
+}
+.suggestPopupMiddleLeft {
+	background: white !important;
+}
+.suggestPopupMiddleRight {
+	background: white !important;
+}
+.suggestPopupBottomCenter {
+	background: white !important;
 }
 /*  .gwt-SuggestBoxPopup {
    max-height: 400px !important;

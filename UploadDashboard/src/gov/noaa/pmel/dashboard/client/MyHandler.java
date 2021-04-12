@@ -3,8 +3,6 @@
  */
 package gov.noaa.pmel.dashboard.client;
 
-import java.util.List;
-
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.Element;
@@ -21,25 +19,36 @@ import com.google.gwt.event.dom.client.DoubleClickHandler;
 import com.google.gwt.event.dom.client.FocusEvent;
 import com.google.gwt.event.dom.client.FocusHandler;
 import com.google.gwt.event.dom.client.KeyCodes;
+import com.google.gwt.event.dom.client.KeyPressEvent;
+import com.google.gwt.event.dom.client.KeyPressHandler;
 import com.google.gwt.event.dom.client.KeyUpEvent;
 import com.google.gwt.event.dom.client.KeyUpHandler;
 import com.google.gwt.event.dom.client.MouseMoveEvent;
 import com.google.gwt.event.dom.client.MouseMoveHandler;
 import com.google.gwt.event.dom.client.MouseOverEvent;
 import com.google.gwt.event.dom.client.MouseOverHandler;
-import com.google.gwt.user.client.ui.TextBox;
+import com.google.gwt.event.dom.client.MouseWheelEvent;
+import com.google.gwt.event.dom.client.MouseWheelHandler;
+import com.google.gwt.event.dom.client.ScrollEvent;
+import com.google.gwt.event.dom.client.ScrollHandler;
+
 
 /**
  * @author kamb
  *
  */
-public class MyHandler implements AttachEvent.Handler, ClickHandler, KeyUpHandler, FocusHandler, BlurHandler, DoubleClickHandler, MouseMoveHandler, MouseOverHandler, ContextMenuHandler {
+public class MyHandler implements AttachEvent.Handler, ClickHandler, KeyUpHandler, KeyPressHandler,
+                                  FocusHandler, BlurHandler, DoubleClickHandler, 
+                                  MouseMoveHandler, MouseOverHandler, ContextMenuHandler,
+                                  ScrollHandler, MouseWheelHandler {
     
     private String _name;
+    private String _currentId = null;
     
     public MyHandler(String name) {
         _name = name;
     }
+        
     /**
      * Fired when the user clicks on the sendButton.
      */
@@ -48,14 +57,40 @@ public class MyHandler implements AttachEvent.Handler, ClickHandler, KeyUpHandle
 //        sendNameToServer();
     }
 
+    @Override
+    public void onMouseWheel(MouseWheelEvent event) {
+        GWT.log(_name + " mousewheel: "+ event.getSource());
+    }
+    @Override
+    public void onScroll(ScrollEvent event) {
+        GWT.log(_name + " scroll: "+ event.getSource());
+    }
     /**
      * Fired when the user types in the nameField.
      */
+    public void onKeyPress(KeyPressEvent event) {
+        GWT.log(_name + " keypress: "+ event.getSource());
+    }
     public void onKeyUp(KeyUpEvent event) {
         GWT.log(_name + " keyup: "+ event.getSource());
-//        if (event.getNativeKeyCode() == KeyCodes.KEY_ENTER) {
-//            sendNameToServer();
-//        }
+        int keyCode = event.getNativeKeyCode(); 
+        if (keyCode == KeyCodes.KEY_UP || keyCode == KeyCodes.KEY_DOWN ) {
+            NodeList<Element> elements = Document.get().getElementsByTagName("div");
+            for (int i = 0; i < elements.getLength(); i++) {
+    //          GWT.log("elements1 " + elements.getItem(i).getClassName());
+                if (elements.getItem(i).getClassName().contains("suggestPopupContent")) {
+                    Element childElement = elements.getItem(i).getFirstChildElement();
+    //                GWT.log("mouseover childElement " + childElement);
+                    String activeId = childElement.getAttribute("aria-activedescendant");
+                    GWT.log("arrow active id " + activeId);
+                    if ( activeId != null && ! activeId.equals(_currentId) ) {
+                        Element line = Document.get().getElementById(activeId);
+                        GWT.log("element: " + line + " : " + line.getInnerHTML());
+                        _currentId = activeId;
+                    }
+                }
+            }
+        }
     }
     
     @Override
@@ -108,6 +143,28 @@ public class MyHandler implements AttachEvent.Handler, ClickHandler, KeyUpHandle
 //      data1suggestionBox.getSuggestOracle().setDefault
     }
 
+    /* (non-Javadoc)
+     * @see com.google.gwt.event.dom.client.MouseMoveHandler#onMouseMove(com.google.gwt.event.dom.client.MouseMoveEvent)
+     */
+    @Override
+    public void onMouseMove(MouseMoveEvent event) {
+//        GWT.log(_name + " mmove:"+event.getSource());
+        NodeList<Element> elements = Document.get().getElementsByTagName("div");
+        for (int i = 0; i < elements.getLength(); i++) {
+            if (elements.getItem(i).getClassName().contains("suggestPopupContent")) {
+                Element childElement = elements.getItem(i).getFirstChildElement();
+                String activeId = childElement.getAttribute("aria-activedescendant");
+                if ( activeId != null && ! activeId.equals(_currentId)) {
+                    GWT.log(_name + " mousemove childElement " + activeId);
+                    Element line = Document.get().getElementById(activeId);
+                    String varName = line.getInnerHTML();
+                    GWT.log(_name + " element: " + line + " : " + varName
+                            + " : " + DataTypeSelectorPopup.dataTypeLookup.get(varName).getDescription());
+                    _currentId = activeId;
+                }
+            }
+        }
+    }
 
     @Override
     public void onMouseOver(MouseOverEvent event) {
@@ -128,8 +185,17 @@ public class MyHandler implements AttachEvent.Handler, ClickHandler, KeyUpHandle
 //          GWT.log("elements1 " + elements.getItem(i).getClassName());
             if (elements.getItem(i).getClassName().contains("suggestPopupContent")) {
                 Element childElement = elements.getItem(i).getFirstChildElement();
-                GWT.log("mouseover childElement " + childElement);
-                GWT.log("mouseover childElement id " + childElement.getAttribute("aria-activedescendant"));
+//                GWT.log("mouseover childElement " + childElement);
+                String activeId = childElement.getAttribute("aria-activedescendant");
+                GWT.log("mouseover active id " + activeId);
+                if ( activeId != null && ! activeId.equals(_currentId) ) {
+                    Element line = Document.get().getElementById(activeId);
+                    GWT.log("element: " + line + " : " + line.getInnerHTML());
+                    String varName = line.getInnerHTML();
+                    GWT.log(_name + " element: " + line + " : " + varName
+                        + " : " + DataTypeSelectorPopup.dataTypeLookup.get(varName).getDescription());
+                    _currentId = activeId;
+                }
 //                GWT.log("elementsin " + elements.getItem(i).getClassName());
 //                GWT.log("elementsin " + elements.getItem(i).getNodeName());
 //              GWT.log("elementsin " + elements.getItem(i).getInnerHTML());
@@ -177,20 +243,19 @@ public class MyHandler implements AttachEvent.Handler, ClickHandler, KeyUpHandle
     @Override
     public void onAttachOrDetach(AttachEvent event) {
         GWT.log(_name + ( event.isAttached() ? " Attach:":" Detach:" )+event.getSource());
-    }
-
-    /* (non-Javadoc)
-     * @see com.google.gwt.event.dom.client.MouseMoveHandler#onMouseMove(com.google.gwt.event.dom.client.MouseMoveEvent)
-     */
-    @Override
-    public void onMouseMove(MouseMoveEvent event) {
-//        GWT.log(_name + " mmove:"+event.getSource());
         NodeList<Element> elements = Document.get().getElementsByTagName("div");
-        for (int i = 0; i < elements.getLength(); i++) {
-            if (elements.getItem(i).getClassName().contains("suggestPopupContent")) {
-                Element childElement = elements.getItem(i).getFirstChildElement();
-                GWT.log("mousemove childElement " + childElement.getAttribute("aria-activedescendant"));
-            }
-        }
+//        for (int i = 0; i < elements.getLength(); i++) {
+////          GWT.log("elements1 " + elements.getItem(i).getClassName());
+//            if (elements.getItem(i).getClassName().contains("suggestPopupContent")) {
+//                Element content = elements.getItem(i);
+//            }
+//        }
     }
+    /* (non-Javadoc)
+     * @see com.google.gwt.event.dom.client.ScrollHandler#onScroll(com.google.gwt.event.dom.client.ScrollEvent)
+     */
+    /* (non-Javadoc)
+     * @see com.google.gwt.event.dom.client.MouseWheelHandler#onMouseWheel(com.google.gwt.event.dom.client.MouseWheelEvent)
+     */
+
 }

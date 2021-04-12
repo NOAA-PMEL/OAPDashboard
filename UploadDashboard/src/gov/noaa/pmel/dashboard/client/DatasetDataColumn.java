@@ -39,7 +39,6 @@ import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.google.gwt.user.client.ui.ScrollPanel;
 
-import gov.noaa.pmel.dashboard.client.DataTypeSelectorWidget.UpdateInformation;
 import gov.noaa.pmel.dashboard.shared.DashboardDataset;
 import gov.noaa.pmel.dashboard.shared.DashboardUtils;
 import gov.noaa.pmel.dashboard.shared.DataColumnType;
@@ -185,7 +184,8 @@ public class DatasetDataColumn {
 		HasCell<DatasetDataColumn,String> stdNameCell = new HasCell<DatasetDataColumn,String>() {
 			private ClickableTextCell theCell = null;
 //            private CellWidget<String> selectorCellWidget;
-            DataTypeSelectorWidget dts = new DataTypeSelectorWidget(knownTypes, 
+//            DataTypeSelectorWidget dts = new DataTypeSelectorWidget(knownTypes, 
+            DataTypeSelectorPopup dts = new DataTypeSelectorPopup(knownTypes, 
                                                 columnIndex, cruise.getUserColNames().get(columnIndex),
                                                 new AsyncCallback<UpdateInformation>() {
                 @Override
