@@ -3,6 +3,8 @@
  */
 package gov.noaa.pmel.dashboard.client;
 
+import org.w3c.dom.html.HTMLTableCellElement;
+
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.Element;
@@ -25,6 +27,8 @@ import com.google.gwt.event.dom.client.KeyUpEvent;
 import com.google.gwt.event.dom.client.KeyUpHandler;
 import com.google.gwt.event.dom.client.MouseMoveEvent;
 import com.google.gwt.event.dom.client.MouseMoveHandler;
+import com.google.gwt.event.dom.client.MouseOutEvent;
+import com.google.gwt.event.dom.client.MouseOutHandler;
 import com.google.gwt.event.dom.client.MouseOverEvent;
 import com.google.gwt.event.dom.client.MouseOverHandler;
 import com.google.gwt.event.dom.client.MouseWheelEvent;
@@ -39,8 +43,8 @@ import com.google.gwt.event.dom.client.ScrollHandler;
  */
 public class MyHandler implements AttachEvent.Handler, ClickHandler, KeyUpHandler, KeyPressHandler,
                                   FocusHandler, BlurHandler, DoubleClickHandler, 
-                                  MouseMoveHandler, MouseOverHandler, ContextMenuHandler,
-                                  ScrollHandler, MouseWheelHandler {
+                                  MouseMoveHandler, MouseOverHandler, MouseOutHandler,
+                                  ContextMenuHandler, ScrollHandler, MouseWheelHandler {
     
     private String _name;
     private String _currentId = null;
@@ -59,7 +63,7 @@ public class MyHandler implements AttachEvent.Handler, ClickHandler, KeyUpHandle
 
     @Override
     public void onMouseWheel(MouseWheelEvent event) {
-        GWT.log(_name + " mousewheel: "+ event.getSource());
+//        GWT.log(_name + " mousewheel: "+ event.getNativeEvent());
     }
     @Override
     public void onScroll(ScrollEvent event) {
@@ -87,11 +91,42 @@ public class MyHandler implements AttachEvent.Handler, ClickHandler, KeyUpHandle
                         Element line = Document.get().getElementById(activeId);
                         GWT.log("element: " + line + " : " + line.getInnerHTML());
                         _currentId = activeId;
+//                        if ( ! isInView(activeId)) {
+                            scrollIt(activeId);
+//                        }
                     }
                 }
             }
         }
     }
+    
+    private native boolean isInView(String eid) /*-{
+        var container = $(eid);
+        var contHeight = container.height();
+        var contTop = container.scrollTop();
+        var contBottom = contTop + contHeight ;
+    
+        var elemTop = $(elem).offset().top - container.offset().top;
+        var elemBottom = elemTop + $(elem).height();
+    
+        var isTotal = (elemTop >= 0 && elemBottom <=contHeight);
+        var isPart = ((elemTop < 0 && elemBottom > 0 ) || (elemTop > 0 && elemTop <= container.height())) && partial ;
+    
+        return  isTotal  || isPart ;
+    }-*/;
+    
+    private native void scrollIt(String eid) /*-{
+        console.log("scrolling " + eid);
+        var cell = $wnd.document.getElementById(eid);
+//        console.log("element: "+ cell);
+//        var offp = cell.offsetParent; //  === null;
+//        console.log("offp " + offp);
+//        var style = window.getComputedStyle(cell);
+//        console.log("style display: " + style.display);
+//        console.log("style visibility: " + style.visibility);
+//        if (style.display === 'none')
+            cell.scrollIntoView({behavior: "smooth", block: "nearest", inline: "nearest"});
+    }-*/;
     
     @Override
     public void onFocus(FocusEvent event) {
@@ -164,6 +199,19 @@ public class MyHandler implements AttachEvent.Handler, ClickHandler, KeyUpHandle
                 }
             }
         }
+    }
+
+    @Override
+    public void onMouseOut(MouseOutEvent event) {
+        GWT.log(_name + " mouseout: "); // + event.getSource());
+        hideDescriptionPopup();
+    }
+    /**
+     * 
+     */
+    private void hideDescriptionPopup() {
+        // TODO Auto-generated method stub
+        
     }
 
     @Override
