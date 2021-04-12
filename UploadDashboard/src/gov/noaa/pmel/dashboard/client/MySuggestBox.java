@@ -3,10 +3,14 @@
  */
 package gov.noaa.pmel.dashboard.client;
 
-import java.lang.reflect.Field;
+import java.util.Map;
 
+import com.google.gwt.core.client.GWT;
+import com.google.gwt.event.dom.client.KeyUpEvent;
 import com.google.gwt.event.dom.client.MouseMoveEvent;
 import com.google.gwt.event.dom.client.MouseOverEvent;
+import com.google.gwt.event.dom.client.MouseWheelEvent;
+import com.google.gwt.event.dom.client.ScrollEvent;
 import com.google.gwt.user.client.ui.DecoratedPopupPanel;
 import com.google.gwt.user.client.ui.DecoratorPanel;
 import com.google.gwt.user.client.ui.MyDecoratedPopupPanel;
@@ -15,6 +19,9 @@ import com.google.gwt.user.client.ui.SuggestBox;
 import com.google.gwt.user.client.ui.SuggestOracle;
 import com.google.gwt.user.client.ui.TextBox;
 import com.google.gwt.user.client.ui.ValueBoxBase;
+
+import gov.noaa.pmel.dashboard.shared.DataColumnType;
+
 import com.google.gwt.user.client.ui.PopupPanel.AnimationType;
 
 /**
@@ -58,18 +65,26 @@ public class MySuggestBox extends SuggestBox {
      */
 
     public static class MySuggestionDisplay extends SuggestBox.DefaultSuggestionDisplay {
-        
+        private MyHandler handler;
         public MySuggestionDisplay() {
             super();
         }
         
+//        public MySug() {
+//            suggestionMenu = new SuggestionMenu(true);
+//            suggestionPopup = createPopup();
+//            suggestionPopup.setWidget(decorateSuggestionList(suggestionMenu));
+//          }
+
         @Override
         protected PopupPanel createPopup() {
 //            MyDecoPanel p = new MyDecoPanel();
             MyDecoratedPopupPanel p = new MyDecoratedPopupPanel(true, false);
-            MyHandler handler = new MyHandler("MyDeco handler");
-//            p.addHandler(handler, MouseOverEvent.getType());
-//            p.addHandler(handler, MouseMoveEvent.getType());
+            handler = new MyHandler("MyDeco handler");
+            p.addHandler(handler, KeyUpEvent.getType());
+            p.addHandler(handler, ScrollEvent.getType());
+            p.addHandler(handler, MouseWheelEvent.getType());
+            p.addHandler(handler, MouseMoveEvent.getType());
 //            p.addDomHandler(new MyHandler("MyDeco domHandler"), MouseOverEvent.getType());
 //            p.addAttachHandler(new MyHandler("MyDeco attachHandler"));
 
