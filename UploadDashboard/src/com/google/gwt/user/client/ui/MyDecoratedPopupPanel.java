@@ -18,6 +18,7 @@ package com.google.gwt.user.client.ui;
 import com.google.gwt.event.dom.client.MouseMoveEvent;
 import com.google.gwt.event.dom.client.MouseOutEvent;
 import com.google.gwt.event.dom.client.MouseOverEvent;
+import com.google.gwt.event.dom.client.MouseWheelEvent;
 import com.google.gwt.event.logical.shared.AttachEvent;
 import com.google.gwt.event.shared.GwtEvent;
 import com.google.gwt.event.shared.GwtEvent.Type;
@@ -141,6 +142,7 @@ public class MyDecoratedPopupPanel extends PopupPanel {
     decPanel.addDomHandler(handler, MouseOverEvent.getType());
     decPanel.addDomHandler(handler, MouseOutEvent.getType());
     decPanel.addDomHandler(handler, MouseMoveEvent.getType());
+    decPanel.addDomHandler(handler, MouseWheelEvent.getType());
     decPanel.addAttachHandler(new MyHandler("decPanel attachHandler"));
     decPanel.setStyleName("");
     setStylePrimaryName(DEFAULT_STYLENAME);

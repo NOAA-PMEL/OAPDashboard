@@ -13,6 +13,9 @@ import com.google.gwt.core.client.GWT;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.FocusEvent;
 import com.google.gwt.event.dom.client.FocusHandler;
+import com.google.gwt.event.dom.client.KeyEvent;
+import com.google.gwt.event.dom.client.KeyUpEvent;
+import com.google.gwt.event.dom.client.MouseWheelEvent;
 import com.google.gwt.event.logical.shared.CloseEvent;
 import com.google.gwt.event.logical.shared.CloseHandler;
 import com.google.gwt.event.logical.shared.SelectionEvent;
@@ -36,6 +39,7 @@ import com.google.gwt.user.client.ui.Widget;
 import com.google.gwt.user.client.ui.PopupPanel.AnimationType;
 import com.google.gwt.user.client.ui.SuggestBox.SuggestionDisplay;
 import com.google.gwt.user.client.ui.SuggestOracle.Suggestion;
+import com.google.gwt.user.client.ui.TextBox;
 
 import gov.noaa.pmel.dashboard.shared.DataColumnType;
 import gov.noaa.pmel.dashboard.shared.UserInfo;
@@ -110,7 +114,9 @@ public class DataTypeSelectorPopup extends Composite {
             dataTypeLookup.put(type.getDisplayName(), type);
             unitsLookup.put(type.getDisplayName(), new ArrayList<>(type.getUnits()));
         }
-		dataSelector = new MySuggestBox(getDataOracle(dataTypeLookup));
+        TextBox theBox = new TextBox();
+        theBox.addHandler(new MyHandler("selector") , KeyUpEvent.getType());
+		dataSelector = new MySuggestBox(getDataOracle(dataTypeLookup), theBox);
         
 		initWidget(uiBinder.createAndBindUi(this));
 //        FocusHandler fh = new FocusHandler() {
