@@ -44,11 +44,12 @@
         float: left;
     }
     .landingheadertitle {
-        position: absolute;
+/*         position: absolute;
+        left: 38%;
+        top: .25em; */
+        text-align: center;
         font-size: xx-large;
         color: white;
-        left: 38%;
-        top: .25em;
     }
     .headersoftwaretitle {
         position: absolute;

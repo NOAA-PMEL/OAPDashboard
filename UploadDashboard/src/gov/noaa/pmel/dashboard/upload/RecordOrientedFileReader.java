@@ -3,6 +3,7 @@
  */
 package gov.noaa.pmel.dashboard.upload;
 
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 
@@ -12,6 +13,19 @@ import java.io.InputStream;
  */
 public interface RecordOrientedFileReader extends Iterable<String[]> {
 
+    static RecordOrientedFileReader getFileReader(String fileType, File uploadedFile) throws IOException {
+        if ( fileType.contains("excel") 
+                || fileType.contains("spreadsheet")
+                || fileType.contains("ooxml")) {
+               return ExcelFileReader.newInstance(uploadedFile);
+        } else if ( ! ( fileType.contains("text") 
+                        && ( fileType.contains("delimited")
+                             || fileType.contains("separated")
+                             || fileType.contains("csv")))) {
+            throw new IllegalStateException("Unknown file type:"+ fileType);
+        }
+        return new CSVFileReader(uploadedFile, fileType);
+    }
     static RecordOrientedFileReader getFileReader(String fileType, InputStream inputStream) throws IOException {
         if ( fileType.contains("excel") 
                 || fileType.contains("spreadsheet")

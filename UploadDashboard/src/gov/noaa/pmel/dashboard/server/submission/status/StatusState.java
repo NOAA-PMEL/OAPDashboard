@@ -17,7 +17,7 @@ public enum StatusState {
     INCOMPLETE("Required information is incomplete"),
     PENDING_INFO("Pending additional information"),
     VALIDATED("Submission validated"),
-    ACCEPTED("Accepted by archive"),
+    ACCEPTED("Published by archive"),
     FAILED("Archive cannot process the submitted package"),
     REJECTED("Rejected by archive"),
     SUPERCEDED("Version has been superceded"),

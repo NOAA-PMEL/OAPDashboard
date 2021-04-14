@@ -53,7 +53,7 @@ public class NewGeneralizedUploadProcessor extends FileUploadProcessor {
             DashboardDatasetData datasetData;
             try ( InputStream inStream = new FileInputStream(_uploadedFile); ) {
                 RecordOrientedFileReader recordReader = 
-                        RecordOrientedFileReader.getFileReader(_uploadFields.checkedFileType(), inStream);
+                        RecordOrientedFileReader.getFileReader(_uploadFields.checkedFileType(), _uploadedFile);
                 datasetData = DataFileHandler.createSingleDatasetFromInput(recordReader, dataFormat, 
                                                                       username, filename, timestamp, 
                                                                       submissionRecordId,
@@ -64,10 +64,11 @@ public class NewGeneralizedUploadProcessor extends FileUploadProcessor {
                 throw ex;
             } catch (IOException ex) {
                 // Mark as a failed file, and go on to the next
-                _messages.add(DashboardUtils.INVALID_FILE_HEADER_TAG + " " + filename);
-                _messages.add("There was an error processing the data file: " + ex.getMessage() + ".");
-                _messages.add(DashboardUtils.END_OF_ERROR_MESSAGE_TAG);
-                return;
+                logger.warn(ex,ex);
+//                _messages.add(DashboardUtils.INVALID_FILE_HEADER_TAG + " " + filename);
+//                _messages.add("There was an error processing the data file: " + ex.getMessage() + ".");
+//                _messages.add(DashboardUtils.END_OF_ERROR_MESSAGE_TAG);
+                throw new IllegalStateException(ex);
             }
 
             // Process all the datasets created from this file

@@ -47,9 +47,9 @@ public class DataUploadPage extends CompositeWithUsername {
 	private static final String MORE_HELP_TEXT = "Example Data";
 
 	private static final String UPLOAD_FILE_INTRO_HTML = 
-            "<h3>Upload data files for data sanity checks, QC, and archiving.</h3>" 
-            + "Any file can be uploaded for archival.  However, only ASCII-delimited (CSV, etc.) files and Excel spreadsheets can be sanity-checked and QC'd."
-            + "<br style=\"padding-bottom: .5em;\"/>To be checked, a delimited file must include:"
+            "<h3>Upload data files for data checks and archival.</h3>" 
+            + "Any file can be uploaded for archival.  However, only ASCII-delimited (CSV, etc.) files and Excel spreadsheets can be checked for errors."
+            + "<br/><div style=\"padding-bottom:.5em; padding-top:.5em;\">To be checked, a delimited file must include:</div>"
 			+ "<ul style=\"list-style-type:disk\">"
 			+ "  <li>A complete header line with <span style=\"font-weight:bold;\">column names for every column</span>,</li>"
 			+ "  <li>an optional header line of data column units where appropriate,</li>"
