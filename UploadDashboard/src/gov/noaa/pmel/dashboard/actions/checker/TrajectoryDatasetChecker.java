@@ -143,6 +143,9 @@ public class TrajectoryDatasetChecker extends BaseDatasetChecker implements Data
 		// Check for missing lon/lat/time 
 		stdUserData.checkMissingLonLatTime();
 
+        if ( stdUserData.hasSampleDepth() || stdUserData.hasSamplePressure()) {
+            stdUserData.checkPressureAndDepth();
+        }
 		// Bounds check the standardized data values
 		stdUserData.checkBounds();
 

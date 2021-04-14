@@ -410,11 +410,11 @@ public class TrajectoryDsgFile extends DsgNcFile {
         _typeSpecificVariables.put(var.getShortName(), var);
         var = addLongitudeVariable(ncFile, SAMPLE_LON_VARNAME , "Sample Longitude", _obsDimList, true);
         _typeSpecificVariables.put(var.getShortName(), var);
-        if ( _stdUser.hasDataColumn(SAMPLE_DEPTH_VARNAME)) {
-            var = addDepthVariable(ncFile, SAMPLE_DEPTH_VARNAME, "Sample Depth", _obsDimList, true);
-            _typeSpecificVariables.put(var.getShortName(), var);
-        } else if ( _stdUser.hasDataColumn(SAMPLE_PRESSURE_VARNAME)) {
+        if ( _stdUser.hasSamplePressure()) { //  && _stdUser.pressuresAreOk()) {
             var = addPressureVariable(ncFile, SAMPLE_PRESSURE_VARNAME, "Sample Pressure", _obsDimList, true);
+            _typeSpecificVariables.put(var.getShortName(), var);
+        } else if ( _stdUser.hasSampleDepth()) { //  && _stdUser.depthsAreOk()) {
+            var = addDepthVariable(ncFile, SAMPLE_DEPTH_VARNAME, "Sample Depth", _obsDimList, true);
             _typeSpecificVariables.put(var.getShortName(), var);
         }
     }
@@ -453,22 +453,22 @@ public class TrajectoryDsgFile extends DsgNcFile {
         ArrayDouble.D1 a_lon = new ArrayDouble.D1(_numObservations);
         Variable v_PresDep = null;
         ArrayDouble.D1 a_PresDep = null;
-        if ( _stdUser.hasSampleDepth()) {
-            presDep = _stdUser.getSampleDepths();
+        if ( _stdUser.hasSamplePressure()) { //  && _stdUser.pressuresAreOk()) {
+            presDep = _stdUser.getSamplePressures();
             v_PresDep = getVariable(ncFile, SAMPLE_DEPTH_VARNAME);
             a_PresDep = new ArrayDouble.D1(_numObservations);
-        } else if ( _stdUser.hasSamplePressure()) {
-            presDep = _stdUser.getSamplePressures();
+        } else if ( _stdUser.hasSampleDepth()) { //  && _stdUser.depthsAreOk()) {
+            presDep = _stdUser.getSampleDepths();
             v_PresDep = getVariable(ncFile, SAMPLE_DEPTH_VARNAME);
             a_PresDep = new ArrayDouble.D1(_numObservations);
         }
         
         for (int row=0; row<_numObservations; row++) {
-            a_time.set(row, times[row].doubleValue());
-            a_lat.set(row, lats[row].doubleValue());
-            a_lon.set(row, lons[row].doubleValue());
+            setDoubleValue(a_time, row, times[row]);
+            setDoubleValue(a_lat, row, lats[row]);
+            setDoubleValue(a_lon, row, lons[row]);
             if ( presDep != null ) {
-                a_PresDep.set(row, presDep[row].doubleValue());
+                setDoubleValue(a_PresDep, row, presDep[row]);
             }
         }
         ncFile.write(v_time, a_time);

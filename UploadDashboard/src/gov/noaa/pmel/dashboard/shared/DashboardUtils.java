@@ -296,7 +296,7 @@ public class DashboardUtils {
 
 	public static final String SAMPLE_DEPTH_VARNAME = "sample_depth";
 	public static final DataColumnType SAMPLE_DEPTH = new DataColumnType(SAMPLE_DEPTH_VARNAME,
-			304.0, "sample depth", "sample depth", true, DEPTH_UNITS);
+			304.0, "depth - sample", "depth at which sample was taken", true, DEPTH_UNITS);
 
     public static final String TEMPERATURE_VARNAME = "temperature";
     public static final DataColumnType TEMPERATURE = new DataColumnType(TEMPERATURE_VARNAME, 

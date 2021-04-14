@@ -416,8 +416,7 @@ public class PreviewPlotsHandler {
     private List<PreviewTab> getGeneralizedPreviewPlots(String datasetId) {
 		List<PreviewTab> plotTabs = new ArrayList<>();
 		String stdId = DashboardServerUtils.checkDatasetID(datasetId);
-		String cruisePlotsDirname = getDatasetPreviewPlotsDir(stdId).getPath();
-		File cruisePlotsDir = new File(cruisePlotsDirname);
+		File cruisePlotsDir = getDatasetPreviewPlotsDir(stdId);
         SortedSet<File> sortedPlotDirs = new TreeSet<>(new Comparator<File>() {
             @Override
             public int compare(File o1, File o2) {

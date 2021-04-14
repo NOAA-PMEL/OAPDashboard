@@ -9,15 +9,14 @@ import javax.servlet.ServletContext;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.ws.rs.Consumes;
-import javax.ws.rs.FormParam;
 import javax.ws.rs.GET;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
-import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.MultivaluedMap;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
 import javax.ws.rs.core.SecurityContext;
@@ -25,13 +24,20 @@ import javax.ws.rs.core.SecurityContext;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+import gov.noaa.pmel.dashboard.handlers.DataFileHandler;
 import gov.noaa.pmel.dashboard.server.Archive;
+import gov.noaa.pmel.dashboard.server.DashboardConfigStore;
+import gov.noaa.pmel.dashboard.server.submission.status.StatusMessageFlag;
 import gov.noaa.pmel.dashboard.server.submission.status.StatusState;
 import gov.noaa.pmel.dashboard.server.submission.status.StatusUpdater;
 import gov.noaa.pmel.dashboard.server.submission.status.SubmissionRecord;
 import gov.noaa.pmel.dashboard.server.util.Notifications;
+import gov.noaa.pmel.dashboard.shared.DashboardDataset;
 import gov.noaa.pmel.dashboard.shared.NotFoundException;
 import gov.noaa.pmel.tws.util.StringUtils;
+
+import static gov.noaa.pmel.dashboard.server.submission.status.StatusMessageFlag.*;
+import static gov.noaa.pmel.dashboard.server.submission.status.StatusState.*;
 
 /**
  * @author kamb
@@ -172,11 +178,9 @@ public class StatusServices extends ResourceBase {
     @Consumes(MediaType.APPLICATION_FORM_URLENCODED)
     @Produces(MediaType.APPLICATION_JSON)
     public Response updateStatus(@PathParam("sid") String p_sid,
-                                 @QueryParam("s") String qp_status_state,
-                                 @QueryParam("m") String qp_message,
-                                 @FormParam("status") String fp_status_state,
-                                 @FormParam("message") String fp_message) {
-        return updateVersionStatus(p_sid, null, qp_status_state, qp_message, fp_status_state, fp_message);
+                                 MultivaluedMap<String, String> params
+                                 ) {
+        return updateVersionStatus(p_sid, null, params); // , qp_status_state, qp_message, fp_status_state, fp_message);
     }
     @POST
     @Path("update/{sid}/{version}")
@@ -184,26 +188,38 @@ public class StatusServices extends ResourceBase {
     @Produces(MediaType.APPLICATION_JSON)
     public Response updateVersionStatus(@PathParam("sid") String p_sid,
                                         @PathParam("version") String p_version,
-                                        @QueryParam("s") String qp_status_state,
-                                        @QueryParam("m") String qp_message,
-                                        @FormParam("status") String fp_status_state,
-                                        @FormParam("message") String fp_message) {
+                                        MultivaluedMap<String, String> params
+                                 ) {
         Response response = null;
         SubmissionRecord srec = null;
         try {
             logger.debug(fullDump(httpRequest));
-            logger.info("Update " + p_sid + "." + p_version +
-                        " as fp status " + fp_status_state + ":" + fp_message +
-                        " or qp status " + qp_status_state + ":" + qp_message +
-                         " from " + getRemoteAddress(httpRequest));
-            String statusStr = fp_status_state != null ? fp_status_state : qp_status_state;
+            
+            String statusStr = getParam(STATUS, params); // fp_status_state != null ? fp_status_state : qp_status_state;
             StatusState sstate = getState(statusStr.toUpperCase());
-            String message = fp_message != null ? fp_message : qp_message;
+            String message = getParam(MESSAGE, params); // fp_message != null ? fp_message : qp_message;
+            String accession = getParam(ACCESSION, params);
+            
             String notificationTitle = "Status update for " + p_sid;
             String logMessage = notificationTitle + " from " + getRemoteAddress(httpRequest) + " to " + sstate + ":" + message;
             logger.info(logMessage);
             
-            srec = StatusUpdater.updateStatus(p_sid, sstate, message);
+            if ( sstate.equals(ACCEPTED)) {
+                if ( StringUtils.emptyOrNull(accession)) {
+                    if ( StringUtils.emptyOrNull(message) || ! message.matches(".*accession[:=]\\d{7}.*")) {
+                        String msg = "Dataset " + p_sid + " published with no accession # provided.";
+                        logger.warn(msg);
+                        Notifications.AdminEmail("Status update Publish with NO ACCESSION", msg);
+                    } else {
+                        int idx = message.indexOf("accession") + 10;
+                        accession = message.substring(idx, idx+7);
+                    }
+                }
+            }
+            
+            srec = StatusUpdater.updateStatusRecord(p_sid, sstate, message);
+            updateDocumentMetadata(p_sid, sstate, accession);
+            
             response = Response.ok("Status updated for " + p_sid).build();
             
         } catch (NotFoundException nfex) {
@@ -215,6 +231,39 @@ public class StatusServices extends ResourceBase {
             response = Response.serverError().entity("An error occurred on the server. Please try again later.").build();
         }
         return response;
+    }
+
+    /**
+     * @param p_sid
+     * @param sstate
+     * @param accession
+     */
+    private static void updateDocumentMetadata(String p_sid, StatusState sstate, String accession) {
+        try {
+            DataFileHandler dfh = DashboardConfigStore.get(false).getDataFileHandler();
+            DashboardDataset dds = dfh.getDatasetFromInfoFile(p_sid);
+            if ( ! StringUtils.emptyOrNull(accession)) {
+                dds.setAccession(accession);
+            }
+            dfh.saveDatasetInfoToFile(dds, "Updated accession number to: " + accession);
+        } catch (Exception ex) {
+            logger.warn(ex,ex);
+            Notifications.AdminEmail("SDIS: Exception updating accesssion",
+                                     "There was an exception updating the accession number for dataset "
+                                    + p_sid + ".\n" + ex.toString());
+                                    
+        }
+    }
+
+    /**
+     * @param status
+     * @param params
+     * @return
+     */
+    private static String getParam(StatusMessageFlag param, MultivaluedMap<String, String> params) {
+        return params.containsKey(param.formField()) ?
+                params.getFirst(param.formField()) :
+                params.getFirst(param.queryFlag());
     }
 
     /**

@@ -381,6 +381,7 @@ public class SubmitToArchivePage extends CompositeWithUsername implements DataSu
         DashboardDataset dataset = datasets.values().iterator().next();
         singleton.reset();
         singleton.setUsername(datasets.getUsername());
+        singleton.header.userInfoLabel.setText(WELCOME_INTRO + datasets.getUsername());
         singleton.setDatasetInfo(dataset);
         boolean hasMessages = false;
         if ( alreadySubmitted(dataset)) {
@@ -428,6 +429,7 @@ public class SubmitToArchivePage extends CompositeWithUsername implements DataSu
 //		singleton.updateDatasetColumns(dataset); 
         setFilesToBeArchived(_dataset);
         submitCommentTextArea.setText(dataset.getArchiveSubmissionMessage());
+        accnNumberBox.setText(dataset.getAccession());
         genDoiChkBx.setValue(dataset.getArchiveDOIrequested());
     }
 
@@ -440,9 +442,8 @@ public class SubmitToArchivePage extends CompositeWithUsername implements DataSu
      * 
      */
     private void reset() {
-        newSubmitButton.setValue(Boolean.TRUE);
-//        updateAccnBox.setText("");
-//        updateAccnBox.setEnabled(false);
+        newSubmitButton.setValue(Boolean.TRUE, false);
+        newSubmitButton.setEnabled(true);
         accnNumberBox.setText("");
         accnNumberBox.setEnabled(false);
         
@@ -547,6 +548,7 @@ public class SubmitToArchivePage extends CompositeWithUsername implements DataSu
     }
     
     private void setUpdateSubmit(DashboardDataset dataset) {
+        newSubmitButton.setEnabled(false);
         updateSubmitButton.setValue(Boolean.TRUE);
         accnNumberBox.setEnabled(true);
     }
@@ -1002,14 +1004,13 @@ public class SubmitToArchivePage extends CompositeWithUsername implements DataSu
 //			return;
 //		}
 
-		boolean repeatSend = true; // XXX
         boolean requestDOI = genDoiChkBx.getValue().booleanValue();
 		// Submit the dataset
 		UploadDashboard.showWaitCursor();
         UploadDashboard.showWaitCursor(submitButton);
         UploadDashboard.showWaitCursor(cancelButton);
 		service.submitDatasetsToArchive(getUsername(), _submitIdsList, _submitColsList, 
-		                                archiveStatus, repeatSend, 
+		                                archiveStatus, accnNumberBox.getText(), 
                                         submitCommentTextArea.getText(), requestDOI,
 			new AsyncCallback<Void>() {
 				@Override
