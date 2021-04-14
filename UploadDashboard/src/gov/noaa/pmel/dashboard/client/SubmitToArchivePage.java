@@ -117,14 +117,14 @@ public class SubmitToArchivePage extends CompositeWithUsername implements DataSu
 	@UiField ApplicationHeaderTemplate header;
 	
     private static final String SUBMIT_AGREEMENT = 
-        "By submitting data for inclusion in the NCEI archives,"
-        + "you warrant that these data may be copied and distributed by NCEI for any purposes."
-        + "NCEI may make these data available via electronic or other means without restrictions."
-        + "You understand that NCEI will not compensate you in any way or pay you for use of these data."
-        + "You further agree to indemnify NCEI in the event that it suffers liability or damages"
-        + "as a result of its use of these data. To the extent that any part of this submission"
-        + "is subject to the intellectual property rights of a third party, you warrant that"
-        + "you have obtained permission from that third party to submit that party's property"
+        "By submitting data for inclusion in the NCEI archives, "
+        + "you warrant that these data may be copied and distributed by NCEI for any purposes. "
+        + "NCEI may make these data available via electronic or other means without restrictions. "
+        + "You understand that NCEI will not compensate you in any way or pay you for use of these data. "
+        + "You further agree to indemnify NCEI in the event that it suffers liability or damages "
+        + "as a result of its use of these data. To the extent that any part of this submission "
+        + "is subject to the intellectual property rights of a third party, you warrant that "
+        + "you have obtained permission from that third party to submit that party's property "
         + "to NCEI for the purposes specified in this agreement.";
     
 	private String _datasetRecordId;
