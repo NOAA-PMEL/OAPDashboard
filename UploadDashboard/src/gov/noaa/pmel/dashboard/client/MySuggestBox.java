@@ -40,9 +40,8 @@ public class MySuggestBox extends SuggestBox {
     /**
      * @param oracle
      */
-    public MySuggestBox(SuggestOracle oracle) {
-        super(oracle, new TextBox(), new MySuggestionDisplay());
-        // TODO Auto-generated constructor stub
+    public MySuggestBox(SuggestOracle oracle, TextBox theBox) {
+        super(oracle, theBox, new MySuggestionDisplay());
     }
 
     /**

@@ -8,6 +8,7 @@ import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.NodeList;
 import com.google.gwt.event.logical.shared.AttachEvent;
+import com.google.gwt.regexp.shared.RegExp;
 import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.PopupPanel;
@@ -15,8 +16,6 @@ import com.google.gwt.event.dom.client.BlurEvent;
 import com.google.gwt.event.dom.client.BlurHandler;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
-import com.google.gwt.event.dom.client.ContextMenuEvent;
-import com.google.gwt.event.dom.client.ContextMenuHandler;
 import com.google.gwt.event.dom.client.DoubleClickEvent;
 import com.google.gwt.event.dom.client.DoubleClickHandler;
 import com.google.gwt.event.dom.client.FocusEvent;
@@ -44,13 +43,19 @@ import com.google.gwt.event.dom.client.ScrollHandler;
  */
 public class MyHandler implements AttachEvent.Handler, ClickHandler, KeyUpHandler, KeyPressHandler,
                                   FocusHandler, BlurHandler, DoubleClickHandler, 
-                                  MouseMoveHandler, MouseOverHandler, MouseOutHandler, ContextMenuHandler,
+                                  MouseMoveHandler, MouseOverHandler, MouseOutHandler, 
                                   ScrollHandler, MouseWheelHandler {
-    
+	
     private String _name;
     private String _currentId = null;
-    static PopupPanel descrTT;
+    static PopupPanel descriptionPopup;
     private int _mmoveCount = 0;
+    
+    final int VISIBLE_DELAY = 2500;
+    final String TOOLTIP_STYLENAME = "tooltip";
+
+    // Simplified regular expression for an HTML tag (opening or closing) or an HTML escape. 
+    final RegExp SKIP_HTML_RE = RegExp.compile("<[^>]*>|&[^;]+;", "g");
     
     public MyHandler(String name) {
         _name = name;
@@ -61,17 +66,28 @@ public class MyHandler implements AttachEvent.Handler, ClickHandler, KeyUpHandle
      */
     public void onClick(ClickEvent event) {
         GWT.log(_name + " Click: "+ event.getSource());
-//        sendNameToServer();
     }
 
+    /* (non-Javadoc)
+     * @see com.google.gwt.event.dom.client.MouseWheelHandler#onMouseWheel(com.google.gwt.event.dom.client.MouseWheelEvent)
+     */
     @Override
     public void onMouseWheel(MouseWheelEvent event) {
-        GWT.log(_name + " mousewheel: "+ event.getSource());
+//        GWT.log(_name + " mousewheel: "+ event.getNativeEvent());
+
+        if (descriptionPopup != null) {
+        	hideDescriptionPopup();
+        }
+        
     }
+    /* (non-Javadoc)
+     * @see com.google.gwt.event.dom.client.ScrollHandler#onScroll(com.google.gwt.event.dom.client.ScrollEvent)
+     */
     @Override
     public void onScroll(ScrollEvent event) {
-        GWT.log(_name + " scroll: "+ event.getSource());
+//        GWT.log(_name + " scroll: "+ event.getSource());
     }
+    
     /**
      * Fired when the user types in the nameField.
      */
@@ -80,8 +96,10 @@ public class MyHandler implements AttachEvent.Handler, ClickHandler, KeyUpHandle
     }
     public void onKeyUp(KeyUpEvent event) {
         GWT.log(_name + " keyup: "+ event.getSource());
+        
         int keyCode = event.getNativeKeyCode(); 
         if (keyCode == KeyCodes.KEY_UP || keyCode == KeyCodes.KEY_DOWN ) {
+        	hideDescriptionPopup();
             NodeList<Element> elements = Document.get().getElementsByTagName("div");
             for (int i = 0; i < elements.getLength(); i++) {
     //          GWT.log("elements1 " + elements.getItem(i).getClassName());
@@ -94,11 +112,42 @@ public class MyHandler implements AttachEvent.Handler, ClickHandler, KeyUpHandle
                         Element line = Document.get().getElementById(activeId);
                         GWT.log("element: " + line + " : " + line.getInnerHTML());
                         _currentId = activeId;
+//                        if ( ! isInView(activeId)) {
+                            scrollIt(activeId);
+//                        }
                     }
                 }
             }
         }
     }
+    
+    private native boolean isInView(String eid) /*-{
+        var container = $(eid);
+        var contHeight = container.height();
+        var contTop = container.scrollTop();
+        var contBottom = contTop + contHeight ;
+    
+        var elemTop = $(elem).offset().top - container.offset().top;
+        var elemBottom = elemTop + $(elem).height();
+    
+        var isTotal = (elemTop >= 0 && elemBottom <=contHeight);
+        var isPart = ((elemTop < 0 && elemBottom > 0 ) || (elemTop > 0 && elemTop <= container.height())) && partial ;
+    
+        return  isTotal  || isPart ;
+    }-*/;
+    
+    private native void scrollIt(String eid) /*-{
+        console.log("scrolling " + eid);
+        var cell = $wnd.document.getElementById(eid);
+//        console.log("element: "+ cell);
+//        var offp = cell.offsetParent; //  === null;
+//        console.log("offp " + offp);
+//        var style = window.getComputedStyle(cell);
+//        console.log("style display: " + style.display);
+//        console.log("style visibility: " + style.visibility);
+//        if (style.display === 'none')
+            cell.scrollIntoView({behavior: "smooth", block: "nearest", inline: "nearest"});
+    }-*/;
     
     @Override
     public void onFocus(FocusEvent event) {
@@ -169,25 +218,15 @@ public class MyHandler implements AttachEvent.Handler, ClickHandler, KeyUpHandle
                 if ( activeId != null && ! activeId.equals(_currentId)) {
                     GWT.log(_name + " mousemove childElement " + activeId);
                     line = Document.get().getElementById(activeId);
-//                     varName = line.getInnerHTML();
+//                    varName = line.getInnerHTML();
 //                    GWT.log(_name + " element: " + line + " : " + varName + " : " + DataTypeSelectorPopup.dataTypeLookup.get(varName).getDescription());
-
+//
 //                    String description = DataTypeSelectorPopup.dataTypeLookup.get(varName).getDescription();
 //                    GWT.log(_name + " element: " + line + " : " + varName + " : " + description);
-//                    if (description != null && !description.isEmpty()) {
-//                    	int left = line.getAbsoluteLeft() + 10;
-//                    	int top = line.getAbsoluteTop() + 10;
-//                    	
-//                    	descrTT = new PopupPanel();
-//                    	descrTT.setPopupPosition( left, top );
-//                    	descrTT.add(new Label("hi from: " + description));
-//                    	descrTT.show();
-//                    	GWT.log("Showing descrTT");
-//                    }
                     
-                    if(descrTT != null && descrTT.isShowing()) {
-        	        	descrTT.hide();
-        	        	GWT.log("hiding descrTT");
+                    if(descriptionPopup != null && descriptionPopup.isShowing()) {
+        	        	descriptionPopup.hide();
+        	        	GWT.log("hiding descriptionPopup");
         	        }
 
                     _currentId = activeId;
@@ -199,42 +238,58 @@ public class MyHandler implements AttachEvent.Handler, ClickHandler, KeyUpHandle
 
         if ( activeId != null && activeId.equals(_currentId)) {
 
-        	GWT.log("_mmoveCount: " + _mmoveCount);
+//        	GWT.log("_mmoveCount: " + _mmoveCount);
         	
-        	String varName = null;
         	if (line != null && _mmoveCount == 1) {
-        		varName = line.getInnerHTML();
-        		String description = DataTypeSelectorPopup.dataTypeLookup.get(varName).getDescription();
+        		String varName = stripHtml(line.getInnerHTML());
+        		String description = "";
+                if (DataTypeSelectorPopup.dataTypeLookup.get(varName).getDescription() != null ) {
+                	description = DataTypeSelectorPopup.dataTypeLookup.get(varName).getDescription();
+                }
+        		
         		if (description != null && !description.isEmpty()) {
-        			int left = line.getAbsoluteLeft() + 100;
-        			int top = line.getAbsoluteTop() + 10;
-
-        			descrTT = new PopupPanel();
-        			descrTT.setPopupPosition( left, top );
-        			descrTT.add(new Label(varName + ": " + description));
+        			int xCord = event.getClientX() + 10;
+        			int yCord = event.getClientY();
+        			descriptionPopup = new PopupPanel();
+        			descriptionPopup.setStyleName(TOOLTIP_STYLENAME);
+        			descriptionPopup.setPopupPosition(xCord, yCord);
+        			descriptionPopup.setAutoHideEnabled(true);
+//        			descriptionPopup.add(new Label(varName + ": " + description));
+        			descriptionPopup.add(new Label(description));
         			
         			Timer t = new Timer() {
         		        @Override
         		        public void run() {
-        		        	descrTT.show();
+        		        	descriptionPopup.show();
         		        }
         		    };
-        		    t.schedule(2500);
-//        			descrTT.show();
-        			
-        			GWT.log("Showing descrTT");
-        			
+        		    t.schedule(VISIBLE_DELAY);
         		}
         	}
         }
     }
 
     @Override
+    public void onMouseOut(MouseOutEvent event) {
+        GWT.log(_name + " mouseout: "); // + event.getSource());
+        hideDescriptionPopup();
+    }
+    
+    /**
+     * 
+     */
+    private void hideDescriptionPopup() {
+    	if (descriptionPopup.isShowing()) {
+//    		GWT.log(descriptionPopup + " is showing");
+			descriptionPopup.hide();
+			_mmoveCount = 0;
+			_currentId = null;
+		}
+    }
+
+    @Override
     public void onMouseOver(MouseOverEvent event) {
-        // TODO Auto-generated method stub
-    	
     	_mmoveCount = 0;
-    	
     	
 //      GWT.log(_name + " event.getSource() mouseover: " + event.getSource());
 //      GWT.log("onMouseOver " + dataTypeSuggestionBox.getValueBox().toString());
@@ -300,12 +355,6 @@ public class MyHandler implements AttachEvent.Handler, ClickHandler, KeyUpHandle
         
     }
 
-    @Override
-    public void onContextMenu(ContextMenuEvent event) {
-        // TODO Auto-generated method stub
-        GWT.log(_name + " event.getSource() contectmenu: " + event.getSource());
-//        GWT.log("onContextMenu " + dataTypeSuggestionBox.getValueBox().toString());
-    }
 
     /* (non-Javadoc)
      * @see com.google.gwt.event.logical.shared.AttachEvent.Handler#onAttachOrDetach(com.google.gwt.event.logical.shared.AttachEvent)
@@ -313,7 +362,11 @@ public class MyHandler implements AttachEvent.Handler, ClickHandler, KeyUpHandle
     @Override
     public void onAttachOrDetach(AttachEvent event) {
         GWT.log(_name + ( event.isAttached() ? " Attach:":" Detach:" )+event.getSource());
-        NodeList<Element> elements = Document.get().getElementsByTagName("div");
+        if (!event.isAttached() && descriptionPopup != null) {
+        	hideDescriptionPopup();
+        }
+
+//        NodeList<Element> elements = Document.get().getElementsByTagName("div");
 //        for (int i = 0; i < elements.getLength(); i++) {
 ////          GWT.log("elements1 " + elements.getItem(i).getClassName());
 //            if (elements.getItem(i).getClassName().contains("suggestPopupContent")) {
@@ -321,21 +374,12 @@ public class MyHandler implements AttachEvent.Handler, ClickHandler, KeyUpHandle
 //            }
 //        }
     }
-    /* (non-Javadoc)
-     * @see com.google.gwt.event.dom.client.ScrollHandler#onScroll(com.google.gwt.event.dom.client.ScrollEvent)
+    
+    /**
+     * Returns the input text with spaces instead of HTML tags or HTML escapes
      */
-    /* (non-Javadoc)
-     * @see com.google.gwt.event.dom.client.MouseWheelHandler#onMouseWheel(com.google.gwt.event.dom.client.MouseWheelEvent)
-     */
-
-	@Override
-	public void onMouseOut(MouseOutEvent event) {
-		// TODO Auto-generated method stub
-		if (descrTT.isShowing()) {
-			descrTT.hide();
-			_mmoveCount = 0;
-			_currentId = null;
-		}
-	}
-
+    String stripHtml(String str) {
+    	return SKIP_HTML_RE.replace(str, "");
+    }
+    
 }
