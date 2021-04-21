@@ -932,12 +932,14 @@ public class DashboardServices extends RemoteServiceServlet implements Dashboard
         if ( srec == null || srec.getStatusHistory() == null || srec.getStatusHistory().size() == 0 )  {
             sb.append("<ul><li>No status history for dataset.</li></ul>");
         } else {
+            String style = "style=\"font-weight:bold;\"";
             List<StatusRecord> history = srec.getStatusHistory();
             sb.append("<ul>");
             for (StatusRecord rec : history) {
-                sb.append("<li>")
+                sb.append("<li ").append(style).append(">")
                   .append(htmlView(rec))
                   .append("</li>");
+                style = "style=\"color:gray\"";
             }
             sb.append("</ul>");
         }
@@ -950,8 +952,8 @@ public class DashboardServices extends RemoteServiceServlet implements Dashboard
      */
     private static String htmlView(StatusRecord rec) {
         StringBuilder sb = new StringBuilder();
-        sb.append(TimeUtils.formatUTC(rec.statusTime(), TimeUtils.non_std_ISO_8601_nofrac_noTz))
-          .append(" : ")
+        sb.append(TimeUtils.formatUTC(rec.statusTime(), "yyyy-MM-dd HH:mm")) // TimeUtils.non_std_ISO_8601_nofrac_noTz))
+          .append(": ")
           .append(rec.status().displayMsg());
         if ( ! StringUtils.emptyOrNull(rec.message())) {
             sb.append("<ul><li>").append(rec.message()).append("</li></ul>");

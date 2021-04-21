@@ -44,6 +44,7 @@ import gov.noaa.pmel.dashboard.shared.DashboardMetadata;
 import gov.noaa.pmel.dashboard.shared.DashboardUtils;
 import gov.noaa.pmel.dashboard.shared.FileType;
 import gov.noaa.pmel.tws.util.ApplicationConfiguration;
+import gov.noaa.pmel.tws.util.StringUtils;
 
 /**
  * Submits a dataset.  At this time this just means creating the 
@@ -283,7 +284,7 @@ public class DatasetSubmitter {
                                                " to " + stagedPkg;
                     logger.info(archiveStatusMsg);
                     sRecord.pkgLocation(stagedPkg);
-                    updateStatus(sRecord, StatusState.STAGED, "Submission package staged for pickup at:" + stagedPkg);
+                    updateStatus(sRecord, StatusState.STAGED, "Package staged for pickup."); //  at: " + stagedPkg);
                     sendSubmitEmail(sRecord, archiveBundle, userRealName, userEmail);
 					thisStatus = "Submitted " + DashboardServerUtils.formatUTC(timestamp);
 				} catch (Exception ex) {
@@ -420,8 +421,10 @@ public class DatasetSubmitter {
         String datasetId = sRecord.datasetId();
         String notificationList = ApplicationConfiguration.getLatestProperty("oap.archive.notification.list", null);
         logger.debug("notification to list:" + notificationList);
-        if ( notificationList != null )  {
+        if ( ! StringUtils.emptyOrNull(notificationList)) {
             sendArchiveMessage(sRecord, archiveBundle, userRealName, userEmail);
+        }
+        if ( ApplicationConfiguration.getProperty("oap.archive.update.notify.user", false)) {
             sendUserMessage(datasetId, archiveBundle, userRealName, userEmail);
         }
      }
@@ -429,7 +432,7 @@ public class DatasetSubmitter {
     private static void sendArchiveMessage(SubmissionRecord sRecord, File archiveBundle, String userRealName, String userEmail) throws Exception {
         String datasetId = sRecord.datasetId();
         String submitKey = sRecord.submissionKey();
-        String subject = "TESTING: Archive bundle posted for dataset ID: " + datasetId;
+        String subject = "Archive bundle posted for dataset ID: " + datasetId;
         String message = "A dataset archive bundle for " + userRealName + " was posted to the SFTP site for pickup.\n"
                        + "The archive bundle is available for pickup at sftp.pmel.noaa.gov/data/oap/" + submitKey + "/" + sRecord.version();
             String toList = ApplicationConfiguration.getLatestProperty("oap.archive.notification.list");

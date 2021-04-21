@@ -118,15 +118,9 @@
                             <g:RadioButton name="submissionType" ui:field="newSubmitButton" value="true"
                                 addStyleNames="{style.submit_type_button},{style.largerText}">New Submission</g:RadioButton>
                             <g:RadioButton name="submissionType" ui:field="updateSubmitButton" 
-                               addStyleNames="{style.submit_type_button},{style.largerText}">Update A Prior Submission</g:RadioButton>
-                               <!--
-                        <g:HorizontalPanel addStyleNames="{style.submit_type_line_panel}">
-                            <g:Label addStyleNames="{style.accn_box_label},{style.largerText}">Accession #</g:Label>
-                            <g:TextBox ui:field="updateAccnBox" addStyleNames="{style.accn_box}"/>
-                        </g:HorizontalPanel>
-                          -->
+                               addStyleNames="{style.submit_type_button},{style.largerText}">Update a Prior Submission</g:RadioButton>
                             <g:RadioButton name="submissionType" ui:field="appendSubmitButton" 
-                                addStyleNames="{style.submit_type_button},{style.largerText}">Append Prior Submission</g:RadioButton>
+                                addStyleNames="{style.submit_type_button},{style.largerText}">Append to a Prior Submission</g:RadioButton>
                         <g:HorizontalPanel addStyleNames="{style.submit_type_line_panel}">
                             <g:Label addStyleNames="{style.accn_box_label},{style.largerText}">Accession&nbsp;#</g:Label>
                             <g:TextBox ui:field="accnNumberBox" addStyleNames="{style.accn_box}"/>
@@ -171,12 +165,14 @@
                 </g:HorizontalPanel>
             </g:FlowPanel>
         </g:center>
-        <g:east size="26" >
-            <g:FlowPanel ui:field="statusPanel" addStyleNames="{style.archiveStatusPanel}">
-                <g:HTML ui:field="statusLabel"  addStyleNames="{style.archiveStatusLabel}" ></g:HTML>
-                <g:Label ui:field="submissionTime"  addStyleNames="{style.archiveStatusSubmitTime}" ></g:Label>
-                <g:HTML ui:field="statusListPanel" addStyleNames="{style.archiveStatusList}"></g:HTML>
-            </g:FlowPanel>
+        <g:east size="26" height="90%" >
+            <g:ScrollPanel>
+                <g:FlowPanel ui:field="statusPanel" addStyleNames="{style.archiveStatusPanel}">
+                    <g:HTML ui:field="statusLabel"  addStyleNames="{style.archiveStatusLabel}" ></g:HTML>
+                    <g:Label ui:field="submissionTime"  addStyleNames="{style.archiveStatusSubmitTime}" ></g:Label>
+                    <g:HTML ui:field="statusListPanel" addStyleNames="{style.archiveStatusList}"></g:HTML>
+                </g:FlowPanel>
+            </g:ScrollPanel>
         </g:east>
 	</g:DockLayoutPanel>
 </ui:UiBinder>
