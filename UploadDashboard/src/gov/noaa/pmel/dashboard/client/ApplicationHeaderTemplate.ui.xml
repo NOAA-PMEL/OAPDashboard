@@ -27,6 +27,7 @@
                                     <g:MenuItem ui:field="changePasswordBtn">Change Password</g:MenuItem>
                                 </oa:MyMenuBar>
                             </g:MenuItem>
+                            <g:MenuItem addStyleNames="{style.headerMenuItem},{style.normalText}" ui:field="showHelpBtn" >Help</g:MenuItem>
                             <g:MenuItemSeparator/>
                             <g:MenuItem addStyleNames="{style.headerMenuItem},{style.headerMenuSeparator}"  ui:field="logoutSeparator" >&nbsp;</g:MenuItem>
                             <g:MenuItemSeparator/>

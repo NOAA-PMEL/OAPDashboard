@@ -193,7 +193,6 @@ public class DataColumnSpecsPage extends CompositeWithUsername {
 	private static DashboardServicesInterfaceAsync service = 
 			GWT.create(DashboardServicesInterface.class);
 
-    @UiField ApplicationHeaderTemplate header;
 	@UiField DataGrid<ArrayList<String>> dataGrid;
 	@UiField Label pagerLabel;
 	@UiField Label messagesLabel;
@@ -257,6 +256,7 @@ public class DataColumnSpecsPage extends CompositeWithUsername {
         header.setLogoutHandler(new Scheduler.ScheduledCommand() {
             @Override
             public void execute() {
+                GWT.log("data column spec page logout.");
                 logoutOnClick();
             }
         });
@@ -503,6 +503,8 @@ public class DataColumnSpecsPage extends CompositeWithUsername {
 
 		singleton.setUsername(username);
         singleton.setDatasetIds(cruises);
+//        singleton.header.setPageInfo(PagesEnum.IDENTIFY_COLUMNS, cruises);
+        
 		UploadDashboard.showWaitCursor();
 		service.getDataColumnSpecs(singleton.getUsername(), cruises.iterator().next().getDatasetId(), 
 								new OAPAsyncCallback<TypesDatasetDataPair>() {
@@ -544,7 +546,7 @@ public class DataColumnSpecsPage extends CompositeWithUsername {
             names.add(dd.getUserDatasetName());
         }
 		expocodes.addAll(datasetIds);
-        header.addDatasetIds(names);
+        header.setDatasetIds(names);
     }
 
     protected void updateCruiseSpecs(TypesDatasetDataPair cruiseSpecs) {

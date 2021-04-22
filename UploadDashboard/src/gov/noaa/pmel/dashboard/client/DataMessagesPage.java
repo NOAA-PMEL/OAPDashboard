@@ -46,7 +46,6 @@ public class DataMessagesPage extends CompositeWithUsername {
 //	private static final String INTRO_HTML_EPILOGUE = 
 //			"</li></ul>";
 
-    @UiField ApplicationHeaderTemplate header;
     
 	private static final String DISMISS_BUTTON_TEXT = "Back";
 

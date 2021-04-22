@@ -14,16 +14,25 @@ import com.google.gwt.user.client.ui.Composite;
  * 
  * @author Karl Smith
  */
-public class CompositeWithUsername extends Composite {
+public abstract class CompositeWithUsername extends Composite {
 
 	public static final String WELCOME_INTRO = "Logged in as ";
     
 	private String username = "";
     private String pageName = "";
 
+    @UiField ApplicationHeaderTemplate header;
+    
+//    abstract void setPageInfo(); // XXX replace setUsername
+    
     protected CompositeWithUsername(String pageHistoryName) {
         pageName = pageHistoryName;
     }
+    
+    protected ApplicationHeaderTemplate header() {
+        return header;
+    }
+    
 	/**
 	 * @return 
 	 * 		the username; never null but may be empty
@@ -41,6 +50,7 @@ public class CompositeWithUsername extends Composite {
 			this.username = "";
 		else
 			this.username = username;
+        header._currentPage = pageName;    // XXX This shouldn't happen here.  All should be in setPageInfo or such
 	}
     
 	public String pageName() { return pageName; }
