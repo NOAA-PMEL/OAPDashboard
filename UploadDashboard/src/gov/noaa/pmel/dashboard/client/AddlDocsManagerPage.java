@@ -128,7 +128,6 @@ public class AddlDocsManagerPage extends CompositeWithUsername {
 	private static DashboardServicesInterfaceAsync service = 
 			GWT.create(DashboardServicesInterface.class);
 
-    @UiField ApplicationHeaderTemplate header;
 	@UiField HTML introHtml; 
 	@UiField DataGrid<DashboardMetadata> addlDocsGrid;
 	@UiField FormPanel uploadForm;

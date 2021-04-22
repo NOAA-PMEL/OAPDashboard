@@ -22,6 +22,7 @@ import com.google.gwt.user.client.ui.MenuBar;
 import com.google.gwt.user.client.ui.MenuItem;
 import com.google.gwt.user.client.ui.Widget;
 
+import gov.noaa.pmel.dashboard.client.UploadDashboard.PagesEnum;
 import gov.noaa.pmel.dashboard.shared.DashboardDataset;
 import gov.noaa.pmel.dashboard.shared.DashboardDatasetList;
 
@@ -41,11 +42,15 @@ public class ApplicationHeaderTemplate extends Composite {
     @UiField Label userInfoLabel;
     @UiField MenuBar menuBar;
     @UiField MenuItem sendFeedbackBtn;
+    @UiField MenuItem showHelpBtn;
     @UiField MyMenuBar preferencesMenuBar;
     @UiField MenuItem userInfoBtn;
     @UiField MenuItem changePasswordBtn;
     @UiField MenuItem logoutSeparator;
     @UiField MenuItem logoutBtn;
+    
+    String _currentPage = "";
+    
     boolean overMenu = false;
     
     interface ApplicationHeaderTemplateUiBinder extends UiBinder<Widget, ApplicationHeaderTemplate> {
@@ -54,9 +59,11 @@ public class ApplicationHeaderTemplate extends Composite {
 
     private static ApplicationHeaderTemplateUiBinder uiBinder = GWT.create(ApplicationHeaderTemplateUiBinder.class);
 
+    static MyWindow helpWindow;
+    
     public ApplicationHeaderTemplate() {
         initWidget(uiBinder.createAndBindUi(this));
-        menuBar.setAutoOpen(true);
+        menuBar.setAutoOpen(false);
         userInfoBtn.getElement().setId("userInfoBtn");
         changePasswordBtn.getElement().setId("changePasswordBtn");
         preferencesMenuBar.setParentMenu(menuBar);
@@ -86,6 +93,12 @@ public class ApplicationHeaderTemplate extends Composite {
             @Override
             public void execute() {
                 doSendFeedback();
+            }
+        });
+        showHelpBtn.setScheduledCommand(new Scheduler.ScheduledCommand() {
+            @Override
+            public void execute() {
+                doShowHelp();
             }
         });
     }
@@ -134,6 +147,39 @@ public class ApplicationHeaderTemplate extends Composite {
         UploadDashboard.showFeedbackPopup();
     }
 
+    private void doShowHelp() {
+        GWT.log("GWT log Header ShowHelp");
+        logger.info("Logger Header ShowHelp");
+        
+        int screenX = MyWindow.screenX();
+        int screenY = MyWindow.screenY();
+        int btnRight = showHelpBtn.getAbsoluteLeft() + showHelpBtn.getOffsetWidth();
+        int btnBottom = showHelpBtn.getAbsoluteTop() + showHelpBtn.getOffsetHeight();
+        int helpWidth = Window.getClientWidth() / 2;
+        int helpHeight = Window.getClientHeight() / 4 * 3;
+        int offset = (2 * helpWidth / 3);
+        int helpX = screenX + btnRight - offset;
+        int helpY = screenY + btnBottom + 125;
+//        GWT.log("screenX:"+ screenX+", screenY:" + screenY);
+//        GWT.log("btn left:"+showHelpBtn.getAbsoluteLeft() + ", width:" + showHelpBtn.getOffsetWidth());
+//        GWT.log("btn top:"+showHelpBtn.getAbsoluteTop() + ", height:" + showHelpBtn.getOffsetHeight());
+//        GWT.log("btn right:"+btnRight+", btn bottom:" + btnBottom);
+//        GWT.log("client width: " + Window.getClientWidth() + ", height: "+ Window.getClientHeight());
+//        GWT.log("help width: " + helpWidth + ", height: "+ helpHeight + ", offset: "  + offset);
+//        GWT.log("help helpX: " + helpX + ", helpY: "+ helpY);
+        String features = "width="+helpWidth+",height="+helpHeight+",screenX="+helpX+",screenY="+helpY+",resizable,scrollbars";
+        Window.open("sdis_help.html" + currentPageLink(), "SDIS Help", features);
+        helpWindow = MyWindow.open("sdis_help.html" + currentPageLink(), "SDIS Help", features);
+//        GWT.log(String.valueOf(helpWindow));
+    }
+    
+    private String currentPageLink() {
+        if ( ! PagesEnum.SHOW_DATASETS.name().equals(_currentPage)) {
+            return "#"+_currentPage;
+        }
+        return "";
+    }
+
     private static void showUserInfoPopup() {
         GWT.log("show user info popoup");
         UploadDashboard.showUserInfoPopup();
@@ -144,7 +190,16 @@ public class ApplicationHeaderTemplate extends Composite {
         UploadDashboard.showChangePasswordPopup();
     }
     
-    public void setDatasetIds(String datasetIds) {
+    public void setPageInfo(PagesEnum page, Collection<DashboardDataset> cruises) {
+        _currentPage = page.name();
+        addDatasetIds(cruises);
+    }
+    
+    /* private */ void setDatasetIds(Collection<String> datasetIds) { // XXX Use setPageInfo
+        setDatasetIds(buildCruiseIdString(datasetIds));
+    }
+    
+    /* private */ void setDatasetIds(String datasetIds) { // XXX Use setPageInfo
         String currentText = titleLabel.getText();
         if ( currentText.indexOf(':') > 0 ) {
             currentText = currentText.substring(0, currentText.indexOf(':'));
@@ -156,33 +211,40 @@ public class ApplicationHeaderTemplate extends Composite {
     /**
      * @param cruises
      */
-    public void addDatasetIds(DashboardDatasetList cruises) {
+    /* private */ void addDatasetIds(DashboardDatasetList cruises) { // XXX Use setPageInfo
         String cruiseIds = extractCruiseIds(cruises);
         setDatasetIds(cruiseIds);
     }
     
-    public void addDatasetIds(Collection<String> cruiseIds) {
-        String datasetIds = extractCruiseIds(cruiseIds);
+    /* private */ void addDatasetIds(Collection<DashboardDataset> cruises) { // XXX Use setPageInfo
+        String datasetIds = extractCruiseIds(cruises);
         setDatasetIds(datasetIds);
     }
+    /* private void addDatasetIds(Collection<String> cruiseIds) { // XXX Use setPageInfo
+        String datasetIds = buildCruiseIdString(cruiseIds);
+        setDatasetIds(datasetIds);
+    }*/ 
 
     private static String extractCruiseIds(DashboardDatasetList cruises) {
-        List<String> names = new ArrayList<>(cruises.values().size()); 
-        for (DashboardDataset dd : cruises.values()) {
+        return extractCruiseIds(cruises.values());
+    }
+    private static String extractCruiseIds(Collection<DashboardDataset> cruises) {
+        List<String> names = new ArrayList<>(cruises.size()); 
+        for (DashboardDataset dd : cruises) {
             String dsname = dd.getUserDatasetName();
             if ( dsname.equals(dd.getRecordId())) {
                 dsname = dd.getUploadFilename();
             }
             names.add(dsname);
         }
-        return extractCruiseIds(names);
+        return buildCruiseIdString(names);
     }
     
     /**
      * @param cruises
      * @return
      */
-    private static String extractCruiseIds(Collection<String> cruises) {
+    private static String buildCruiseIdString(Collection<String> cruises) {
         StringBuilder ids = new StringBuilder();
         String comma = "";
         for (String id : cruises) {

@@ -114,7 +114,6 @@ public class SubmitToArchivePage extends CompositeWithUsername implements DataSu
 ////	@UiField RadioButton select_user;
 //	@UiField RadioButton select_all;
     
-	@UiField ApplicationHeaderTemplate header;
 	
     private static final String SUBMIT_AGREEMENT = 
         "By submitting data for inclusion in the NCEI archives, "

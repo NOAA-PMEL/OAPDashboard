@@ -8,12 +8,14 @@
 
 	<g:ScrollPanel addStyleNames="{style.fullpagecontainer}">
 		<g:FlowPanel>
-			<g:FlowPanel addStyleNames="{style.titlepanel}">
+            <oap:ApplicationHeaderTemplate ui:field="header" />
+<!--
+    		<g:FlowPanel addStyleNames="{style.titlepanel}">
 				<g:Button addStyleNames="{style.titlelogoutbutton}" ui:field="logoutButton" />
 				<g:InlineLabel addStyleNames="{style.headeruserlabel}" ui:field="userInfoLabel" />
 				<g:InlineLabel addStyleNames="{style.titlepagelabel}" ui:field="titleLabel" />
 				<g:Label addStyleNames="{style.titlereset}" />
-			</g:FlowPanel>
+			</g:FlowPanel>  -->    
 			<g:HTML addStyleNames="{style.introhtml}" ui:field="introHtml" />
 <!-- 			<g:FlowPanel addStyleNames="{style.optionsborderpanel}">
 				<g:HTML addStyleNames="{style.optionsintro}" ui:field="archivePlanHtml" />

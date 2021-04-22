@@ -172,7 +172,6 @@ public class DataUploadPage extends CompositeWithUsername {
     @UiField Hidden observationTypeToken;
     @UiField Anchor featureTypeHelpAnchor;
     
-    @UiField ApplicationHeaderTemplate header;
 	@UiField HTML introHtml;
 	@UiField Anchor moreHelpAnchor;
 	@UiField FormPanel uploadForm;

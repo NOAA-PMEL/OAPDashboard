@@ -86,7 +86,6 @@ public class MetadataManagerPage extends CompositeWithUsername {
 	private static DashboardServicesInterfaceAsync service = 
 			GWT.create(DashboardServicesInterface.class);
 
-    @UiField ApplicationHeaderTemplate header;
 	@UiField Button doneButton;
 	@UiField Button cancelButton;
     private boolean confirmCancel = true;

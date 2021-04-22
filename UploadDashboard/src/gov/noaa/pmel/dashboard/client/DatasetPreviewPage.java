@@ -84,7 +84,6 @@ public class DatasetPreviewPage extends CompositeWithUsername {
 	private static DashboardServicesInterfaceAsync service = 
 			GWT.create(DashboardServicesInterface.class);
 
-    @UiField ApplicationHeaderTemplate header;
 	@UiField HTML introHtml;
 	@UiField Button refreshButton;
 	@UiField Button doneButton;
