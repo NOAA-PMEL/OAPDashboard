@@ -134,8 +134,9 @@ public class SubmitForQCPage extends CompositeWithUsername implements DataSubmis
 	private static DashboardServicesInterfaceAsync service = 
 			GWT.create(DashboardServicesInterface.class);
 
-	@UiField InlineLabel titleLabel;
-	@UiField InlineLabel userInfoLabel;
+    @UiField ApplicationHeaderTemplate header;
+//	@UiField InlineLabel titleLabel;
+//	@UiField InlineLabel userInfoLabel;
 //	@UiField Button logoutButton;
 	@UiField HTML introHtml;
 //	@UiField HTML archivePlanHtml;
@@ -177,7 +178,7 @@ public class SubmitForQCPage extends CompositeWithUsername implements DataSubmis
 		expocodes = new HashSet<String>();
 		hasSentDataset = false;
 
-		titleLabel.setText(TITLE_TEXT);
+//		titleLabel.setText(TITLE_TEXT);
 //		logoutButton.setText(LOGOUT_TEXT);
 
 //		archivePlanHtml.setHTML(ARCHIVE_PLAN_INTRO);
@@ -242,7 +243,7 @@ public class SubmitForQCPage extends CompositeWithUsername implements DataSubmis
 	private void updateDatasets(DashboardDatasetList cruises) {
 		// Update the username
 		setUsername(cruises.getUsername());
-		userInfoLabel.setText(WELCOME_INTRO + getUsername());
+//		userInfoLabel.setText(WELCOME_INTRO + getUsername());
 
 		expocodes.clear();
 		hasSentDataset = false;

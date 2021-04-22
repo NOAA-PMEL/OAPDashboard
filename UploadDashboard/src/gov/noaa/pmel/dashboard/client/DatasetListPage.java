@@ -319,7 +319,6 @@ public class DatasetListPage extends CompositeWithUsername {
 	private static DashboardServicesInterfaceAsync service = 
 			GWT.create(DashboardServicesInterface.class);
 
-    @UiField ApplicationHeaderTemplate header;
     
 //	@UiField Label titleLabel;
 //	@UiField InlineLabel userInfoLabel;
