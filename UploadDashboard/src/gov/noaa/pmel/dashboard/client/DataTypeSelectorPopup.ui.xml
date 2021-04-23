@@ -22,19 +22,18 @@
     </ui:style>
 
 	<g:VerticalPanel addStyleNames="{style.infopanel}" > <!--horizontalAlignment="ALIGN_CENTER"  -->
-        <g:Label ui:field="prologue" addStyleNames="{style.infoTableRow}" />
         <g:HorizontalPanel addStyleNames="{style.infoTableRow}" >
-            <g:Label addStyleNames="{style.infoPanelLeftLabel}" ui:field="descLbl">Description:</g:Label>
-            <g:HTML width="20em" addStyleNames="{style.infoPanelTextBox}" ui:field="descText"/>
+            <g:Label width="10em" addStyleNames="{style.infoPanelLeftLabel}" ui:field="descLbl">Description:</g:Label>
+            <g:HTML width="32em" addStyleNames="{style.infoPanelTextBox}" ui:field="descText" />
         </g:HorizontalPanel>
         <g:HorizontalPanel addStyleNames="{style.infoTableRow}" >
-            <g:Label addStyleNames="{style.infoPanelLeftLabel}" ui:field="selectorLbl">Select variable type:</g:Label>
-            <oap:MySuggestBox width="95%" addStyleNames="{style.infoPanelTextBox}" ui:field="dataSelector"/>
+            <g:Label width="10em" addStyleNames="{style.infoPanelLeftLabel}" ui:field="selectorLbl">Select variable type:</g:Label>
+            <oap:MySuggestBox width="31em" addStyleNames="{style.infoPanelTextBox}" ui:field="dataSelector" />
             <g:Button ui:field="showAllButton" title="Show All" addStyleNames="{style.showAllButton}"><img height="12px" src="images/angle-down.svg"/></g:Button>
         </g:HorizontalPanel>
         <g:HorizontalPanel addStyleNames="{style.infoTableRow}" ui:field="unitsPnl">
-            <g:Label addStyleNames="{style.infoPanelLeftLabel}" ui:field="unitsLbl">Units:</g:Label>
-            <g:ListBox width="5em" addStyleNames="{style.infoPanelTextBox}" ui:field="unitsListBox"/>
+            <g:Label width="10em" addStyleNames="{style.infoPanelLeftLabel}" ui:field="unitsLbl">Units:</g:Label>
+            <g:ListBox width="10em" addStyleNames="{style.infoPanelTextBox}" ui:field="unitsListBox" />
         </g:HorizontalPanel>
     		<g:FlowPanel addStyleNames="{style.horizontalpanel},{style.floatRight},{style.button_panel}">
     			<g:Button addStyleNames="{style.narrowadjustingbutton}" ui:field="cancelButton" />
