@@ -10,11 +10,13 @@ import java.util.TreeMap;
 
 import com.google.gwt.cell.client.ValueUpdater;
 import com.google.gwt.core.client.GWT;
+import com.google.gwt.event.dom.client.BlurEvent;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.FocusEvent;
-import com.google.gwt.event.dom.client.FocusHandler;
 import com.google.gwt.event.dom.client.KeyEvent;
 import com.google.gwt.event.dom.client.KeyUpEvent;
+import com.google.gwt.event.dom.client.KeyUpHandler;
+import com.google.gwt.event.dom.client.MouseOverEvent;
 import com.google.gwt.event.dom.client.MouseWheelEvent;
 import com.google.gwt.event.logical.shared.CloseEvent;
 import com.google.gwt.event.logical.shared.CloseHandler;
@@ -87,8 +89,9 @@ public class DataTypeSelectorPopup extends Composite {
     
     public static Map<String, DataColumnType> dataTypeLookup;
     private Map<String, List<String>> unitsLookup;
-
-
+    
+    final String DEFAULT_SUGGEST_VALUE = "ignored";
+    
 	/**
 	 * Widget for asking a question in a PopupPanel 
 	 * that is modal and does not auto-hide.
@@ -107,15 +110,19 @@ public class DataTypeSelectorPopup extends Composite {
         this.columnNumber = columnIndex + 1;
         this.userColumnHeader = userColumnName;
         this.callback = callback;
-
+        
 		dataTypeLookup = new TreeMap<>(String.CASE_INSENSITIVE_ORDER);
 		unitsLookup = new TreeMap<String, List<String>>(String.CASE_INSENSITIVE_ORDER);
         for (DataColumnType type : knownTypes.values()) {
             dataTypeLookup.put(type.getDisplayName(), type);
             unitsLookup.put(type.getDisplayName(), new ArrayList<>(type.getUnits()));
         }
+            
         TextBox theBox = new TextBox();
         theBox.addHandler(new MyHandler("selector") , KeyUpEvent.getType());
+        theBox.addHandler(new MyHandler("selector") , BlurEvent.getType());
+		theBox.addHandler(new MyHandler("selector") , FocusEvent.getType());
+        
 		dataSelector = new MySuggestBox(getDataOracle(dataTypeLookup), theBox);
         
 		initWidget(uiBinder.createAndBindUi(this));
@@ -126,6 +133,7 @@ public class DataTypeSelectorPopup extends Composite {
 //            }
 //        };
 //        cpBx.addFocusHandler(fh);
+		
 		parentPanel = new PopupPanel(false, true);
 		parentPanel.setWidget(this);
         
@@ -133,6 +141,8 @@ public class DataTypeSelectorPopup extends Composite {
         parentPanel.setAnimationEnabled(true);
         parentPanel.setGlassEnabled(true);
         parentPanel.setGlassStyleName("dataTypeSelectorGlass");
+        
+        unitsPnl.setVisible(false);
 
 		selectButton.setText("Select");
 		cancelButton.setText("Cancel");
@@ -153,11 +163,6 @@ public class DataTypeSelectorPopup extends Composite {
                 GWT.log("gettext: "+ temp);
                 descText.setHTML(getDataDescription(temp, dataTypeLookup));
                 
-                // Testing
-                SuggestionDisplay temp2 = dataSelector.getSuggestionDisplay();
-                GWT.log("temp2: "+ temp2.toString());
-
-                
                 // set listBox with units for datatype
                 unitsListBox.clear();
                 unitsPnl.setVisible(false);
@@ -174,32 +179,31 @@ public class DataTypeSelectorPopup extends Composite {
                 }
             }
         });
-        
-
     }
 
-    private DataTypeSuggestOracle getDataOracle(Map<String, DataColumnType> data1lookup) {  
-//      MultiWordSuggestOracle dataOracle = new MultiWordSuggestOracle();
+	private DataTypeSuggestOracle getDataOracle(Map<String, DataColumnType> datatypeMap) {
       DataTypeSuggestOracle dataOracle = new DataTypeSuggestOracle();
-      
-//      for (Map.Entry<String, String> d : data1lookup.entrySet()) {
-//        logger.info("Key: "+ d.getKey() + " & Value: " + d.getValue());
-//      }
-      
+
       // set suggestion list for empty query
-      dataOracle.setDefaultSuggestionsFromText(data1lookup.keySet());
+      dataOracle.setDefaultSuggestionsFromText(datatypeMap.keySet());
       
-      for ( String theKey : data1lookup.keySet() ){
+      // initialize dataOracle with prepopulated
+      dataOracle.add(DEFAULT_SUGGEST_VALUE);
+      
+      for ( String theKey : datatypeMap.keySet() ){
+    	  if (theKey.toLowerCase() == DEFAULT_SUGGEST_VALUE.toLowerCase()) {
+    		  continue;
+    	  }
           dataOracle.add(theKey);
       }
 
       return dataOracle;  
   }
 
-    private String getDataDescription(String displayName, Map<String, DataColumnType> data1lookup) { 
+    private String getDataDescription(String displayName, Map<String, DataColumnType> datatypeMap) { 
         String itemDescription = "";
-        if (data1lookup.get(displayName) != null ) {
-            itemDescription = data1lookup.get(displayName).getDescription();
+        if (datatypeMap.get(displayName) != null ) {
+            itemDescription = datatypeMap.get(displayName).getDescription();
         } else {
             itemDescription = "Unknown variable: " + displayName;
         }
@@ -212,7 +216,7 @@ public class DataTypeSelectorPopup extends Composite {
         List<String> unitsList = unitsLookup.containsKey(displayName) ?
                                     unitsLookup.get(displayName) :
                                     new ArrayList<>();
-        GWT.log("units list for " + displayName + " : "+ unitsList);
+//        GWT.log("units list for " + displayName + " : "+ unitsList);
 
         for ( String item : unitsList ) {
             if (isEmptyString(item)) {
@@ -229,7 +233,17 @@ public class DataTypeSelectorPopup extends Composite {
     static boolean isEmptyString(String string) {
         return string == null || string.isEmpty();
     }
-
+    
+    static boolean isSuggested(String displayName, Map<String, DataColumnType> datatypeMap) { 
+//    	GWT.log("textbox value is " + displayName + " : "+ datatypeMap);
+        if (datatypeMap.get(displayName) != null ) {
+            return true;
+        } 
+        else {
+            return false;
+        }
+    }
+    
     void show(DataColumnType columnType, ValueUpdater<String> contextUpdater, int x, int y) {
         GWT.log("Show : " + columnType);
         this.currentType = columnType;
@@ -258,6 +272,10 @@ public class DataTypeSelectorPopup extends Composite {
 
 	@UiHandler("selectButton")
 	void yesOnClick(ClickEvent e) {
+		if (isSuggested(dataSelector.getValueBox().getText(), dataTypeLookup)) {
+			dataSelector.getValueBox().setText(DEFAULT_SUGGEST_VALUE);
+		}
+
 		sendIt = true;
 		parentPanel.hide();
 	}
@@ -281,10 +299,12 @@ public class DataTypeSelectorPopup extends Composite {
         dataSelector.showSuggestionList();
         dataSelector.setFocus(true);
     }
-
+    
     public void reset() {
     }
     
     public String getSelection() { return dataSelector.getValue().trim(); } // ???
     public String getUnits() { return unitsListBox.getSelectedItemText(); }
+    
+    
 }

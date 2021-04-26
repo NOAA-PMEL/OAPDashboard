@@ -22,6 +22,7 @@
     </ui:style>
 
 	<g:VerticalPanel addStyleNames="{style.infopanel}" > <!--horizontalAlignment="ALIGN_CENTER"  -->
+		<g:Label ui:field="prologue" addStyleNames="{style.infoTableRow}" />
         <g:HorizontalPanel addStyleNames="{style.infoTableRow}" >
             <g:Label width="10em" addStyleNames="{style.infoPanelLeftLabel}" ui:field="descLbl">Description:</g:Label>
             <g:HTML width="32em" addStyleNames="{style.infoPanelTextBox}" ui:field="descText" />
