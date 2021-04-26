@@ -81,7 +81,9 @@ public class DataTypeSuggestOracle extends SuggestOracle {
 	private Response defaultResponse;
 	
 	public void requestDefaultSuggestions(Request request, Callback callback) {
-		logger.info("requestDefaultSuggestions");
+		logger.info("RequestDefaultSuggestions");
+		logger.info("DefaultResponse: " + defaultResponse.getSuggestions());
+		logger.info("Request: " + request.getQuery());
 		if (defaultResponse != null) {
 			callback.onSuggestionsReady(request, defaultResponse);
 		} else {
@@ -94,11 +96,15 @@ public class DataTypeSuggestOracle extends SuggestOracle {
 	 */
 	public void requestSuggestions(Request request, Callback callback) {
 		logger.info("requestSuggestions-2-param");
+		logger.info("DefaultResponse: " + defaultResponse.getSuggestions());
+		logger.info("Request: " + request.getQuery());
 		requestSuggestions(request, null, callback);
 	}
 
 	public void requestSuggestions(Request request, String filter, Callback callback) {
 		logger.info("requestSuggestions-3-param");
+		logger.info("DefaultResponse: " + defaultResponse.getSuggestions());
+		logger.info("Request: " + request.getQuery());
 		
 //		SuggestOracle.Response response = new SuggestOracle.Response();
 		int limit = 72;
@@ -156,8 +162,17 @@ public class DataTypeSuggestOracle extends SuggestOracle {
 //			}
 			
 			for (Entry<String, String> elem : itemsDisplay.entrySet()) { 
+				if (elem.getValue().contains("ignored")) {
+					logger.info("elem.getValue(ignored): " + elem.getValue());
+					logger.info("elem.getKey(ignored): " + elem.getKey());
+					suggestions.add(new ContainsSuggestion(
+							elem.getKey(), 
+							OptionSuggestion(elem.getKey(), elem.getValue(), query)
+							)
+					);
+				}
 				if (elem.getValue().contains(query.toLowerCase())) {
-//					logger.info("elem: " + elem.getValue());
+					logger.info("elem: " + elem.getValue());
 					suggestions.add(new ContainsSuggestion(
 							elem.getKey(), 
 							OptionSuggestion(elem.getKey(), elem.getValue(), query)

@@ -48,11 +48,25 @@ public class MyHandler implements AttachEvent.Handler, ClickHandler, KeyUpHandle
 	
     private String _name;
     private String _currentId = null;
+    
+    private String lastSelectionValue = null;
+    
     static PopupPanel descriptionPopup;
     private int _mmoveCount = 0;
+    private boolean _hasMouseOver = false;
+    private boolean _hasMouseOut = false;
     
     final int VISIBLE_DELAY = 2500;
     final String TOOLTIP_STYLENAME = "tooltip";
+    
+    /**
+     * Constant returned from {@link #getDraggable()}.
+     */
+	public static final String POINTEREVENTS_AUTO = "auto";
+    public static final String POINTEREVENTS_NONE = "none";
+    
+    private Timer descriptionPopupTimer = null;
+    public boolean timerState = false;
 
     // Simplified regular expression for an HTML tag (opening or closing) or an HTML escape. 
     final RegExp SKIP_HTML_RE = RegExp.compile("<[^>]*>|&[^;]+;", "g");
@@ -96,49 +110,104 @@ public class MyHandler implements AttachEvent.Handler, ClickHandler, KeyUpHandle
     }
     public void onKeyUp(KeyUpEvent event) {
         GWT.log(_name + " keyup: "+ event.getSource());
+
+        int keyCode = event.getNativeKeyCode();
         
-        int keyCode = event.getNativeKeyCode(); 
-        if (keyCode == KeyCodes.KEY_UP || keyCode == KeyCodes.KEY_DOWN ) {
+        if (_currentId != null) {
+        	GWT.log(_name + "keyup[currentId]: " + _currentId);
+        }
+
+        if ( keyCode == KeyCodes.KEY_UP || keyCode == KeyCodes.KEY_DOWN ) {
         	hideDescriptionPopup();
             NodeList<Element> elements = Document.get().getElementsByTagName("div");
             for (int i = 0; i < elements.getLength(); i++) {
     //          GWT.log("elements1 " + elements.getItem(i).getClassName());
                 if (elements.getItem(i).getClassName().contains("suggestPopupContent")) {
+//                	setTablePointerEvent(elements.getItem(i), POINTEREVENTS_NONE);
                     Element childElement = elements.getItem(i).getFirstChildElement();
     //                GWT.log("mouseover childElement " + childElement);
                     String activeId = childElement.getAttribute("aria-activedescendant");
+                    
                     GWT.log("arrow active id " + activeId);
+                    GWT.log("arrow current id " + _currentId);
+                    boolean wasNull_currentId = false;
+                    if (_currentId == null) {
+                    	_currentId = activeId;
+                    	GWT.log("arrow current id was null" + _currentId);
+                    	childElement.setAttribute("aria-activedescendant", _currentId);
+                    	Element line = Document.get().getElementById(_currentId);
+                        GWT.log("element: " + line + " : " + line.getInnerHTML());
+                        line.addClassName("item-selected");
+                        
+                        GWT.log("element: " + line + " : " + line.getClassName());
+                    	wasNull_currentId = true;
+                    }
+                    
                     if ( activeId != null && ! activeId.equals(_currentId) ) {
                         Element line = Document.get().getElementById(activeId);
                         GWT.log("element: " + line + " : " + line.getInnerHTML());
-                        _currentId = activeId;
+                        line.addClassName("item-selected");
+                        
+                        GWT.log("element: " + line + " : " + line.getClassName());
+                        
+                        lastSelectionValue = line.getInnerHTML();
+                        
+//                        Element table = getClosestParentByTagName(line, "table");
+//                        GWT.log("Aelement: " + table + " : " + table.getClassName());
+//                        
+//                        setTablePointerEvent(table, POINTEREVENTS_NONE);
+//                        
+//                        GWT.log("BSelement: " + table + " : " + table.getClassName());
+
 //                        if ( ! isInView(activeId)) {
-                            scrollIt(activeId);
+                        if (_currentId != null && wasNull_currentId ) {
+                        	scrollIt(_currentId);
+                        }
+                        else {
+                        	scrollIt(activeId);
+                        }
+                            
 //                        }
+                            _currentId = activeId;
                     }
                 }
             }
         }
     }
     
-    private native boolean isInView(String eid) /*-{
-        var container = $(eid);
-        var contHeight = container.height();
-        var contTop = container.scrollTop();
-        var contBottom = contTop + contHeight ;
+	public final native Element getClosestParentByTagName(Element el, String value) /*-{
+		return el.closest(value);
+	}-*/;
+	
+	// pointer-events property value: auto|none;
+	public final native void setTablePointerEvent(Element table, String value ) /*-{
+		console.log("table:" + table);
+		console.log("value:" + value);
+		table.style.pointerEvents = value || POINTEREVENTS_NONE;
+		console.log("setTablePointerEvent " + table.style.getPropertyValue("pointer-events"));
+	}-*/;
     
-        var elemTop = $(elem).offset().top - container.offset().top;
-        var elemBottom = elemTop + $(elem).height();
-    
-        var isTotal = (elemTop >= 0 && elemBottom <=contHeight);
-        var isPart = ((elemTop < 0 && elemBottom > 0 ) || (elemTop > 0 && elemTop <= container.height())) && partial ;
-    
-        return  isTotal  || isPart ;
-    }-*/;
+//    private native boolean isInView(String eid) /*-{
+//        var container = $(eid);
+//        var contHeight = container.height();
+//        var contTop = container.scrollTop();
+//        var contBottom = contTop + contHeight ;
+//    
+//        var elemTop = $(elem).offset().top - container.offset().top;
+//        var elemBottom = elemTop + $(elem).height();
+//    
+//        var isTotal = (elemTop >= 0 && elemBottom <=contHeight);
+//        var isPart = ((elemTop < 0 && elemBottom > 0 ) || (elemTop > 0 && elemTop <= container.height())) && partial ;
+//    
+//        return  isTotal  || isPart ;
+//    }-*/;
     
     private native void scrollIt(String eid) /*-{
         console.log("scrolling " + eid);
-        var cell = $wnd.document.getElementById(eid);
+        var cell = $doc.getElementById(eid);
+//        var table = cell.closest('table');
+//        console.log(cell, table);
+//        table.style.pointerEvents="none"
 //        console.log("element: "+ cell);
 //        var offp = cell.offsetParent; //  === null;
 //        console.log("offp " + offp);
@@ -147,56 +216,29 @@ public class MyHandler implements AttachEvent.Handler, ClickHandler, KeyUpHandle
 //        console.log("style visibility: " + style.visibility);
 //        if (style.display === 'none')
             cell.scrollIntoView({behavior: "smooth", block: "nearest", inline: "nearest"});
+//          _currentId = eid;
     }-*/;
     
     @Override
     public void onFocus(FocusEvent event) {
         // TODO Auto-generated method stub
         GWT.log(_name + " event.getSource() focus: " + event.getSource());
-//        unitsListBox.clear();
-//        listPanel.setVisible(false);
-        
-//      data1suggestionBox.showSuggestionList();
-//      boolean suggestionShowing = data1suggestionBox.getSuggestionDisplay().isSuggestionListShowing();
-//      
-//      if ( suggestionShowing ) {
-//          Window.alert("showing!");
-//      }
-//      
 
     }
     @Override
     public void onBlur(BlurEvent event) {
         // TODO Auto-generated method stub
-        GWT.log(_name + " event.getSource() blur: " + event.getSource());
+        GWT.log(" ***** "+ _name + " onBlur " + event.getSource());
         
-//        GWT.log("event.getSource() value: " + ((TextBox)event.getSource()).getValue());
-//        String checkValue = (String)((TextBox)event.getSource()).getValue();
-//        
-//        List<String> unitsList = getUnitsList(checkValue, unitsLookup);
-//        unitsListBox.clear();
-//        
-//        if (unitsList.isEmpty()) {
-//            listPanel.setVisible(false);
-//        } else {
-//            for ( String data : unitsList ) {
-//                unitsListBox.addItem(data);
-//            }
-//            listPanel.setVisible(true);
-//        }
+        hideDescriptionPopup();
+
     }
     
     @Override
     public void onDoubleClick(DoubleClickEvent event) {
         // TODO Auto-generated method stub
         GWT.log(_name + " event.getSource() doubleclik: " + event.getSource());
-//        GWT.log("onDoubleClick " + dataTypeSuggestionBox.getValueBox().toString());
-//      data1suggestionBox.setFocus(true);
-//        dataTypeSuggestionBox.setText(null);  
-//        dataTypeSuggestionBox.showSuggestionList();
-        
-//      data1suggestionBox = new SuggestBox(getDataOracle(data1lookup));
-//      data1suggestionBox.getSuggestOracle().setDefault
+
     }
 
     /* (non-Javadoc)
@@ -204,20 +246,40 @@ public class MyHandler implements AttachEvent.Handler, ClickHandler, KeyUpHandle
      */
     @Override
     public void onMouseMove(MouseMoveEvent event) {
-//        GWT.log(_name + " mmove:"+event.getSource());
-    	
+        GWT.log(_name + " mmove:"+event.getSource());
+        GWT.log(_name + " getRelativeElement:"+ event.getRelativeElement());
+
     	String activeId = null;
     	Element line = null;
-    	
+
         NodeList<Element> elements = Document.get().getElementsByTagName("div");
         for (int i = 0; i < elements.getLength(); i++) {
             if (elements.getItem(i).getClassName().contains("suggestPopupContent")) {
+//            	setTablePointerEvent(elements.getItem(i), POINTEREVENTS_AUTO);
                 Element childElement = elements.getItem(i).getFirstChildElement();
                 activeId = childElement.getAttribute("aria-activedescendant");
+                
+//                if ( activeId != null) {
+//                	line = Document.get().getElementById(activeId);
+//                	Element table = getClosestParentByTagName(line, "table");
+//                    GWT.log("mousemove: " + table + " : " + table.getInnerHTML());
+//                    
+//                    setTablePointerEvent(table, POINTEREVENTS_AUTO);
+//                    
+//                    GWT.log("mousemove: " + table + " : " + table.getClassName());
+//                }
 
                 if ( activeId != null && ! activeId.equals(_currentId)) {
-                    GWT.log(_name + " mousemove childElement " + activeId);
+//                    GWT.log(_name + " mousemove childElement " + activeId);
+                	
                     line = Document.get().getElementById(activeId);
+//                    Element table = getClosestParentByTagName(line, "table");
+//                    GWT.log("mousemove: " + table + " : " + table.getInnerHTML());
+//                    
+//                    setTablePointerEvent(table, POINTEREVENTS_AUTO);
+                    
+                    
+                    
 //                    varName = line.getInnerHTML();
 //                    GWT.log(_name + " element: " + line + " : " + varName + " : " + DataTypeSelectorPopup.dataTypeLookup.get(varName).getDescription());
 //
@@ -226,7 +288,7 @@ public class MyHandler implements AttachEvent.Handler, ClickHandler, KeyUpHandle
                     
                     if(descriptionPopup != null && descriptionPopup.isShowing()) {
         	        	descriptionPopup.hide();
-        	        	GWT.log("hiding descriptionPopup");
+//        	        	GWT.log("hiding descriptionPopup");
         	        }
 
                     _currentId = activeId;
@@ -253,25 +315,44 @@ public class MyHandler implements AttachEvent.Handler, ClickHandler, KeyUpHandle
         			descriptionPopup = new PopupPanel();
         			descriptionPopup.setStyleName(TOOLTIP_STYLENAME);
         			descriptionPopup.setPopupPosition(xCord, yCord);
-        			descriptionPopup.setAutoHideEnabled(true);
+        			descriptionPopup.setAutoHideEnabled(false);
 //        			descriptionPopup.add(new Label(varName + ": " + description));
         			descriptionPopup.add(new Label(description));
-        			
-        			Timer t = new Timer() {
+
+        		    descriptionPopupTimer = new Timer() {
         		        @Override
         		        public void run() {
-        		        	descriptionPopup.show();
+        		        	timerState = true;
+        		        	if ( isSuggestBoxPopupShowing() && !_hasMouseOut) {
+//        		        		GWT.log("isSuggestBoxPopupShowing? " + isSuggestBoxPopupShowing());
+        		        		descriptionPopup.show();
+        		            }
+        		        	else {
+//        		        		GWT.log("isSuggestBoxPopupShowing[NOT]? " + isSuggestBoxPopupShowing());
+        		        		hideDescriptionPopup();
+        		        	}
         		        }
         		    };
-        		    t.schedule(VISIBLE_DELAY);
+        		    descriptionPopupTimer.schedule(VISIBLE_DELAY);
+        		    
         		}
         	}
         }
+        
     }
 
+    //gwt-SuggestBoxPopup
+    private final native boolean isSuggestBoxPopupShowing() /*-{
+		if ($doc.getElementsByClassName("gwt-SuggestBoxPopup").length) {
+			return true;
+		}
+		return false;
+	}-*/;
+    
     @Override
     public void onMouseOut(MouseOutEvent event) {
-        GWT.log(_name + " mouseout: "); // + event.getSource());
+//        GWT.log(_name + " mouseout: "); // + event.getSource());
+    	_hasMouseOut = true;
         hideDescriptionPopup();
     }
     
@@ -279,19 +360,29 @@ public class MyHandler implements AttachEvent.Handler, ClickHandler, KeyUpHandle
      * 
      */
     private void hideDescriptionPopup() {
-    	if (descriptionPopup.isShowing()) {
+    	if (descriptionPopup != null && descriptionPopup.isShowing()) {
 //    		GWT.log(descriptionPopup + " is showing");
 			descriptionPopup.hide();
 			_mmoveCount = 0;
 			_currentId = null;
 		}
+    	
+    	if (timerState == true) {
+    		descriptionPopupTimer.cancel();
+    		GWT.log("canceling timer!");
+    		timerState = false;
+    	}
     }
 
     @Override
     public void onMouseOver(MouseOverEvent event) {
     	_mmoveCount = 0;
+    	_hasMouseOver = true;
+    	_hasMouseOut = false;
     	
-//      GWT.log(_name + " event.getSource() mouseover: " + event.getSource());
+      GWT.log(_name + " event.getSource() mouseover: " + event.getSource());
+      GWT.log(_name + " event.test: " + event.getNativeEvent().getKeyCode());
+      
 //      GWT.log("onMouseOver " + dataTypeSuggestionBox.getValueBox().toString());
         
 //      data1suggestionBox.showSuggestionList();
@@ -361,7 +452,7 @@ public class MyHandler implements AttachEvent.Handler, ClickHandler, KeyUpHandle
      */
     @Override
     public void onAttachOrDetach(AttachEvent event) {
-        GWT.log(_name + ( event.isAttached() ? " Attach:":" Detach:" )+event.getSource());
+//        GWT.log(_name + ( event.isAttached() ? " Attach:":" Detach:" )+event.getSource());
         if (!event.isAttached() && descriptionPopup != null) {
         	hideDescriptionPopup();
         }
@@ -381,5 +472,4 @@ public class MyHandler implements AttachEvent.Handler, ClickHandler, KeyUpHandle
     String stripHtml(String str) {
     	return SKIP_HTML_RE.replace(str, "");
     }
-    
 }
