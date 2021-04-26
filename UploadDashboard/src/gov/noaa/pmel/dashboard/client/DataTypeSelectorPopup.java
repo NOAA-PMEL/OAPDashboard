@@ -91,6 +91,7 @@ public class DataTypeSelectorPopup extends Composite {
     private Map<String, List<String>> unitsLookup;
     
     final String DEFAULT_SUGGEST_VALUE = "ignored";
+    public static int WIDTH = 430;
     
 	/**
 	 * Widget for asking a question in a PopupPanel 
@@ -272,7 +273,7 @@ public class DataTypeSelectorPopup extends Composite {
 
 	@UiHandler("selectButton")
 	void yesOnClick(ClickEvent e) {
-		if (isSuggested(dataSelector.getValueBox().getText(), dataTypeLookup)) {
+		if (!isSuggested(dataSelector.getValueBox().getText(), dataTypeLookup)) {
 			dataSelector.getValueBox().setText(DEFAULT_SUGGEST_VALUE);
 		}
 
