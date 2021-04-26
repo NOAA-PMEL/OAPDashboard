@@ -273,7 +273,7 @@ public class DatasetDataColumn {
                                 GWT.log("ignoring click!");
                                 return; 
                             }
-                            int popupWidth = DataTypeSelectorWidget.WIDTH; // XXX FeedbackPopupWidth CHANGE_ME!
+                            int popupWidth = DataTypeSelectorPopup.WIDTH; // XXX FeedbackPopupWidth CHANGE_ME!
                             int showX = adjustedX + fudgeX;
 //                            int showX = clickX - selectorWidth;
                             if ( showX < 25 ) {
