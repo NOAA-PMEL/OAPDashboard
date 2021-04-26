@@ -3,9 +3,14 @@
  */
 package gov.noaa.pmel.dashboard.client;
 
+import java.util.Collection;
 import java.util.Map;
 
 import com.google.gwt.core.client.GWT;
+import com.google.gwt.dom.client.Element;
+import com.google.gwt.dom.client.Style.Unit;
+import com.google.gwt.event.dom.client.BlurEvent;
+import com.google.gwt.event.dom.client.FocusEvent;
 import com.google.gwt.event.dom.client.KeyUpEvent;
 import com.google.gwt.event.dom.client.MouseMoveEvent;
 import com.google.gwt.event.dom.client.MouseOverEvent;
@@ -13,16 +18,20 @@ import com.google.gwt.event.dom.client.MouseWheelEvent;
 import com.google.gwt.event.dom.client.ScrollEvent;
 import com.google.gwt.user.client.ui.DecoratedPopupPanel;
 import com.google.gwt.user.client.ui.DecoratorPanel;
+import com.google.gwt.user.client.ui.MenuItem;
 import com.google.gwt.user.client.ui.MyDecoratedPopupPanel;
 import com.google.gwt.user.client.ui.PopupPanel;
 import com.google.gwt.user.client.ui.SuggestBox;
 import com.google.gwt.user.client.ui.SuggestOracle;
 import com.google.gwt.user.client.ui.TextBox;
 import com.google.gwt.user.client.ui.ValueBoxBase;
+import com.google.gwt.user.client.ui.Widget;
 
 import gov.noaa.pmel.dashboard.shared.DataColumnType;
 
 import com.google.gwt.user.client.ui.PopupPanel.AnimationType;
+import com.google.gwt.user.client.ui.SuggestBox.SuggestionCallback;
+import com.google.gwt.user.client.ui.SuggestOracle.Suggestion;
 
 /**
  * @author kamb
@@ -32,10 +41,12 @@ public class MySuggestBox extends SuggestBox {
 
     /**
      * 
+     */
     public MySuggestBox() {
         // TODO Auto-generated constructor stub
+    	super();
     }
-     */
+     
 
     /**
      * @param oracle
@@ -53,7 +64,7 @@ public class MySuggestBox extends SuggestBox {
     }
      */
 
-    /**
+	/**
      * @param oracle
      * @param box
      * @param suggestDisplay
@@ -65,31 +76,29 @@ public class MySuggestBox extends SuggestBox {
 
     public static class MySuggestionDisplay extends SuggestBox.DefaultSuggestionDisplay {
         private MyHandler handler;
+
         public MySuggestionDisplay() {
             super();
         }
         
-//        public MySug() {
-//            suggestionMenu = new SuggestionMenu(true);
-//            suggestionPopup = createPopup();
-//            suggestionPopup.setWidget(decorateSuggestionList(suggestionMenu));
-//          }
+    	// SET popup same size as textbox
+    	@Override
+    	protected void showSuggestions(SuggestBox suggestBox, Collection<? extends Suggestion> suggestions, boolean isDisplayStringHTML, boolean isAutoSelectEnabled, SuggestionCallback callback) {
+    		super.showSuggestions(suggestBox, suggestions, isDisplayStringHTML, isAutoSelectEnabled, callback);
+    		getPopupPanel().setWidth((suggestBox.getElement().getAbsoluteRight() - suggestBox.getAbsoluteLeft()) + Unit.PX.getType());
+    	}
 
         @Override
         protected PopupPanel createPopup() {
-//            MyDecoPanel p = new MyDecoPanel();
             MyDecoratedPopupPanel p = new MyDecoratedPopupPanel(true, false);
             handler = new MyHandler("MyDeco handler");
             p.addHandler(handler, KeyUpEvent.getType());
+            p.addHandler(handler, BlurEvent.getType());
+            p.addHandler(handler, FocusEvent.getType());
             p.addHandler(handler, ScrollEvent.getType());
             p.addHandler(handler, MouseWheelEvent.getType());
             p.addHandler(handler, MouseMoveEvent.getType());
-//            p.addDomHandler(new MyHandler("MyDeco domHandler"), MouseOverEvent.getType());
-//            p.addAttachHandler(new MyHandler("MyDeco attachHandler"));
-
-//            DecoratorPanel decPanel = p.getDecoPanel();
-//            MyDecoratedPopupPanel p = new MyDecoratedPopupPanel();
-//            p.setStyleName(decPanel.getContainerElement(), prefix + "Content", true);
+            p.addHandler(handler, MouseOverEvent.getType());
             p.setStyleName("gwt-SuggestBoxPopup");
             p.setPreviewingAllNativeEvents(true);
             p.setAnimationType(AnimationType.ROLL_DOWN);
@@ -97,25 +106,4 @@ public class MySuggestBox extends SuggestBox {
           }
 
     }
-    
-//    public static class MyDecoPanel extends DecoratedPopupPanel {
-//        
-//        DecoratorPanel superDeco;
-//        
-//        public MyDecoPanel() {
-//            super(true, false);
-//        }
-//        
-//        DecoratorPanel getDecoPanel() {
-//            if ( superDeco == null ) {
-//                try {
-//                    Field decoField = this.getClass().getField("decPanel");
-//                    superDeco = (DecoratorPanel)decoField.get(this);
-//                } catch (Exception nonsuch) {
-//                    throw new RuntimeException(nonsuch);
-//                }
-//            }
-//            return superDeco;
-//        }
-//    }
 }
