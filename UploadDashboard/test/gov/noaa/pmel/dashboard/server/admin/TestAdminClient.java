@@ -18,7 +18,7 @@ public class TestAdminClient extends AdminClient {
             String[] debugArgs = 
                 new String[] { "add", "-u", "whooya", "-fn", "Whoya", "-mn", "G", "-ln", "Call",
                                "-e", "who@ya.ca", "-t", "206.777.8484",
-                               "-o", "NOAA Pacific Marine Environment Laboratory", "-d", "newbock" }; // , "-x" };
+                               "-o", "NOAA Pacific Marine Environment Laboratory", "-d", "dunkel" }; // , "-x" };
             AdminClient.main(debugArgs);
         } catch (Exception ex) {
             ex.printStackTrace();

@@ -12,6 +12,8 @@
 /delomed/
 /ssh/
 /.apt_generated/
+/config/
+/config/*
 
 
 # Created by https://www.toptal.com/developers/gitignore/api/eclipse
