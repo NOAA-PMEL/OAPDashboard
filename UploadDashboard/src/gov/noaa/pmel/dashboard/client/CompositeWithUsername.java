@@ -56,4 +56,7 @@ public class CompositeWithUsername extends Composite {
         }
 	}
 
+    void showing() {
+        // alert the page that it is being displayed in case it has anything to do
+    }
 }
