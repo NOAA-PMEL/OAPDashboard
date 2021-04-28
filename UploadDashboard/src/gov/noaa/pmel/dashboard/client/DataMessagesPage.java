@@ -188,6 +188,7 @@ public class DataMessagesPage extends CompositeWithUsername {
 		ADCMessage m = selectionModel.getSelectedObject();
 		Integer errorRow = m.getRowNumber();
 		Integer errorColumn = m.getColNumber();
+        History.back(); // pop off the history entry
 		DataColumnSpecsPage.redisplayPage(getUsername(), errorRow, errorColumn);
 		
 	}
