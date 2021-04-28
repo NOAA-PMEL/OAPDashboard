@@ -255,10 +255,13 @@ public class DataColumnType implements Comparable<DataColumnType>, Serializable,
 	 * 		if null, zero is assigned
 	 */
 	public void setSelectedUnitIndex(Integer selectedUnitIndex) {
-		if ( selectedUnitIndex != null )
-			this.selectedUnitIndex = selectedUnitIndex;
-		else
+		if ( selectedUnitIndex == null ||
+             selectedUnitIndex.intValue() < 0 || 
+             selectedUnitIndex.intValue() > units.size()) {
 			this.selectedUnitIndex = Integer.valueOf(0);
+		} else { 
+			this.selectedUnitIndex = selectedUnitIndex;
+		}
 	}
 
 	/**
