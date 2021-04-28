@@ -368,6 +368,7 @@ public class UploadDashboard implements EntryPoint, ValueChangeHandler<String> {
         singleton.currentPage = newPage;
         if ( singleton.currentPage != null ) {
             GWT.log("Setting page to " + newPage.pageName());
+            singleton.currentPage.showing();
             RootLayoutPanel.get().add(singleton.currentPage);
             newPage.setBuildVersion(buildVersion);
     		History.newItem(newPage.pageName(), false);
