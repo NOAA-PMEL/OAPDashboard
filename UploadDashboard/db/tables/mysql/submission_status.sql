@@ -24,7 +24,7 @@ DROP TABLE IF EXISTS `submission_status`;
 CREATE TABLE `submission_status` (
   `db_id` int(20) unsigned NOT NULL AUTO_INCREMENT,
   `submission_id` int(20) unsigned NOT NULL,
-  `status_time` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `status_time` timestamp(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
   `status` varchar(128) NOT NULL DEFAULT 'INITIAL',
   `message` text,
   PRIMARY KEY (`db_id`),

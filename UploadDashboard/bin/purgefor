@@ -12,10 +12,10 @@ fi
 WAR=$2
 WHICH_HOST=$1
 case $WHICH_HOST in
-	hazy)
+	hazy|matisse)
 		JAR=mysql-connector-java-5.1.41-bin.jar
 		;;
-	new?bock|newbock|dunkel|matisse)
+	new?bock|newbock|dunkel)
 		JAR=mysql-connector-java-8.0.23.jar
 		;;
 	*)
