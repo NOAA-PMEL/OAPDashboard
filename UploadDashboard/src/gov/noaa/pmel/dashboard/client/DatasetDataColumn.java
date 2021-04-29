@@ -55,6 +55,26 @@ import gov.noaa.pmel.dashboard.shared.QCFlag.Severity;
 public class DatasetDataColumn {
 
 	static final String DEFAULT_MISSING_VALUE = "(default missing values)";
+
+    private static final String COLUMN_WARNING_STYLE = "dataColumnTypeWarning";
+    private static final String COLUMN_ERROR_STYLE = "dataColumnTypeError";
+    private static final String COLUMN_CRITICAL_STYLE = "dataColumnTypeCritical";
+    private static final String TYPE_SELECTOR_BASE_STYLE = "dataColumnType_div"; //  "dataColumnSelectionCell";
+
+    static int STD_ICON_WIDTH = 20;
+    
+    // When switching to DataColumnSpecsPage from messages page and scrolling to a column, 
+    // the click check on the DataTypeSelector button gets borked somehow.  So we have to adjust 
+    // when we come from that page, and adjust back when the page is shown normally with showPage()
+    static int iconWidth = STD_ICON_WIDTH;
+    static void resetSelectorAdjustment() {
+        iconWidth = STD_ICON_WIDTH;
+        GWT.log("iconWidth reset to " + iconWidth);
+    }
+    static void setSelectorAdjustment() {
+        iconWidth = (int)(1.5*STD_ICON_WIDTH);
+        GWT.log("iconWidth SET to " + iconWidth);
+    }
     
     // List of known types
     private Map<String, DataColumnType> knownTypes;
@@ -70,7 +90,7 @@ public class DatasetDataColumn {
 	private Header<DatasetDataColumn> columnHeader;
 	// Flag that something in the column header has hasChanged
 	private boolean hasChanged;
-	
+
     private static Logger logger = Logger.getLogger("DatasetDataColumn");
 
 	/**
@@ -88,7 +108,7 @@ public class DatasetDataColumn {
 		knownTypes = new HashMap<>();
 		for ( DataColumnType dataType : knownUserTypes ) {
             if ( knownTypes.put(dataType.getVarName(), dataType) != null ) {
-                GWT.log("Duplicate varnamem for : " + dataType);
+                GWT.log("Duplicate varname for : " + dataType);
             }
 			for (int k = 0; k < dataType.getUnits().size(); k++) {
 				DataColumnType dctype = dataType.duplicate();
@@ -135,11 +155,6 @@ public class DatasetDataColumn {
 		return hasChanged;
 	}
 
-//    private CellWidget<String> selectorCellWidget;
-//    private CellWidget<String> getSelectorCellWidget() {
-//        UploadDashboard.logToConsole("selectorCellWidget:"+selectorCellWidget);
-//        return selectorCellWidget;
-//    }
 	/**
 	 * Creates the header for this cruise data column.
 	 */
@@ -154,7 +169,13 @@ public class DatasetDataColumn {
             if ( ( flagRow == null || flagRow.intValue() == DashboardUtils.INT_MISSING_VALUE.intValue() ) 
                     && flagCol != null && flagCol.intValue() == (columnNumber-1) ) {
                 Severity s = flag.getSeverity();
-                columnStyle = "dataColumnTypeWarning";
+                if ( Severity.WARNING.equals(s)) {
+                    columnStyle = COLUMN_WARNING_STYLE;
+                } else if ( Severity.ERROR.equals(s)) {
+                    columnStyle = COLUMN_ERROR_STYLE;
+                } else if ( Severity.CRITICAL.equals(s)) {
+                    columnStyle = COLUMN_CRITICAL_STYLE;
+                }
             }
         }
 		// Create the TextCell giving the column name given by the user
@@ -182,17 +203,26 @@ public class DatasetDataColumn {
 
 		// Create the SelectionCell listing the known standard headers
 		HasCell<DatasetDataColumn,String> stdNameCell = new HasCell<DatasetDataColumn,String>() {
-			private ClickableTextCell theCell = null;
-//            private CellWidget<String> selectorCellWidget;
-//            DataTypeSelectorWidget dts = new DataTypeSelectorWidget(knownTypes, 
-            DataTypeSelectorPopup dts = new DataTypeSelectorPopup(knownTypes, 
+			private StylishClickableTextCell theCell = null;
+			// we could probably have just one of these and set/reset it for each showing
+			DataTypeSelectorPopup dts = new DataTypeSelectorPopup(knownTypes, 
                                                 columnIndex, cruise.getUserColNames().get(columnIndex),
                                                 new AsyncCallback<UpdateInformation>() {
                 @Override
                 public void onSuccess(UpdateInformation info) {
                     GWT.log("DatatTypeSelector returned: " + info.newType);
-					hasChanged = true;
                     DataColumnType newType = info.newType;
+                    DataColumnType oldType = cruise.getDataColTypes().get(columnIndex);
+                    if ( newType.equals(oldType)) { return; }
+                    hasChanged = true;
+                    String id = "dcd_"+columnNumber;
+                    GWT.log("Looking for " + id);
+                    Element nameDiv = Document.get().getElementById(id);
+                    nameDiv.setClassName(TYPE_SELECTOR_BASE_STYLE);
+//                    getCell().resetStyle(); // would need to be re-rendered
+                    if ( newType.equals(DashboardUtils.UNKNOWN)) {
+                        nameDiv.addClassName(COLUMN_WARNING_STYLE);
+                    }
                     cruise.getDataColTypes().set(columnIndex, info.newType);
                     String displayString = newType.getDisplayName();   
 //                    if ( newType.getSelectedUnitIndex() != null) {   // defaults to Integer(0)!
@@ -209,24 +239,17 @@ public class DatasetDataColumn {
                 }
             });
 			@Override
-			public ClickableTextCell getCell() {
+			public StylishClickableTextCell getCell() {
                 if ( theCell == null ) {
 				// Create a list of all the standard column headers with units;
 				// render as a block-level element
                     theCell = 
-                              new ClickableTextCell() {
-//                            new StyledSuggestBoxCell(typeUnitStringList, "dataColumnSelectionCell") {
+                              new StylishClickableTextCell(TYPE_SELECTOR_BASE_STYLE) {
     					@Override
     					public void render(Cell.Context context, String value, SafeHtmlBuilder sb) {
 //                            GWT.log("render: " + value);
-//    						super.render(context, value, sb);
-//                            String ctxStr = "context:"+context.getColumn() + ", " + context.getIndex();
-//                            if ( value == null ) {
-//                                ctxStr = "null value " + ctxStr;
-//                            }
-//                            GWT.log(ctxStr);
                             if ( value != null ) {
-                            sb.appendHtmlConstant("<div class=\"dataColumnType_div\">")
+                            sb.appendHtmlConstant("<div id=\"dcd_"+context.getColumn()+"\" class=\""+currentStyle()+"\">")
                               .appendHtmlConstant("<img src=\"images/angle-down.svg\" class=\"dataColumnType_icon\" />")
                               .appendHtmlConstant("<div id=\"dcn_"+context.getColumn()+"\" class=\"dataColumnType_name\">"+value+"</div>")
                               .appendHtmlConstant("</div>");
@@ -241,23 +264,22 @@ public class DatasetDataColumn {
                             int clickX = event.getClientX();
                             int clickY = event.getClientY();
                             int pageWidth = Window.getClientWidth();
-//                            GWT.log("eX: " + clickX + ", eY: " + clickY + ", page: " + pageWidth);
+                            GWT.log("eX: " + clickX + ", eY: " + clickY + ", page: " + pageWidth);
                             int offsetX = 0;
                             int offsetY = 0;
                             int fudgeX = 10;
-                            int fudgeY = parent.getOffsetParent().getOffsetHeight();
+                            int fudgeY = parent.getOffsetParent().getOffsetHeight() + 10;
                             Element selector = (Element)parent.getChild(0);
                             ScrollPanel dgScroll = DataColumnSpecsPage.getDataGrid().getScrollPanel();
                             int scroll = dgScroll.getHorizontalScrollPosition();
                             GWT.log("scroll: " + scroll);
-//                            GWT.log("selector scrollLeft: " + selector.getScrollLeft() +
-//                                    ", scrollWidth: " + selector.getScrollWidth() +
-//                                    ", dataGrid: scrollLeft: " + DataColumnSpecsPage.getDataGrid().getElement().getScrollLeft() +
-//                                    ", dataGrid: scrollWidth: " + DataColumnSpecsPage.getDataGrid().getElement().getScrollWidth()
-//                            );
+                            GWT.log("selector scrollLeft: " + selector.getScrollLeft() +
+                                    ", scrollWidth: " + selector.getScrollWidth() +
+                                    ", dataGrid: scrollLeft: " + DataColumnSpecsPage.getDataGrid().getElement().getScrollLeft() +
+                                    ", dataGrid: scrollWidth: " + DataColumnSpecsPage.getDataGrid().getElement().getScrollWidth()
+                            );
                             fudgeY -= selector.getOffsetHeight();
                             int selectorWidth = selector.getOffsetWidth();
-                            int iconWidth = 20; // XXX
                             Element e = parent;
                             for (int i = 0; i < 8; i++ ) {
                                 offsetX += e.getOffsetLeft();
@@ -266,16 +288,14 @@ public class DatasetDataColumn {
                                 e = e.getOffsetParent(); 
                             }
                             UploadDashboard.logToConsole("eX: " + clickX + ", eY: " + clickY + ", page: " + pageWidth+ ", selector: " + selectorWidth );
-//                            UploadDashboard.logToConsole("fudgeX: " + fudgeX + ", fudgeY: " + fudgeY);
                             int adjustedX = offsetX - scroll;
                             UploadDashboard.logToConsole("offX: " + offsetX + ", offY: " + offsetY + ", adjustedX: " + adjustedX);
                             if ( clickX < adjustedX + selectorWidth - iconWidth ) { // ignore
                                 GWT.log("ignoring click!");
                                 return; 
                             }
-                            int popupWidth = DataTypeSelectorPopup.WIDTH; // XXX FeedbackPopupWidth CHANGE_ME!
+                            int popupWidth = DataTypeSelectorPopup.WIDTH; 
                             int showX = adjustedX + fudgeX;
-//                            int showX = clickX - selectorWidth;
                             if ( showX < 25 ) {
                                 GWT.log("adjusting showX up.");
                                 showX = 25;
@@ -288,13 +308,9 @@ public class DatasetDataColumn {
                             }
                             GWT.log("showX:"+showX + ", showY: " + showY);
                             dts.show(cruise.getDataColTypes().get(columnIndex), valueUpdater, showX, showY);
-//                            int shownWidth = dts.getPopupPanel().getOffsetWidth();
-//                            UploadDashboard.logToConsole("shownWidth:"+shownWidth);
-//                            super.onBrowserEvent(context, parent, value, event, valueUpdater);
                         }
     				};
                 }
-//                selectorCellWidget = new CellWidget<String>(theCell);
                 return theCell;
 			}
 			@Override
@@ -306,35 +322,12 @@ public class DatasetDataColumn {
 						// column where it is normally used; not of use here.
 
 //                        Window.alert("You clicked " + value);
-                        GWT.log("update value " + value + " for idx: " + index + " col: " + dataCol + " widget "+ theCell); // selectorCellWidget);
+                        GWT.log("update value " + value + " col: " + dataCol + " widget "+ theCell); // selectorCellWidget);
                         String id = "dcn_"+columnNumber;
                         GWT.log("Looking for " + id);
                         Element nameCell = Document.get().getElementById(id);
                         GWT.log("nameCell:"+nameCell);
                         nameCell.setInnerHTML(value);
-//                        selectorCellWidget.getCell().setValue(arg0, arg1, arg2);
-//                        DataColumnSpecsPage.showDataTypeSelector(selectorCellWidget);
-//                        if ( true )
-//                            return;
-						// Ignore this callback if value is null
-//						if ( value == null )
-//							return;
-
-//						// Find the data type and units corresponding to header
-//						int idx = typeUnitStringList.indexOf(value);
-//						// Ignore this callback if value is not found - should not happen
-//						if ( idx < 0 )
-//							return;
-//						DataColumnType newType = knownTypeUnitList.get(idx).duplicate();
-//
-//						// Assign the data type and units
-//						ArrayList<DataColumnType> cruiseColTypes = dataCol.cruise.getDataColTypes();
-//						DataColumnType oldType = cruiseColTypes.get(dataCol.columnIndex);
-//						newType.setSelectedMissingValue(oldType.getSelectedMissingValue());
-//						if ( newType.equals(oldType) )
-//							return;
-//						hasChanged = true;
-//						cruiseColTypes.set(dataCol.columnIndex, newType);
     				}
 				};
 			}
@@ -343,6 +336,7 @@ public class DatasetDataColumn {
 //                GWT.log("getValue: " + dataCol.columnIndex);
 				// Find this column type with units
 				DataColumnType dctype = dataCol.cruise.getDataColTypes().get(dataCol.columnIndex);
+                GWT.log("getValue: colType: " + dctype);
 				// Ignore the missing value for this comparison
 				String missVal = dctype.getSelectedMissingValue();
 				dctype.setSelectedMissingValue(null);
@@ -358,15 +352,6 @@ public class DatasetDataColumn {
 				return typeUnitStringList.get(idx);
 			}
 		};
-//        UploadDashboard.logToConsole("stdCell:"+stdNameCell.getCell());
-//        selectorCellWidget = new CellWidget<String>(stdNameCell.getCell());
-//        selectorCellWidget.addHandler(new ClickHandler() {
-//            @Override
-//            public void onClick(ClickEvent event) {
-//                UploadDashboard.logToConsole(event.toString());
-//            }
-//        }, new GwtEvent.Type<ClickHandler>());
-//        UploadDashboard.logToConsole("selectorWidget:"+selectorCellWidget);
 
 		// Create the TextInputCell allowing the user to specify the missing value
 		HasCell<DatasetDataColumn,String> missValCell = new HasCell<DatasetDataColumn,String>() {
@@ -419,11 +404,11 @@ public class DatasetDataColumn {
 				return DatasetDataColumn.this;
 			}
 		};
-//        CompositeCell<DatasetDataColumn> headerComp = (CompositeCell<DatasetDataColumn>)headerCell.getCell();
-//        List<HasCell<DatasetDataColumn,?>> compCells = headerComp.getHasCells();
-//        HasCell<DatasetDataColumn,String> compNameHasCell = (HasCell<DatasetDataColumn, String>) compCells.get(1);
-//        StyledSuggestBoxCell compNameCell = (StyledSuggestBoxCell)compNameHasCell.getCell();
-//        compNameCell.addStyle(columnStyle);
+        CompositeCell<DatasetDataColumn> headerComp = (CompositeCell<DatasetDataColumn>)headerCell.getCell();
+        List<HasCell<DatasetDataColumn,?>> compCells = headerComp.getHasCells();
+        HasCell<DatasetDataColumn,String> compNameHasCell = (HasCell<DatasetDataColumn, String>) compCells.get(1);
+        StylishClickableTextCell compNameCell = (StylishClickableTextCell)compNameHasCell.getCell();
+        compNameCell.addStyle(columnStyle);
 		return headerCell;
 	}
 }

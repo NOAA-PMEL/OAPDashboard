@@ -21,16 +21,15 @@ public class DataTypeSuggestOracle extends SuggestOracle {
 	private static Logger logger = Logger.getLogger(DataTypeSuggestOracle.class.getName());
 //	private List<String> data;
 //	ArrayList<String> items = new ArrayList<>();
-//	ArrayList items = new ArrayList();
-	ArrayList<String> items = new ArrayList<>();
+	HashMap<String,String> itemsDisplay = new HashMap<String,String>();
 	
 	
 	/*
 	 * default limit suggests.
 	 */
-	private static final int LIMIT_DEFAULT = 25;
-	public static final int LENGTH_MIN = 4;
-	public static final int LENGTH_MAX = 11;
+//	private static final int LIMIT_DEFAULT = 25;
+//	public static final int LENGTH_MIN = 4;
+//	public static final int LENGTH_MAX = 11;
 	
 	private static String escape(String ds) {
 		SafeHtmlBuilder accum = new SafeHtmlBuilder();
@@ -38,6 +37,16 @@ public class DataTypeSuggestOracle extends SuggestOracle {
 	    return accum.toSafeHtml().asString();
 	  }
 
+    private String escapeRx(String s) {
+        StringBuilder sb = new StringBuilder();
+        for (char c : s.toCharArray()) {
+            if ( c == '(' || c == ')' ) {
+                sb.append("\\");
+            }
+            sb.append(c);
+        }
+        return sb.toString();
+    }
 	public DataTypeSuggestOracle() { }
 
 	/**
@@ -80,9 +89,10 @@ public class DataTypeSuggestOracle extends SuggestOracle {
 	
 	private Response defaultResponse;
 	
+    @Override
 	public void requestDefaultSuggestions(Request request, Callback callback) {
 		logger.info("RequestDefaultSuggestions");
-		logger.info("DefaultResponse: " + defaultResponse.getSuggestions());
+		logger.info("DefaultResponse: " + defaultResponse);
 		logger.info("Request: " + request.getQuery());
 		if (defaultResponse != null) {
 			callback.onSuggestionsReady(request, defaultResponse);
@@ -94,66 +104,18 @@ public class DataTypeSuggestOracle extends SuggestOracle {
 	/**
 	 * match the query, generate a response and pass to callback
 	 */
+    @Override
 	public void requestSuggestions(Request request, Callback callback) {
 		logger.info("requestSuggestions-2-param");
-		logger.info("DefaultResponse: " + defaultResponse.getSuggestions());
-		logger.info("Request: " + request.getQuery());
-		requestSuggestions(request, null, callback);
-	}
-
-	public void requestSuggestions(Request request, String filter, Callback callback) {
-		logger.info("requestSuggestions-3-param");
-		logger.info("DefaultResponse: " + defaultResponse.getSuggestions());
+        logger.info("callback: " + callback);
 		logger.info("Request: " + request.getQuery());
 		
-//		SuggestOracle.Response response = new SuggestOracle.Response();
 		int limit = 72;
-		HashMap<String,String> itemsDisplay = new HashMap<String,String>();
 		final List<ContainsSuggestion> suggestions = new ArrayList<>(limit);
-		
-		logger.info("filter: " + filter); // ?
-		
-		// first get all filtered items
-		for (int i = 0; i < items.size(); i++) {
-			String itemStr = (String)items.get(i);
-			String itemValue = itemStr.toLowerCase();
-//			logger.info("itemStr: " + itemStr); // display value
-		
-			if (filter!=null && !filter.equals("")) {
-				itemValue = itemStr.toLowerCase();
-				if (contains(itemValue, filter.toLowerCase())) {
-//					filteredItems.add(itemStr);
-					itemsDisplay.put(itemStr, itemValue);
-				}
-			} else {
-//				filteredItems.add(itemStr);
-				itemsDisplay.put(itemStr, itemValue);
-			}
-		}
-//		logger.info("filteredItems: " + filteredItems);
-//		logger.info("itemsDisplay: " + itemsDisplay.entrySet());
-		
-		if(request.getQuery().isEmpty()) {
-			request.setQuery(null);
-            super.requestDefaultSuggestions(request, callback);
-		}
-		
-		if ( (request != null) && request.getQuery().length() >= 2 ) {
-//			int limit = 72;
-//			if (request.getLimit() > 0) {
-//				limit = request.getLimit();
-//			} 
-//			else {
-//				limit = DataTypeSuggestOracle.LIMIT_DEFAULT;
-//			}
-			
-//			final List<ContainsSuggestion> suggestions = new ArrayList<>(limit);
-			
-			String query = request.getQuery();
-			logger.info("query: " + query);
-			
-//			queryOptions(query);
 
+        String query = request.getQuery().trim();
+		logger.info("query: " + query);
+			
 //			if (query == "*") {
 //				logger.info("query == *");
 ////				List<String> realSuggestions = items;
@@ -163,31 +125,28 @@ public class DataTypeSuggestOracle extends SuggestOracle {
 			
 			for (Entry<String, String> elem : itemsDisplay.entrySet()) { 
 				if (elem.getValue().contains("ignored")) {
-					logger.info("elem.getValue(ignored): " + elem.getValue());
-					logger.info("elem.getKey(ignored): " + elem.getKey());
-					suggestions.add(new ContainsSuggestion(
-							elem.getKey(), 
-							OptionSuggestion(elem.getKey(), elem.getValue(), query)
-							)
-					);
+//					logger.info("elem.getValue(ignored): " + elem.getValue());
+//					logger.info("elem.getKey(ignored): " + elem.getKey());
+                    continue;
 				}
 				if (elem.getValue().contains(query.toLowerCase())) {
-					logger.info("elem: " + elem.getValue());
+//					logger.info("elem: " + elem.getValue());
 					suggestions.add(new ContainsSuggestion(
 							elem.getKey(), 
 							OptionSuggestion(elem.getKey(), elem.getValue(), query)
 							)
 					);
 
-					if (suggestions.size() >= limit) {
+					if (suggestions.size() >= limit-1) {
 						break;
 					}
 				}
 			}
-//			response.setSuggestions(suggestions);
-			
-		}
-//		logger.info("filteredItems: " + filteredItems);
+			suggestions.add(new ContainsSuggestion("ignored", "IGNORED"));
+			if (suggestions.size() == 1) {
+			    suggestions.add(new ContainsSuggestion("(unknown)", "(unknown)"));
+			}
+            
 		Response response = new Response(suggestions);
 		
 		callback.onSuggestionsReady(request, response);
@@ -200,7 +159,7 @@ public class DataTypeSuggestOracle extends SuggestOracle {
         if (begin >= 0) {
             int end = begin + query.length();
             String match = displ.substring(begin, end);
-            displayMatchName = displ.replaceFirst(match, "<strong>" + match + "</strong>");
+            displayMatchName = displ.replaceFirst(escapeRx(match), "<strong>" + match + "</strong>");
         } else {
         	displayMatchName = displ;
         }
@@ -273,7 +232,8 @@ public class DataTypeSuggestOracle extends SuggestOracle {
 	 */
 	public void add(String suggestion)
 	{
-		items.add(suggestion);
+//		items.add(suggestion);
+        itemsDisplay.put(suggestion, suggestion.toLowerCase());
 	}
 
 	/**
@@ -281,7 +241,10 @@ public class DataTypeSuggestOracle extends SuggestOracle {
 	 */
 	public void addAll(Collection<String> collection)
 	{
-		items.addAll(collection);
+//		items.addAll(collection);
+        for (String item : collection) {
+            add(item);
+        }
 	}
 
 	/**

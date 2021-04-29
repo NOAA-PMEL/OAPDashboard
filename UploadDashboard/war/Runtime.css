@@ -6,28 +6,6 @@
 	Runtime styling needs to be available to the browser.
 */
 
-.suggestPopupContent {
-   /*  background: #d8f7fd !important; */
-    max-height: 400px !important;
-    overflow-y: scroll !important;
-}
-.suggestPopupTopCenter {
-	background: white !important;
-}
-.suggestPopupMiddleLeft {
-	background: white !important;
-}
-.suggestPopupMiddleRight {
-	background: white !important;
-}
-.suggestPopupBottomCenter {
-	background: white !important;
-}
-/*  .gwt-SuggestBoxPopup {
-   max-height: 400px !important;
-   overflow-y: scroll !important;
-} */
-
 .underlined {
 	text-decoration: underline;
 }
@@ -181,9 +159,16 @@
 	width: 100%;
 }
 
+/* .suggestPopupContent {
+   / *  background: #d8f7fd !important; * /
+    max-height: 400px !important;
+    overflow-y: scroll !important;
+}
+*/
 /* add scrollbar & set height */
-.suggestPopupContent {
-    height: 100px;    
+.gwt-SuggestBoxPopup .suggestPopupContent {
+    background: #f2f7fb;
+    max-height: 400px;    
     overflow-y: scroll;
     width: 100%;
 }
@@ -211,7 +196,7 @@
 
 .tooltip {
     /* display:none; */
-    background-color:#ffa;
+    background-color:#fbfadf;
     border:1px solid #cc9;
     padding:3px;
     font-size:13px;

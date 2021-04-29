@@ -534,6 +534,8 @@ public class DataColumnSpecsPage extends CompositeWithUsername {
 		if ( singleton == null )
 			singleton = new DataColumnSpecsPage();
 
+        DatasetDataColumn.resetSelectorAdjustment();
+        
 		singleton.setUsername(username);
         singleton.setDatasetIds(cruises);
 		UploadDashboard.showWaitCursor();
@@ -634,8 +636,14 @@ public class DataColumnSpecsPage extends CompositeWithUsername {
 			singleton.setView(rowNumber, columnNumber, false);
 		}
 	}
+    
+	@Override
+	void showing() {
+        DatasetDataColumn.resetSelectorAdjustment();
+	}
 	
 	void setView(Integer rowNumber, Integer columnNumber, boolean fromClick) {
+        DatasetDataColumn.setSelectorAdjustment();
 		int showColumnIdx = columnNumber == null || columnNumber.equals(DashboardUtils.INT_MISSING_VALUE) ? 
 								0 : columnNumber.intValue() - 1;
 		int showRowNum = rowNumber == null || rowNumber.equals(DashboardUtils.INT_MISSING_VALUE) ? 
