@@ -16,21 +16,13 @@ import com.google.gwt.event.dom.client.MouseMoveEvent;
 import com.google.gwt.event.dom.client.MouseOverEvent;
 import com.google.gwt.event.dom.client.MouseWheelEvent;
 import com.google.gwt.event.dom.client.ScrollEvent;
-import com.google.gwt.user.client.ui.DecoratedPopupPanel;
-import com.google.gwt.user.client.ui.DecoratorPanel;
-import com.google.gwt.user.client.ui.MenuItem;
 import com.google.gwt.user.client.ui.MyDecoratedPopupPanel;
 import com.google.gwt.user.client.ui.PopupPanel;
 import com.google.gwt.user.client.ui.SuggestBox;
 import com.google.gwt.user.client.ui.SuggestOracle;
 import com.google.gwt.user.client.ui.TextBox;
-import com.google.gwt.user.client.ui.ValueBoxBase;
-import com.google.gwt.user.client.ui.Widget;
-
-import gov.noaa.pmel.dashboard.shared.DataColumnType;
 
 import com.google.gwt.user.client.ui.PopupPanel.AnimationType;
-import com.google.gwt.user.client.ui.SuggestBox.SuggestionCallback;
 import com.google.gwt.user.client.ui.SuggestOracle.Suggestion;
 
 /**
@@ -55,27 +47,8 @@ public class MySuggestBox extends SuggestBox {
         super(oracle, theBox, new MySuggestionDisplay());
     }
 
-    /**
-     * @param oracle
-     * @param box
-    public MySuggestBox(SuggestOracle oracle, ValueBoxBase<String> box) {
-        super(oracle, box);
-        // TODO Auto-generated constructor stub
-    }
-     */
-
-	/**
-     * @param oracle
-     * @param box
-     * @param suggestDisplay
-    public MySuggestBox(SuggestOracle oracle, ValueBoxBase<String> box, SuggestionDisplay suggestDisplay) {
-        super(oracle, box, suggestDisplay);
-        // TODO Auto-generated constructor stub
-    }
-     */
-
     public static class MySuggestionDisplay extends SuggestBox.DefaultSuggestionDisplay {
-        private MyHandler handler;
+//        private MyHandler handler;
 
         public MySuggestionDisplay() {
             super();
@@ -91,14 +64,14 @@ public class MySuggestBox extends SuggestBox {
         @Override
         protected PopupPanel createPopup() {
             MyDecoratedPopupPanel p = new MyDecoratedPopupPanel(true, false);
-            handler = new MyHandler("MyDeco handler");
-            p.addHandler(handler, KeyUpEvent.getType());
-            p.addHandler(handler, BlurEvent.getType());
-            p.addHandler(handler, FocusEvent.getType());
-            p.addHandler(handler, ScrollEvent.getType());
-            p.addHandler(handler, MouseWheelEvent.getType());
-            p.addHandler(handler, MouseMoveEvent.getType());
-            p.addHandler(handler, MouseOverEvent.getType());
+//            handler = new MyHandler("MyDeco handler");
+//            p.addHandler(handler, KeyUpEvent.getType());
+//            p.addHandler(handler, BlurEvent.getType());
+//            p.addHandler(handler, FocusEvent.getType());
+//            p.addHandler(handler, ScrollEvent.getType());
+//            p.addHandler(handler, MouseWheelEvent.getType());
+//            p.addHandler(handler, MouseMoveEvent.getType());
+//            p.addHandler(handler, MouseOverEvent.getType());
             p.setStyleName("gwt-SuggestBoxPopup");
             p.setPreviewingAllNativeEvents(true);
             p.setAnimationType(AnimationType.ROLL_DOWN);

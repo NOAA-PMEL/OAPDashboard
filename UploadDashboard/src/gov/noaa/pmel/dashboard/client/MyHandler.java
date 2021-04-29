@@ -56,7 +56,7 @@ public class MyHandler implements AttachEvent.Handler, ClickHandler, KeyUpHandle
     private boolean _hasMouseOver = false;
     private boolean _hasMouseOut = false;
     
-    final int VISIBLE_DELAY = 2500;
+    final int VISIBLE_DELAY = 500;
     final String TOOLTIP_STYLENAME = "tooltip";
     
     /**
@@ -71,6 +71,9 @@ public class MyHandler implements AttachEvent.Handler, ClickHandler, KeyUpHandle
     // Simplified regular expression for an HTML tag (opening or closing) or an HTML escape. 
     final RegExp SKIP_HTML_RE = RegExp.compile("<[^>]*>|&[^;]+;", "g");
     
+    /**
+     * @param string
+     */
     public MyHandler(String name) {
         _name = name;
     }
@@ -87,7 +90,7 @@ public class MyHandler implements AttachEvent.Handler, ClickHandler, KeyUpHandle
      */
     @Override
     public void onMouseWheel(MouseWheelEvent event) {
-//        GWT.log(_name + " mousewheel: "+ event.getNativeEvent());
+        GWT.log(_name + " mousewheel: "); // + event.getNativeEvent());
 
         if (descriptionPopup != null) {
         	hideDescriptionPopup();
@@ -99,22 +102,22 @@ public class MyHandler implements AttachEvent.Handler, ClickHandler, KeyUpHandle
      */
     @Override
     public void onScroll(ScrollEvent event) {
-//        GWT.log(_name + " scroll: "+ event.getSource());
+        GWT.log(_name + " scroll: "+ event.getSource());
     }
     
     /**
      * Fired when the user types in the nameField.
      */
     public void onKeyPress(KeyPressEvent event) {
-        GWT.log(_name + " keypress: "+ event.getSource());
+        GWT.log(_name + " keypress: "); // + event.getSource());
     }
     public void onKeyUp(KeyUpEvent event) {
-        GWT.log(_name + " keyup: "+ event.getSource());
+        GWT.log(_name + " keyup: " + event.getNativeKeyCode()); // + event.getSource());
 
         int keyCode = event.getNativeKeyCode();
         
         if (_currentId != null) {
-        	GWT.log(_name + "keyup[currentId]: " + _currentId);
+        	GWT.log(_name + " keyup[currentId]: " + _currentId);
         }
 
         if ( keyCode == KeyCodes.KEY_UP || keyCode == KeyCodes.KEY_DOWN ) {
@@ -222,23 +225,22 @@ public class MyHandler implements AttachEvent.Handler, ClickHandler, KeyUpHandle
     @Override
     public void onFocus(FocusEvent event) {
         // TODO Auto-generated method stub
-        GWT.log(_name + " event.getSource() focus: " + event.getSource());
+        GWT.log(_name + " event.getSource() focus: "); // + event.getSource());
 
     }
     @Override
     public void onBlur(BlurEvent event) {
         // TODO Auto-generated method stub
-        GWT.log(" ***** "+ _name + " onBlur " + event.getSource());
+        GWT.log(" ***** "+ _name + " onBlur "); // + event.getSource());
         
         hideDescriptionPopup();
-
     }
     
     @Override
     public void onDoubleClick(DoubleClickEvent event) {
         // TODO Auto-generated method stub
         GWT.log(_name + " event.getSource() doubleclik: " + event.getSource());
-
+//        _dataTypeSelectorPopup.showAllChoices();
     }
 
     /* (non-Javadoc)
@@ -246,8 +248,8 @@ public class MyHandler implements AttachEvent.Handler, ClickHandler, KeyUpHandle
      */
     @Override
     public void onMouseMove(MouseMoveEvent event) {
-        GWT.log(_name + " mmove:"+event.getSource());
-        GWT.log(_name + " getRelativeElement:"+ event.getRelativeElement());
+//        GWT.log(_name + " mmove:"); // +event.getSource());
+//        GWT.log(_name + " getRelativeElement:"); // + event.getRelativeElement());
 
     	String activeId = null;
     	Element line = null;
@@ -351,7 +353,7 @@ public class MyHandler implements AttachEvent.Handler, ClickHandler, KeyUpHandle
     
     @Override
     public void onMouseOut(MouseOutEvent event) {
-//        GWT.log(_name + " mouseout: "); // + event.getSource());
+        GWT.log(_name + " mouseout: "); // + event.getSource());
     	_hasMouseOut = true;
         hideDescriptionPopup();
     }
@@ -380,8 +382,7 @@ public class MyHandler implements AttachEvent.Handler, ClickHandler, KeyUpHandle
     	_hasMouseOver = true;
     	_hasMouseOut = false;
     	
-      GWT.log(_name + " event.getSource() mouseover: " + event.getSource());
-      GWT.log(_name + " event.test: " + event.getNativeEvent().getKeyCode());
+      GWT.log(_name + " event.getSource() mouseover: "); //  + event.getSource());
       
 //      GWT.log("onMouseOver " + dataTypeSuggestionBox.getValueBox().toString());
         
@@ -452,7 +453,7 @@ public class MyHandler implements AttachEvent.Handler, ClickHandler, KeyUpHandle
      */
     @Override
     public void onAttachOrDetach(AttachEvent event) {
-//        GWT.log(_name + ( event.isAttached() ? " Attach:":" Detach:" )+event.getSource());
+        GWT.log(_name + ( event.isAttached() ? " Attach:":" Detach:" )+event.getSource());
         if (!event.isAttached() && descriptionPopup != null) {
         	hideDescriptionPopup();
         }

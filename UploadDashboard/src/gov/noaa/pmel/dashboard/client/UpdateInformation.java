@@ -13,9 +13,11 @@ import gov.noaa.pmel.dashboard.shared.DataColumnType;
  */
 public class UpdateInformation {
 
+    public int columnIdx;
     public DataColumnType newType;
     public ValueUpdater<String> updater;
-    public UpdateInformation(DataColumnType newType, ValueUpdater<String> updater) {
+    public UpdateInformation(int columnIdx, DataColumnType newType, ValueUpdater<String> updater) {
+        this.columnIdx = columnIdx;
         this.newType = newType;
         this.updater = updater;
     }

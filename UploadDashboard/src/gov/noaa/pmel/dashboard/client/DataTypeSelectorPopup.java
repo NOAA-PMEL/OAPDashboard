@@ -12,22 +12,13 @@ import com.google.gwt.cell.client.ValueUpdater;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.event.dom.client.BlurEvent;
 import com.google.gwt.event.dom.client.ClickEvent;
-import com.google.gwt.event.dom.client.FocusEvent;
-import com.google.gwt.event.dom.client.KeyEvent;
 import com.google.gwt.event.dom.client.KeyUpEvent;
-import com.google.gwt.event.dom.client.KeyUpHandler;
-import com.google.gwt.event.dom.client.MouseOverEvent;
-import com.google.gwt.event.dom.client.MouseWheelEvent;
-import com.google.gwt.event.logical.shared.CloseEvent;
-import com.google.gwt.event.logical.shared.CloseHandler;
 import com.google.gwt.event.logical.shared.SelectionEvent;
 import com.google.gwt.event.logical.shared.SelectionHandler;
 import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.uibinder.client.UiHandler;
-import com.google.gwt.user.client.Timer;
-import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.google.gwt.user.client.ui.Button;
 import com.google.gwt.user.client.ui.Composite;
@@ -36,20 +27,19 @@ import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.ListBox;
 import com.google.gwt.user.client.ui.Panel;
 import com.google.gwt.user.client.ui.PopupPanel;
-import com.google.gwt.user.client.ui.SuggestBox;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.gwt.user.client.ui.PopupPanel.AnimationType;
-import com.google.gwt.user.client.ui.SuggestBox.SuggestionDisplay;
 import com.google.gwt.user.client.ui.SuggestOracle.Suggestion;
 import com.google.gwt.user.client.ui.TextBox;
 
+import gov.noaa.pmel.dashboard.shared.DashboardUtils;
 import gov.noaa.pmel.dashboard.shared.DataColumnType;
-import gov.noaa.pmel.dashboard.shared.UserInfo;
 
 /**
- * An question embedded within a PopupPanel.
+ * Column DataType Selector in a Popup with an Auto-complete suggestion box.
  * 
  * @author Linus Kamb
+ * @author Dale Gamble
  */
 public class DataTypeSelectorPopup extends Composite {
 
@@ -70,9 +60,9 @@ public class DataTypeSelectorPopup extends Composite {
 	@UiField Button cancelButton;
     @UiField Panel unitsPnl;
     @UiField Button showAllButton;
+    TextBox theBox;
 
 	private PopupPanel parentPanel;
-	Boolean sendIt;
 	HandlerRegistration handler;
 
     private DataColumnType currentType;
@@ -81,8 +71,9 @@ public class DataTypeSelectorPopup extends Composite {
 
     private Map<String, DataColumnType> knownTypes;
 
+    private int columnIdx;
     private int columnNumber;
-
+    
     private String userColumnHeader;
 
     private AsyncCallback<UpdateInformation> callback;
@@ -91,7 +82,7 @@ public class DataTypeSelectorPopup extends Composite {
     private Map<String, List<String>> unitsLookup;
     
     final String DEFAULT_SUGGEST_VALUE = "ignored";
-    public static int WIDTH = 430;
+    public static int WIDTH = 665;
     
 	/**
 	 * Widget for asking a question in a PopupPanel 
@@ -108,6 +99,7 @@ public class DataTypeSelectorPopup extends Composite {
                                  final int columnIndex, final String userColumnName,
                                  final AsyncCallback<UpdateInformation> callback) {
         this.knownTypes = knownTypes;
+        this.columnIdx = columnIndex;
         this.columnNumber = columnIndex + 1;
         this.userColumnHeader = userColumnName;
         this.callback = callback;
@@ -119,22 +111,16 @@ public class DataTypeSelectorPopup extends Composite {
             unitsLookup.put(type.getDisplayName(), new ArrayList<>(type.getUnits()));
         }
             
-        TextBox theBox = new TextBox();
-        theBox.addHandler(new MyHandler("selector") , KeyUpEvent.getType());
-        theBox.addHandler(new MyHandler("selector") , BlurEvent.getType());
-		theBox.addHandler(new MyHandler("selector") , FocusEvent.getType());
+        theBox = new TextBox();
+        MyHandler theHandler = new MyHandler("theBox");
+        theBox.addHandler(theHandler , KeyUpEvent.getType());
         
 		dataSelector = new MySuggestBox(getDataOracle(dataTypeLookup), theBox);
         
 		initWidget(uiBinder.createAndBindUi(this));
-//        FocusHandler fh = new FocusHandler() {
-//            @Override
-//            public void onFocus(FocusEvent focusEvent) {
-//                ((TextBox)focusEvent.getSource()).setReadOnly(false);
-//            }
-//        };
-//        cpBx.addFocusHandler(fh);
 		
+        prologue.setText("Select data type for column " + columnNumber + ": " + userColumnHeader);
+        
 		parentPanel = new PopupPanel(false, true);
 		parentPanel.setWidget(this);
         
@@ -147,7 +133,6 @@ public class DataTypeSelectorPopup extends Composite {
 
 		selectButton.setText("Select");
 		cancelButton.setText("Cancel");
-		sendIt = null;
 
         init();
 	}
@@ -169,39 +154,42 @@ public class DataTypeSelectorPopup extends Composite {
                 unitsPnl.setVisible(false);
                 
                 List<String> theList = getUnitsList(event.getSelectedItem().getReplacementString(), unitsLookup);
-                if (theList == null || theList.isEmpty()) {
-                    unitsPnl.setVisible(false);
-                }
-                else {
-                    for ( String data : theList ) {
-                        unitsListBox.addItem(data);
-                    }
-                    unitsPnl.setVisible(true);
-                }
+                setUnits(theList, 0);
             }
         });
     }
+    
+    void setUnits(List<String> unitsList, int selectedIndex) {
+        GWT.log("set units:"+unitsList + 
+                ( unitsList != null ? " (" + unitsList.size() + ")" : "()" ) +
+                ", idx:"+ selectedIndex);
+                if (unitsList == null || unitsList.isEmpty() || unitsList.get(0).equals("")) {
+                    unitsListBox.clear();
+                    unitsPnl.setVisible(false);
+                }
+                else {
+                    for ( String data : unitsList ) {
+                        unitsListBox.addItem(data);
+                    }
+                    unitsListBox.setSelectedIndex(selectedIndex);
+                    unitsPnl.setVisible(true);
+                }
+    }
 
-	private DataTypeSuggestOracle getDataOracle(Map<String, DataColumnType> datatypeMap) {
+	private static DataTypeSuggestOracle getDataOracle(Map<String, DataColumnType> datatypeMap) {
       DataTypeSuggestOracle dataOracle = new DataTypeSuggestOracle();
 
       // set suggestion list for empty query
       dataOracle.setDefaultSuggestionsFromText(datatypeMap.keySet());
       
-      // initialize dataOracle with prepopulated
-      dataOracle.add(DEFAULT_SUGGEST_VALUE);
-      
       for ( String theKey : datatypeMap.keySet() ){
-    	  if (theKey.toLowerCase() == DEFAULT_SUGGEST_VALUE.toLowerCase()) {
-    		  continue;
-    	  }
           dataOracle.add(theKey);
       }
 
       return dataOracle;  
   }
 
-    private String getDataDescription(String displayName, Map<String, DataColumnType> datatypeMap) { 
+    private static String getDataDescription(String displayName, Map<String, DataColumnType> datatypeMap) { 
         String itemDescription = "";
         if (datatypeMap.get(displayName) != null ) {
             itemDescription = datatypeMap.get(displayName).getDescription();
@@ -251,39 +239,38 @@ public class DataTypeSelectorPopup extends Composite {
         this.updater = contextUpdater;
         parentPanel.setPopupPosition(x, y);
         parentPanel.show();
+		theBox.setFocus(true);
+        if ( ! ( columnType.equals(DashboardUtils.UNKNOWN) ||
+                 columnType.equals(DashboardUtils.OTHER))) {
+            dataSelector.setValue(columnType.getDisplayName());
+            descText.setText(columnType.getDescription());
+        }
+        setUnits(columnType.getUnits(), columnType.getSelectedUnitIndex());
         UploadDashboard.logToConsole("visible? " + parentPanel.isShowing());
         DataColumnSpecsPage.preventScroll(true);
     }
-
-	void show(String userColumn) {
-        setPrologue("Data Type for column " + userColumn);
-//        Timer t = new Timer() {
-//            @Override
-//            public void run() {
-//        		cpBx.setFocus(true);
-//            }
-//        };
-//        t.schedule(500);
-		parentPanel.center();
-	}
-    
-	private void setPrologue(String username) {
-	    prologue.setText("Update profile for user: " + username);
-	}
 
 	@UiHandler("selectButton")
 	void yesOnClick(ClickEvent e) {
 		if (!isSuggested(dataSelector.getValueBox().getText(), dataTypeLookup)) {
 			dataSelector.getValueBox().setText(DEFAULT_SUGGEST_VALUE);
 		}
-
-		sendIt = true;
+		String selected = dataSelector.getValueBox().getText();
+        DataColumnType newType = dataTypeLookup.get(selected).duplicate();
+        GWT.log("newType:"+newType);
+        if ( newType.getUnits().size() > 0 ) {
+            int selectedUnits = unitsListBox.getSelectedIndex();
+            GWT.log("selectedIdx:"+selectedUnits);
+            newType.setSelectedUnitIndex(selectedUnits);
+        }
+        UpdateInformation result = new UpdateInformation(columnIdx, newType, updater);
+        callback.onSuccess(result);
 		parentPanel.hide();
 	}
 
     @UiHandler("cancelButton")
 	void noOnClick(ClickEvent e) {
-		sendIt = false;
+        reset();
 		parentPanel.hide();
 	}
 
@@ -295,13 +282,17 @@ public class DataTypeSelectorPopup extends Composite {
     /**
      * 
      */
-    private void showAllChoices() {
-        dataSelector.setText(null);  
+    void showAllChoices() {
+        reset();
         dataSelector.showSuggestionList();
         dataSelector.setFocus(true);
     }
     
     public void reset() {
+        dataSelector.setText(null);  
+        descText.setText("");
+        setUnits(null, 0);
+        unitsPnl.setVisible(false);
     }
     
     public String getSelection() { return dataSelector.getValue().trim(); } // ???
