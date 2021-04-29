@@ -70,10 +70,6 @@ public class SubmitToArchivePage extends CompositeWithUsername implements DataSu
     @UiField Label submissionTime;
     @UiField HTML statusListPanel;
     @UiField TextArea submitCommentTextArea;
-//	@UiField Tree columnTree;
-//	@UiField HTML introHtml;
-//	@UiField Panel columnsPanel;
-//	@UiField DataGrid<DataColumnType> columnsGrid;
     @UiField HTML ackChecksHr;
     @UiField FlowPanel messagesPanel;
     @UiField Label messagesText;
@@ -99,7 +95,6 @@ public class SubmitToArchivePage extends CompositeWithUsername implements DataSu
     @UiField RadioButton newSubmitButton;
     @UiField RadioButton updateSubmitButton;
     @UiField RadioButton appendSubmitButton;
-//    @UiField TextBox updateAccnBox;
     @UiField TextBox accnNumberBox;
     
     boolean blocked = false; // Cannot submit.
@@ -107,25 +102,6 @@ public class SubmitToArchivePage extends CompositeWithUsername implements DataSu
 	@UiField Button cancelButton;
 	@UiField Button submitButton;
 	
-//	@UiField RadioButton select_none;
-////	@UiField RadioButton select_min;
-////	@UiField RadioButton select_req;
-//	@UiField RadioButton select_std;
-////	@UiField RadioButton select_user;
-//	@UiField RadioButton select_all;
-    
-	
-    private static final String SUBMIT_AGREEMENT = 
-        "By submitting data for inclusion in the NCEI archives, "
-        + "you warrant that these data may be copied and distributed by NCEI for any purposes. "
-        + "NCEI may make these data available via electronic or other means without restrictions. "
-        + "You understand that NCEI will not compensate you in any way or pay you for use of these data. "
-        + "You further agree to indemnify NCEI in the event that it suffers liability or damages "
-        + "as a result of its use of these data. To the extent that any part of this submission "
-        + "is subject to the intellectual property rights of a third party, you warrant that "
-        + "you have obtained permission from that third party to submit that party's property "
-        + "to NCEI for the purposes specified in this agreement.";
-    
 	private String _datasetRecordId;
 	private DashboardDataset _dataset;
 	private List<String> _submitIdsList;
@@ -194,26 +170,8 @@ public class SubmitToArchivePage extends CompositeWithUsername implements DataSu
         dataIssuesPanel.setVisible(false);
         metadataIssuesPanel.setVisible(false);
         
-        showPolicyAgreement.addClickHandler(new ClickHandler() {
-            @Override
-            public void onClick(ClickEvent event) {
-                event.preventDefault();
-                UploadDashboard.showMessage(SUBMIT_AGREEMENT);
-//                String question = SUBMIT_AGREEMENT;
-//                UploadDashboard.ask(question, "Agree", "Cancel", QuestionType.PLAIN, 
-//                                    new AsyncCallback<Boolean>() {
-//                                        @Override
-//                                        public void onFailure(Throwable caught) {
-//                                            // TODO Auto-generated method stub
-//                                        }
-//                                        @Override
-//                                        public void onSuccess(Boolean result) {
-//                                            // TODO Auto-generated method stub
-//                                        }
-//                                    });
-//                Window.alert("Placeholder: Show submission policy agreement.");
-            }
-        });
+        showPolicyAgreement.setHref("SDIS_user_agreement.txt");
+        showPolicyAgreement.setTarget("_blank");
         
 		cancelButton.setText("Cancel");
 		cancelButton.setTitle("Cancel");
