@@ -15,7 +15,7 @@ public class ObservationType {
             "Time-series (moorings, etc.)",
             "Surface measurements (underway, discrete)",
             "Profile (CTD, bottle, etc.)",
-             "Gliders, etc.",
+            "Gliders, etc.",
             "Pump cast",
             "Model output",
             "Field experiment",
@@ -72,7 +72,7 @@ public class ObservationType {
         if ( obs.equals("time-series (profile)")) {
             return FeatureType.TIMESERIES_PROFILE;
         }
-        if ( obs.equals("time-series")) {
+        if ( obs.startsWith("time-series")) {
             return FeatureType.TIMESERIES;
         }
         if ( obs.contains("profile")) {
