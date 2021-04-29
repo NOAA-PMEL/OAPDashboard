@@ -11,4 +11,4 @@
 *.swp
 /delomed/
 /ssh/
-/Dashboard-master.war.hazy
+/Dashboard*.war*
