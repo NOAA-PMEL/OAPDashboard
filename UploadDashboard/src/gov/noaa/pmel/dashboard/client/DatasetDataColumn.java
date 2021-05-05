@@ -336,7 +336,7 @@ public class DatasetDataColumn {
 //                GWT.log("getValue: " + dataCol.columnIndex);
 				// Find this column type with units
 				DataColumnType dctype = dataCol.cruise.getDataColTypes().get(dataCol.columnIndex);
-                GWT.log("getValue: colType: " + dctype);
+//                GWT.log("getValue: colType: " + dctype);
 				// Ignore the missing value for this comparison
 				String missVal = dctype.getSelectedMissingValue();
 				dctype.setSelectedMissingValue(null);

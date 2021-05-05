@@ -26,6 +26,8 @@ import com.google.gwt.event.dom.client.DoubleClickEvent;
 import com.google.gwt.event.dom.client.DoubleClickHandler;
 import com.google.gwt.event.dom.client.ScrollEvent;
 import com.google.gwt.event.dom.client.ScrollHandler;
+import com.google.gwt.event.logical.shared.ValueChangeEvent;
+import com.google.gwt.event.logical.shared.ValueChangeHandler;
 import com.google.gwt.logging.client.ConsoleLogHandler;
 import com.google.gwt.text.client.IntegerParser;
 import com.google.gwt.uibinder.client.UiBinder;
@@ -33,12 +35,12 @@ import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.uibinder.client.UiHandler;
 import com.google.gwt.user.cellview.client.RowStyles;
 import com.google.gwt.user.cellview.client.SimplePager;
+import com.google.gwt.user.client.History;
 import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.google.gwt.user.client.ui.Button;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.ScrollPanel;
-import com.google.gwt.user.client.ui.UIObject;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.gwt.view.client.AsyncDataProvider;
 import com.google.gwt.view.client.CellPreviewEvent;
@@ -206,6 +208,9 @@ public class DataColumnSpecsPage extends CompositeWithUsername {
 	@UiField Button doneButton;
 	@UiField Button saveButton;
 	
+    private Integer _showRowNumber;
+    private Integer _showColNumber;
+    
 	private SingleSelectionModel<ArrayList<String>> selectionModel;
 	private ADCMessageList datasetMessages;
 	private Map<Integer, ADCMessage> rowMsgMap = new HashMap<Integer, ADCMessage>();
@@ -309,6 +314,14 @@ public class DataColumnSpecsPage extends CompositeWithUsername {
 				return item.get(0);
 			}
 		});
+        
+        History.addValueChangeHandler(new ValueChangeHandler<String>() {
+            @Override
+            public void onValueChange(ValueChangeEvent<String> event) {
+                GWT.log("DataColumns history:"+ event.getValue());
+            }
+        });
+
 //        dataGrid.getScrollPanel().addScrollHandler(scrollHandler);
         
 		dataGrid.setRowStyles(new RowStyles<ArrayList<String>>() {
@@ -623,9 +636,23 @@ public class DataColumnSpecsPage extends CompositeWithUsername {
 		}
 		else {
 			UploadDashboard.updateCurrentPage(singleton);
+            if ( singleton._showRowNumber != null || singleton._showColNumber != null ) {
+               singleton.setView(singleton._showRowNumber, singleton._showColNumber, false);
+            }
 		}
 	}
 
+	static void setView(String username, Integer rowNumber, Integer columnNumber) {
+        if ( (username == null) || username.isEmpty() || 
+                (singleton == null) || ! singleton.getUsername().equals(username) ) {
+               DatasetListPage.showPage();
+           }
+           else {
+               singleton._showRowNumber = rowNumber;
+               singleton._showColNumber = columnNumber;
+           }
+
+	}
 	static void redisplayPage(String username, Integer rowNumber, Integer columnNumber) {
 		if ( (username == null) || username.isEmpty() || 
 			 (singleton == null) || ! singleton.getUsername().equals(username) ) {
@@ -643,6 +670,8 @@ public class DataColumnSpecsPage extends CompositeWithUsername {
 	}
 	
 	void setView(Integer rowNumber, Integer columnNumber, boolean fromClick) {
+        _showRowNumber = null;
+        _showColNumber = null;
         DatasetDataColumn.setSelectorAdjustment();
 		int showColumnIdx = columnNumber == null || columnNumber.equals(DashboardUtils.INT_MISSING_VALUE) ? 
 								0 : columnNumber.intValue() - 1;
