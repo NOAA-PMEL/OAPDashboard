@@ -230,11 +230,16 @@ public class DashboardUtils {
 	 */
 	public static final String DATASET_IDENTIFIER_VARNAME = "dataset_name";
 	public static final DataColumnType DATASET_IDENTIFIER = new DataColumnType(DATASET_IDENTIFIER_VARNAME,
-			100.0, "cruise/dataset name", "unique name for this dataset", true, NO_UNITS);
+			100.0, "cruise", "cruise identifier", false, NO_UNITS);
+//			100.0, "dataset name", "unique name for this dataset", false, NO_UNITS);
+
+//	public static final String CRUISE_IDENTIFIER_VARNAME = "dataset_name";
+//	public static final DataColumnType CRUISE_IDENTIFIER = new DataColumnType(CRUISE_IDENTIFIER_VARNAME,
+//			100.0, "cruise", "cruise identifier", false, NO_UNITS);
 
 	public static final String EXPO_CODE_VARNAME = "expocode";
 	public static final DataColumnType EXPO_CODE = new DataColumnType(EXPO_CODE_VARNAME, 
-			100.0, "expo code", "expocode for the cruise", false, NO_UNITS);
+			100.0, "expocode", "NODC expedition code", false, NO_UNITS);
 
 	public static final String PLATFORM_CODE_VARNAME = "platform_code";
 	public static final DataColumnType PLATFORM_CODE = new DataColumnType(PLATFORM_CODE_VARNAME,

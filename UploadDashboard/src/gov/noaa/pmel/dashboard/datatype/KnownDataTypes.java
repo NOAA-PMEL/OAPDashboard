@@ -86,7 +86,8 @@ public class KnownDataTypes {
 		HashMap<String,DashDataType<?>> types = new HashMap<String, DashDataType<?>>();
 		addDataTypeTo(types, DashboardServerUtils.UNKNOWN);
 		addDataTypeTo(types, DashboardServerUtils.OTHER);
-		addDataTypeTo(types, DashboardServerUtils.DATASET_NAME);
+		addDataTypeTo(types, DashboardServerUtils.EXPO_CODE);
+		addDataTypeTo(types, DashboardServerUtils.DATASET_NAME); // XXX CRUISE ID !!!!
 		addDataTypeTo(types, DashboardServerUtils.PLATFORM_CODE);
 		addDataTypeTo(types, DashboardServerUtils.PLATFORM_NAME);
 		addDataTypeTo(types, DashboardServerUtils.PLATFORM_TYPE);
