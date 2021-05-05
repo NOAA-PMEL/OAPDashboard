@@ -105,7 +105,7 @@ public class DashboardServerUtils {
 			"dataset_id", IDENTIFIER_CATEGORY, null, null, null, null, null);
 
 	public static final StringDashDataType EXPO_CODE = new StringDashDataType("expocode", 
-			50.0, "expo code", "unique ID for cruise", false, DashboardUtils.NO_UNITS, 
+			50.0, "expocode", "NODC expedition code", false, DashboardUtils.NO_UNITS, 
 			"expocode", IDENTIFIER_CATEGORY, null, null, null, null, null);
 
 	/**
