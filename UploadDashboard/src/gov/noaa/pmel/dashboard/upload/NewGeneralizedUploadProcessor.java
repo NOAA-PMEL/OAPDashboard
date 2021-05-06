@@ -89,6 +89,12 @@ public class NewGeneralizedUploadProcessor extends FileUploadProcessor {
                     DashboardDataset oldDataset = _dataFileHandler.getDatasetFromInfoFile(datasetId);
                     String owner = oldDataset.getOwner();
                     String status = oldDataset.getSubmitStatus();
+                    String mdStatus = oldDataset.getMdStatus();
+                    if ( "Validated".equals(mdStatus)) {
+                        mdStatus = "Check Metadata";
+                    }
+                    datasetData.setMdStatus(mdStatus);
+                    datasetData.setMdTimestamp(oldDataset.getMdTimestamp());
                     if ( datasetExists ) {  // replacing uploaded file for same submission record
                         // If only create new datasets, add error message and skip the dataset
                         if ( DashboardUtils.NEW_DATASETS_REQUEST_TAG.equals(action) ) {
@@ -118,9 +124,6 @@ public class NewGeneralizedUploadProcessor extends FileUploadProcessor {
                                 }
                             }
                         }
-                    } else { // isUpdate, but data file doesn't exist.  Must be upload to cloned submission
-                        String mdStatus = oldDataset.getMdStatus();
-                        datasetData.setMdStatus(mdStatus);
                     }
                 }
                     

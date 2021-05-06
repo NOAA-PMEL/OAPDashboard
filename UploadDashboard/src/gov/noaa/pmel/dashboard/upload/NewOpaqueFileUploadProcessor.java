@@ -55,6 +55,12 @@ public class NewOpaqueFileUploadProcessor extends FileUploadProcessor {
                     DashboardDataset oldDataset = _dataFileHandler.getDatasetFromInfoFile(datasetId);
                     String owner = oldDataset.getOwner();
                     String status = oldDataset.getSubmitStatus();
+                    String mdStatus = oldDataset.getMdStatus();
+                    if ( "Validated".equals(mdStatus)) {
+                        mdStatus = "Check Metadata";
+                    }
+                    pseudoDataset.setMdStatus(mdStatus);
+                    pseudoDataset.setMdTimestamp(oldDataset.getMdTimestamp());
                     if ( datasetDataDirExists ) {
                         // If only create new datasets, add error message and skip the dataset
                         if ( DashboardUtils.NEW_DATASETS_REQUEST_TAG.equals(action) ) {
@@ -79,9 +85,6 @@ public class NewOpaqueFileUploadProcessor extends FileUploadProcessor {
                                 }
                             }
                         }
-                    } else { // updateRequest, but data file doesn't exist. Must be clone.
-                        String mdStatus = oldDataset.getMdStatus();
-                        pseudoDataset.setMdStatus(mdStatus);
                     }
                 }
                 try {
