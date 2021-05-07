@@ -1480,8 +1480,6 @@ public class DatasetListPage extends CompositeWithUsername {
 		// Add the columns, with headers, to the table
 //		datasetsGrid.addColumn(rowNumColumn, selectHeader);
 		datasetsGrid.addColumn(selectedColumn, ""); // selectHeader);
-		datasetsGrid.addColumn(recordIdColumn, 
-				SafeHtmlUtils.fromSafeConstant(RECORD_ID_COLUMN_NAME));
 		datasetsGrid.addColumn(filenameColumn, 
 				SafeHtmlUtils.fromSafeConstant(FILENAME_COLUMN_NAME));
 		datasetsGrid.addColumn(featureTypeColumn, 
@@ -1500,6 +1498,8 @@ public class DatasetListPage extends CompositeWithUsername {
 //				SafeHtmlUtils.fromSafeConstant(SUBMITTED_COLUMN_NAME));
 		datasetsGrid.addColumn(archiveStatusColumn, 
 				SafeHtmlUtils.fromSafeConstant(ARCHIVED_COLUMN_NAME));
+		datasetsGrid.addColumn(recordIdColumn, 
+				SafeHtmlUtils.fromSafeConstant(RECORD_ID_COLUMN_NAME));
         if (showManagerColumns) {
     		datasetsGrid.addColumn(ownerColumn, 
     				SafeHtmlUtils.fromSafeConstant(OWNER_COLUMN_NAME));
@@ -1537,9 +1537,9 @@ public class DatasetListPage extends CompositeWithUsername {
 //		datasetsGrid.setColumnWidth(qcStatusColumn, 
 //				UploadDashboard.NORMAL_COLUMN_WIDTH, Style.Unit.EM);
 //		minTableWidth += UploadDashboard.NORMAL_COLUMN_WIDTH;
-		datasetsGrid.setColumnWidth(archiveStatusColumn, 
-				UploadDashboard.NORMAL_COLUMN_WIDTH, Style.Unit.EM);
-		minTableWidth += UploadDashboard.NORMAL_COLUMN_WIDTH;
+		datasetsGrid.setColumnWidth(archiveStatusColumn, 8, Style.Unit.EM);
+//				UploadDashboard.MIDDLING_COLUMN_WIDTH, Style.Unit.EM);
+		minTableWidth += 8; // UploadDashboard.MIDDLING_COLUMN_WIDTH;
         if ( showManagerColumns ) {
     		datasetsGrid.setColumnWidth(ownerColumn, 
     				UploadDashboard.MIDDLING_COLUMN_WIDTH, Style.Unit.EM);
