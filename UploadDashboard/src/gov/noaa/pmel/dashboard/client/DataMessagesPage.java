@@ -178,17 +178,16 @@ public class DataMessagesPage extends CompositeWithUsername {
 	}
 
 	@UiHandler("dismissButton")
-	void dismissOnClick(ClickEvent event) {
+    void dismissOnClick(ClickEvent event) {
 		History.back();
-//		DataColumnSpecsPage.redisplayPage(getUsername());
 	}
 	
 	void showErrorData(DoubleClickEvent event) {
 		ADCMessage m = selectionModel.getSelectedObject();
 		Integer errorRow = m.getRowNumber();
 		Integer errorColumn = m.getColNumber();
-		DataColumnSpecsPage.redisplayPage(getUsername(), errorRow, errorColumn);
-		
+		DataColumnSpecsPage.setView(getUsername(), errorRow, errorColumn);
+        History.back(); // pop off the history entry
 	}
 
 	/**

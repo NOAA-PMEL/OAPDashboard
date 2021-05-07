@@ -23,6 +23,26 @@
 .dataColumnSelectionCell {
 	width: 97%;
 }
+.dataColumnType_div {
+    margin: 3px 0px;
+	border: 1px solid black;
+	background-color: white;
+}
+.dataColumnType_name {
+    margin-bottom: 1px;
+    overflow: hidden;
+    padding-left: 4px;
+}
+.dataColumnType_icon {
+	height: 12px;
+    background-color: #f1f1f1;
+	border: 1px solid black;
+    border-radius: 2px;
+    cursor: pointer;
+    margin: 2px;
+    padding: 2px 2px;
+	float: right;
+}
 .dataColumnTypeWarning {
 	background-color: #f9eb8b;
 }
@@ -131,6 +151,59 @@
 	width:90%; 
 	margin:0 4.5em .5em;
 }
+.dialogVPanel {
+  margin: 5px;
+  padding-right: 10px;
+}
+.dialogVPanel table {
+	width: 100%;
+}
+
+/* .suggestPopupContent {
+   / *  background: #d8f7fd !important; * /
+    max-height: 400px !important;
+    overflow-y: scroll !important;
+}
+*/
+/* add scrollbar & set height */
+.gwt-SuggestBoxPopup .suggestPopupContent {
+    background: #f2f7fb;
+    max-height: 400px;    
+    overflow-y: scroll;
+    width: 100%;
+}
+
+/* set width for selected item highlight to span the entire width */
+.suggestPopupContent > div > table {
+	/* width: 420px; */
+	width: 100%;
+}
+/* fill in transparent boarder around popup */
+.gwt-SuggestBoxPopup .suggestPopupTopCenter,
+.gwt-SuggestBoxPopup .suggestPopupMiddleLeft,
+.gwt-SuggestBoxPopup .suggestPopupMiddleRight,
+.gwt-SuggestBoxPopup .suggestPopupBottomCenter { 
+   background-color: white;
+}
+
+/*
+.gwt-PopupPanel {
+  border: 3px solid #e7e7e7;
+  padding: 3px;
+  background: white;
+}
+*/
+
+.tooltip {
+    /* display:none; */
+    background-color:#fbfadf;
+    border:1px solid #cc9;
+    padding:3px;
+    font-size:13px;
+    -moz-box-shadow: 2px 2px 11px #666;
+    -webkit-box-shadow: 2px 2px 11px #666;
+}
+
 /* .hide {
 	display: none;
 } */

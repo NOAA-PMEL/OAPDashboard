@@ -57,6 +57,18 @@
         <property name="poolPingConnectionsNotUsedFor" value="28000000"/>
       </dataSource>
     </environment>
+    <environment id="localhost"> 
+      <transactionManager type="JDBC"/>
+      <dataSource type="POOLED">
+        <property name="driver" value="${db.driver}"/>
+        <property name="url" value="${db.url}"/>
+        <property name="username" value="${db.username}"/>
+        <property name="password" value="${db.password}"/>
+        <property name="poolPingQuery" value="SELECT 1"/>
+        <property name="poolPingEnabled" value="true"/>
+        <property name="poolPingConnectionsNotUsedFor" value="28000000"/>
+      </dataSource>
+    </environment>
     <environment id="production"> <!-- configuration for running locally on production machine -->
       <transactionManager type="JDBC"/>
       <dataSource type="POOLED">

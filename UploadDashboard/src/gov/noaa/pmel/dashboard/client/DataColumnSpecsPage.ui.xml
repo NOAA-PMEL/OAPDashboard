@@ -10,7 +10,7 @@
         <g:north size="4.2" ><oap:ApplicationHeaderTemplate ui:field="header" /> </g:north>
         <g:center>
                 <g:ResizeLayoutPanel>
-       				<cell:DataGrid addStyleNames="{style.datacolsgrid}" ui:field="dataGrid" />
+       				<oap:MyDataGrid addStyleNames="{style.datacolsgrid}" ui:field="dataGrid" />
                 </g:ResizeLayoutPanel>
         </g:center>  
         <g:south size="10.5">

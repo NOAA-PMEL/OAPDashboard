@@ -1,13 +1,18 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <classpath>
 	<classpathentry excluding="gov/noaa/pmel/dashboard/actions/DatasetChecker2.java|gov/noaa/pmel/dashboard/dsg/StdUserDataArray2.java|gov/noaa/pmel/dashboard/client/SuggestBoxTextInputCell.java" kind="src" path="src"/>
-	<classpathentry excluding="gov/noaa/pmel/dashboard/server/new_model/TimeseriesMeasurement.java" kind="src" output="test-classes" path="test"/>
+	<classpathentry excluding="gov/noaa/pmel/dashboard/server/new_model/TimeseriesMeasurement.java|gov/noaa/pmel/dashboard/server/new_model/" kind="src" output="test-classes" path="test"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
 	<classpathentry kind="con" path="org.eclipse.jst.j2ee.internal.web.container"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.junit.JUNIT_CONTAINER/4"/>
 	<classpathentry kind="con" path="com.google.gwt.eclipse.core.GWT_CONTAINER"/>
-	<classpathentry kind="lib" path="lib/tws_client.jar"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.USER_LIBRARY/lombok"/>
+	<classpathentry kind="lib" path="lib/tws_client.jar"/>
 	<classpathentry kind="con" path="com.gwtplugins.gwt.eclipse.core.GWT_CONTAINER"/>
+	<classpathentry kind="src" path=".apt_generated">
+		<attributes>
+			<attribute name="optional" value="true"/>
+		</attributes>
+	</classpathentry>
 	<classpathentry kind="output" path="war/WEB-INF/classes"/>
 </classpath>
