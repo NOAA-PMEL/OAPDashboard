@@ -15,6 +15,7 @@ import com.google.gwt.safehtml.shared.SafeHtmlUtils;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.uibinder.client.UiHandler;
+import com.google.gwt.user.client.History;
 import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.google.gwt.user.client.ui.Button;
@@ -394,7 +395,7 @@ public class MetadataManagerPage extends CompositeWithUsername {
     private void showDataListPage() {
         metadataEditorFrame.setUrl("about:_blank");
         UploadDashboard.showAutoCursor();
-		DatasetListPage.showPage();
+        History.back();
     }
     
     private void sendCurrentMetadataToMetaEd(String datasetId) {
@@ -464,7 +465,7 @@ public class MetadataManagerPage extends CompositeWithUsername {
 			// having it request the updated cruises for the user from the server
 //			uploadForm.reset();
 //			mdUpload.getElement().setPropertyString("value", "");
-			DatasetListPage.showPage();
+            History.back();
 		}
 		else {
 			// Unknown response, just display the entire message

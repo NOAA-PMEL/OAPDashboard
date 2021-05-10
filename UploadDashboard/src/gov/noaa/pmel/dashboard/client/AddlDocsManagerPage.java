@@ -27,6 +27,7 @@ import com.google.gwt.user.cellview.client.ColumnSortEvent.ListHandler;
 import com.google.gwt.user.cellview.client.DataGrid;
 import com.google.gwt.user.cellview.client.TextColumn;
 import com.google.gwt.user.client.DOM;
+import com.google.gwt.user.client.History;
 import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.google.gwt.user.client.ui.Button;
@@ -295,8 +296,7 @@ public class AddlDocsManagerPage extends CompositeWithUsername {
 
 	@UiHandler("dismissButton")
 	void cancelOnClick(ClickEvent event) {
-		// Change to the latest cruise listing page.
-		DatasetListPage.showPage();
+        History.back();
 	}
 
 	@UiHandler("uploadButton") 

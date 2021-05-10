@@ -371,7 +371,10 @@ public class UploadDashboard implements EntryPoint, ValueChangeHandler<String> {
             singleton.currentPage.showing();
             RootLayoutPanel.get().add(singleton.currentPage);
             newPage.setBuildVersion(buildVersion);
-    		History.newItem(newPage.pageName(), false);
+            ApplicationHeaderTemplate._currentPage = newPage.pageName();
+            if ( ! PagesEnum.SHOW_DATASETS.name().equals(newPage.pageName())) {
+        		History.newItem(newPage.pageName(), false);
+            }
             Window.setTitle("SDIS " + newPage.pageName());
         } else {
             logToConsole("Null current page!");
@@ -445,6 +448,7 @@ public class UploadDashboard implements EntryPoint, ValueChangeHandler<String> {
 	@Override
 	public void onValueChange(ValueChangeEvent<String> event) {
 		String token = event.getValue();
+        GWT.log("history event:"+token);
 		if ( (token == null) || token.isEmpty() || (currentPage == null) ) {
 			// Initial history setup; show the cruise list page
             GWT.log("Initial page load");
@@ -476,6 +480,7 @@ public class UploadDashboard implements EntryPoint, ValueChangeHandler<String> {
                         break;
                     case SUBMIT_TO_ARCHIVE:
             			SubmitToArchivePage.redisplayPage(currentPage.getUsername());
+                        break;
                     case SHOW_DATASETS:
                     default:
             			DatasetListPage.showPage();

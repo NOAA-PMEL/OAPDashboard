@@ -21,6 +21,7 @@ import com.google.gwt.logging.client.ConsoleLogHandler;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.uibinder.client.UiHandler;
+import com.google.gwt.user.client.History;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.google.gwt.user.client.ui.Button;
 import com.google.gwt.user.client.ui.FlowPanel;
@@ -366,7 +367,7 @@ public class DatasetPreviewPage extends CompositeWithUsername {
 	void cancelOnClick(ClickEvent event) {
 		availablePlots = null;
 		UploadDashboard.closePreviews(this);
-		DatasetListPage.showPage();
+        History.back();
 	}
 
 }

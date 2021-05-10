@@ -633,6 +633,7 @@ public class DataColumnSpecsPage extends CompositeWithUsername {
 	 * associated with this page matches the given username.
 	 */
 	static void redisplayPage(String username) {
+        GWT.log("redisplay dataColumns: " + username);
 		if ( (username == null) || username.isEmpty() || 
 			 (singleton == null) || ! singleton.getUsername().equals(username) ) {
 			DatasetListPage.showPage();
@@ -948,7 +949,7 @@ public class DataColumnSpecsPage extends CompositeWithUsername {
 			// No changes since last update
 			// If only one cruise, done
 			if ( expocodes.size() < 2 ) {
-				DatasetListPage.showPage();
+                History.back();
 				return;
 			}
 			// Put up the wait cursor and send the rest of the cruises through the sanity checker
@@ -958,7 +959,7 @@ public class DataColumnSpecsPage extends CompositeWithUsername {
 				@Override
 				public void onSuccess(Void result) {
 					// Go to the list of cruises without comment; return to the normal cursor
-					DatasetListPage.showPage();
+                    History.back();
 					UploadDashboard.showAutoCursor();
 					return;
 				}
@@ -966,7 +967,7 @@ public class DataColumnSpecsPage extends CompositeWithUsername {
 				public void customFailure(Throwable caught) {
                     Window.alert("Error updating column specifications: " + caught.toString());
 					// Go to the list of cruises without comment; return to the normal cursor
-					DatasetListPage.showPage();
+                    History.back();
 					UploadDashboard.showAutoCursor();
 					return;
 				}

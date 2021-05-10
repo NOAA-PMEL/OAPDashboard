@@ -50,7 +50,6 @@ public abstract class CompositeWithUsername extends Composite {
 			this.username = "";
 		else
 			this.username = username;
-        header._currentPage = pageName;    // XXX This shouldn't happen here.  All should be in setPageInfo or such
 	}
     
 	public String pageName() { return pageName; }

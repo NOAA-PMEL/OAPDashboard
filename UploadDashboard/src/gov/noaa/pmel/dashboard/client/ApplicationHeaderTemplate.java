@@ -49,7 +49,7 @@ public class ApplicationHeaderTemplate extends Composite {
     @UiField MenuItem logoutSeparator;
     @UiField MenuItem logoutBtn;
     
-    String _currentPage = "";
+    static String _currentPage = "";
     
     boolean overMenu = false;
     

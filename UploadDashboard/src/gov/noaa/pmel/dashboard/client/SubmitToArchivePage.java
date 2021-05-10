@@ -20,6 +20,7 @@ import com.google.gwt.safehtml.shared.SafeHtmlUtils;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.uibinder.client.UiHandler;
+import com.google.gwt.user.client.History;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.google.gwt.user.client.ui.Anchor;
 import com.google.gwt.user.client.ui.Button;
@@ -321,6 +322,7 @@ public class SubmitToArchivePage extends CompositeWithUsername implements DataSu
 	}
 
     static void redisplayPage(String username) {
+        GWT.log("redisplay submit: " + username);
         if ( (username == null) || username.isEmpty() || 
              (singleton == null) || ! singleton.getUsername().equals(username) ) {
             DatasetListPage.showPage();
@@ -880,7 +882,7 @@ public class SubmitToArchivePage extends CompositeWithUsername implements DataSu
     @UiHandler("cancelButton")
     static void cancelOnClick(ClickEvent event) {
 		// Return to the list of cruises which could have been modified by this page
-		DatasetListPage.showPage();
+        History.back();
 	}
 
 	@UiHandler("submitButton")

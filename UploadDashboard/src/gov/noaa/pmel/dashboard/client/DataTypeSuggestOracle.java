@@ -3,7 +3,6 @@ package gov.noaa.pmel.dashboard.client;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.List;
 import java.util.Map.Entry;
 import java.util.logging.Logger;
@@ -13,9 +12,6 @@ import com.google.gwt.safehtml.shared.SafeHtmlUtils;
 import com.google.gwt.safehtml.shared.annotations.IsSafeHtml;
 import com.google.gwt.user.client.rpc.IsSerializable;
 import com.google.gwt.user.client.ui.SuggestOracle;
-import com.google.gwt.user.client.ui.SuggestOracle.Callback;
-import com.google.gwt.user.client.ui.SuggestOracle.Request;
-import com.google.gwt.user.client.ui.SuggestOracle.Suggestion;
 
 public class DataTypeSuggestOracle extends SuggestOracle {
 	private static Logger logger = Logger.getLogger(DataTypeSuggestOracle.class.getName());

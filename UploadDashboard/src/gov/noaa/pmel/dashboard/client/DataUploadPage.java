@@ -17,6 +17,7 @@ import com.google.gwt.safehtml.shared.SafeHtmlUtils;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.uibinder.client.UiHandler;
+import com.google.gwt.user.client.History;
 import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.ui.Anchor;
 import com.google.gwt.user.client.ui.Button;
@@ -441,7 +442,7 @@ public class DataUploadPage extends CompositeWithUsername {
 	void cancelButtonOnClick(ClickEvent event) {
 		// Return to the cruise list page after updating the cruise list
         closePopups();
-		DatasetListPage.showPage();
+        History.back();
 		// Make sure the normal cursor is shown
 		UploadDashboard.showAutoCursor();
 	}
