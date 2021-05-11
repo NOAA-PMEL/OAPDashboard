@@ -10,6 +10,8 @@ import java.util.TreeMap;
 
 import com.google.gwt.cell.client.ValueUpdater;
 import com.google.gwt.core.client.GWT;
+import com.google.gwt.event.dom.client.ChangeEvent;
+import com.google.gwt.event.dom.client.ChangeHandler;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.KeyUpEvent;
 import com.google.gwt.event.logical.shared.SelectionEvent;
@@ -132,7 +134,9 @@ public class DataTypeSelectorPopup extends Composite {
 
 		selectButton.setText("Select");
 		cancelButton.setText("Cancel");
-
+		// enabled on selection from the list.
+        selectButton.setEnabled(false);
+        
         init();
 	}
 
@@ -152,8 +156,17 @@ public class DataTypeSelectorPopup extends Composite {
                 unitsListBox.clear();
                 unitsPnl.setVisible(false);
                 
+                selectButton.setEnabled(true);
+                
                 List<String> theList = getUnitsList(event.getSelectedItem().getReplacementString(), unitsLookup);
                 setUnits(theList, 0);
+            }
+        });
+        unitsListBox.addChangeHandler(new ChangeHandler() {
+            @Override
+            public void onChange(ChangeEvent event) {
+                GWT.log("units changed:"+event);
+                selectButton.setEnabled(true);
             }
         });
     }
@@ -275,6 +288,7 @@ public class DataTypeSelectorPopup extends Composite {
 
     @UiHandler("showAllButton")
     void showAllOnClick(ClickEvent e) {
+        selectButton.setEnabled(false);
         showAllChoices();
     }
     
@@ -292,6 +306,7 @@ public class DataTypeSelectorPopup extends Composite {
         descText.setText("");
         setUnits(null, 0);
         unitsPnl.setVisible(false);
+        selectButton.setEnabled(false);
     }
     
     public String getSelection() { return dataSelector.getValue().trim(); } // ???
