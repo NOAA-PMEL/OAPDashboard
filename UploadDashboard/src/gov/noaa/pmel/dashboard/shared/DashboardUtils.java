@@ -213,7 +213,7 @@ public class DashboardUtils {
 	 */
 	public static final String UNKNOWN_VARNAME = "unknown";
 	public static final DataColumnType UNKNOWN = new DataColumnType(UNKNOWN_VARNAME, 
-			0.0, "(unknown)", "Unspecified data type", false, NO_UNITS);
+			0.0, "(not specified)", "Unspecified data type", false, NO_UNITS);
 
 	/**
 	 * OTHER is for supplementary data in the user's original data file but 
