@@ -59,6 +59,7 @@ import gov.loc.repository.bagit.writer.BagWriter;
 import gov.noaa.pmel.dashboard.actions.DatasetSubmitter;
 import gov.noaa.pmel.dashboard.server.DashboardConfigStore;
 import gov.noaa.pmel.dashboard.server.submission.status.SubmissionRecord;
+import gov.noaa.pmel.dashboard.shared.DashboardDataset;
 import gov.noaa.pmel.oads.xml.a0_2_2.Transform;
 import gov.noaa.pmel.tws.util.ApplicationConfiguration;
 import gov.noaa.pmel.tws.util.FileUtils;
@@ -142,10 +143,12 @@ public class Bagger implements ArchiveBundler {
     private Path stuffit() throws IOException {
         DataFileHandler dataFiler = _store.getDataFileHandler();
         File dataFile  = dataFiler.datasetUploadedFile(_datasetId);
-        return stuffit(dataFile);
+        DashboardDataset dd = dataFiler.getDatasetFromInfoFile(_datasetId);
+        String observationType = dd.getUserObservationType();
+        return stuffit(dataFile, observationType);
     }
     
-    private Path stuffit(File dataFile) throws IOException {
+    private Path stuffit(File dataFile, String observationType) throws IOException {
         File rootDir = new File(_contentRoot, "staging");
         File bagRoot = new File(rootDir, _datasetId);
         Path bagPath = bagRoot.toPath();
@@ -185,10 +188,10 @@ public class Bagger implements ArchiveBundler {
                writeFileTo(mfile, meta); 
            } else if (mfile.getAbsoluteFile().equals(metaFile.getAbsoluteFile())) {
                writeFileTo(mfile, meta); 
-               if ( ApplicationConfiguration.getProperty("oap.archive.submit_ocads", false)) {
+               if ( ApplicationConfiguration.getProperty("oap.archive.submit_ocads", true)) {
                    String ocadsFileName = mfile.getName().replace("metadata", "machineUse");
                    File ocadsFile = new File(meta, ocadsFileName);
-                   Transform.main(new String[] { mfile.getPath(), ocadsFile.getPath() });
+                   Transform.main(new String[] { "-o", observationType, mfile.getPath(), ocadsFile.getPath() });
                }
            } else {
                writeFileTo(mfile, supl);
