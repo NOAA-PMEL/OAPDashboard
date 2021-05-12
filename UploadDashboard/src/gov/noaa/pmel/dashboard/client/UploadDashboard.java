@@ -341,6 +341,11 @@ public class UploadDashboard implements EntryPoint, ValueChangeHandler<String> {
 		UploadDashboard.showMessage(exceptMsg);
 	}
 
+    public static boolean isFirefox() {
+        String browser = Window.Navigator.getUserAgent();
+        GWT.log("browser "+ browser);
+        return browser.contains("Firefox");
+    }
 	/**
 	 * Updates the displayed page by removing any page 
 	 * currently being shown and adding the given page.
@@ -360,6 +365,7 @@ public class UploadDashboard implements EntryPoint, ValueChangeHandler<String> {
         sesh.ping(sessionId, callback);
     }
 	public static void _updateCurrentPage(CompositeWithUsername newPage) {
+        GWT.log("_update to: " + newPage.pageName());
         getSingleton();
         closePopups();
         if ( singleton.currentPage != null ) {
@@ -373,6 +379,7 @@ public class UploadDashboard implements EntryPoint, ValueChangeHandler<String> {
             newPage.setBuildVersion(buildVersion);
             ApplicationHeaderTemplate._currentPage = newPage.pageName();
             if ( ! PagesEnum.SHOW_DATASETS.name().equals(newPage.pageName())) {
+                GWT.log("Adding new history: " + newPage.pageName());
         		History.newItem(newPage.pageName(), false);
             }
             Window.setTitle("SDIS " + newPage.pageName());
@@ -381,6 +388,7 @@ public class UploadDashboard implements EntryPoint, ValueChangeHandler<String> {
         }
 	}
 	public static void updateCurrentPage(CompositeWithUsername newPage, boolean doPing) {
+        GWT.log("update ping " + doPing + " to " + newPage.pageName());
         if ( doPing ) {
             pingService(new OAPAsyncCallback<Void>() {
                 @Override
@@ -448,7 +456,7 @@ public class UploadDashboard implements EntryPoint, ValueChangeHandler<String> {
 	@Override
 	public void onValueChange(ValueChangeEvent<String> event) {
 		String token = event.getValue();
-        GWT.log("history event:"+token);
+		GWT.log("history event:"+token);
 		if ( (token == null) || token.isEmpty() || (currentPage == null) ) {
 			// Initial history setup; show the cruise list page
             GWT.log("Initial page load");

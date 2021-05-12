@@ -200,10 +200,12 @@ public class AddlDocsManagerPage extends CompositeWithUsername {
 	 * 		cruises to use 
 	 */
 	static void showPage(DashboardDatasetList cruiseList) {
+        GWT.log("show AddlDocs");
 		if ( singleton == null )
 			singleton = new AddlDocsManagerPage();
         singleton.uploadForm.reset();
 		singleton.updateAddlDocs(cruiseList);
+        singleton.wasActuallyOk = false;
 		UploadDashboard.updateCurrentPage(singleton, UploadDashboard.DO_PING);
 	}
 
@@ -212,6 +214,7 @@ public class AddlDocsManagerPage extends CompositeWithUsername {
 	 * associated with this page matches the given username.
 	 */
 	static void redisplayPage(String username) {
+        GWT.log("redisplay AddlDocs:" + username);
 		if ( (username == null) || username.isEmpty() || 
 			 (singleton == null) || ! singleton.getUsername().equals(username) ) {
 			DatasetListPage.showPage();
@@ -296,6 +299,7 @@ public class AddlDocsManagerPage extends CompositeWithUsername {
 
 	@UiHandler("dismissButton")
 	void cancelOnClick(ClickEvent event) {
+	    GWT.log("addl docs history back.");
         History.back();
 	}
 
@@ -354,10 +358,10 @@ public class AddlDocsManagerPage extends CompositeWithUsername {
 			}
 			askOverwritePopup.askQuestion(message);
 			return;
+		} else {
+    		assignTokens();
+    		uploadForm.submit();
 		}
-
-		assignTokens();
-		uploadForm.submit();
 	}
 
 	@UiHandler("uploadForm")
@@ -367,6 +371,7 @@ public class AddlDocsManagerPage extends CompositeWithUsername {
 
 	@UiHandler("uploadForm")
 	void uploadFormOnSubmitComplete(SubmitCompleteEvent event) {
+	    GWT.log("submit form complete");
 		clearTokens();
 		// Process the returned message
 		processResultMsg(event.getResults());
@@ -382,12 +387,15 @@ public class AddlDocsManagerPage extends CompositeWithUsername {
 			}
 			@Override
 			public void customFailure(Throwable ex) {
+			    GWT.log("addl docs upload custom failure:"+ex);
 				UploadDashboard.showFailureMessage(ADDL_DOCS_LIST_FAIL_MSG, ex);
 				UploadDashboard.showAutoCursor();
 			}
 		});
 	}
 
+    // deal with a Firefox history bug
+    private boolean wasActuallyOk = false;
 	/**
 	 * Process the message returned from the upload of a dataset.
 	 * 
@@ -395,21 +403,29 @@ public class AddlDocsManagerPage extends CompositeWithUsername {
 	 * 		message returned from the upload of a dataset
 	 */
 	private void processResultMsg(String resultMsg) {
+	    GWT.log("upload result:"+resultMsg+".");
 		if ( resultMsg == null ) {
+            UploadDashboard.logToConsole("null resultMsg fail.");
 			UploadDashboard.showMessage(UNEXPLAINED_FAIL_MSG);
 			return;
 		}
 		resultMsg = resultMsg.trim();
 		if ( resultMsg.startsWith(DashboardUtils.SUCCESS_HEADER_TAG) ) {
             uploadForm.reset();
+            wasActuallyOk = true;
 			// Do not show any messages on success;
 			// depend on the updated list of documents to show success
-			;
 		}
 		else {
-			// Unknown response, just display the entire message
-			UploadDashboard.showMessage(EXPLAINED_FAIL_MSG_START + 
+		    GWT.log("unknown response fail:"+resultMsg);
+            GWT.log("isFirefox:"+UploadDashboard.isFirefox()+" and wasOk: " + wasActuallyOk);
+            if ( UploadDashboard.isFirefox() && wasActuallyOk ) {
+                History.back();
+            } else {
+    			// Unknown response, just display the entire message
+    			UploadDashboard.showMessage(EXPLAINED_FAIL_MSG_START + 
 					SafeHtmlUtils.htmlEscape(resultMsg) + EXPLAINED_FAIL_MSG_END);
+            }
 		}
 	}
 
