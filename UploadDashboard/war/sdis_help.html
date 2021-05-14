@@ -9,6 +9,17 @@
       display: block;
       padding: 5px 20px 20px 20px;
     }
+    #intro_div a {
+        font-style: oblique;
+        color: black;
+        /* text-decoration-line:none; */
+    }
+    .back_up {
+        float:right;
+    }
+    .back_up a {
+        color: black;
+    }
 </style>
 </head>
 <body>
@@ -23,6 +34,7 @@
 <a href="#MANAGE_DATA_FILE">Manage Data File</a><br/>
 <a href="#PREVIEW_DATA">Preview Plots</a><br/>
 <a href="#EDIT_METADATA">Metadata Entry</a><br/>
+<a href="#MANAGE_DOCUMENTS">Supplemental Documents</a><br/>
 <a href="#SUBMIT_TO_ARCHIVE">Submit To Archive</a><br/>
 <a href="#CLONE">Clone a Submission</a><br/>
 </div>
@@ -30,14 +42,34 @@
 
 
 <h3 id="INTRO">Introduction</h3>
+<div id="intro_div">
 The Ocean Acidification Program’s Science Data Information System (SDIS, the “Dashboard”)
-is used to upload new and updated datasets for submission to NCEI. 
+is used to upload new and updated datasets for submission for archival at NCEI. 
+<p/>
+For certain observation and file types, the tool can run data sanity checks to identify 
+obvious or potential errors, and generate preview plots to visually check the data.
+<p/>
+The workflow generally follows the tool buttons down the left-hand side, starting with 
+<a href="#UPLOAD_DATA">New Submission</a>
+down to <a href="#SUBMIT_TO_ARCHIVE">Submit To Archive</a>.
+You can <a href="#IDENTIFY_COLUMNS">identify the data columns</a>, 
+upload a <a href="#MANAGE_DATA_FILE">new or updated data file</a> if necessary,
+generate <a href="#PREVIEW_DATA">preview plots</a>,
+edit or upload <a href="#EDIT_METADATA">dataset metadata</a>, and
+upload any additional <a href="#MANAGE_DOCUMENTS">supplemental documents</a>.
+<p/>
+In addition, you can <a href="#CLONE">clone an existing submission</a> to copy the metadata
+from one submission to start the submission process for another data file having the same or very similar metadata.
+</div>
+<p/>
+To submit a dataset to NCEI, you must enter at least the minimum required metadata.  Without that, you will not be able to submit.
+<!-- 
 The data columns in the dataset(s) you upload can be identified from the data column headers, 
 and the data can be checked for obvious errors. 
 A set of plots of the data (the “Preview Plots”) are available to help detect inconsistencies 
 or other errors in your data. 
-To submit a dataset to NCEI, you also need to enter or upload one or more metadata files describing the data and how the data was obtained. 
-<br/><br/>
+ -->
+<p/>
 There is a 10 minute <a href="https://www.youtube.com/watch?v=ZZL_wQWr38A" target="_video">video tutorial</a> of the SDIS available.
 
 <h3 id="SHOW_DATASETS">Main Page: Dataset List</h3>
@@ -48,8 +80,8 @@ Along the left side of the page are the tools that are available, including star
 identifying data columns, managing the data file, entering metadata, adding supplemental documents, previewing the data, and submitting the dataset to the archive.  
 Only those tools that are available for the currently selected dataset will be enabled.  To select a dataset, click on the checkbox in the first column.
 
-
-<h3 id="UPLOAD_DATA">Uploading Data Files</h3>
+<div id="UPLOAD_DATA" class="back_up"><a href="#Contents">Top</a></div> 
+<h3>Uploading Data Files</h3>
 On the upload page, you are first asked to specify the observation type.  
 This is because the different observation types are handled differently.   
 Currently, data checking and preview plots are only available for timeseries, surface measurements, and profiles.
@@ -66,7 +98,10 @@ All subsequent (non-comment) lines must have the same number of columns as there
 Lines at the beginning of the file before the column headers will be ignored, provided they do not contain multiple columns, 
 as will any line that begins with the ‘#’ character, assumed to be a comment line.
 <p/>
-The following is the start of an acceptable CSV file with units as part of the column name header line. 
+Some common errors that have been seen include extra commas at the end of lines causing unequal numbers of columns in rows, 
+whole lines that are quoted, and introductory rows before the column headers that have more than 5 columns.
+<p/>
+The following is an example of the start of an acceptable CSV file with units as part of the column name header line. 
 The data header and data values lines were truncated to make it easier to see the format. 
 <pre><code>
 Expocode: 42AZ20020427 
@@ -95,8 +130,8 @@ JD_GMT, DATE_UTC, TIME_UTC, LAT, LONG, ...
 </code>
 </pre>
 
-
-<h3 id="IDENTIFY_COLUMNS">Identifying Data Columns</h3>
+<div id="IDENTIFY_COLUMNS" class="back_up"><a href="#Contents">Top</a></div> 
+<h3>Identifying Data Columns</h3>
 After you upload your datafile, and provided the observation type is one that can be checked and the data file can be read by the system,  
 you can choose to run the data checks on your dataset.  To do this, you must first identify the variable type for each column using the DataType Selector.  
 When you upload a data file, the Dashboard will examine it and attempt to identify the column header names and units according to your previous selections.  
@@ -139,18 +174,20 @@ Note that the SDIS does not make any changes to your data and you cannot edit yo
 <p>
 If you need to make changes to your data, edit your copy, and then upload the edited file using the <a href="#MANAGE_DATA_FILE">Manage Data File</a> tool.
 
-
-<h3 id="SHOW_DATA_MESSAGES">Data Checker Messages</h3>
+<div id="SHOW_DATA_MESSAGES" class="back_up"><a href="#Contents">Top</a></div> 
+<h3>Data Checker Messages</h3>
 If the data check found any errors or issues with the data, they are shown on the Data Errors and Warnings page.
 <p>
 The errors and warnings will have a brief description of the problem, as well as the row and column if applicable.
 <p>
 Double-clicking on the error or warning row in the list will take you to the row and column in the data.
 
-
-<h3 id="MANAGE_DATA_FILE">Manage Data File</h3>
+<div id="MANAGE_DATA_FILE" class="back_up"><a href="#Contents">Top</a></div> 
+<h3>Manage Data File</h3>
 The Manage Data File tool is used to upload a new data file for a submission record. This file will replace the existing file.
-<h3 id="PREVIEW_DATA">Previewing Data</h3>
+
+<div id="PREVIEW_DATA" class="back_up"><a href="#Contents">Top</a></div> 
+<h3>Previewing Data</h3>
 After uploading and checking the data for a dataset, you may be able to examine plots of your data on the “Preview Data” page. 
 <p>
 This is an optional step and is only available for certain observation types and files in recognized formats.
@@ -162,8 +199,8 @@ In this case, you can correct the identity of the data columns in the Dashboard 
 <p>
 Please note that for larger datasets, the generation of the plots can take as long as a minute or more.
 
-
-<h3 id="EDIT_METADATA">Metadata Entry</h3>
+<div id="EDIT_METADATA" class="back_up"><a href="#Contents">Top</a></div> 
+<h3>Metadata Entry</h3>
 Before you submit a dataset for archival, you must provide metadata for the data you have uploaded. 
 This metadata should identify each of the data columns in your data file (including data columns 
 that are marked as “IGNORED” data types) and describe details of how the data was collected. 
@@ -183,14 +220,14 @@ While there is extensive metadata that is requested - and is desirable in order 
 there is only a limited number of absolutely required fields without which you will be unable to submit for archival.  
 Those fields include the Data Submitter name, organization, and contact information, at least one PI identified, and citation Title, Abstract, and List of Authors.
 
-
-<h3 id="MANAGE_DOCUMENTS">Supplemental Documents</h3>
+<div id="MANAGE_DOCUMENTS" class="back_up"><a href="#Contents">Top</a></div> 
+<h3>Supplemental Documents</h3>
 Within the SDIS, you can also upload any additional content in whatever format you chose, using the “Supplemental Documents” page. 
 The files you upload will be simply uploaded and associated with the dataset; the contents are not examined or modified in any way. 
 Because of this, the uploaded files should be in standard formats that will be easy to read by scientists using or reviewing your data. 
 
-
-<h3 id="SUBMIT_TO_ARCHIVE">Submit to Archive</h3>
+<div id="SUBMIT_TO_ARCHIVE" class="back_up"><a href="#Contents">Top</a></div> 
+<h3>Submit to Archive</h3>
 After entering or uploading metadata for the dataset, you are then able to submit the data, metadata, and any additional documentation, for archival.
 <p>
 If the metadata are incomplete, you will not be able to submit.  See the <a href="#EDIT_METADATA">Metadata Entry</a> section for the minimum required metadata.
@@ -203,8 +240,8 @@ If the automatic data checker found what it thought to be errors in the data, or
 you will be required to acknowledge that you are submitting the dataset in spite of these findings.  
 You will also be required to agree to the NCEI Publication Policy Agreement.
 
-
-<h3 id="CLONE">Clone Submission</h3>
+<div id="CLONE" class="back_up"><a href="#Contents">Top</a></div> 
+<h3>Clone Submission</h3>
 Cloning an existing submission record will create a new submission record without a data file with a copy of the metadata from the existing submission.
 <p>
 After cloning a record, you are required to check the metadata to be sure that all the fields are still appropriate for the new data file.
