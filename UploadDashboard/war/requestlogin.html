@@ -18,11 +18,11 @@ boxy {
     position: fixed;
     left: 50%;
     top: 50%;
-    transform: translate(-50%, -70%);
+    transform: translate(-50%, -50%);
     
     display: flex;
     flex-direction: column;
-    width: 25em;
+    width: 30em;
 }
 .header_section {
     text-align: center;
@@ -45,6 +45,16 @@ boxy {
 }
 .required {
     margin-right: .25em;
+}
+.agreement_chkbox {
+    margin-top: .6em;
+    margin-left: 7em;
+    margin-right: .9em;
+}
+.agreement_required {
+    margin-right: 1em;
+}
+.agreement_label {
 }
 .first_plus {
     flex: 0 0 9em;
@@ -99,7 +109,7 @@ var row_id_num = 0;
   function getResidRow(rowNum) {
     var resid_row = '<div class="row" id="resid_row_'+rowNum+'">' +
                         '<div class="first_plus" >' +
-                            '<select id="rid_select_'+rowNum+'" style="height:18px;" class="boxy" name="resid_type_'+rowNum+'" tabindex="'+(8+2*n_resid)+'">' + // onchange="selectChanged(this)" 
+                            '<select id="rid_select_'+rowNum+'" style="height:20px;" class="boxy" name="resid_type_'+rowNum+'" tabindex="'+(8+2*n_resid)+'">' + // onchange="selectChanged(this)" 
                                 '<option selected disabled>Select One</option>' +
                                 '<option>ORCID</option>' +
                                 '<option>ResearcherID</option>' +
@@ -107,7 +117,7 @@ var row_id_num = 0;
                             '</select>' +
                         '</div>' +
                         '<input id="rid_input_'+rowNum+'"  tabindex="'+(9+2*n_resid)+'" style="height:21px; margin-right:5px;" class="boxy remainder_width" type="text" name="resid_'+rowNum+'" />' +
-                        '<button style="height:18px; margin-top:3px;" class="boxy" onclick="removeResidRow('+rowNum+')" style="cursor:pointer;" title="Remove Line">X</button>' +
+                        '<button style="height:24px; margin-top:3px;" class="boxy" onclick="removeResidRow('+rowNum+')" style="cursor:pointer;" title="Remove Line">X</button>' +
                     '</div>';
      return resid_row;
   }
@@ -269,6 +279,16 @@ var row_id_num = 0;
 	  msgDiv.innerHTML = msg;
       msgDiv.style.color = styleClass;
   }
+  function policyAgreementClicked(chkbox) {
+      let submitBtn = document.getElementById("submitBtn");
+      let agreementChkBox = document.getElementById("agreementChkbox");
+      console.log("agreed:"+agreementChkbox);
+      submitBtn.disabled = ! agreementChkbox.checked;
+	  if ( !checkRequiredFields()) {
+		  highlightMissing();
+		  setMessage("Please fill in required fields.", "red");
+	  }
+  }
 </script>
 <div class="pageheader" style="position: absolute; left: 0px; top: 0px; right: 0px; bottom: 0px;">
     <img class="headerLogo" src="images/NOAA_logo.png"></img>
@@ -317,7 +337,12 @@ var row_id_num = 0;
           <input tabindex="6" style="width: 3em;" type="text" name="extn" />
       </div>
     </div>
- <!--
+    <div class="row">
+      <div class="field_label field_required">Organization:</div>
+      <span id="organizationRequired" class="required">*</span>
+      <input id="organizationBox" tabindex="7" class="remainder_width" type="text" name="org" onchange="clearThisHighlight(this)" />
+    </div>
+<!-- 
     <div class="resid_block">
         <div class="row">
             <div class="first_plus">Researcher ID:</div>
@@ -326,20 +351,20 @@ var row_id_num = 0;
         </div>
         <div id="resid_rows" ></div>
     </div>
- --> 
+-->
     <div class="row">
-      <div class="field_label field_required">Organization:</div>
-      <span id="organizationRequired" class="required">*</span>
-      <input id="organizationBox" tabindex="12" class="remainder_width" type="text" name="org" onchange="clearThisHighlight(this)" />
+      <input class="agreement_chkbox" tabindex="13" type="checkbox" onclick="policyAgreementClicked(this)" id="agreementChkbox" name="agreeable">
+      <span class="required">*</span>
+      <div class="remainder_width">I agree to the NCEI <a target="_blank" href="SDIS_user_agreement.txt">User&nbsp;Agreement</a>.</div>
     </div>
     <div style="padding-top:.5em;">
       <div style="text-align:left; display:inline;" class="info_msg" id="info_msg">* Required Field.</div>
       <div style="text-align:right; display:inline; float:right;">
-      <input tabindex="14" type="button" value="Cancel" onclick="cancelRequest()" />
+      <input tabindex="15" type="button" value="Cancel" onclick="cancelRequest()" />
       &nbsp;
-      <input tabindex="13" type="button" onclick="doSubmit()" value="Submit" /></div> <!-- onclick="dismissDialog(this)"  -->
+      <input id="submitBtn" tabindex="14" type="button" disabled onclick="doSubmit()" value="Submit" /></div> <!-- onclick="dismissDialog(this)"  -->
     </div>
-    <div tabindex="15" onfocus="resetFocus()"></div>
+    <div tabindex="16" onfocus="resetFocus()"></div>
   </div>
 </form>
 <div class="pagefooter" >
