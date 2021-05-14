@@ -395,7 +395,11 @@ public class MetadataManagerPage extends CompositeWithUsername {
     private void showDataListPage() {
         metadataEditorFrame.setUrl("about:_blank");
         UploadDashboard.showAutoCursor();
-        History.back();
+        if ( UploadDashboard.isFirefox()) {
+            DatasetListPage.showPage();
+        } else {
+            History.back();
+        }
     }
     
     private void sendCurrentMetadataToMetaEd(String datasetId) {
