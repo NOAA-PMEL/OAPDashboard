@@ -159,7 +159,8 @@ public class DataTypeSelectorPopup extends Composite {
                 selectButton.setEnabled(true);
                 
                 List<String> theList = getUnitsList(event.getSelectedItem().getReplacementString(), unitsLookup);
-                setUnits(theList, 0);
+                String labelText = "date".equalsIgnoreCase(temp) ? "Format:" : "Units:";
+                setUnits(theList, 0, labelText);
             }
         });
         unitsListBox.addChangeHandler(new ChangeHandler() {
@@ -171,21 +172,22 @@ public class DataTypeSelectorPopup extends Composite {
         });
     }
     
-    void setUnits(List<String> unitsList, int selectedIndex) {
+    void setUnits(List<String> unitsList, int selectedIndex, String labelText) {
         GWT.log("set units:"+unitsList + 
                 ( unitsList != null ? " (" + unitsList.size() + ")" : "()" ) +
                 ", idx:"+ selectedIndex);
-                if (unitsList == null || unitsList.isEmpty() || unitsList.get(0).equals("")) {
-                    unitsListBox.clear();
-                    unitsPnl.setVisible(false);
-                }
-                else {
-                    for ( String data : unitsList ) {
-                        unitsListBox.addItem(data);
-                    }
-                    unitsListBox.setSelectedIndex(selectedIndex);
-                    unitsPnl.setVisible(true);
-                }
+        if (unitsList == null || unitsList.isEmpty() || unitsList.get(0).equals("")) {
+            unitsListBox.clear();
+            unitsPnl.setVisible(false);
+        }
+        else {
+            for ( String data : unitsList ) {
+                unitsListBox.addItem(data);
+            }
+            unitsListBox.setSelectedIndex(selectedIndex);
+            unitsLbl.setText(labelText);
+            unitsPnl.setVisible(true);
+        }
     }
 
 	private static DataTypeSuggestOracle getDataOracle(Map<String, DataColumnType> datatypeMap) {
@@ -257,7 +259,8 @@ public class DataTypeSelectorPopup extends Composite {
             dataSelector.setValue(columnType.getDisplayName());
             descText.setText(columnType.getDescription());
         }
-        setUnits(columnType.getUnits(), columnType.getSelectedUnitIndex());
+        String labelText = columnType.typeNameEquals(DashboardUtils.DATE) ? "Format:" : "Units:";
+        setUnits(columnType.getUnits(), columnType.getSelectedUnitIndex(), labelText);
         UploadDashboard.logToConsole("visible? " + parentPanel.isShowing());
         DataColumnSpecsPage.preventScroll(true);
     }
@@ -304,7 +307,7 @@ public class DataTypeSelectorPopup extends Composite {
     public void reset() {
         dataSelector.setText(null);  
         descText.setText("");
-        setUnits(null, 0);
+        setUnits(null, 0, "Units:");
         unitsPnl.setVisible(false);
         selectButton.setEnabled(false);
     }
