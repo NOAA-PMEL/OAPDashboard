@@ -9,6 +9,7 @@ import java.util.List;
 import java.util.logging.Logger;
 
 import com.google.gwt.core.client.GWT;
+import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.core.client.Scheduler.ScheduledCommand;
 import com.google.gwt.uibinder.client.UiBinder;
@@ -59,7 +60,7 @@ public class ApplicationHeaderTemplate extends Composite {
 
     private static ApplicationHeaderTemplateUiBinder uiBinder = GWT.create(ApplicationHeaderTemplateUiBinder.class);
 
-    static MyWindow helpWindow;
+    static JavaScriptObject helpWindow;
     
     public ApplicationHeaderTemplate() {
         initWidget(uiBinder.createAndBindUi(this));
@@ -150,16 +151,7 @@ public class ApplicationHeaderTemplate extends Composite {
     private void doShowHelp() {
         GWT.log("GWT log Header ShowHelp");
         logger.info("Logger Header ShowHelp");
-        
-        int screenX = MyWindow.screenX();
-        int screenY = MyWindow.screenY();
-        int btnRight = showHelpBtn.getAbsoluteLeft() + showHelpBtn.getOffsetWidth();
-        int btnBottom = showHelpBtn.getAbsoluteTop() + showHelpBtn.getOffsetHeight();
-        int helpWidth = Window.getClientWidth() / 2;
-        int helpHeight = Window.getClientHeight() / 4 * 3;
-        int offset = (2 * helpWidth / 3);
-        int helpX = screenX + btnRight - offset;
-        int helpY = screenY + btnBottom + 125;
+        JavaScriptObject theHelpWindow = helpWindow;
 //        GWT.log("screenX:"+ screenX+", screenY:" + screenY);
 //        GWT.log("btn left:"+showHelpBtn.getAbsoluteLeft() + ", width:" + showHelpBtn.getOffsetWidth());
 //        GWT.log("btn top:"+showHelpBtn.getAbsoluteTop() + ", height:" + showHelpBtn.getOffsetHeight());
@@ -167,10 +159,41 @@ public class ApplicationHeaderTemplate extends Composite {
 //        GWT.log("client width: " + Window.getClientWidth() + ", height: "+ Window.getClientHeight());
 //        GWT.log("help width: " + helpWidth + ", height: "+ helpHeight + ", offset: "  + offset);
 //        GWT.log("help helpX: " + helpX + ", helpY: "+ helpY);
-        String features = "width="+helpWidth+",height="+helpHeight+",screenX="+helpX+",screenY="+helpY+",resizable,scrollbars";
-        Window.open("sdis_help.html" + currentPageLink(), "SDIS Help", features);
-        helpWindow = MyWindow.open("sdis_help.html" + currentPageLink(), "SDIS Help", features);
-//        GWT.log(String.valueOf(helpWindow));
+        String help_page = "sdis_help.html" + currentPageLink();
+//        Window.open(help_page, "SDIS Help", features);
+//        GWT.log("helpWindow:"+String.valueOf(helpWindow));
+        int helpX;
+        int helpY;
+        int helpWidth = Window.getClientWidth() / 2;
+        int helpHeight = Window.getClientHeight() / 4 * 3;
+        if ( theHelpWindow != null ) {
+            if ( MyWindow.isOpen(theHelpWindow) ) {
+                GWT.log("theHelpWindow:"+theHelpWindow);
+                helpX = MyWindow.screenX(theHelpWindow);
+                helpY = MyWindow.screenY(theHelpWindow);
+                if ( UploadDashboard.isFirefox()) {
+                    MyWindow.close(theHelpWindow);
+                }
+                GWT.log("helpWin X:" + helpX + ", Y" + helpY);
+            } else {
+                helpX = MyWindow.lastX;
+                helpY = MyWindow.lastY;
+                GWT.log("LAST X:" + helpX + ", Y" + helpY);
+            }
+        } else {
+            int screenX = MyWindow.screenX();
+            int screenY = MyWindow.screenY();
+            int btnRight = showHelpBtn.getAbsoluteLeft() + showHelpBtn.getOffsetWidth();
+            int btnBottom = showHelpBtn.getAbsoluteTop() + showHelpBtn.getOffsetHeight();
+            int offset = (2 * helpWidth / 3);
+            helpX = screenX + btnRight - offset;
+            helpY = screenY + btnBottom + 125;
+            GWT.log("calculated X:" + helpX + ", Y" + helpY);
+        }
+        String features = "width="+helpWidth+",height="+helpHeight+","
+                        + "screenX="+helpX+",screenY="+helpY+",resizable,scrollbars";
+        helpWindow = MyWindow.open(help_page, "SDIS Help", features);
+        GWT.log("helpWindow:"+helpWindow);
     }
     
     private String currentPageLink() {
