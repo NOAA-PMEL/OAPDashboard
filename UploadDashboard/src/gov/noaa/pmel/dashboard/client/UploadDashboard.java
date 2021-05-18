@@ -344,7 +344,15 @@ public class UploadDashboard implements EntryPoint, ValueChangeHandler<String> {
     public static boolean isFirefox() {
         String browser = Window.Navigator.getUserAgent();
         GWT.log("browser "+ browser);
-        return browser.contains("Firefox");
+        return browser.toLowerCase().contains("firefox");
+    }
+    public static boolean isSafari() {
+        String browser = Window.Navigator.getUserAgent();
+        GWT.log("browser "+ browser);
+        return browser.toLowerCase().contains("safari");
+    }
+    public static boolean needsHistoryForcing() {
+        return isFirefox() || isSafari();
     }
 	/**
 	 * Updates the displayed page by removing any page 
@@ -365,7 +373,7 @@ public class UploadDashboard implements EntryPoint, ValueChangeHandler<String> {
         sesh.ping(sessionId, callback);
     }
 	public static void _updateCurrentPage(CompositeWithUsername newPage) {
-        GWT.log("_update to: " + newPage.pageName());
+        logToConsole("_update to: " + newPage.pageName());
         getSingleton();
         closePopups();
         if ( singleton.currentPage != null ) {
@@ -456,10 +464,10 @@ public class UploadDashboard implements EntryPoint, ValueChangeHandler<String> {
 	@Override
 	public void onValueChange(ValueChangeEvent<String> event) {
 		String token = event.getValue();
-		GWT.log("history event:"+token);
+		logToConsole("history event:"+token);
 		if ( (token == null) || token.isEmpty() || (currentPage == null) ) {
 			// Initial history setup; show the cruise list page
-            GWT.log("Initial page load");
+            logToConsole("Initial page load");
 			DatasetListPage.showPage();
 		} else {
             try {
@@ -475,7 +483,13 @@ public class UploadDashboard implements EntryPoint, ValueChangeHandler<String> {
                         DataMessagesPage.redisplayPage(currentPage.getUsername());
                         break;
                     case EDIT_METADATA:
-            			MetadataManagerPage.redisplayPage(currentPage.getUsername());
+                        boolean isSafari = isSafari();
+                        logToConsole("EDIT_METADATA Safari: " + isSafari);
+                        if ( isSafari ) {
+                            DatasetListPage.showPage();
+                        } else {
+                			MetadataManagerPage.redisplayPage(currentPage.getUsername());
+                        }
                         break;
                     case MANAGE_DOCUMENTS:
             			AddlDocsManagerPage.redisplayPage(currentPage.getUsername());

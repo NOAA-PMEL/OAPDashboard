@@ -299,8 +299,17 @@ public class AddlDocsManagerPage extends CompositeWithUsername {
 
 	@UiHandler("dismissButton")
 	void cancelOnClick(ClickEvent event) {
-	    GWT.log("addl docs history back.");
-        History.back();
+	    GWT.log("addl docs cancel.");
+        showDatasetsPage();
+	}
+    
+	static void showDatasetsPage() {
+	    GWT.log("addl docs show datasets.");
+//        if ( UploadDashboard.needsHistoryForcing()) {
+//            DatasetListPage.showPage();
+//        } else {
+            History.back();
+//        }
 	}
 
 	@UiHandler("uploadButton") 
@@ -419,7 +428,7 @@ public class AddlDocsManagerPage extends CompositeWithUsername {
 		else {
 		    GWT.log("unknown response fail:"+resultMsg);
             GWT.log("isFirefox:"+UploadDashboard.isFirefox()+" and wasOk: " + wasActuallyOk);
-            if ( UploadDashboard.isFirefox() && wasActuallyOk ) {
+            if ( UploadDashboard.needsHistoryForcing() && wasActuallyOk ) {
                 History.back();
             } else {
     			// Unknown response, just display the entire message
