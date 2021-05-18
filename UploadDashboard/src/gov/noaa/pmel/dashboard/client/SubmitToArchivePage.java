@@ -171,7 +171,7 @@ public class SubmitToArchivePage extends CompositeWithUsername implements DataSu
         dataIssuesPanel.setVisible(false);
         metadataIssuesPanel.setVisible(false);
         
-        showPolicyAgreement.setHref("SDIS_user_agreement.txt");
+        showPolicyAgreement.setHref("SDIS_user_agreement.html");
         showPolicyAgreement.setTarget("_blank");
         
 		cancelButton.setText("Cancel");
