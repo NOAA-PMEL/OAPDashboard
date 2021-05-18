@@ -14,12 +14,14 @@ import com.google.gwt.event.dom.client.ChangeEvent;
 import com.google.gwt.event.dom.client.ChangeHandler;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.KeyUpEvent;
+import com.google.gwt.event.logical.shared.AttachEvent;
 import com.google.gwt.event.logical.shared.SelectionEvent;
 import com.google.gwt.event.logical.shared.SelectionHandler;
 import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.uibinder.client.UiHandler;
+import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.google.gwt.user.client.ui.Button;
 import com.google.gwt.user.client.ui.Composite;
@@ -32,6 +34,7 @@ import com.google.gwt.user.client.ui.Widget;
 import com.google.gwt.user.client.ui.PopupPanel.AnimationType;
 import com.google.gwt.user.client.ui.SuggestOracle.Suggestion;
 import com.google.gwt.user.client.ui.TextBox;
+import com.google.gwt.user.client.ui.UIObject;
 
 import gov.noaa.pmel.dashboard.shared.DashboardUtils;
 import gov.noaa.pmel.dashboard.shared.DataColumnType;
@@ -42,10 +45,15 @@ import gov.noaa.pmel.dashboard.shared.DataColumnType;
  * @author Linus Kamb
  * @author Dale Gamble
  */
-public class DataTypeSelectorPopup extends Composite {
+public class DataTypeSelectorPopup extends Composite implements AttachEvent.Handler {
 
 	interface DataTypeSelectorPopupUiBinder extends UiBinder<Widget, DataTypeSelectorPopup> {
 	}
+
+    protected static final String INVALID_CHOICE_MSG = 
+           "You must select one of the known types or IGNORED.<br/><br/>" +
+           "Adding new variable types is not currently supported.";
+            
 
 	private static DataTypeSelectorPopupUiBinder uiBinder = 
 			GWT.create(DataTypeSelectorPopupUiBinder.class);
@@ -83,6 +91,9 @@ public class DataTypeSelectorPopup extends Composite {
     private Map<String, List<String>> unitsLookup;
     
     final String DEFAULT_SUGGEST_VALUE = "ignored";
+
+    private Timer showInvalidChoiceTimer;
+    
     public static int WIDTH = 665;
     
 	/**
@@ -116,7 +127,7 @@ public class DataTypeSelectorPopup extends Composite {
         MyHandler theHandler = new MyHandler("theBox");
         theBox.addHandler(theHandler , KeyUpEvent.getType());
         
-		dataSelector = new MySuggestBox(getDataOracle(dataTypeLookup), theBox);
+		dataSelector = new MySuggestBox(getDataOracle(dataTypeLookup), theBox, this);
         
 		initWidget(uiBinder.createAndBindUi(this));
 		
@@ -139,13 +150,38 @@ public class DataTypeSelectorPopup extends Composite {
         
         init();
 	}
+    
+    @Override
+    public void onAttachOrDetach(AttachEvent event) {
+        GWT.log("MyDeco attach:"+event.isAttached());
+        UIObject that = this;
+        if (!event.isAttached() ) {
+            showInvalidChoiceTimer = new Timer() {
+                @Override
+                public void run() {
+                    String temp = dataSelector.getText();
+                    DataColumnType type = dataTypeLookup.get(temp);
+                    if ( type == null ) {
+                        GWT.log("Invalid choice:"+temp);
+                        UploadDashboard.showMessageAt(INVALID_CHOICE_MSG, that);
+                    }
+                }
+            };
+            showInvalidChoiceTimer.schedule(150);
+        } else {
+            if (showInvalidChoiceTimer != null) {
+                showInvalidChoiceTimer.cancel();
+                showInvalidChoiceTimer = null;
+            }
+        }
+    }
+
 
     /**
      * 
      */
     private void init() {
-        dataSelector.addSelectionHandler(new SelectionHandler<Suggestion>() {
-
+    dataSelector.addSelectionHandler(new SelectionHandler<Suggestion>() {
             @Override
             public void onSelection(SelectionEvent<Suggestion> event) {
                 String temp = dataSelector.getText();

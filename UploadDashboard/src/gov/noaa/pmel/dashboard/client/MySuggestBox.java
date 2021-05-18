@@ -4,18 +4,10 @@
 package gov.noaa.pmel.dashboard.client;
 
 import java.util.Collection;
-import java.util.Map;
 
-import com.google.gwt.core.client.GWT;
-import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.Style.Unit;
-import com.google.gwt.event.dom.client.BlurEvent;
-import com.google.gwt.event.dom.client.FocusEvent;
-import com.google.gwt.event.dom.client.KeyUpEvent;
-import com.google.gwt.event.dom.client.MouseMoveEvent;
-import com.google.gwt.event.dom.client.MouseOverEvent;
-import com.google.gwt.event.dom.client.MouseWheelEvent;
-import com.google.gwt.event.dom.client.ScrollEvent;
+import com.google.gwt.event.logical.shared.AttachEvent;
+import com.google.gwt.event.logical.shared.AttachEvent.Handler;
 import com.google.gwt.user.client.ui.MyDecoratedPopupPanel;
 import com.google.gwt.user.client.ui.PopupPanel;
 import com.google.gwt.user.client.ui.SuggestBox;
@@ -43,15 +35,17 @@ public class MySuggestBox extends SuggestBox {
     /**
      * @param oracle
      */
-    public MySuggestBox(SuggestOracle oracle, TextBox theBox) {
-        super(oracle, theBox, new MySuggestionDisplay());
+    public MySuggestBox(SuggestOracle oracle, TextBox theBox, AttachEvent.Handler attachHandler) {
+        super(oracle, theBox, new MySuggestionDisplay(attachHandler));
     }
 
     public static class MySuggestionDisplay extends SuggestBox.DefaultSuggestionDisplay {
 //        private MyHandler handler;
+        private MyDecoratedPopupPanel decPopup;
 
-        public MySuggestionDisplay() {
+        public MySuggestionDisplay(Handler attachHandler) {
             super();
+            decPopup.addAttachHandler(attachHandler);
         }
         
     	// SET popup same size as textbox
@@ -63,20 +57,11 @@ public class MySuggestBox extends SuggestBox {
 
         @Override
         protected PopupPanel createPopup() {
-            MyDecoratedPopupPanel p = new MyDecoratedPopupPanel(true, false);
-//            handler = new MyHandler("MyDeco handler");
-//            p.addHandler(handler, KeyUpEvent.getType());
-//            p.addHandler(handler, BlurEvent.getType());
-//            p.addHandler(handler, FocusEvent.getType());
-//            p.addHandler(handler, ScrollEvent.getType());
-//            p.addHandler(handler, MouseWheelEvent.getType());
-//            p.addHandler(handler, MouseMoveEvent.getType());
-//            p.addHandler(handler, MouseOverEvent.getType());
-            p.setStyleName("gwt-SuggestBoxPopup");
-            p.setPreviewingAllNativeEvents(true);
-            p.setAnimationType(AnimationType.ROLL_DOWN);
-            return p;
+            decPopup = new MyDecoratedPopupPanel(true, false);
+            decPopup.setStyleName("gwt-SuggestBoxPopup");
+            decPopup.setPreviewingAllNativeEvents(true);
+            decPopup.setAnimationType(AnimationType.ROLL_DOWN);
+            return decPopup;
           }
-
     }
 }
