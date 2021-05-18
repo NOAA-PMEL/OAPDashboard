@@ -3,6 +3,9 @@
 <title>SDIS Help</title>
 <meta content="text/html; charset=UTF-8" http-equiv="content-type">
 <style type="text/css">
+    body {
+        font-family: Arial Unicode MS, Arial, sans-serif;
+    }
     pre code {
       background-color: #eee;
       border: 1px solid #999;
@@ -16,6 +19,7 @@
     }
     .back_up {
         float:right;
+        margin-right: 1em;
     }
     .back_up a {
         color: black;
@@ -52,7 +56,8 @@ obvious or potential errors, and generate preview plots to visually check the da
 The workflow generally follows the tool buttons down the left-hand side, starting with 
 <a href="#UPLOAD_DATA">New Submission</a>
 down to <a href="#SUBMIT_TO_ARCHIVE">Submit To Archive</a>.
-You can <a href="#IDENTIFY_COLUMNS">identify the data columns</a>, 
+After creating a <a href="#UPLOAD_DATA">new submission</a> and uploading a data file, 
+you can <a href="#IDENTIFY_COLUMNS">identify the data columns</a>, 
 upload a <a href="#MANAGE_DATA_FILE">new or updated data file</a> if necessary,
 generate <a href="#PREVIEW_DATA">preview plots</a>,
 edit or upload <a href="#EDIT_METADATA">dataset metadata</a>, and
@@ -75,7 +80,7 @@ There is a 10 minute <a href="https://www.youtube.com/watch?v=ZZL_wQWr38A" targe
 <h3 id="SHOW_DATASETS">Main Page: Dataset List</h3>
 On the main page of the application, you will see all of the datasets that you have uploaded, 
 and their status in the various stages of preparation for submission. If you have not uploaded any datasets, your list will be empty.
-<p>
+<p/>
 Along the left side of the page are the tools that are available, including starting a new submission, 
 identifying data columns, managing the data file, entering metadata, adding supplemental documents, previewing the data, and submitting the dataset to the archive.  
 Only those tools that are available for the currently selected dataset will be enabled.  To select a dataset, click on the checkbox in the first column.
@@ -141,23 +146,23 @@ However, the first time you upload a file you will have to go through and identi
 Non-standard missing values for any data columns can also be specified. 
 Columns of data that are not recognized within the application at this time can be marked as the “IGNORED” data type. 
 Any data column marked as the “IGNORED” data type will be ignored for data checking purposes but will remain in the original data file.  If a column is left unspecified, you will get a warning that the data type for the column is unknown.  Unknown variables will also be ignored for data checking purposes.
-<p>
+<p/>
 Once all columns are identified to your satisfaction, you can opt to check your data for errors 
 using the “Check Data” button on the “Identify Columns” page. 
-<p>
+<p/>
 This is an optional step and is not available for all types of data.
-<p>
+<p/>
 This will help verify that the columns are correctly identified. 
 You will be notified of unreasonable values in the data, either because of incorrect data type, incorrect data units, or non-standard missing-data values. 
 If errors are due to incorrect identification of the data columns, you can return to the “Identify Columns” page to correct the data column types 
 and formats and recheck the data without having to upload the data file again. 
-<p>
+<p/>
 Note that all observational data samples must have a valid longitude, latitude, date, and time of measurement. 
 Furthermore, the data samples must be ordered in ascending time order - from the beginning of the cruise to the end of the cruise - with no duplication of time values. 
 Datasets with longitude, latitude, or time errors are marked as such in your list of datasets and little can be done with these 
 datasets other than see what problems the Dashboard discovered in the data. You should correct the errors discovered and upload 
 the updated data to the Dashboard to continue work with such a dataset. 
-<p>
+<p/>
 The Dashboard has an extensive listing of common column header names/units and their column types. 
 When you identify columns that were not recognized, which were incorrectly identified, or which uses a non-standard missing value, 
 the Dashboard saves this information as your personal customization of the Dashboard. 
@@ -165,38 +170,39 @@ Future uploads of data files will then use your personalized list of column head
 and assign the types you last gave for these column headers. 
 So if you use column names that the Dashboard does not recognize, 
 you only have to identify the columns once, and the Dashboard “learns” these column names. 
-<p>
+<p/>
 Some common mistakes in the date format include the ordering of the day, month, and year as well as whether the year is two digits or four. 
 For full-date formats without separators between the day, month, and year, the exact number of digits for that format must be present. 
 Any standard separator, not just the one shown, is acceptable in date formats with separators.
-<p>
+<p/>
 Note that the SDIS does not make any changes to your data and you cannot edit your data within the SDIS.
-<p>
+<p/>
 If you need to make changes to your data, edit your copy, and then upload the edited file using the <a href="#MANAGE_DATA_FILE">Manage Data File</a> tool.
 
 <div id="SHOW_DATA_MESSAGES" class="back_up"><a href="#Contents">Top</a></div> 
 <h3>Data Checker Messages</h3>
 If the data check found any errors or issues with the data, they are shown on the Data Errors and Warnings page.
-<p>
+<p/>
 The errors and warnings will have a brief description of the problem, as well as the row and column if applicable.
-<p>
+<p/>
 Double-clicking on the error or warning row in the list will take you to the row and column in the data.
 
 <div id="MANAGE_DATA_FILE" class="back_up"><a href="#Contents">Top</a></div> 
 <h3>Manage Data File</h3>
 The Manage Data File tool is used to upload a new data file for a submission record. This file will replace the existing file.
+<p/>
 
 <div id="PREVIEW_DATA" class="back_up"><a href="#Contents">Top</a></div> 
 <h3>Previewing Data</h3>
 After uploading and checking the data for a dataset, you may be able to examine plots of your data on the “Preview Data” page. 
-<p>
+<p/>
 This is an optional step and is only available for certain observation types and files in recognized formats.
-<p>
+<p/>
 These plots allow you to quickly detect inconsistencies or other errors in the data you provided. 
 If you discover errors that need to be corrected, you should correct your data file and re-upload the updated dataset. 
 Sometimes the error may just be a misidentification of a data column, its units, or its missing value. 
 In this case, you can correct the identity of the data columns in the Dashboard without having to upload the data. 
-<p>
+<p/>
 Please note that for larger datasets, the generation of the plots can take as long as a minute or more.
 
 <div id="EDIT_METADATA" class="back_up"><a href="#Contents">Top</a></div> 
@@ -205,17 +211,17 @@ Before you submit a dataset for archival, you must provide metadata for the data
 This metadata should identify each of the data columns in your data file (including data columns 
 that are marked as “IGNORED” data types) and describe details of how the data was collected. 
 The integrated MetadataEditor assists in this effort.  
-<p>
+<p/>
 The Metadata Editor provides editable forms to cover all of the requested OAP dataset metadata 
 corresponding to the NCEI OADS metadata SubmissionForm Excel spreadsheet.
 If you have a completed Excel SubmissionForm from a prior similar data submission, 
 you can upload that form into the Metadata Editor and then edit only the changed fields.  
 Otherwise, you must fill out the metadata for those fields that are pertinent to your dataset.  
-<p>
+<p/>
 The SDIS will fill in some fields, such as Data Submitter information and -- if the dataset was checked -- the geospatial and temporal bounds.   
 If filling out the metadata from scratch, you may find it helpful to fill in common information, 
 and then download that to be used as a metadata template for future submissions.  
-<p>
+<p/>
 While there is extensive metadata that is requested - and is desirable in order to better understand and use the data, 
 there is only a limited number of absolutely required fields without which you will be unable to submit for archival.  
 Those fields include the Data Submitter name, organization, and contact information, at least one PI identified, and citation Title, Abstract, and List of Authors.
@@ -224,14 +230,15 @@ Those fields include the Data Submitter name, organization, and contact informat
 <h3>Supplemental Documents</h3>
 Within the SDIS, you can also upload any additional content in whatever format you chose, using the “Supplemental Documents” page. 
 The files you upload will be simply uploaded and associated with the dataset; the contents are not examined or modified in any way. 
-Because of this, the uploaded files should be in standard formats that will be easy to read by scientists using or reviewing your data. 
+Because of this, the uploaded files should be in standard formats that will be easy to read by scientists using or reviewing your data.
+<p/>
 
 <div id="SUBMIT_TO_ARCHIVE" class="back_up"><a href="#Contents">Top</a></div> 
 <h3>Submit to Archive</h3>
 After entering or uploading metadata for the dataset, you are then able to submit the data, metadata, and any additional documentation, for archival.
-<p>
+<p/>
 If the metadata are incomplete, you will not be able to submit.  See the <a href="#EDIT_METADATA">Metadata Entry</a> section for the minimum required metadata.
-<p>
+<p/>
 On the Submit To Archive you have the option to add a submission comment.  
 This is only for any special instructions to the archive staff and should not be used for metadata 
 or other important information about the dataset, as it will not be archived with the dataset. 
@@ -243,10 +250,10 @@ You will also be required to agree to the NCEI Publication Policy Agreement.
 <div id="CLONE" class="back_up"><a href="#Contents">Top</a></div> 
 <h3>Clone Submission</h3>
 Cloning an existing submission record will create a new submission record without a data file with a copy of the metadata from the existing submission.
-<p>
+<p/>
 After cloning a record, you are required to check the metadata to be sure that all the fields are still appropriate for the new data file.
 If this has not been done, the Submit to Archive page will report that the metadata is incomplete and disallow submission.
-<p>
+<p/>
 Use the <a href="#MANAGE_DATA_FILE">Manage Data File</a> tool to upload the data file for the new submission record.
 </body>
 </html>
