@@ -54,6 +54,12 @@ public class UploadProcessor {
         for ( FileItem item : datafiles ) {
             
             String uploadName = item.getName();
+            logger.debug("item filename" + uploadName);
+            if ( uploadName.indexOf('\\') >= 0 ) {
+                logger.debug("Trimming windows path of :" + uploadName);
+                uploadName = uploadName.substring(uploadName.lastIndexOf('\\')+1);
+            }
+                
             String uploadContentType = item.getContentType();
             _stdFields.uploadFileName(uploadName);
             _stdFields.uploadType(uploadContentType);

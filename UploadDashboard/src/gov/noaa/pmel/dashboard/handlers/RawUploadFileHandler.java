@@ -8,6 +8,8 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.TimeZone;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.apache.tomcat.util.http.fileupload.FileItem;
 
 /**
@@ -21,6 +23,8 @@ import org.apache.tomcat.util.http.fileupload.FileItem;
  */
 public class RawUploadFileHandler /* extends VersionedFileHandler */ {
 
+    private static Logger logger = LogManager.getLogger(RawUploadFileHandler.class);
+    
 	/**
 	 * @param filesDirName
 	 * @param svnUsername
@@ -67,7 +71,14 @@ public class RawUploadFileHandler /* extends VersionedFileHandler */ {
 	}
 	
 	private static File getRawFileTarget(File targetDir, FileItem item) {
-		File targetFile = new File(targetDir, item.getName());
+        String uploadFilename = item.getName();
+        logger.debug("item filename" + uploadFilename);
+        if ( uploadFilename.indexOf('\\') >= 0 ) {
+            logger.debug("Trimming windows path of :" + uploadFilename);
+            uploadFilename = uploadFilename.substring(uploadFilename.lastIndexOf('\\')+1);
+        }
+
+		File targetFile = new File(targetDir, uploadFilename);
 		return targetFile;
 	}
 
