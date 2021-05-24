@@ -991,7 +991,7 @@ public class DataColumnSpecsPage extends CompositeWithUsername {
 					else {
 						// Return to the latest cruise listing page, which may  
 						// have been updated from previous actions on this page.
-						DatasetListPage.showPage();
+                        History.back();
 					}
 				}
 				else {

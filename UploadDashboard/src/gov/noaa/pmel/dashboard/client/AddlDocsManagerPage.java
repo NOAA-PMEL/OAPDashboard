@@ -308,7 +308,7 @@ public class AddlDocsManagerPage extends CompositeWithUsername {
 //        if ( UploadDashboard.needsHistoryForcing()) {
 //            DatasetListPage.showPage();
 //        } else {
-            History.back();
+            DatasetListPage.showPage();
 //        }
 	}
 
@@ -429,7 +429,7 @@ public class AddlDocsManagerPage extends CompositeWithUsername {
 		    GWT.log("unknown response fail:"+resultMsg);
             GWT.log("isFirefox:"+UploadDashboard.isFirefox()+" and wasOk: " + wasActuallyOk);
             if ( UploadDashboard.needsHistoryForcing() && wasActuallyOk ) {
-                History.back();
+                DatasetListPage.showPage();
             } else {
     			// Unknown response, just display the entire message
     			UploadDashboard.showMessage(EXPLAINED_FAIL_MSG_START + 

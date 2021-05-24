@@ -348,8 +348,15 @@ public class UploadDashboard implements EntryPoint, ValueChangeHandler<String> {
     }
     public static boolean isSafari() {
         String browser = Window.Navigator.getUserAgent();
+        browser = browser.toLowerCase();
         GWT.log("browser "+ browser);
-        return browser.toLowerCase().contains("safari");
+        return browser.contains("safari") && ! browser.contains("chrome");
+    }
+    public static boolean isIE() {
+        String browser = Window.Navigator.getUserAgent();
+        GWT.log("browser "+ browser);
+        browser = browser.toLowerCase();
+        return browser.contains("msie") || browser.contains("trident");
     }
     public static boolean needsHistoryForcing() {
         return isFirefox() || isSafari();
@@ -386,7 +393,7 @@ public class UploadDashboard implements EntryPoint, ValueChangeHandler<String> {
             RootLayoutPanel.get().add(singleton.currentPage);
             newPage.setBuildVersion(buildVersion);
             ApplicationHeaderTemplate._currentPage = newPage.pageName();
-            if ( ! PagesEnum.SHOW_DATASETS.name().equals(newPage.pageName())) {
+            if ( needsHistory(newPage.pageName())) {
                 GWT.log("Adding new history: " + newPage.pageName());
         		History.newItem(newPage.pageName(), false);
             }
@@ -395,7 +402,19 @@ public class UploadDashboard implements EntryPoint, ValueChangeHandler<String> {
             logToConsole("Null current page!");
         }
 	}
-	public static void updateCurrentPage(CompositeWithUsername newPage, boolean doPing) {
+	/**
+     * @param pageName
+     * @return
+     */
+    private static boolean needsHistory(String pageName) {
+        return  ! (
+                 PagesEnum.SHOW_DATASETS.name().equals(pageName) ||
+                 PagesEnum.UPLOAD_DATA.name().equals(pageName) ||
+//                 PagesEnum.EDIT_METADATA.name().equals(pageName) ||
+                 PagesEnum.MANAGE_DOCUMENTS.name().equals(pageName) 
+                );
+    }
+    public static void updateCurrentPage(CompositeWithUsername newPage, boolean doPing) {
         GWT.log("update ping " + doPing + " to " + newPage.pageName());
         if ( doPing ) {
             pingService(new OAPAsyncCallback<Void>() {
@@ -453,6 +472,8 @@ public class UploadDashboard implements EntryPoint, ValueChangeHandler<String> {
 
 	@Override
 	public void onModuleLoad() {
+	    String browser = Window.Navigator.getUserAgent();
+	    logToConsole("user agent: " + browser);
 		if ( historyHandlerReg != null )
 			historyHandlerReg.removeHandler();
 		// setup history management
@@ -468,6 +489,7 @@ public class UploadDashboard implements EntryPoint, ValueChangeHandler<String> {
 		if ( (token == null) || token.isEmpty() || (currentPage == null) ) {
 			// Initial history setup; show the cruise list page
             logToConsole("Initial page load");
+            History.newItem(PagesEnum.SHOW_DATASETS.name(), false);
 			DatasetListPage.showPage();
 		} else {
             try {
@@ -581,6 +603,7 @@ public class UploadDashboard implements EntryPoint, ValueChangeHandler<String> {
         }
     }-*/;
     
+    // called from native JS in setupLoginPopupClose() above.
     public static void completeRelogin() {
        logger.info("Completing relogin submission");
        forceSubmittal();
@@ -622,8 +645,8 @@ public class UploadDashboard implements EntryPoint, ValueChangeHandler<String> {
             
             @Override
             public void onError(Request errRequest, Throwable t) {
-                GWT.log("reponse request:"+errRequest);
-                GWT.log("reponse :"+t);
+                logToConsole("reponse request:"+errRequest);
+                logToConsole("reponse :"+t);
             }
         }); 
           GWT.log("response:"+response);
@@ -686,7 +709,7 @@ public class UploadDashboard implements EntryPoint, ValueChangeHandler<String> {
                                              singleton.feedbackPopup.getMessage(), new AsyncCallback<Void>() {
                             @Override
                             public void onFailure(Throwable arg0) {
-                                GWT.log("send feedback failed: " + arg0);
+                                logToConsole("send feedback failed: " + arg0);
                             }
 
                             @Override
@@ -700,7 +723,7 @@ public class UploadDashboard implements EntryPoint, ValueChangeHandler<String> {
                 }
                 @Override
                 public void onFailure(Throwable arg0) {
-                    GWT.log("Feedback failure: " + arg0);
+                    logToConsole("Feedback failure: " + arg0);
                 }
             });
 		}
@@ -717,7 +740,7 @@ public class UploadDashboard implements EntryPoint, ValueChangeHandler<String> {
             }
             @Override
             public void customFailure(Throwable t) {
-                GWT.log("ping fail: "+ t);
+                logToConsole("ping fail: "+ t);
             }
         });
     }
@@ -728,7 +751,7 @@ public class UploadDashboard implements EntryPoint, ValueChangeHandler<String> {
                new AsyncCallback<DashboardServiceResponse<UserInfo>>() {
                     @Override
                     public void onFailure(Throwable caught) {
-                        GWT.log("Retrieve Profile Info failed: " + caught);
+                        logToConsole("Retrieve Profile Info failed: " + caught);
                         showFailureMessage("There was an error retrieving your profile information.", caught);
                     }
                     @Override
@@ -763,7 +786,7 @@ public class UploadDashboard implements EntryPoint, ValueChangeHandler<String> {
                                            new AsyncCallback<DashboardServiceResponse<Void>>() {
                             @Override
                             public void onFailure(Throwable arg0) {
-                                GWT.log("Update Profile Info failed: " + arg0);
+                                logToConsole("Update Profile Info failed: " + arg0);
                                 showFailureMessage("There was an error updating your profile information.", arg0);
                             }
 
@@ -783,7 +806,7 @@ public class UploadDashboard implements EntryPoint, ValueChangeHandler<String> {
                 }
                 @Override
                 public void onFailure(Throwable arg0) {
-                    GWT.log("Update Profile failure: " + arg0);
+                    logToConsole("Update Profile failure: " + arg0);
                     showFailureMessage("There was a service error updating your profile information.", arg0);
                 }
             });
@@ -802,7 +825,7 @@ public class UploadDashboard implements EntryPoint, ValueChangeHandler<String> {
             }
             @Override
             public void customFailure(Throwable t) {
-                GWT.log("ping fail: "+ t);
+                logToConsole("ping fail: "+ t);
             }
         });
     }
@@ -819,7 +842,7 @@ public class UploadDashboard implements EntryPoint, ValueChangeHandler<String> {
                                                singleton.changePasswordPopup.getNewPassword(), new AsyncCallback<DashboardServiceResponse>() {
                             @Override
                             public void onFailure(Throwable arg0) {
-                                GWT.log("Change Password failed: " + arg0);
+                                logToConsole("Change Password failed: " + arg0);
                                 showFailureMessage("There was an error changing your password.", arg0);
                             }
 
@@ -839,7 +862,7 @@ public class UploadDashboard implements EntryPoint, ValueChangeHandler<String> {
                 }
                 @Override
                 public void onFailure(Throwable arg0) {
-                    GWT.log("Change Password failure: " + arg0);
+                    logToConsole("Change Password failure: " + arg0);
                     showFailureMessage("There was a service error changing your password.", arg0);
                 }
             });

@@ -296,6 +296,8 @@ public class DataUploadPage extends CompositeWithUsername {
 		singleton.setUsername(username);
 		singleton.clearTokens();
         singleton.clearForm();
+        singleton.cruiseIDs.clear();
+        singleton.wasActuallyOk = false;
         singleton.featureTypeSelector.removeStyleName("missingInfoItem");
         singleton.featureTypeSelector.setSelectedIndex(0);
 		singleton.encodingListBox.setSelectedIndex(2);
@@ -442,7 +444,7 @@ public class DataUploadPage extends CompositeWithUsername {
 	void cancelButtonOnClick(ClickEvent event) {
 		// Return to the cruise list page after updating the cruise list
         closePopups();
-        History.back();
+        DatasetListPage.showPage();
 		// Make sure the normal cursor is shown
 		UploadDashboard.showAutoCursor();
 	}
@@ -461,14 +463,18 @@ public class DataUploadPage extends CompositeWithUsername {
         cancelButton.setText("Done");
     }
         
+	private ArrayList<String> cruiseIDs = new ArrayList<String>();
+    private boolean wasActuallyOk = false;
 	@UiHandler("uploadForm")
 	void uploadFormOnSubmitComplete(SubmitCompleteEvent event) {
-		boolean wasSuccess = processResultMsg(event.getResults());
-        GWT.log("Upload was successful: " + wasSuccess);
+        wasActuallyOk = processResultMsg(event.getResults());
+        UploadDashboard.logToConsole("Upload was successful: " + wasActuallyOk);
 		clearTokens();
-        if ( wasSuccess ) {
+        if ( wasActuallyOk ) {
             clearForm();
-        }
+			DatasetListPage.resortTable();
+            DatasetListPage.showPage(cruiseIDs);
+		}
 		UploadDashboard.showAutoCursor();
 	}
 
@@ -479,8 +485,12 @@ public class DataUploadPage extends CompositeWithUsername {
 	 * 		message returned from the upload of a dataset
 	 */
 	private boolean processResultMsg(String resultMsg) {
+        UploadDashboard.logToConsole("Upload result msg:" + resultMsg + ".");
 		// Check the returned results
-		if ( resultMsg == null ) {
+		if ( resultMsg == null || resultMsg.trim().length() == 0 ) {
+		    if ( wasActuallyOk ) {
+                return true;
+    		} 
 			UploadDashboard.showMessage(UNEXPLAINED_FAIL_MSG);
 			return false;
 		}
@@ -512,13 +522,14 @@ public class DataUploadPage extends CompositeWithUsername {
 			return false;
 		}
 
-		ArrayList<String> cruiseIDs = new ArrayList<String>();
 		ArrayList<String> errMsgs = new ArrayList<String>();
 		for (int k = 0; k < splitMsgs.length; k++) {
 			String responseMsgItem = splitMsgs[k].trim();
 			if ( responseMsgItem.startsWith(DashboardUtils.SUCCESS_HEADER_TAG) ) {
 				// Success
-				cruiseIDs.add(responseMsgItem.substring(DashboardUtils.SUCCESS_HEADER_TAG.length()).trim());
+                String cruiseId = responseMsgItem.substring(DashboardUtils.SUCCESS_HEADER_TAG.length()).trim();
+				cruiseIDs.add(cruiseId);
+                GWT.log("successful upload: " + cruiseId);
 			}
 			else if ( responseMsgItem.startsWith(DashboardUtils.INVALID_FILE_HEADER_TAG) ) {
 				// An exception was thrown while processing the input file
@@ -578,11 +589,6 @@ public class DataUploadPage extends CompositeWithUsername {
 			UploadDashboard.showMessage(errors);
 		}
 
-		// Process any successes
-		if ( ! cruiseIDs.isEmpty() ) {
-			DatasetListPage.resortTable();
-            DatasetListPage.showPage(cruiseIDs);
-		}
 		return wasCompleteSuccess;
 	}
 

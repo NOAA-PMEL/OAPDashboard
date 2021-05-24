@@ -127,7 +127,7 @@ public class MetadataManagerPage extends CompositeWithUsername {
             }
         });
         
-        setupMessageListener(this);
+        setupMessageListener(this, UploadDashboard.isIE());
 	}
     
     private static boolean isAck(String response, String command) {
@@ -136,7 +136,7 @@ public class MetadataManagerPage extends CompositeWithUsername {
     private static boolean isNack(String response, String command) {
         return response.startsWith("Neg That:" + command);
     }
-	private native void setupMessageListener(MetadataManagerPage instance) /*-{
+	private native void setupMessageListener(MetadataManagerPage instance, boolean IE) /*-{
 	    function postMsgListener(event) {
             console.log("DB: recv msg:" + ( event.data ? event.data : event ) + " from " + event.origin);
             instance.@gov.noaa.pmel.dashboard.client.MetadataManagerPage::onPostMessage(Ljava/lang/String;Ljava/lang/String;) (
@@ -145,6 +145,7 @@ public class MetadataManagerPage extends CompositeWithUsername {
             console.log("DB: processed message successful");
         }
         $wnd.addEventListener('message', postMsgListener, false);
+        // Older versions of IE.  IE doesn't work anyways...
 //        if ( IE ) {
 //            $wnd.attachEvent('onmessage', postMsgListener);
 //        }
@@ -153,7 +154,7 @@ public class MetadataManagerPage extends CompositeWithUsername {
     public static native void sendIFrameMessage(String message) /*-{
         var iframe = $wnd.document.getElementById('__metadataEditorFrame');
         var domain = iframe.src;
-        if ( ! domain.startsWith("http")) {
+        if ( domain.startsWith && ! domain.startsWith("http")) {
             console.log("DB: skipping " + message + " to domain: " + domain);
         } else {
             console.log("DB: send " + message + " to domain: " + domain);
@@ -377,7 +378,7 @@ public class MetadataManagerPage extends CompositeWithUsername {
                           // Submit only if yes
                           GWT.log("abandon changes result: " + result);
                           if ( result.booleanValue() == true ) {
-                              showDatasetListPage(UploadDashboard.isSafari());
+                              showDataListPage();
                           }
                       }
                       @Override
@@ -392,9 +393,7 @@ public class MetadataManagerPage extends CompositeWithUsername {
 	}
     
     private void showDataListPage() {
-        showDatasetListPage(false);
-    }
-    private void showDatasetListPage(boolean force) {
+        boolean force = UploadDashboard.needsHistoryForcing();
         UploadDashboard.logToConsole("ME: showDatasetPage: force:"+force);
         metadataEditorFrame.setUrl("about:_blank");
         UploadDashboard.showAutoCursor();
