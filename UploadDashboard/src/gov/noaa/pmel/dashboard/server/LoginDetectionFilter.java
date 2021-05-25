@@ -25,6 +25,7 @@ import org.apache.log4j.Logger;
 import gov.noaa.pmel.dashboard.server.db.dao.DaoFactory;
 import gov.noaa.pmel.dashboard.server.db.dao.UsersDao;
 import gov.noaa.pmel.dashboard.server.model.User;
+import gov.noaa.pmel.dashboard.server.util.Notifications;
 import gov.noaa.pmel.tws.util.Logging;
 
 /**
@@ -62,7 +63,8 @@ public class LoginDetectionFilter implements Filter {
             String username = principal.getName();
             if (session == null || session.getAttribute("user") == null) {
                 request.getSession().setAttribute("user", principal);
-                logger.info("Login by " + principal);
+                String browser = request.getHeader("User-Agent");
+                logger.info("Login by " + principal + " using " + browser);
                 try {
                     UsersDao udao = DaoFactory.UsersDao();
                     User user = udao.retrieveUser(username);
@@ -105,7 +107,13 @@ public class LoginDetectionFilter implements Filter {
                     return;
                 }
             } 
-        } 
+        } else if ( request.getRequestURL().toString().contains("DashboardServices")) {
+            logger.warn("Null user principle!\nSending them packing!");
+            Notifications.SendEmail("Null user principle", "Null user principle", "linus.kamb@noaa.gov");
+            // We'll come back to this.
+//            response.sendError(HttpServletResponse.SC_FORBIDDEN, "No User Principle");
+//            return;
+        }
 
         chain.doFilter(req, resp);
     }
