@@ -49,7 +49,6 @@ import com.google.gwt.user.client.ui.Widget;
 import com.google.gwt.view.client.CellPreviewEvent;
 import com.google.gwt.view.client.ListDataProvider;
 
-import gov.noaa.pmel.dashboard.client.DashboardAskPopup.QuestionType;
 import gov.noaa.pmel.dashboard.client.UploadDashboard.PagesEnum;
 import gov.noaa.pmel.dashboard.shared.DashboardDataset;
 import gov.noaa.pmel.dashboard.shared.DashboardDatasetList;
@@ -1006,7 +1005,7 @@ public class DatasetListPage extends CompositeWithUsername {
             String selectedRecordId = selectedDatasets.keySet().iterator().next();
             DashboardDataset dataset = selectedDatasets.get(selectedRecordId);
             UploadDashboard.ask("Confirm cloning of submission record " + selectedRecordId +".", 
-                                "Clone", "Cancel", QuestionType.WARNING, 
+                                "Clone", "Cancel", InfoMsgType.WARNING, 
                 new OAPAsyncCallback<Boolean>() {
                     @Override
                     public void onSuccess(Boolean result) {
@@ -1224,7 +1223,7 @@ public class DatasetListPage extends CompositeWithUsername {
 		message += DELETE_DATASET_HTML_EPILOGUE;
 		if ( askDeletePopup == null ) {
 			askDeletePopup = new DashboardAskPopup(DELETE_YES_TEXT, 
-					DELETE_NO_TEXT, QuestionType.WARNING,
+					DELETE_NO_TEXT, InfoMsgType.WARNING,
 					new AsyncCallback<Boolean>() {
 				@Override
 				public void onSuccess(Boolean okay) {
@@ -1344,7 +1343,7 @@ public class DatasetListPage extends CompositeWithUsername {
 		message += HIDE_DATASET_HTML_EPILOGUE;
 		if ( askRemovePopup == null ) {
 			askRemovePopup = new DashboardAskPopup(HIDE_YES_TEXT, 
-					HIDE_NO_TEXT, DashboardAskPopup.QuestionType.QUESTION,
+					HIDE_NO_TEXT, InfoMsgType.QUESTION,
 					new AsyncCallback<Boolean>() {
 				@Override
 				public void onSuccess(Boolean result) {
@@ -2343,7 +2342,7 @@ public class DatasetListPage extends CompositeWithUsername {
         
         if ( !okToSubmit ) {
             errorMsgBldr.append("<br/><br/>Do you still wish to submit to the archive?");
-            UploadDashboard.ask(errorMsgBldr.toString(), "Yes", "No", QuestionType.WARNING, 
+            UploadDashboard.ask(errorMsgBldr.toString(), "Yes", "No", InfoMsgType.WARNING, 
                                 new AsyncCallback<Boolean>() {
                                     @Override
                                     public void onFailure(Throwable t) {

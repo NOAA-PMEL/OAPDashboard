@@ -371,7 +371,7 @@ public class MetadataManagerPage extends CompositeWithUsername {
 		// Return to the cruise list page which might have been updated
         if ( confirmCancel ) {
             DashboardAskPopup confirm = new DashboardAskPopup(YES_TEXT, NO_TEXT, 
-                                                              DashboardAskPopup.QuestionType.WARNING,
+                                                              InfoMsgType.WARNING,
               new AsyncCallback<Boolean>() {
                       @Override
                       public void onSuccess(Boolean result) {

@@ -49,7 +49,6 @@ import com.google.gwt.view.client.ProvidesKey;
 import com.google.gwt.view.client.Range;
 import com.google.gwt.view.client.SingleSelectionModel;
 
-import gov.noaa.pmel.dashboard.client.DashboardAskPopup.QuestionType;
 import gov.noaa.pmel.dashboard.client.UploadDashboard.PagesEnum;
 import gov.noaa.pmel.dashboard.shared.ADCMessage;
 import gov.noaa.pmel.dashboard.shared.ADCMessageList;
@@ -1256,7 +1255,7 @@ public class DataColumnSpecsPage extends CompositeWithUsername {
 					 status.startsWith(DashboardUtils.CHECK_STATUS_CRITICAL_ERRORS_PREFIX) ||
 					 status.equals(DashboardUtils.CHECK_STATUS_UNACCEPTABLE) ) {
 					// the sanity checker had serious problems
-					UploadDashboard.theresAproblem(QuestionType.CRITICAL, 
+					UploadDashboard.theresAproblem(InfoMsgType.CRITICAL, 
 					                               buildFailureMessage(SANITY_CHECK_FAIL_MSG, ddd), 
 					                               "Show Errors / Warnings", "Dismiss", 
 					                               new AsyncCallback<Boolean>() {
