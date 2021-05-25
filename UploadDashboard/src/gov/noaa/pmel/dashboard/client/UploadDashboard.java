@@ -39,7 +39,6 @@ import com.google.gwt.user.client.ui.RootLayoutPanel;
 import com.google.gwt.user.client.ui.UIObject;
 import com.google.gwt.user.client.ui.VerticalPanel;
 
-import gov.noaa.pmel.dashboard.client.DashboardAskPopup.QuestionType;
 import gov.noaa.pmel.dashboard.shared.DashboardDataset;
 import gov.noaa.pmel.dashboard.shared.DashboardServiceResponse;
 import gov.noaa.pmel.dashboard.shared.DashboardServicesInterface;
@@ -114,6 +113,12 @@ public class UploadDashboard implements EntryPoint, ValueChangeHandler<String> {
 	static final String ROW_NUMBER_COLOR = "#666666";
 	private static final String UPLOAD_DASHBOARD_SERVER_NAME = "OAPUploadDashboard";
 
+    private static final String IE_NOT_SUPPORTED = 
+            "Internet Explorer is not supported.<br/>"
+          + "Please use another browser."
+          + "<br/><br/>Check the <a target='SDIS Help' href='sdis_help.html'>Help Documentation</a>"
+          + " for supported browsers.";
+    
 	// Singleton instance of this object
 	private static UploadDashboard singleton = null;
     private static UploadDashboard getSingleton() {
@@ -190,6 +195,27 @@ public class UploadDashboard implements EntryPoint, ValueChangeHandler<String> {
 		singleton.infoMsgPopup.showCentered();
 	}
 
+    public static void showNotification(String htmlMsg, InfoMsgType msgType) {
+        getSingleton();
+        NotificationPopup notificationMsgPopup = new NotificationPopup(htmlMsg, msgType);
+        notificationMsgPopup.showCentered();
+    }
+    
+    public static void showNotification(String htmlMsg, InfoMsgType msgType, OAPAsyncCallback<?> continuation) {
+        getSingleton();
+        NotificationPopup notificationMsgPopup = new NotificationPopup(htmlMsg, msgType, continuation);
+        notificationMsgPopup.setInfoMessage(htmlMsg);
+        notificationMsgPopup.showCentered();
+    }
+    
+    public static void showNotification(String htmlMsg, InfoMsgType msgType, 
+                                        String dismissBtnText, OAPAsyncCallback<?> continuation) {
+        getSingleton();
+        NotificationPopup notificationMsgPopup = new NotificationPopup(htmlMsg, msgType, dismissBtnText, continuation);
+        notificationMsgPopup.setInfoMessage(htmlMsg);
+        notificationMsgPopup.showCentered();
+    }
+    
 	/**
 	 * Shows a message in a popup panel centered on the page and executes the continuation on dismissal.
 	 * 
@@ -205,9 +231,9 @@ public class UploadDashboard implements EntryPoint, ValueChangeHandler<String> {
 	}
 
     public static void theresAproblem(String msg, String yesText, String noText, AsyncCallback<Boolean> callback) {
-        theresAproblem(QuestionType.WARNING, msg, yesText, noText, callback);
+        theresAproblem(InfoMsgType.WARNING, msg, yesText, noText, callback);
     }
-    public static void theresAproblem(QuestionType type, String msg, String yesText, String noText, AsyncCallback<Boolean> callback) {
+    public static void theresAproblem(InfoMsgType type, String msg, String yesText, String noText, AsyncCallback<Boolean> callback) {
         DashboardAskPopup dap = new DashboardAskPopup(yesText, noText, type, callback);
         dap.askQuestion(msg);
     }
@@ -222,6 +248,39 @@ public class UploadDashboard implements EntryPoint, ValueChangeHandler<String> {
     public static DashboardServicesInterfaceAsync getService() {
         return service;
     }
+    public static void logoutUser() {
+        logoutUser("dashboardlogout.html");
+    }
+    public static void logoutUser(String redirectTo) {
+        logger.info("UploadDashboard logoutUser");
+        UploadDashboard.closePopups();
+        try {
+        UploadDashboard.getService().logoutUser(new OAPAsyncCallback<Void>() {
+            @Override
+            public void onSuccess(Void nada) {
+                UploadDashboard.logToConsole("Logout success");
+                Cookies.removeCookie("JSESSIONID");
+                UploadDashboard.stopHistoryHandling();
+                UploadDashboard.showAutoCursor();
+                Window.Location.assign(redirectTo);
+            }
+            @Override
+            public void onFailure(Throwable ex) {
+                UploadDashboard.logToConsole("Logout error:" + ex.toString());
+//                Window.alert(String.valueOf(ex));
+                Cookies.removeCookie("JSESSIONID");
+                UploadDashboard.stopHistoryHandling();
+                UploadDashboard.showAutoCursor();
+                Window.Location.assign(redirectTo);
+            }
+        });
+        } catch (Throwable t) {
+            UploadDashboard.logToConsole("logout exception: "+ String.valueOf(t));
+//            Window.alert(String.valueOf(t));
+            Window.Location.assign("dashboardlogout.html");
+        }
+    }
+
     public static void closePopups() {
         closePreviews();
         if ( singleton.infoMsgPopup != null && singleton.infoMsgPopup.isVisible()) {
@@ -474,6 +533,16 @@ public class UploadDashboard implements EntryPoint, ValueChangeHandler<String> {
 	public void onModuleLoad() {
 	    String browser = Window.Navigator.getUserAgent();
 	    logToConsole("user agent: " + browser);
+        if ( isIE()) {
+            showNotification(IE_NOT_SUPPORTED, InfoMsgType.WARNING,
+                             new OAPAsyncCallback<Boolean>() {
+                                @Override
+                                public void onSuccess(Boolean result) {
+                                    logoutUser("OAPUploadDashboard.html");
+                                }
+                            });
+            return;
+        }
 		if ( historyHandlerReg != null )
 			historyHandlerReg.removeHandler();
 		// setup history management
@@ -562,7 +631,7 @@ public class UploadDashboard implements EntryPoint, ValueChangeHandler<String> {
             "Your session has expired.<br/>"
             + "You must log in again.<br/>";
 
-    public static void ask(String question, String yesText, String noText, QuestionType type, AsyncCallback<Boolean> callback) {
+    public static void ask(String question, String yesText, String noText, InfoMsgType type, AsyncCallback<Boolean> callback) {
         new DashboardAskPopup(yesText, noText, type, callback).askQuestion(question);
     }
     
