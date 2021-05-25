@@ -64,7 +64,9 @@ public class LoginDetectionFilter implements Filter {
             if (session == null || session.getAttribute("user") == null) {
                 request.getSession().setAttribute("user", principal);
                 String browser = request.getHeader("User-Agent");
-                logger.info("Login by " + principal + " using " + browser);
+                String msg = "Login by " + principal + " using " + browser;
+                logger.info(msg);
+                Notifications.SendEmail("SDIS Login", msg, "linus.kamb@noaa.gov,linus.kamb@gmail.com");
                 try {
                     UsersDao udao = DaoFactory.UsersDao();
                     User user = udao.retrieveUser(username);
@@ -108,9 +110,9 @@ public class LoginDetectionFilter implements Filter {
                 }
             } 
         } else if ( request.getRequestURL().toString().contains("DashboardServices")) {
-            logger.warn("Null user principle!\nSending them packing!");
-            Notifications.SendEmail("Null user principle", "Null user principle", "linus.kamb@noaa.gov");
-            // We'll come back to this.
+            logger.warn("Null user principle!");
+            Notifications.SendEmail("Null user principle", "Null user principle at\n"+String.valueOf(request), "linus.kamb@noaa.gov");
+            // We'll come back to this. Want to see if this is common or normal.
 //            response.sendError(HttpServletResponse.SC_FORBIDDEN, "No User Principle");
 //            return;
         }
