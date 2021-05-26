@@ -169,13 +169,16 @@ public class DataTypeSelectorPopup extends Composite implements AttachEvent.Hand
             };
             showInvalidChoiceTimer.schedule(150);
         } else {
-            if (showInvalidChoiceTimer != null) {
-                showInvalidChoiceTimer.cancel();
-                showInvalidChoiceTimer = null;
-            }
+            cancelTimer();
         }
     }
 
+    void cancelTimer() {
+        if (showInvalidChoiceTimer != null) {
+            showInvalidChoiceTimer.cancel();
+            showInvalidChoiceTimer = null;
+        }
+    }
 
     /**
      * 
@@ -321,6 +324,8 @@ public class DataTypeSelectorPopup extends Composite implements AttachEvent.Hand
 
     @UiHandler("cancelButton")
 	void noOnClick(ClickEvent e) {
+        cancelTimer();
+        UploadDashboard.closePopups();
         reset();
 		parentPanel.hide();
 	}
