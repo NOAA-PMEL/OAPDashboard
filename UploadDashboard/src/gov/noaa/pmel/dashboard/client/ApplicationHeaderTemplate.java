@@ -123,7 +123,7 @@ public class ApplicationHeaderTemplate extends Composite {
         UploadDashboard.showFeedbackPopup();
     }
 
-    private void doShowHelp() {
+    void doShowHelp() {
         GWT.log("GWT log Header ShowHelp");
         logger.info("Logger Header ShowHelp");
         JavaScriptObject theHelpWindow = helpWindow;

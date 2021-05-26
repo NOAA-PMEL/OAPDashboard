@@ -25,6 +25,9 @@
         color: black;
         /* text-decoration-line:none; */
     }
+    #column_type_limitations {
+        font-weight: bold;
+    }
     .back_up {
         float:right;
         margin-right: 1em;
@@ -159,18 +162,23 @@ you can choose to run the data checks on your dataset.  To do this, you must fir
 When you upload a data file, the Dashboard will examine it and attempt to identify the column header names and units according to your previous selections.  
 However, the first time you upload a file you will have to go through and identify all the columns.
 <p/>
+Note that this is an optional step and is not available for all types of data.
+<p/>
  The data columns and their suggested identities (their “data type”) will be shown to you in the 
  “Identify Columns” page to allow you to modify these identities as needed. 
 Non-standard missing values for any data columns can also be specified. 
+<p/>
 Columns of data that are not recognized within the application at this time can be marked as the “other” data type. 
+This will prevent warnings about columns with unknown data types.
 Any data column marked as the “other” data type will remain in the original data file but will be ignored for data checking purposes.  
 If a column is left unspecified, you will get a warning that the data type for the column is unknown.  
 Unknown variables will also be ignored for data checking purposes.
 <p/>
+<div id="column_type_limitations">Currently there is no way for the user to add new data column types.
+In addition, currently there can only be one column of any given type, ie you may not have two or more columns of the same element with different units.</div>
+<p/>
 Once all columns are identified to your satisfaction, you can opt to check your data for errors 
 using the “Check Data” button on the “Identify Columns” page. 
-<p/>
-This is an optional step and is not available for all types of data.
 <p/>
 This will help verify that the columns are correctly identified. 
 You will be notified of unreasonable values in the data, either because of incorrect data type, incorrect data units, or non-standard missing-data values. 

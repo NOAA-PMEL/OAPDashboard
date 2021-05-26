@@ -139,7 +139,9 @@ public class DataColumnSpecsPage extends CompositeWithUsername {
 			"the time of each measurement";
 	private static final String MULTIPLE_COLUMN_TYPES_ERROR_MSG =
 			"More than one column has the type: ";
-
+	private static final String MULTIPLE_COLUMN_TYPES_ERROR_CLOSE =
+	        "<br/>Please see the <a onclick=\"show_help()\" >Help Documentation.</a>";
+    
 	private static final String DEFAULT_SECONDS_WARNING_QUESTION = 
 			"No data columns have been identified providing the seconds " +
 			"for the time of each measurement.  It is strongly recommended " +
@@ -244,6 +246,22 @@ public class DataColumnSpecsPage extends CompositeWithUsername {
 	public static MyDataGrid<ArrayList<String>> getDataGrid() {
         return singleton.dataGrid;
     }
+    
+    // This sets up so submit button onclick can call completeRelogin()
+    static native void setupShowHelp()/*-{
+        console.log("setupShowHelp");
+        if ( ! $wnd.show_help ) {
+            console.log("wnd: " + $wnd);
+            $wnd.show_help = @gov.noaa.pmel.dashboard.client.DataColumnSpecsPage::show_help();
+            console.log("show_help: " + $wnd.show_help);
+        }
+    }-*/;
+
+    public static void show_help() {
+        GWT.log("static show_help");
+        singleton.header.doShowHelp();
+        UploadDashboard.closePopups();
+    }
     public static void preventScroll(boolean prevent) {
         GWT.log("prevent: " + prevent);
         ScrollPanel sp = singleton.dataGrid.getScrollPanel();
@@ -277,6 +295,8 @@ public class DataColumnSpecsPage extends CompositeWithUsername {
         super(PagesEnum.IDENTIFY_COLUMNS.name());
 		initWidget(uiBinder.createAndBindUi(this));
 		singleton = this;
+        
+		setupShowHelp();
         
         logger.addHandler(new ConsoleLogHandler());
         logger.setLevel(Level.ALL);
@@ -1169,6 +1189,7 @@ public class DataColumnSpecsPage extends CompositeWithUsername {
 				}
 				errMsg += "<li>" + dup.type + " at columns " + typeSet.get(dup.type).position + " and " + dup.position + "</li>";
 			}
+            errMsg += MULTIPLE_COLUMN_TYPES_ERROR_CLOSE;
 			UploadDashboard.showMessage(errMsg);
 			return;
 		}
