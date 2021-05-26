@@ -32,6 +32,9 @@
     .back_up a {
         color: black;
     }
+    .superscript {
+        font-size: small;
+    }
 </style>
 </head>
 <body>
@@ -102,7 +105,7 @@ On the upload page, you are first asked to specify the observation type.
 This is because the different observation types are handled differently.   
 Currently, data checking and preview plots are only available for timeseries, surface measurements, and profiles.
 <p/>
-You may upload data files in any format, but only Excel spreadsheets and delimited (eg. CSV, tab-delimited) 
+You may upload data files in any format, but only Excel spreadsheets<a href="#FOOTNOTE_1"><sup>[ 1 ]</sup></a> and delimited (eg. CSV, tab-delimited) 
 text files with a known format can be checked for errors and previewed. Readable files have the following general format: 
 <ul>
         <li> a line of data column headers, </li>
@@ -145,6 +148,9 @@ JD_GMT, DATE_UTC, TIME_UTC, LAT, LONG, ...
 110.79736, 19042012, 19:08:12, 12.622, -59.222, ... 
 </code>
 </pre>
+<div id="FOOTNOTE_1"></div>
+<div style="padding-left: 1em;">1. Currently only single-sheet spreadsheets are supported.
+<span style="margin-left:3em;"><a style="color:black" href="#UPLOAD_DATA">Back</a></span></div>
 
 <div id="IDENTIFY_COLUMNS" class="back_up"><a href="#Contents">Top</a></div> 
 <h3>Identifying Data Columns</h3>
@@ -153,10 +159,13 @@ you can choose to run the data checks on your dataset.  To do this, you must fir
 When you upload a data file, the Dashboard will examine it and attempt to identify the column header names and units according to your previous selections.  
 However, the first time you upload a file you will have to go through and identify all the columns.
 <p/>
- The data columns and their suggested identities (their “data type”) will be shown to you in the “Identify Columns” page to allow you to modify these identities as needed. 
+ The data columns and their suggested identities (their “data type”) will be shown to you in the 
+ “Identify Columns” page to allow you to modify these identities as needed. 
 Non-standard missing values for any data columns can also be specified. 
-Columns of data that are not recognized within the application at this time can be marked as the “IGNORED” data type. 
-Any data column marked as the “IGNORED” data type will be ignored for data checking purposes but will remain in the original data file.  If a column is left unspecified, you will get a warning that the data type for the column is unknown.  Unknown variables will also be ignored for data checking purposes.
+Columns of data that are not recognized within the application at this time can be marked as the “other” data type. 
+Any data column marked as the “other” data type will remain in the original data file but will be ignored for data checking purposes.  
+If a column is left unspecified, you will get a warning that the data type for the column is unknown.  
+Unknown variables will also be ignored for data checking purposes.
 <p/>
 Once all columns are identified to your satisfaction, you can opt to check your data for errors 
 using the “Check Data” button on the “Identify Columns” page. 

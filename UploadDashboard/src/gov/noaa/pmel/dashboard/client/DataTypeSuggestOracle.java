@@ -120,7 +120,7 @@ public class DataTypeSuggestOracle extends SuggestOracle {
 //			}
 			
 			for (Entry<String, String> elem : itemsDisplay.entrySet()) { 
-				if (elem.getValue().contains("IGNORED")) {
+				if (elem.getValue().contains("other")) {
 //					logger.info("elem.getValue(ignored): " + elem.getValue());
 //					logger.info("elem.getKey(ignored): " + elem.getKey());
                     continue;
@@ -138,7 +138,7 @@ public class DataTypeSuggestOracle extends SuggestOracle {
 					}
 				}
 			}
-			suggestions.add(new ContainsSuggestion("IGNORED", "IGNORED"));
+			suggestions.add(new ContainsSuggestion("other", "other"));
 //			if (suggestions.size() == 1) {
 //			    suggestions.add(new ContainsSuggestion("(unknown)", "(unknown)"));
 //			}

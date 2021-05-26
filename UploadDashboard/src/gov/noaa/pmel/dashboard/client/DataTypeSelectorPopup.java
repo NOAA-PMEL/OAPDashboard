@@ -51,7 +51,7 @@ public class DataTypeSelectorPopup extends Composite implements AttachEvent.Hand
 	}
 
     protected static final String INVALID_CHOICE_MSG = 
-           "You must select one of the known types or IGNORED.<br/><br/>" +
+           "You must select one of the known types or \"other.\"<br/><br/>" +
            "Adding new variable types is not currently supported.";
             
 
@@ -90,7 +90,7 @@ public class DataTypeSelectorPopup extends Composite implements AttachEvent.Hand
     public static Map<String, DataColumnType> dataTypeLookup;
     private Map<String, List<String>> unitsLookup;
     
-    final String DEFAULT_SUGGEST_VALUE = "ignored";
+    final String DEFAULT_SUGGEST_VALUE = "other";
 
     private Timer showInvalidChoiceTimer;
     
