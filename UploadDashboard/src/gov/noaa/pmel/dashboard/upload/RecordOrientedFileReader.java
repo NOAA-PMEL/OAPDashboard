@@ -3,21 +3,21 @@
  */
 package gov.noaa.pmel.dashboard.upload;
 
+import java.io.BufferedInputStream;
 import java.io.File;
 import java.io.IOException;
-import java.io.InputStream;
 
 /**
  * @author kamb
  *
  */
-public interface RecordOrientedFileReader extends Iterable<String[]> {
+public interface RecordOrientedFileReader extends Iterable<String[]>, AutoCloseable {
 
     static RecordOrientedFileReader getFileReader(String fileType, File uploadedFile) throws IOException {
         if ( fileType.contains("excel") 
                 || fileType.contains("spreadsheet")
                 || fileType.contains("ooxml")) {
-               return ExcelFileReader.newInstance(uploadedFile);
+               return ExcelFileReader.newInstance(uploadedFile, fileType);
         } else if ( ! ( fileType.contains("text") 
                         && ( fileType.contains("delimited")
                              || fileType.contains("separated")
@@ -26,11 +26,11 @@ public interface RecordOrientedFileReader extends Iterable<String[]> {
         }
         return new CSVFileReader(uploadedFile, fileType);
     }
-    static RecordOrientedFileReader getFileReader(String fileType, InputStream inputStream) throws IOException {
+    static RecordOrientedFileReader getFileReader(String fileType, BufferedInputStream inputStream) throws IOException {
         if ( fileType.contains("excel") 
                 || fileType.contains("spreadsheet")
                 || fileType.contains("ooxml")) {
-               return ExcelFileReader.newInstance(inputStream);
+               return ExcelFileReader.newInstance(inputStream, fileType);
         } else if ( ! ( fileType.contains("text") 
                         && ( fileType.contains("delimited")
                              || fileType.contains("separated")

@@ -11,13 +11,12 @@ import java.io.FileInputStream;
 import java.io.FilterInputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.nio.file.Files;
-import java.nio.file.StandardCopyOption;
 import java.util.ArrayList;
 import java.util.Enumeration;
 import java.util.Iterator;
 import java.util.List;
 import java.util.zip.ZipEntry;
+import java.util.zip.ZipException;
 import java.util.zip.ZipFile;
 import java.util.zip.ZipInputStream;
 
@@ -43,7 +42,6 @@ import com.example.OoXmlStrictConverter;
 
 import gov.noaa.pmel.dashboard.server.DataUploadService;
 import gov.noaa.pmel.oads.util.StringUtils;
-import gov.noaa.pmel.tws.util.JWhich;
 
 /**
  * @author kamb
@@ -59,9 +57,13 @@ public class ExcelFileReader implements RecordOrientedFileReader, Iterator<Strin
     private Iterator<Row> rows;
     private int rowIdx = 0;
     
-    public static ExcelFileReader newInstance(File uploadedFile) throws IOException {
+    private static final String OLD_EXCEL_TYPE = "application/vnd.ms-excel";
+    private static final String OPEN_OFFICE_TYPE = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet";
+    
+    @SuppressWarnings("resource") // resource (workbook) closed by AutoCloseable
+    public static ExcelFileReader newInstance(File uploadedFile, String fileType) throws IOException {
         Workbook workbook;
-        boolean strict = checkForStrict(uploadedFile);
+        boolean strict = ! OLD_EXCEL_TYPE.equals(fileType) && checkForStrict(uploadedFile);
         try (FileInputStream fis = new FileInputStream(uploadedFile); ) {
             if ( ! strict ) {
                 workbook = WorkbookFactory.create(fis);
@@ -87,33 +89,30 @@ public class ExcelFileReader implements RecordOrientedFileReader, Iterator<Strin
         return new ExcelFileReader(workbook);
     }
     
-    public static ExcelFileReader newInstance(InputStream inStream) throws IOException {
-        InputStream useStream = inStream.markSupported() ? inStream : new BufferedInputStream(inStream);
+    @SuppressWarnings("resource") // resource (workbook) closed by AutoCloseable
+    public static ExcelFileReader newInstance(BufferedInputStream inStream, String fileType) throws IOException {
         Workbook workbook;
         try {
-            int available = useStream.available() - 64;
+            int available = inStream.available() - 64;
             int maxMark = Math.min(available, MAX_PEEK);
-            useStream.mark(maxMark);
-            boolean strict = checkForStrict(useStream);
-            useStream.reset();
+            inStream.mark(maxMark);
+            boolean strict = ! OLD_EXCEL_TYPE.equals(fileType) && checkForStrict(inStream);
+            inStream.reset();
             if ( ! strict ) {
-                workbook = WorkbookFactory.create(useStream);
+                workbook = WorkbookFactory.create(inStream);
             } else {
-//                File strictFile = File.createTempFile("sdis_strict_", ".xlsx");
-//                Files.copy(useStream, strictFile.toPath(), StandardCopyOption.REPLACE_EXISTING);
                 ByteArrayOutputStream baos = new ByteArrayOutputStream();
+                InputStream createStream = null;
                 try {
-                    OoXmlStrictConverter.Transform(useStream, baos);
-//                    File looseFile = File.createTempFile("sdis_loose_", ".xlsx");
-//                    OoXmlStrictConverter.Transform(strictFile.getAbsolutePath(), looseFile.getAbsolutePath());
+                    OoXmlStrictConverter.Transform(inStream, baos);
                     ByteArrayInputStream bais = new ByteArrayInputStream(baos.toByteArray());
-                    useStream = bais.markSupported() ? bais : new BufferedInputStream(bais);
-                    workbook = WorkbookFactory.create(useStream);
+                    createStream = bais.markSupported() ? bais : new BufferedInputStream(bais);
+                    workbook = WorkbookFactory.create(createStream);
                 } catch (Exception e2) {
                     e2.printStackTrace();
                     throw new IllegalStateException("Failed to create ExcelFileReader:" + e2);
                 } finally {
-                    try { useStream.close(); }
+                    try { if ( createStream != null ) createStream.close(); }
                     catch (Throwable t) {
                         // ignore
                     }
@@ -125,7 +124,7 @@ public class ExcelFileReader implements RecordOrientedFileReader, Iterator<Strin
         return new ExcelFileReader(workbook);
     }
     
-    static final int MAX_PEEK = 8192 * 4; // DataUploadService.MAX_ALLOWED_UPLOAD_SIZE; // 8192 * 2;
+    static final int MAX_PEEK = DataUploadService.MAX_ALLOWED_UPLOAD_SIZE; // ~100MB
     static final String STRICT_NS_1 = "http://purl.oclc.org/ooxml/spreadsheetml/main";
 
     /**
@@ -138,48 +137,52 @@ public class ExcelFileReader implements RecordOrientedFileReader, Iterator<Strin
         boolean isStrict = false;
         boolean stop = false;
         XMLInputFactory XIF = XMLInputFactory.newInstance();
-        ZipInputStream zis = new ZipInputStream(inStream);
-        ZipEntry ze;
-        while( !isStrict && !stop && (ze = zis.getNextEntry()) != null) {
-            try ( FilterInputStream filterIs = new FilterInputStream(zis) {
-                // because XMLEventReader will close the underlying stream when it is closed.
-                @Override
-                public void close() throws IOException {
-                    // so don't close the underlying stream
-                }
-            }; ) {
-                String zeName = ze.getName();
-                logger.debug("ZipEntry " + zeName + " size: " + ze.getSize());
-                if ( "xl/workbook.xml".equals(zeName)) {
-                    logger.info("Processing workbook.xml, then stopping.");
-                    stop = true;
-                } else {
-                    continue;
-                }
-                if(isXml(ze.getName())) {
-                    try {
-                        XMLEventReader xer = XIF.createXMLEventReader(filterIs);
-                        int pos = -1;
-                        while(xer.hasNext() && pos < 0) {
-                            XMLEvent xe = xer.nextEvent();
-                            if ( xe.isStartElement()) {
-                                pos+=1;
-                                logger.debug(pos + ":" + xe.toString());
-                                StartElement se = xe.asStartElement();
-                                QName qn = se.getName();
-                                String ns = qn.getNamespaceURI();
-                                if ( STRICT_NS_1.equals(ns)) {
-                                    logger.debug("Found strict at pos : " + pos);
-                                    isStrict = true;
-                                    break;
+        try {
+            ZipInputStream zis = new ZipInputStream(inStream);
+            ZipEntry ze;
+            while( !isStrict && !stop && (ze = zis.getNextEntry()) != null) {
+                try ( FilterInputStream filterIs = new FilterInputStream(zis) {
+                    // because XMLEventReader will close the underlying stream when it is closed.
+                    @Override
+                    public void close() throws IOException {
+                        // so don't close the underlying stream
+                    }
+                }; ) {
+                    String zeName = ze.getName();
+                    logger.debug("ZipEntry " + zeName + " size: " + ze.getSize());
+                    if ( "xl/workbook.xml".equals(zeName)) {
+                        logger.info("Processing workbook.xml, then stopping.");
+                        stop = true;
+                    } else {
+                        continue;
+                    }
+                    if(isXml(ze.getName())) {
+                        try {
+                            XMLEventReader xer = XIF.createXMLEventReader(filterIs);
+                            int pos = -1;
+                            while(xer.hasNext() && pos < 0) {
+                                XMLEvent xe = xer.nextEvent();
+                                if ( xe.isStartElement()) {
+                                    pos+=1;
+                                    logger.debug(pos + ":" + xe.toString());
+                                    StartElement se = xe.asStartElement();
+                                    QName qn = se.getName();
+                                    String ns = qn.getNamespaceURI();
+                                    if ( STRICT_NS_1.equals(ns)) {
+                                        logger.debug("Found strict at pos : " + pos);
+                                        isStrict = true;
+                                        break;
+                                    }
                                 }
                             }
+                        } catch (XMLStreamException xsx) {
+                            throw new IOException("Exception parsing document XML:"+xsx.getMessage(), xsx);
                         }
-                    } catch (XMLStreamException xsx) {
-                        throw new IOException("Exception parsing document XML:"+xsx.getMessage(), xsx);
                     }
                 }
             }
+        } catch (ZipException ze) {
+            logger.warn(ze);
         }
         logger.info("Found strict: " + isStrict);
         return isStrict;
@@ -224,6 +227,8 @@ public class ExcelFileReader implements RecordOrientedFileReader, Iterator<Strin
                     }
                 }
             }
+        } catch (ZipException ze) {
+            logger.warn(ze);
         }
         logger.info("Found strict: " + isStrict);
         return isStrict;
@@ -249,10 +254,11 @@ public class ExcelFileReader implements RecordOrientedFileReader, Iterator<Strin
             logger.debug("EFR finalized");
             if ( wb != null )
                 wb.close();
-        } catch (IOException ex) {
+        } catch (Exception ex) {
             System.err.println("ExcelFileReader exception on finalize: " + ex);
         }
     }
+    
 //    public ExcelFileReader(InputStream inStream) throws IOException {
 //        this._inStream = inStream.markSupported() ? inStream : new BufferedInputStream(inStream);
 //        df = new DataFormatter();
@@ -405,7 +411,8 @@ public class ExcelFileReader implements RecordOrientedFileReader, Iterator<Strin
     @Override
     public void close() throws Exception {
         try {
-            wb.close();
+            if ( wb != null )
+                wb.close();
         } catch (Throwable t) {
             // ignore
         }
@@ -501,27 +508,33 @@ public class ExcelFileReader implements RecordOrientedFileReader, Iterator<Strin
         try {
             boolean useStream = false;
             String[] files = new String[] { 
-//                    "/Users/kamb/workspace/oa_dashboard_test_data/WOAC_metadata_jh100918.xlsx",
+//                    "/Users/kamb/workspace/oa_dashboard_test_data/people/julian/WOAC_metadata_jh100918.xlsx",
+//                    "/Users/kamb/workspace/oa_dashboard_test_data/A02_HLY0803.xlsx",
 //                    "/Users/kamb/workspace/oa_dashboard_test_data/A02_HLY0803-loose.xlsx",
 //                    "/Users/kamb/workspace/oa_dashboard_test_data/A02_HLY0803.xlsx.loose",
-//            "/Users/kamb/workspace/oa_dashboard_test_data/WOAC_metadata-fixed-strict.xlsx"
-            "/Users/kamb/workspace/oa_dashboard_test_data/WCOA/WCOA11-01-06-2015_data-full.xlsx",
-            "/Users/kamb/workspace/OADashboard/test-data/WCOA11-01-06-2015_data-full.xlsx",
-//            "/Users/kamb/workspace/OADashboard/test-data/WCOA11-fileItem.xlsx"
-            "/Users/kamb/workspace/OADashboard/test-data/strict-test.xlsx",
-            "/Users/kamb/workspace/OADashboard/test-data/WCOA11-01-06-2015_data-full-resaved.xlsx",
-                    "/Users/kamb/workspace/oa_dashboard_test_data/A02_HLY0803.xlsx"
+                    "/Users/kamb/workspace/oa_dashboard_test_data/33GG20171112-from_GDRIVE.xlsx", 
+                    "/Users/kamb/workspace/oa_dashboard_test_data/people/julian/WOAC_metadata-fixed-strict.xlsx",
+                    "/Users/kamb/workspace/oa_dashboard_test_data/WCOA/WCOA11-01-06-2015_data-full.xlsx",
+                    "/Users/kamb/workspace/OADashboard/test-data/WCOA11-01-06-2015_data-full.xlsx", // invalid mark
+                    "/Users/kamb/workspace/OADashboard/test-data/WCOA11-01-06-2015_data-full-resaved.xlsx",
+                    "/Users/kamb/workspace/OADashboard/test-data/WCOA11-fileItem.xlsx",
+                    "/Users/kamb/workspace/OADashboard/test-data/strict-test.xlsx"
                     };
-            if ( useStream ) {
-            for (String file : files ) {
-                InputStream inStream = new FileInputStream(file);
-                ExcelFileReader efr = newInstance(inStream);
-                System.out.println(efr);
-                for (String[] row : efr ) {
-                    System.out.println(row);
+//            if ( useStream ) {
+                for (String file : files ) {
+                    System.out.println("File:"+file);
+                    try ( BufferedInputStream inStream = new BufferedInputStream(new FileInputStream(file));
+                          ExcelFileReader efr = newInstance(inStream, OPEN_OFFICE_TYPE); ) {
+                        System.out.println(file+":"+efr);
+                        for (String[] row : efr ) {
+                            System.out.println(row);
+                            break;
+                        }
+                    } catch (Exception ex) {
+                        ex.printStackTrace();
+                    }
                 }
-            }
-            } else {
+//            } else {
                 for (String file : files ) {
                     try {
                         File zipFile = new File(file);
@@ -531,7 +544,7 @@ public class ExcelFileReader implements RecordOrientedFileReader, Iterator<Strin
                         ex.printStackTrace();
                     }
                 }
-            }
+//            }
         } catch (Exception ex) {
             ex.printStackTrace();
             // TODO: handle exception

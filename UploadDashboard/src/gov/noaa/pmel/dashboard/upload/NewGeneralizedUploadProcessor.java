@@ -4,14 +4,9 @@
 package gov.noaa.pmel.dashboard.upload;
 
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.IOException;
-import java.io.InputStream;
-import java.nio.file.FileAlreadyExistsException;
 import java.nio.file.Files;
-import java.nio.file.Path;
 import java.util.ArrayList;
-import java.util.TreeMap;
 import java.util.TreeSet;
 
 import org.apache.log4j.Logger;
@@ -23,7 +18,6 @@ import gov.noaa.pmel.dashboard.shared.DashboardDatasetData;
 import gov.noaa.pmel.dashboard.shared.DashboardMetadata;
 import gov.noaa.pmel.dashboard.shared.DashboardUtils;
 import gov.noaa.pmel.oads.util.StringUtils;
-import gov.noaa.pmel.tws.util.FileUtils;
 import gov.noaa.pmel.tws.util.Logging;
 
 /**
@@ -50,10 +44,10 @@ public class NewGeneralizedUploadProcessor extends FileUploadProcessor {
             specifiedDatasetId = StringUtils.emptyOrNull(specifiedDatasetId) ? 
                                     filename :
                                     specifiedDatasetId; 
-            DashboardDatasetData datasetData;
-            try ( InputStream inStream = new FileInputStream(_uploadedFile); ) {
-                RecordOrientedFileReader recordReader = 
+            DashboardDatasetData datasetData = null;
+            try ( RecordOrientedFileReader recordReader = 
                         RecordOrientedFileReader.getFileReader(_uploadFields.checkedFileType(), _uploadedFile);
+                ) { 
                 datasetData = DataFileHandler.createSingleDatasetFromInput(recordReader, dataFormat, 
                                                                       username, filename, timestamp, 
                                                                       submissionRecordId,
@@ -69,6 +63,11 @@ public class NewGeneralizedUploadProcessor extends FileUploadProcessor {
 //                _messages.add("There was an error processing the data file: " + ex.getMessage() + ".");
 //                _messages.add(DashboardUtils.END_OF_ERROR_MESSAGE_TAG);
                 throw new IllegalStateException(ex);
+            } catch (Exception ex) { // thrown by AutoCloseable.close()
+                logger.warn("from AutoCloseable? " + ex, ex);
+                if ( datasetData == null ) {
+                    throw new IllegalStateException("No datasetData:"+ex, ex);
+                }
             }
 
             // Process all the datasets created from this file
@@ -82,7 +81,7 @@ public class NewGeneralizedUploadProcessor extends FileUploadProcessor {
                 datasetData.setUploadedFile(_uploadedFile.getPath());
                 datasetData.setUserDatasetName(specifiedDatasetId);
                 // Check if the dataset already exists
-                datasetId = datasetData.getDatasetId();
+                datasetId = datasetData.getRecordId();
                 boolean datasetExists = _dataFileHandler.dataFileExists(datasetId); // , datasetFile.getName());
                 boolean appended = false;
                 if ( isUpdateRequest ) {

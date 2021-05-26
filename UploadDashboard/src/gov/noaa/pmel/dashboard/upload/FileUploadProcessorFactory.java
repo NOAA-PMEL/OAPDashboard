@@ -21,14 +21,14 @@ public class FileUploadProcessorFactory {
     public static FileUploadProcessorFactory getFactory() {
         return new FileUploadProcessorFactory();
     }
-    public static FileUploadProcessor getProcessor(StandardUploadFields stdFields) {
-        String fileType = stdFields.checkedFileType();
-        if ( fileIsReadable(fileType)) {
-            return new GeneralizedUploadProcessor(stdFields);
-        } else {
-            return new OpaqueFileUploadProcessor(stdFields);
-        }
-    }
+//    public static FileUploadProcessor getProcessor(StandardUploadFields stdFields) {
+//        String fileType = stdFields.checkedFileType();
+//        if ( fileIsReadable(fileType)) {
+//            return new GeneralizedUploadProcessor(stdFields);
+//        } else {
+//            return new OpaqueFileUploadProcessor(stdFields);
+//        }
+//    }
 //    public static FileUploadProcessor _getProcessor(StandardUploadFields stdFields) {
 //        FileUploadProcessor processor = null;
 //        switch (stdFields.fileType()) {

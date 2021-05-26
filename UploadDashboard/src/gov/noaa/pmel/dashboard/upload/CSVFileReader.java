@@ -72,5 +72,12 @@ public class CSVFileReader implements RecordOrientedFileReader {
     public String getDelimiter() {
         return fileFormat.getDelimiterString();
     }
+    /* (non-Javadoc)
+     * @see java.lang.AutoCloseable#close()
+     */
+    @Override
+    public void close() throws Exception {
+        // nothing to do here
+    }
     
 }
