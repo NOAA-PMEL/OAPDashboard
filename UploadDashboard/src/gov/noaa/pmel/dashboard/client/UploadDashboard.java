@@ -115,8 +115,9 @@ public class UploadDashboard implements EntryPoint, ValueChangeHandler<String> {
 
     private static final String IE_NOT_SUPPORTED = 
             "Internet Explorer is not supported.<br/>"
+          + "We apologize for any invconvenience.<br/>"
           + "Please use another browser."
-          + "<br/><br/>Check the <a target='SDIS Help' href='sdis_help.html'>Help Documentation</a>"
+          + "<br/><br/>Please see the <a href='sdis_help.html#SUPPORTED_BROWSERS'>Help Documentation</a>"
           + " for supported browsers.";
     
 	// Singleton instance of this object
@@ -409,7 +410,7 @@ public class UploadDashboard implements EntryPoint, ValueChangeHandler<String> {
         String browser = Window.Navigator.getUserAgent();
         browser = browser.toLowerCase();
         GWT.log("browser "+ browser);
-        return browser.contains("safari") && ! browser.contains("chrome");
+        return browser.contains("safari") && ! browser.contains("chrome"); // Or contains Windows...Not changing now.
     }
     public static boolean isIE() {
         String browser = Window.Navigator.getUserAgent();
