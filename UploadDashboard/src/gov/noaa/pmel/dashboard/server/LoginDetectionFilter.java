@@ -8,6 +8,7 @@ import java.security.Principal;
 import java.sql.SQLException;
 import java.util.HashSet;
 import java.util.Set;
+import java.util.concurrent.Executors;
 
 import javax.servlet.Filter;
 import javax.servlet.FilterChain;
@@ -26,6 +27,7 @@ import gov.noaa.pmel.dashboard.server.db.dao.DaoFactory;
 import gov.noaa.pmel.dashboard.server.db.dao.UsersDao;
 import gov.noaa.pmel.dashboard.server.model.User;
 import gov.noaa.pmel.dashboard.server.util.Notifications;
+import gov.noaa.pmel.tws.util.ApplicationConfiguration;
 import gov.noaa.pmel.tws.util.Logging;
 
 /**
@@ -64,9 +66,11 @@ public class LoginDetectionFilter implements Filter {
             if (session == null || session.getAttribute("user") == null) {
                 request.getSession().setAttribute("user", principal);
                 String browser = request.getHeader("User-Agent");
-                String msg = "Login by " + principal + " using " + browser;
+                String msg = "Login by " + principal + " on " + request.getLocalName() + " using " + browser;
                 logger.info(msg);
-                Notifications.SendEmail("SDIS Login", msg, "linus.kamb@noaa.gov,linus.kamb@gmail.com");
+                if ( ApplicationConfiguration.getProperty("oap.login.notify", false)) {
+                    sendNotification(msg);
+                }
                 try {
                     UsersDao udao = DaoFactory.UsersDao();
                     User user = udao.retrieveUser(username);
@@ -118,6 +122,21 @@ public class LoginDetectionFilter implements Filter {
         }
 
         chain.doFilter(req, resp);
+    }
+
+    /**
+     * @param msg
+     */
+    private void sendNotification(String msg) {
+        Runnable notifier = new Runnable() {
+            @Override
+            public void run() {
+                logger.debug("running login notifier");
+                Thread.yield();
+                Notifications.SendEmail("SDIS Login", msg, "linus.kamb@noaa.gov,linus.kamb@gmail.com");
+            }
+        };
+        Executors.newSingleThreadExecutor().execute(notifier);
     }
 
     /**
