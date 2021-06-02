@@ -424,7 +424,7 @@ public class DatasetSubmitter {
         if ( ! StringUtils.emptyOrNull(notificationList)) {
             sendArchiveMessage(sRecord, archiveBundle, userRealName, userEmail);
         }
-        if ( ApplicationConfiguration.getProperty("oap.archive.update.notify.user", false)) {
+        if ( ApplicationConfiguration.getProperty("oap.archive.staged.notify.user", true)) {
             sendUserMessage(datasetId, archiveBundle, userRealName, userEmail);
         }
      }
