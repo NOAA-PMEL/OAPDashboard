@@ -12,6 +12,8 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.math.BigDecimal;
+import java.math.MathContext;
 import java.net.URL;
 import java.nio.charset.Charset;
 import java.util.Comparator;
@@ -141,8 +143,9 @@ public class FileTypeTest {
         int nFirst = first.getKey().intValue();
         int nSecond = second.getKey().intValue();
         boolean looksLikeIt = ! first.getValue().equals(Delimiter.angle) 
-                                && atLeast( nFirst, length, .1 ) 
-                                && lessThan( nSecond, nFirst, .5);
+                                && ( atLeast( nFirst, length, .1 ) 
+                                && lessThan( nSecond, nFirst, .5))
+                                || second.getValue().equals(Delimiter.NONE);
 //        System.out.println(looksLikeIt);
         return looksLikeIt;
     }
@@ -155,6 +158,7 @@ public class FileTypeTest {
     static boolean atLeast(int smaller, int larger, double percentage, double slack) {
         try {
         double d = (double)smaller/larger; 
+        d = new BigDecimal(d, new MathContext(1)).doubleValue();
         return d >= (percentage - (slack*percentage));
         } catch (Error e) {
             return true;
