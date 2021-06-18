@@ -207,9 +207,9 @@ public class StatusServices extends ResourceBase {
             if ( sstate.equals(ACCEPTED)) {
                 if ( StringUtils.emptyOrNull(accession)) {
                     if ( StringUtils.emptyOrNull(message) || ! message.matches(".*accession[:=]\\d{7}.*")) {
-                        String msg = "Dataset " + p_sid + " published with no accession # provided.";
+                        String msg = "Dataset " + p_sid + " accepted with no accession # provided.";
                         logger.warn(msg);
-                        Notifications.AdminEmail("Status update Publish with NO ACCESSION", msg);
+                        Notifications.AdminEmail("Status update Accept with NO ACCESSION", msg);
                     } else {
                         int idx = message.indexOf("accession") + 10;
                         accession = message.substring(idx, idx+7);

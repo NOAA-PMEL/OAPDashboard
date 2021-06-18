@@ -81,6 +81,7 @@ public class StatusUpdater {
                 logMessage = "The archive status for submission record " + datasetId +
                         " has been changed from " + currentState.status() + ":" + currentState.message() +
                         " to " + sstate + ":" + message;
+                logger.info(logMessage);
                 if ( ApplicationConfiguration.getProperty("oap.archive.update.notify.user", false)) {
                     try {
                         User submitter = Users.getDataSubmitter(srec.datasetId());
@@ -96,7 +97,7 @@ public class StatusUpdater {
             Notifications.AdminEmail(notificationTitle, logMessage);
             return srec;
         } catch (Exception ex) {
-            logger.warn(ex, ex);
+            logger.warn("Exception during update status process:"+ex, ex);
             String exceptionMsg = DashboardServerUtils.exceptionToString(ex);
             Notifications.AdminEmail("Exception updating status for " + datasetId, exceptionMsg);
             throw new DashboardException("Exception updating archive status for dataset " + datasetId, ex);
