@@ -426,11 +426,11 @@ public class DashboardConfigStore {
 					" value specified in " + _configFile.getPath() + "\n" + 
 					ex.getMessage() + "\n" + CONFIG_FILE_INFO_MSG);
 		}
-		if ( logger.isDebugEnabled() ) {
+		if ( logger.isTraceEnabled() ) {
 			logger.info("Known user-provided data types: ");
 			TreeSet<DashDataType<?>> knownTypes = knownUserDataTypes.getKnownTypesSet();
 			for ( DashDataType<?> dtype : knownTypes )
-				logger.debug("    " + dtype.getVarName() + "=" + dtype.toPropertyValue());			
+				logger.trace("    " + dtype.getVarName() + "=" + dtype.toPropertyValue());			
 		}
 
 		try {
@@ -450,7 +450,7 @@ public class DashboardConfigStore {
 					" value specified in " + _configFile.getPath() + "\n" + 
 					ex.getMessage() + "\n" + CONFIG_FILE_INFO_MSG);
 		}
-		if ( logger.isInfoEnabled() ) {
+		if ( logger.isTraceEnabled() ) {
 			logger.info("Known file metadata types: ");
 			TreeSet<DashDataType<?>> knownTypes = knownMetadataTypes.getKnownTypesSet();
 			for ( DashDataType<?> dtype : knownTypes )
