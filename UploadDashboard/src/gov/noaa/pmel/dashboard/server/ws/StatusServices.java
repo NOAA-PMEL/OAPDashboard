@@ -208,6 +208,10 @@ public class StatusServices extends ResourceBase {
             String logMessage = notificationTitle + " from " + getRemoteAddress(httpRequest) + " to " + sstate + ":" + message;
             logger.info(logMessage);
             
+            DashboardDataset dds = DashboardConfigStore.get(false).getDataFileHandler().getDatasetFromInfoFile(p_sid);
+            if ( dds  == null ) {
+                throw new NotFoundException("No dataset found for record id: " + p_sid);
+            }
             if ( sstate.equals(ACCEPTED)) {
                 if ( StringUtils.emptyOrNull(accession)) {
                     if ( StringUtils.emptyOrNull(message) || ! message.matches(".*accession[:=]\\d{7}.*")) {
@@ -220,7 +224,7 @@ public class StatusServices extends ResourceBase {
                     }
                 }
             }
-            // XXX TODO: Need to fix status information panel.  This is ridiculous.
+            // XXX TODO: Need to fix display of URL on status information panel.  Or where-ever.
             if ( sstate.equals(PUBLISHED)) {
                 if ( !StringUtils.emptyOrNull(url)) {
                     message += "<br/>"+url;
@@ -229,11 +233,12 @@ public class StatusServices extends ResourceBase {
             }
             
             srec = StatusUpdater.updateStatusRecord(p_sid, sstate, updateParams);
-            updateDocumentMetadata(p_sid, sstate, accession, url);
+            updateDocumentMetadata(dds, sstate, accession, url);
             
             response = Response.ok("Status updated for " + p_sid).build();
             
         } catch (NotFoundException nfex) {
+            logger.warn(nfex);
             response = Response.status(HttpServletResponse.SC_NOT_FOUND)
                         .entity("No submission record found for id " + p_sid).build();
         } catch (Exception ex) {
@@ -268,11 +273,10 @@ public class StatusServices extends ResourceBase {
      * @param sstate
      * @param accession
      */
-    private static void updateDocumentMetadata(String p_sid, StatusState sstate, 
+    private static void updateDocumentMetadata(DashboardDataset dds, StatusState sstate, 
                                                String accession, String url) {
         try {
             DataFileHandler dfh = DashboardConfigStore.get(false).getDataFileHandler();
-            DashboardDataset dds = dfh.getDatasetFromInfoFile(p_sid);
             if ( ! StringUtils.emptyOrNull(accession)) {
                 dds.setAccession(accession);
             }
@@ -284,7 +288,7 @@ public class StatusServices extends ResourceBase {
             logger.warn(ex,ex);
             Notifications.AdminEmail("SDIS: Exception updating accesssion",
                                      "There was an exception updating the accession number for dataset "
-                                    + p_sid + ".\n" + ex.toString());
+                                    + dds.getRecordId() + ".\n" + ex.toString());
                                     
         }
     }
