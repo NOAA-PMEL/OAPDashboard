@@ -3,7 +3,9 @@
  */
 package gov.noaa.pmel.dashboard.server.ws;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import javax.servlet.ServletContext;
 import javax.servlet.http.HttpServletRequest;
@@ -197,8 +199,10 @@ public class StatusServices extends ResourceBase {
             
             String statusStr = getParam(STATUS, params); // fp_status_state != null ? fp_status_state : qp_status_state;
             StatusState sstate = getState(statusStr.toUpperCase());
-            String message = getParam(MESSAGE, params); // fp_message != null ? fp_message : qp_message;
-            String accession = getParam(ACCESSION, params);
+            Map<String, String> updateParams = extractUpdateParams(sstate, params);
+            String message = updateParams.get(MESSAGE.name());
+            String accession = updateParams.get(ACCESSION.name());
+            String url = updateParams.get(URL.name());
             
             String notificationTitle = "Status update for " + p_sid;
             String logMessage = notificationTitle + " from " + getRemoteAddress(httpRequest) + " to " + sstate + ":" + message;
@@ -216,9 +220,16 @@ public class StatusServices extends ResourceBase {
                     }
                 }
             }
+            // XXX TODO: Need to fix status information panel.  This is ridiculous.
+            if ( sstate.equals(PUBLISHED)) {
+                if ( !StringUtils.emptyOrNull(url)) {
+                    message += "<br/>"+url;
+                    updateParams.put(MESSAGE.name(), message); // XXX TODO: need appropriate place for URL.
+                }
+            }
             
-            srec = StatusUpdater.updateStatusRecord(p_sid, sstate, message);
-            updateDocumentMetadata(p_sid, sstate, accession);
+            srec = StatusUpdater.updateStatusRecord(p_sid, sstate, updateParams);
+            updateDocumentMetadata(p_sid, sstate, accession, url);
             
             response = Response.ok("Status updated for " + p_sid).build();
             
@@ -234,16 +245,39 @@ public class StatusServices extends ResourceBase {
     }
 
     /**
+     * @param params
+     * @return
+     */
+    private static Map<String, String> extractUpdateParams(StatusState sstate, MultivaluedMap<String, String> params) {
+        Map<String, String> updateParams = new HashMap<String, String>();
+        String message = getParam(MESSAGE, params); // fp_message != null ? fp_message : qp_message;
+        if ( StringUtils.emptyOrNull(message)) {
+            message = sstate.displayMsg();
+        }
+        updateParams.put(MESSAGE.name(), message);
+        String accession = getParam(ACCESSION, params);
+        updateParams.put(ACCESSION.name(), accession);
+        String url = getParam(URL, params);
+        updateParams.put(URL.name(), url);
+        logger.info("Update Params:"+ updateParams);
+        return updateParams;
+    }
+
+    /**
      * @param p_sid
      * @param sstate
      * @param accession
      */
-    private static void updateDocumentMetadata(String p_sid, StatusState sstate, String accession) {
+    private static void updateDocumentMetadata(String p_sid, StatusState sstate, 
+                                               String accession, String url) {
         try {
             DataFileHandler dfh = DashboardConfigStore.get(false).getDataFileHandler();
             DashboardDataset dds = dfh.getDatasetFromInfoFile(p_sid);
             if ( ! StringUtils.emptyOrNull(accession)) {
                 dds.setAccession(accession);
+            }
+            if ( ! StringUtils.emptyOrNull(url)) {
+                dds.setPublishedUrl(url);
             }
             dfh.saveDatasetInfoToFile(dds, "Updated accession number to: " + accession);
         } catch (Exception ex) {

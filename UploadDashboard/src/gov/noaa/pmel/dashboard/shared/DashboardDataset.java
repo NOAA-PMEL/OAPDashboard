@@ -32,6 +32,8 @@ public class DashboardDataset implements Serializable, IsSerializable {
     @Builder.Default
     protected String accession = DashboardUtils.STRING_MISSING_VALUE; 
     @Builder.Default
+    protected String publishedUrl = DashboardUtils.STRING_MISSING_VALUE; 
+    @Builder.Default
 	protected boolean selected = false;
     @Builder.Default
     protected String recordId = DashboardUtils.STRING_MISSING_VALUE;
@@ -97,6 +99,7 @@ public class DashboardDataset implements Serializable, IsSerializable {
         super();
 		selected = false;
         accession = DashboardUtils.STRING_MISSING_VALUE;
+        publishedUrl = DashboardUtils.STRING_MISSING_VALUE;
         recordId = DashboardUtils.STRING_MISSING_VALUE;
         userDatasetName = DashboardUtils.STRING_MISSING_VALUE;
 		version = DashboardUtils.STRING_MISSING_VALUE;
@@ -129,6 +132,12 @@ public class DashboardDataset implements Serializable, IsSerializable {
     }
     public void setAccession(String accn) {
         accession = accn;
+    }
+    public String getPublishedUrl() {
+        return publishedUrl;
+    }
+    public void setPublishedUrl(String url) {
+        publishedUrl = url;
     }
     
 	public boolean isArchived() {
@@ -743,6 +752,8 @@ XXX This allows the possibility that numDataRows != the actual number of data ro
 		DashboardDataset other = (DashboardDataset) obj;
 
 		if ( ! accession.equals(other.accession))
+			return false;
+		if ( ! publishedUrl.equals(other.publishedUrl))
 			return false;
 		if ( selected != other.selected )
 			return false;

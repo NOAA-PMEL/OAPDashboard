@@ -3,6 +3,8 @@
  */
 package gov.noaa.pmel.dashboard.server.submission.status;
 
+import java.util.Map;
+
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -17,6 +19,8 @@ import gov.noaa.pmel.dashboard.server.submission.status.StatusState;
 import gov.noaa.pmel.dashboard.server.util.Notifications;
 import gov.noaa.pmel.dashboard.shared.NotFoundException;
 import gov.noaa.pmel.tws.util.ApplicationConfiguration;
+
+import static gov.noaa.pmel.dashboard.server.submission.status.StatusMessageFlag.*;
 
 
 /**
@@ -57,12 +61,22 @@ public class StatusUpdater {
         return sb.toString();
     }
     
-    public static SubmissionRecord updateStatusRecord(String datasetId, StatusState sstate,
-                                                      String message)
+    public static SubmissionRecord updateStatusRecord(String datasetId, 
+                                                      StatusState sstage,
+                                                      String message) {
+        throw new RuntimeException("Deprecated: use updateStatusRecord(datasetId, sstate, updateParams"); // XXX TODO: remove
+    }
+    
+    public static SubmissionRecord updateStatusRecord(String datasetId, 
+                                                      StatusState sstate,
+                                                      Map<String, String> updateParams)
             throws NotFoundException, DashboardException {
         try {
             SubmissionRecord srec;
             String notificationTitle = "Status update for " + datasetId;
+            String updateMessage = updateParams.containsKey(MESSAGE.name()) ? 
+                                    updateParams.get(MESSAGE.name()) :
+                                    sstate.displayMsg();
             String logMessage = "";
             SubmissionsDao sdao = DaoFactory.SubmissionsDao();
             if ( Archive.isRecordKey(datasetId)) {
@@ -77,10 +91,10 @@ public class StatusUpdater {
                 throw new NotFoundException("No submission record found for dataset ID: " + datasetId);
             } else {
                 StatusRecord currentState = srec.status();
-                Archive.updateStatus(srec, sstate, message);
+                Archive.updateStatus(srec, sstate, updateMessage);
                 logMessage = "The archive status for submission record " + datasetId +
                         " has been changed from " + currentState.status() + ":" + currentState.message() +
-                        " to " + sstate + ":" + message;
+                        " to " + sstate + ":" + updateMessage;
                 logger.info(logMessage);
                 if ( ApplicationConfiguration.getProperty("oap.archive.update.notify.user", false)) {
                     try {

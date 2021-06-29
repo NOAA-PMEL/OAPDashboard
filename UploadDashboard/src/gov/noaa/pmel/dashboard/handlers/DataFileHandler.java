@@ -77,6 +77,7 @@ public class DataFileHandler extends VersionedFileHandler {
 	private static final String TAB = "\t";
     private static final String SUBMISSION_RECORD_ID = "recordid";
     private static final String ACCESSION_NUM = "accession";
+    private static final String PUBLISHED_URL = "url";
 	private static final String DATA_OWNER_ID = "dataowner";
 	private static final String FEATURE_TYPE_ID = "featuretype";
 	private static final String OBSERVATION_TYPE_ID = "userobservationtype";
@@ -1084,6 +1085,7 @@ public class DataFileHandler extends VersionedFileHandler {
 		// Create the properties for this dataset information file
 		Properties datasetProps = new Properties();
         datasetProps.setProperty(ACCESSION_NUM, dataset.getAccession());
+        datasetProps.setProperty(PUBLISHED_URL, dataset.getPublishedUrl());
         datasetProps.setProperty(SUBMISSION_RECORD_ID, dataset.getRecordId());
         datasetProps.setProperty(USER_DATASET_NAME, dataset.getUserDatasetName());
 		// Owner of the dataset
@@ -1950,6 +1952,11 @@ public class DataFileHandler extends VersionedFileHandler {
 		value = cruiseProps.getProperty(ACCESSION_NUM);
         if ( value == null ) { value = STRING_MISSING_VALUE; }
         dataset.setAccession(value);
+		        
+        // Published URL
+		value = cruiseProps.getProperty(PUBLISHED_URL);
+        if ( value == null ) { value = STRING_MISSING_VALUE; }
+        dataset.setPublishedUrl(value);
 		        
 		// Metadata documents
 		value = cruiseProps.getProperty(ADDL_DOC_TITLES_ID);

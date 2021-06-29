@@ -12,7 +12,8 @@ public enum StatusMessageFlag {
     ACCESSION("a", "accesssion"),
     MESSAGE("m", "message"),
     STATUS("s", "status"),
-    VERSION("n", "version");
+    VERSION("n", "version"),
+    URL("u", "url");
     
     private String _qpFlag;
     private String _formField;
