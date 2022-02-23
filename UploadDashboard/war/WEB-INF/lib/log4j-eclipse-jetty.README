@@ -1,0 +1,5 @@
+Eclipse (or maybe it's the GWT plugin) includes an older version of Jetty for running Dev Mode.
+This older version of Jetty cannot handle Java 9 multi-release jars.
+The work-around is to unpack log4j-api and log4j-core and remove META-INF/versions directory
+and re-jar them.
+
