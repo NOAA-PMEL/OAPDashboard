@@ -114,7 +114,11 @@ public abstract class SigmaThetaCalculator {
 			if ( ! _dataset.isUsableIndex(_salinityColumnIdx)) {
 				throw new IllegalStateException("Dependent value is not yet standardized.");
 			}
-			double sal = ((Double)_dataset.getStdVal(rowIdx, _salinityColumnIdx)).doubleValue();
+            Double salinty = (Double)_dataset.getStdVal(rowIdx, _salinityColumnIdx);
+            if ( salinty == null ) {
+                throw  new IllegalStateException("Null value for dependent variable salinity.");
+            }
+			double sal = salinty.doubleValue();
 			double density = fromTempAndSalinity(_labTemp, sal);
 			return density;
 		}
