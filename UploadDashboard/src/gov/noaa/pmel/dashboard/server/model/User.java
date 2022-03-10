@@ -95,6 +95,15 @@ public class User {
         return phone.toString();
     }
 
+    public String shortString() {
+        return "_firstName="+_firstName
+                + " _middle="+_middle
+                + " _lastName="+_lastName
+                + " _email="+_email
+                + " _telephone="+_telephone
+                + " _telExtension="+_telExtension
+                + " _organization="+_organization;
+    }
     /**
      * @return
      */

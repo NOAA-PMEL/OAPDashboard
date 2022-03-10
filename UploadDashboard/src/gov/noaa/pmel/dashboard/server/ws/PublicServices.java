@@ -85,9 +85,10 @@ public class PublicServices extends CommonServiceBase {
                     respondFailure(httpResponse, SC_BAD_REQUEST, "Unknown request.");
             }
         } catch (DashboardException ex) {
+            logger.warn(ex,  ex);
             respondFailure(httpResponse, SC_BAD_REQUEST, ex.getMessage());
         } catch (Exception ex) {
-            logger.warn(ex,  ex);
+            logger.warn("SDIS PasswordServices Exception"+ex,  ex);
             Notifications.Alert("SDIS PasswordServices Exception", ex);
             respondFailure(httpResponse, SC_INTERNAL_SERVER_ERROR, 
                            "There was an error handling your request. "

@@ -4,6 +4,8 @@
 package gov.noaa.pmel.dashboard.server.db.myb;
 
 import java.io.Reader;
+import java.net.URL;
+
 import org.apache.ibatis.io.Resources;
 import org.apache.ibatis.session.SqlSession;
 import org.apache.ibatis.session.SqlSessionFactory;
@@ -46,6 +48,12 @@ public class MybatisConnectionFactory {
                 String dbConfigFileName = ApplicationConfiguration.getProperty(DB_CONFIG_FILE_PROPERTY, DEFAULT_CONFIG_FILE);
                 ApplicationConfiguration.console("Using dbConfigFile: "+ dbConfigFileName);
                 ApplicationConfiguration.console("Using dashboard environemnt: "+ dbEnvironmet);
+                try { 
+                    URL url = MybatisConnectionFactory.class.getResource("/"+dbConfigFileName);
+                    System.out.println("Db config file found at " + url + " as " + url.getFile());
+                } catch (Exception ex) {
+                    ex.printStackTrace();
+                }
                 try ( Reader r1 = Resources.getResourceAsReader(dbConfigFileName); ) {
                 	SqlSessionFactoryBuilder builder = new SqlSessionFactoryBuilder();
                     dashboardSessionFactory = builder.build(r1, dbEnvironmet );

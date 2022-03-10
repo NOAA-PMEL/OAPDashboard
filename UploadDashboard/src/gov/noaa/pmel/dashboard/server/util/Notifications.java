@@ -26,13 +26,13 @@ public class Notifications {
 
 	static Logger logger = LogManager.getLogger(Notifications.class);
 
-	public static final String OADB_RETURN_ADDR = "\"OAP Dashboard\" <noreply@pmel.noaa.gov>";
-
 	private static final int MAX_SMS_MSG_LENGTH = 160;
 
     private static final String DEFAULT_EMAIL = "sdis.pmel@noaa.gov";
     private static final String ADMIN_EMAIL = "oar.pmel.sdis.admin@noaa.gov";
     
+	public static final String OADB_RETURN_ADDR = "\"OAP Dashboard\" <" + DEFAULT_EMAIL + ">"; // noreply@pmel.noaa.gov>";
+
 //	public static void SendSMS(String message, Iterable<String> phoneNumbers) {
 //		for (String phoneNumber : phoneNumbers) {
 //			SendSMS(message, phoneNumber);

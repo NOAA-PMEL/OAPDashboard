@@ -111,6 +111,10 @@ public class StatusUpdater {
             Notifications.AdminEmail(notificationTitle, logMessage);
             return srec;
         } catch (Exception ex) {
+            if ( ex instanceof NotFoundException ) {
+                logger.warn("Exception during update status process:"+ex);
+                throw (NotFoundException)ex; // XXX TODO: get yer exceptions straightened out.
+            }
             logger.warn("Exception during update status process:"+ex, ex);
             String exceptionMsg = DashboardServerUtils.exceptionToString(ex);
             Notifications.AdminEmail("Exception updating status for " + datasetId, exceptionMsg);
