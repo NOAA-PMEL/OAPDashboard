@@ -71,11 +71,11 @@ public class AdminClient extends CLClient {
                                             .description("User email.").build();
     private static CLOption opt_phone = CLOption.builder().name("phone").flag("t").longFlag("phone")
                                             .description("User phone.  Use \"x####\" to specify an extension.").build(); //  Use \"x####\" to specify an extension.").build();
-    private static CLOption opt_notify = CLOption.builder().name("notify").flag("n").longFlag("notify")
+    private static CLOption opt_nonotify = CLOption.builder().name("notify").flag("N").longFlag("nonotify")
                                             .requiresValue(false)
-                                            .description("Send new user a notification email.").build();
+                                            .description("Do NOT send new user a notification email.").build();
     private static CLOption opt_target = CLOption.builder().name("targetDb").flag("d").longFlag("db")
-                                            .defaultValue("localhost")
+                                            .defaultValue("hazy")
                                             .description("Target database. Options: localhost, prod, [hostname] (which may or may not be supported.)").build();
     
     private static CLOption opt_noop = CLOption.builder().name("no-op").flag("x").longFlag("noop")
@@ -98,7 +98,7 @@ public class AdminClient extends CLClient {
                                                 .option(opt_userOrg)
                                                 .option(opt_email)
                                                 .option(opt_phone)
-                                                .option(opt_notify)
+                                                .option(opt_nonotify)
                                                 .option(opt_target)
                                                 .option(opt_batch)
                                                 .option(opt_noop)
@@ -216,7 +216,10 @@ public class AdminClient extends CLClient {
                             .telephone(phone)
                             .telExtension(extension)
                             .build();
-            if ( confirm("Add user " + newUser + " to target db: " + target)) {
+            boolean sendEmail = ! _clOptions.booleanValue(opt_nonotify, false);
+            if ( confirm("Add user " + newUser.shortString() + 
+                         ( sendEmail ? "" : "(without notification email)") + 
+                         " to target db: " + target)) {
                 if ( ! _clOptions.booleanValue(opt_noop, false)) {
                     Users.addUser(newUser, pw, UserRole.Groupie);
                     System.out.print("User " + userid + " added");
@@ -225,8 +228,10 @@ public class AdminClient extends CLClient {
                     } else {
                         System.out.println(".");
                     }
-                    if ( _clOptions.booleanValue(opt_notify, false)) {
+                    if ( sendEmail ) {
                         sendNewUserEmail(newUser, tempPass);
+                    } else {
+                        System.out.println("********* WARNING: The user will not receive any automatic notification of the new account or its password. ***********");
                     }
                 } else {
                     System.out.println("No-op requested.  User not added.");
@@ -272,11 +277,11 @@ public class AdminClient extends CLClient {
 //            checkOptions(command);
             
             _clOptions = new CLOptions(command, optionValues, arguments);
-            if ( _clOptions.options().containsKey(opt_target)) {
+//            if ( _clOptions.options().containsKey(opt_target)) {
                 String dbEnv = _clOptions.optionValue(opt_target);
                 System.out.println("Configuring db for environment: " + dbEnv + " from mybatis-config");
                 MybatisConnectionFactory.initialize(dbEnv);
-            }
+//            }
             Method processingMethod = getProcessingMethod(command);
             processingMethod.invoke(this);
             
