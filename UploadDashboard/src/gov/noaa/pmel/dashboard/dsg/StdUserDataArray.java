@@ -267,7 +267,7 @@ public class StdUserDataArray extends StdDataArray {
 						standardized[col] = Boolean.TRUE;
 					} catch ( IllegalStateException ex ) {
 						standardized[col] = Boolean.FALSE;
-						needsAnotherPass = true;
+						needsAnotherPass = "Dependent value is not yet standardized.".equals(ex.getMessage());
 					}
 				}
 			}
