@@ -31,7 +31,7 @@ public class DensityDependentValueConverter extends ValueConverter<Double> {
 	private SigmaThetaCalculator _sigTheta;
 	
 	private static String _mgPerL2uMolesPerKgKey = conversionKey(mgPerLiter_UNIT_STR, uMOLES_PER_KG_UNIT_STR);
-	private static String _mlPerL2uMolesPerKgKey = conversionKey(mgPerLiter_UNIT_STR, uMOLES_PER_KG_UNIT_STR);
+	private static String _mlPerL2uMolesPerKgKey = conversionKey(mlPerLiter_UNIT_STR, uMOLES_PER_KG_UNIT_STR);
 	private static String _uMolesPerL2uMolesPerKgKey = conversionKey(uMOLES_PER_L_UNIT_STR, uMOLES_PER_KG_UNIT_STR);
 
 	private static TreeSet<String> _supportedConversions = new TreeSet<>(String.CASE_INSENSITIVE_ORDER);
