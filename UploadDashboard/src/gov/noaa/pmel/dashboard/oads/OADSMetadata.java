@@ -51,8 +51,10 @@ import gov.noaa.pmel.dashboard.dsg.StdUserDataArray;
 import gov.noaa.pmel.dashboard.handlers.MetadataFileHandler;
 import gov.noaa.pmel.dashboard.server.DashboardConfigStore;
 import gov.noaa.pmel.dashboard.server.DashboardServerUtils;
+import gov.noaa.pmel.dashboard.shared.DashboardDataset;
 import gov.noaa.pmel.dashboard.shared.DashboardMetadata;
 import gov.noaa.pmel.dashboard.shared.DashboardUtils;
+import gov.noaa.pmel.dashboard.shared.FeatureType;
 import gov.noaa.pmel.dashboard.shared.FileInfo;
 import gov.noaa.pmel.dashboard.shared.MetadataPreviewInfo;
 import gov.noaa.pmel.dashboard.shared.NotFoundException;
@@ -510,19 +512,23 @@ public class OADSMetadata {
      * @throws SAXException 
      * @throws JAXBException 
      */
-    public static String validateMetadata(File metaFile) throws JAXBException, SAXException, 
+    public static String validateMetadata(String datasetId, File metaFile) throws JAXBException, SAXException, 
                                                                 IOException, Exception {
         OadsMetadataDocumentType mdDoc = OadsXmlReader.read(metaFile);
-        return validateMetadata(mdDoc);
+        DashboardDataset info = DashboardConfigStore.get().getDataFileHandler().getDatasetFromInfoFile(datasetId);
+        return validateMetadata(info, mdDoc);
     }
                 
-    public static String validateMetadata(OadsMetadataDocumentType metadata) {
+    public static String validateMetadata(DashboardDataset dataset, OadsMetadataDocumentType metadata) {
         String validationMsg;
         try {
+            FeatureType ftype = dataset.getFeatureType();
             checkSubmitter(metadata);
             checkInvestigators(metadata);
             checkCitationInfo(metadata);
-            checkSpatialExtents(metadata);
+            if ( ftype.isDSG()) {
+                checkSpatialExtents(metadata);
+            }
             checkTemporalExtents(metadata);
             checkVariables(metadata);
             validationMsg = "Validated";
@@ -536,14 +542,16 @@ public class OADSMetadata {
 //            // TODO Auto-generated catch block
 //            ex.printStackTrace();
         } catch (IllegalArgumentException iax) {
-            validationMsg = "Metadata has invalid data";
+            validationMsg = "Metadata has invalid data: "+iax.getMessage();
             logger.info(metadata + " : " + validationMsg + ": " + iax);
         } catch (IllegalStateException isx) {
-            validationMsg = "Metadata is incomplete";
+            validationMsg = "Metadata is incomplete: " + isx.getMessage();
             logger.info(metadata + " : " + validationMsg + ": " + isx);
         } catch (Exception ex) {
-            validationMsg = "Processing Error";
-            ex.printStackTrace();
+            validationMsg = "Processing Error: " + (! (ex instanceof NullPointerException) ? 
+                                                        ex.getMessage() :
+                                                        "Unexpected null value.");
+            logger.warn(ex,ex);
         }
         return validationMsg;
     }
@@ -669,7 +677,9 @@ public class OADSMetadata {
     private static void checkVariables(OadsMetadataDocumentType mdDoc) {
         List<BaseVariableType> variables = mdDoc.getVariables();
         if ( variables == null || variables.size() == 0 ) {
-            throw new IllegalStateException("Empty variables element.");
+            logger.info("No variables found for " + mdDoc.getCruiseIds());
+            return;
+//            throw new IllegalStateException("Empty variables element.");
         }
         StringBuilder errormsgs = new StringBuilder();
         for ( BaseVariableType var : variables ) {
@@ -828,7 +838,8 @@ public class OADSMetadata {
 			File file = new File("/local/tomcat/oap_content/OAPUploadDashboard/MetadataDocs//PRIS/PRISM022008/PRISM022008_OADS.xml");
 //			DashboardOADSMetadata omd = OADSMetadata.readOadsXml(file);
 //			System.out.println(omd);
-            validateMetadata(file);
+            String datasetId = "PRISM022008";
+            validateMetadata(datasetId, file);
 		} catch (Exception e) {
 			e.printStackTrace();
 			// TODO: handle exception

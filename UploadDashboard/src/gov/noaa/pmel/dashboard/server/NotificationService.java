@@ -106,8 +106,9 @@ public class NotificationService extends HttpServlet {
     
 	private static void saveAndValidateMetadata(String datasetId, InputStream in) throws Exception {
             OadsMetadataDocumentType metadata = saveXmlFromStream(datasetId, in);
+            DashboardDataset info = DashboardConfigStore.get().getDataFileHandler().getDatasetFromInfoFile(datasetId);
             String validationMessage = ApplicationConfiguration.getProperty("oap.metadata.validate", true) ? 
-                                        OADSMetadata.validateMetadata(metadata) :
+                                        OADSMetadata.validateMetadata(info, metadata) :
                                         "Not checked.";
     		String timestamp = TimeUtils.formatUTC(new Date(), "yyyy-MM-dd HH:mm Z");
             DataFileHandler df = DashboardConfigStore.get().getDataFileHandler();
