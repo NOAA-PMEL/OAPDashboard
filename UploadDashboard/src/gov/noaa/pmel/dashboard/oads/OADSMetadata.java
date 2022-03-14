@@ -183,7 +183,7 @@ public class OADSMetadata {
 		                         .endDate(new Date((long)(1000*gtExtents.timeExtents.maxValue)))
 		                         .build());
 		                                    
-        if ( ApplicationConfiguration.getLatestProperty("oap.metadata.extract_variables", true) && mdDoc.getVariables().isEmpty()) {
+        if ( ApplicationConfiguration.getLatestProperty("oap.metadata.extract_variables", false) && mdDoc.getVariables().isEmpty()) {
             
             // XXX TODO: This is just a mess.
             // XXX What to do with unknowns and other/ignored, 
@@ -545,6 +545,7 @@ public class OADSMetadata {
             validationMsg = "Metadata has invalid data: "+iax.getMessage();
             logger.info(metadata + " : " + validationMsg + ": " + iax);
         } catch (IllegalStateException isx) {
+            
             validationMsg = "Metadata is incomplete: " + isx.getMessage();
             logger.info(metadata + " : " + validationMsg + ": " + isx);
         } catch (Exception ex) {
@@ -682,12 +683,19 @@ public class OADSMetadata {
 //            throw new IllegalStateException("Empty variables element.");
         }
         StringBuilder errormsgs = new StringBuilder();
+        int ecount = 0;
         for ( BaseVariableType var : variables ) {
             if ( StringUtils.emptyOrNull(var.getName()) || 
                  StringUtils.emptyOrNull(var.getDatasetVarName()) ||
                  StringUtils.emptyOrNull(var.getFullName())) {
-                errormsgs.append("Incomplete information for " + String.valueOf(var) + ". ");
+                 ecount += 1;
+                 if ( ecount == 1 ) {
+                     errormsgs.append("Incomplete information for " + var.getDatasetVarName()+":"+var.getFullName());
+                 }
             }
+        }
+        if ( ecount > 1 ) {
+            errormsgs.append(" and " + ecount + " others");
         }
         if ( errormsgs.length() > 0 ) {
             throw new IllegalStateException(errormsgs.toString());
