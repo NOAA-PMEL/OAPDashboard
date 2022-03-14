@@ -692,10 +692,6 @@ public class OADSMetadata {
                  if ( ecount == 1 ) {
                      errormsgs.append("Incomplete variable information for " + var.getDatasetVarName()+":"+var.getFullName());
                  }
-                 ecount += 1;
-                 if ( ecount == 1 ) {
-                     errormsgs.append("Incomplete information for " + var.getDatasetVarName()+":"+var.getFullName());
-                 }
             }
         }
         if ( ecount > 1 ) {
