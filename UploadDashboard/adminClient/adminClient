@@ -1,6 +1,7 @@
 #!/bin/bash
 
 THIS=$0
+echo THIS: $THIS
 PROG_PATH=${THIS%/*}
 DIR="$( cd "$( dirname "$0" )" && pwd )"
 
@@ -11,7 +12,6 @@ echo host: $host
 
 matisse_CONTENT_ROOT="/local/tomcat"
 dunkel_CONTENT_ROOT="/home/users/kamb/tomcat/tomcat-5680-8.5.11"
-# new-bock_CONTENT_ROOT="/usr/local/src/oads/apache-tomcat-8.5.34"  ## dashes not ok in var names
 new_bock_CONTENT_ROOT="/usr/local/src/oads/apache-tomcat-8.5.34"
 
 content_var="${host}_CONTENT_ROOT"
@@ -33,7 +33,7 @@ new_bock_APP_CONTENT="${OA_DOCUMENT_ROOT}/${STD_LOC}"
 
 APP_CONTENT="${host}_APP_CONTENT"
 
-CLIENT_JAR="${DIR}/dashboard-client.jar"
+CLIENT_JAR="${DIR}/admin-client.jar"
 echo client jar: $CLIENT_JAR
 
 # OAP_ENV=-Doap.env=matisse 

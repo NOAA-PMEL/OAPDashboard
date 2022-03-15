@@ -24,7 +24,7 @@ SRC_DIR=src
 CLASS_DIR=war/WEB-INF/classes
 PKG_BASE_DIR=gov/noaa/pmel/dashboard
 
-JAR_FILE_NAME=dashboard-client.jar
+JAR_FILE_NAME=admin-client.jar
 MANIFEST_FILE=${CLIENT_DIR_ROOT}/manifest.mf
 
 COPY_DIRS=(server shared util)
