@@ -67,8 +67,25 @@
         padding: 1.5em 1.75em 1.25em;
         position: fixed;
         left: 50%;
-        top: 50%;
+        top: 40%;
         transform: translate(-50%, -70%)
+    }
+    .pra_table {
+        width: 61%;
+        padding: .75em;
+        position: fixed;
+        bottom: 5em;
+        left: 20%;
+        border: groove lightgray;
+        background: #e4ffff;
+        font-size: 10px;
+    }
+/*     .pra_table tr:first-child td {
+        width: 15%;
+    } */
+    .pra_table td {
+        vertical-align: top;
+        padding: 1em;
     }
     .pagefooter {
         position: absolute;
