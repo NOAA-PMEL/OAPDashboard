@@ -32,6 +32,7 @@ import org.apache.logging.log4j.Logger;
 import org.apache.poi.ss.usermodel.Cell;
 import org.apache.poi.ss.usermodel.CellType;
 import org.apache.poi.ss.usermodel.DataFormatter;
+import org.apache.poi.ss.usermodel.FormulaEvaluator;
 import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.ss.usermodel.Sheet;
 import org.apache.poi.ss.usermodel.Workbook;
@@ -52,6 +53,7 @@ public class ExcelFileReader implements RecordOrientedFileReader, Iterator<Strin
     static Logger logger = LogManager.getLogger(ExcelFileReader.class);
     
     private DataFormatter df;
+    private FormulaEvaluator fe;
     private Workbook wb;
     private Sheet sheet;
     private Iterator<Row> rows;
@@ -247,6 +249,7 @@ public class ExcelFileReader implements RecordOrientedFileReader, Iterator<Strin
     private ExcelFileReader(Workbook workbook) throws IOException {
         this.wb = workbook;
         df = new DataFormatter();
+        fe = workbook.getCreationHelper().createFormulaEvaluator();
     }
     
     public void finalize() {
@@ -359,7 +362,8 @@ public class ExcelFileReader implements RecordOrientedFileReader, Iterator<Strin
                             cellValue = String.valueOf(cell.getBooleanCellValue());
                             break;
                         case NUMERIC:
-                            cellValue = String.valueOf(cell.getNumericCellValue());
+//                            cellValue = String.valueOf(cell.getNumericCellValue());
+                            cellValue = df.formatCellValue(cell, fe);
                             break;
                         case STRING:
                             cellValue = String.valueOf(cell.getRichStringCellValue());
@@ -512,13 +516,14 @@ public class ExcelFileReader implements RecordOrientedFileReader, Iterator<Strin
 //                    "/Users/kamb/workspace/oa_dashboard_test_data/A02_HLY0803.xlsx",
 //                    "/Users/kamb/workspace/oa_dashboard_test_data/A02_HLY0803-loose.xlsx",
 //                    "/Users/kamb/workspace/oa_dashboard_test_data/A02_HLY0803.xlsx.loose",
-                    "/Users/kamb/workspace/oa_dashboard_test_data/33GG20171112-from_GDRIVE.xlsx", 
-                    "/Users/kamb/workspace/oa_dashboard_test_data/people/julian/WOAC_metadata-fixed-strict.xlsx",
-                    "/Users/kamb/workspace/oa_dashboard_test_data/WCOA/WCOA11-01-06-2015_data-full.xlsx",
-                    "/Users/kamb/workspace/OADashboard/test-data/WCOA11-01-06-2015_data-full.xlsx", // invalid mark
-                    "/Users/kamb/workspace/OADashboard/test-data/WCOA11-01-06-2015_data-full-resaved.xlsx",
-                    "/Users/kamb/workspace/OADashboard/test-data/WCOA11-fileItem.xlsx",
-                    "/Users/kamb/workspace/OADashboard/test-data/strict-test.xlsx"
+                    "/Users/kamb/workspace/oa_dashboard_test_data/WCOA/W03_WCOA2012R_djg_v2.xlsx",
+//                    "/Users/kamb/workspace/oa_dashboard_test_data/33GG20171112-from_GDRIVE.xlsx", 
+//                    "/Users/kamb/workspace/oa_dashboard_test_data/people/julian/WOAC_metadata-fixed-strict.xlsx",
+//                    "/Users/kamb/workspace/oa_dashboard_test_data/WCOA/WCOA11-01-06-2015_data-full.xlsx",
+//                    "/Users/kamb/workspace/OADashboard/test-data/WCOA11-01-06-2015_data-full.xlsx", // invalid mark
+//                    "/Users/kamb/workspace/OADashboard/test-data/WCOA11-01-06-2015_data-full-resaved.xlsx",
+//                    "/Users/kamb/workspace/OADashboard/test-data/WCOA11-fileItem.xlsx",
+//                    "/Users/kamb/workspace/OADashboard/test-data/strict-test.xlsx"
                     };
 //            if ( useStream ) {
                 for (String file : files ) {
@@ -526,9 +531,11 @@ public class ExcelFileReader implements RecordOrientedFileReader, Iterator<Strin
                     try ( BufferedInputStream inStream = new BufferedInputStream(new FileInputStream(file));
                           ExcelFileReader efr = newInstance(inStream, OPEN_OFFICE_TYPE); ) {
                         System.out.println(file+":"+efr);
+                        int rowIdx = 0;
                         for (String[] row : efr ) {
                             System.out.println(row);
-                            break;
+                            rowIdx += 1;
+//                            break;
                         }
                     } catch (Exception ex) {
                         ex.printStackTrace();
