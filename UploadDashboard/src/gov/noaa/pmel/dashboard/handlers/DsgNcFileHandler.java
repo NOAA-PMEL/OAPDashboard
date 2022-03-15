@@ -119,6 +119,25 @@ public class DsgNcFileHandler {
 	 * @throws IOException 
 	 */
 	public DsgNcFile getDsgNcFile(String datasetId) throws IllegalArgumentException, IOException {
+        return getDsgNcFile(datasetId, true);
+	}
+	/**
+	 * Generates the full NetCDF DSG abstract file for a dataset.
+	 * This version is used when only checking for existence of the DsgFile
+	 * so that the parent dir is not created unnecessarily.
+	 * 
+	 * @param datasetId
+	 * 		ID of the dataset
+     * @param createDirs
+     *      Whether or not to create the parent subdirectory.
+	 * @return
+	 * 		full NetCDF DSG abstract file for the dataset
+	 * @throws IllegalArgumentException
+	 * 		if the dataset ID is invalid, or
+	 * 		if problems creating the parent subdirectory
+	 * @throws IOException 
+	 */
+	public DsgNcFile getDsgNcFile(String datasetId, boolean createDirs) throws IllegalArgumentException, IOException {
 		// Check and standardize the dataset ID
 		String stdId = DashboardServerUtils.checkDatasetID(datasetId);
         DashboardDataset dd = DashboardConfigStore.get(false).getDataFileHandler().getDatasetFromInfoFile(stdId);
@@ -131,7 +150,7 @@ public class DsgNcFileHandler {
 						parentDir.getPath());
 			}
 		}
-		else if ( ! parentDir.mkdirs() ) {
+		else if ( createDirs && ! parentDir.mkdirs() ) {
 			throw new IllegalArgumentException("Unable to create the new subdirectory " + 
 					parentDir.getPath());
 		}
@@ -247,7 +266,7 @@ public class DsgNcFileHandler {
 	 */
 	public boolean deleteCruise(String datasetId) throws IllegalArgumentException, IOException {
 		boolean fileDeleted = false;
-		File dsgFile = getDsgNcFile(datasetId);
+		File dsgFile = getDsgNcFile(datasetId, false);
 		if ( dsgFile.exists() ) {
 			if ( ! dsgFile.delete() )
 				throw new IllegalArgumentException("Unable to delete the DSG file for " + 
