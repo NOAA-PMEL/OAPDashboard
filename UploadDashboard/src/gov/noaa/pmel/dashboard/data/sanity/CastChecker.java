@@ -75,7 +75,7 @@ public class CastChecker {
         CastSet lastCast = null;
 		checkForDuplicateCastIds(_dataset, _casts);
 		for (CastSet cast : _casts) {
-			logger.debug("Cast " + cast.id() + " time " + new Date((long)(cast.expectedTime()*1000)));
+			logger.trace("Cast " + cast.id() + " time " + new Date((long)(cast.expectedTime()*1000)));
 			if ( cast.indeces().size() == 1 ) {
 				singleCastWarning(cast);
 				continue;

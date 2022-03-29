@@ -414,6 +414,8 @@ public class DashboardConfigStore {
         String serverAppName = getServerAppName();
 		try {
 			propVal = getFilePathProperty(_configProps, USER_TYPES_PROPS_FILE_TAG, appConfigDir);
+			File userTypesFile = new File(propVal);
+			filesToWatch.add(userTypesFile);
 			Properties typeProps = new Properties();
 			try ( FileReader propsReader = new FileReader(propVal); ) {
 				typeProps.load(propsReader);
