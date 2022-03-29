@@ -236,7 +236,7 @@ public class DoubleDashDataType extends DashDataType<Double> {
 //			errInfoMsg = " : " + ex.getMessage();
 //		}
 
-		throw new IllegalArgumentException("conversion from \"" + 
+		throw new IllegalArgumentException("Conversion from \"" + 
 				inputUnit + "\" to \"" + outputUnit + "\" is not supported for " + this + " : " + errInfoMsg);
 	}
 

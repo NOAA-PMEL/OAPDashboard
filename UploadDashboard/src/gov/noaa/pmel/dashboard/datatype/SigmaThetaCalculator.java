@@ -76,8 +76,16 @@ public abstract class SigmaThetaCalculator {
 			if ( ! ( _dataset.isUsableIndex(_tempColumnIdx) && _dataset.isUsableIndex(_salinityColumnIdx))) {
 				throw new IllegalStateException("Dependent value is not yet standardized.");
 			}
-			double temp = ((Double)_dataset.getStdVal(rowIdx, _tempColumnIdx)).doubleValue();
-			double sal = ((Double)_dataset.getStdVal(rowIdx, _salinityColumnIdx)).doubleValue();
+            Double stdTemp = (Double)_dataset.getStdVal(rowIdx, _tempColumnIdx);
+            if ( stdTemp == null ) {
+                throw  new IllegalStateException("Null value for dependent variable temperature from column index: " + _tempColumnIdx);
+            }
+			double temp = stdTemp.doubleValue();
+            Double salinty = (Double)_dataset.getStdVal(rowIdx, _salinityColumnIdx);
+            if ( salinty == null ) {
+                throw  new IllegalStateException("Null value for dependent variable salinity from column index: " + _salinityColumnIdx);
+            }
+			double sal = salinty.doubleValue();
 			double density = fromTempAndSalinity(temp, sal);
 			return density;
 		}
@@ -116,7 +124,7 @@ public abstract class SigmaThetaCalculator {
 			}
             Double salinty = (Double)_dataset.getStdVal(rowIdx, _salinityColumnIdx);
             if ( salinty == null ) {
-                throw  new IllegalStateException("Null value for dependent variable salinity.");
+                throw  new IllegalStateException("Null value for dependent variable salinity from column index: " + _salinityColumnIdx);
             }
 			double sal = salinty.doubleValue();
 			double density = fromTempAndSalinity(_labTemp, sal);

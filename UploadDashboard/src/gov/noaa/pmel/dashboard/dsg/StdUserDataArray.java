@@ -37,6 +37,7 @@ public class StdUserDataArray extends StdDataArray {
 
 	public static final String INCONSISTENT_NUMBER_OF_DATA_VALUES_MSG = 
 			"inconstistent number of data values";
+    private static final String UNITS_CONVERSION_UNAVAILABLE = "Units Conversion Unavailable";
 
 	private String[] userColNames;
 	private String[] userUnits;
@@ -223,16 +224,21 @@ public class StdUserDataArray extends StdDataArray {
                                     origVal = strDataVals[row][col];
                                     Object stdVal = stdizer.convertValueOf(origVal, row);
 									stdObjects[row][col] = stdVal;
-                                    if ( stdVal == null && StringUtils.emptyOrNull(origVal) && 
-                                         stdizer instanceof TimestampConverter ) {
-    									ADCMessage msg = new ADCMessage();
-    									msg.setSeverity(Severity.CRITICAL);
-    									msg.setRowIndex(row);
-    									msg.setColIndex(col);
-    									msg.setColName(userColNames[col]);
-    									msg.setGeneralComment("Missing value");
-                                        msg.setDetailedComment("Missing date/time value.");
-    									stdMsgList.add(msg);
+                                    // XXX Should we log unconverted values?
+                                    if ( stdVal == null ) {
+                                        if ( ! StringUtils.emptyOrNull(origVal)) {
+                                            logger.info("Failed to convert " + colType.getStandardName() + 
+                                                        " value " + origVal + " at row " + row + ", col " + col);
+                                        } else if ( stdizer instanceof TimestampConverter ) {
+        									ADCMessage msg = new ADCMessage();
+        									msg.setSeverity(Severity.CRITICAL);
+        									msg.setRowIndex(row);
+        									msg.setColIndex(col);
+        									msg.setColName(userColNames[col]);
+        									msg.setGeneralComment("Missing value");
+                                            msg.setDetailedComment("Missing date/time value.");
+        									stdMsgList.add(msg);
+                                        }
                                     } else {
                                         lastRowHadError = false;
                                     }
@@ -243,7 +249,7 @@ public class StdUserDataArray extends StdDataArray {
                                             continue;
                                         }
     									msg = new ADCMessage();
-                                        if (row != 0) { // && ! lastRowHadError ) {
+                                        if (row != 0) { // && ! lastRowHadError ) 
         									msg.setRowIndex(row);
                                         }
                                     } else {
@@ -268,6 +274,15 @@ public class StdUserDataArray extends StdDataArray {
 					} catch ( IllegalStateException ex ) {
 						standardized[col] = Boolean.FALSE;
 						needsAnotherPass = "Dependent value is not yet standardized.".equals(ex.getMessage());
+					} catch ( IllegalArgumentException ex ) {
+                        logger.info("column " + col + ": "+ ex);
+						standardized[col] = Boolean.FALSE;
+//		                ADCMessage msg = new ADCMessage();
+//		                msg.setSeverity(Severity.INFORMATION);
+//		                msg.setColIndex(col);
+//		                msg.setGeneralComment(UNITS_CONVERSION_UNAVAILABLE);
+//		                msg.setDetailedComment(ex.getMessage());
+//		                stdMsgList.add(msg);
 					}
 				}
 			}
@@ -322,13 +337,19 @@ public class StdUserDataArray extends StdDataArray {
                     Double pressure = getStdValAsDouble(idx, col);
                     if ( pressure == null ) {
                         _pressuresOk = false;
-                        msg = messageFor(Severity.WARNING, idx, col, "Missing or Invalid Pressure or Depth", "Missing or Invalid Pressure at row " + (idx+1));
+                        msg = messageFor(Severity.WARNING, idx, col, 
+                                         "Missing or Invalid Pressure or Depth", 
+                                         "Missing or Invalid Pressure at row " + (idx+1));
                     } else if ( DashboardUtils.FP_MISSING_VALUE.equals(pressure)) {
-                        msg = messageFor(Severity.WARNING, idx, col, "Missing or Invalid Pressure or Depth", "Missing Pressure at row " + (idx+1));
+                        msg = messageFor(Severity.WARNING, idx, col, 
+                                         "Missing or Invalid Pressure or Depth", 
+                                         "Missing Pressure at row " + (idx+1));
                     }
                 } catch (Exception ex) {
                     _pressuresOk = false;
-                    msg = messageFor(Severity.WARNING, idx, col, "Missing or Invalid Pressure or Depth", "Missing or Invalid Pressure at row " + (idx+1));
+                    msg = messageFor(Severity.WARNING, idx, col, 
+                                     "Missing or Invalid Pressure or Depth", 
+                                     "Missing or Invalid Pressure at row " + (idx+1));
                 }
                 if ( msg != null ) {
                     addStandardizationMessage(msg);
@@ -485,7 +506,7 @@ public class StdUserDataArray extends StdDataArray {
 		try {
             _timesChecked = true;
 			times = getSampleTimes();
-			for (int rowIdx = 0; rowIdx < numSamples; rowIdx++) {
+			for (int rowIdx = 0; _timesOk && rowIdx < numSamples; rowIdx++) {
 				if ( times[rowIdx] == null ) {
 					_timesOk = false;
                     // XXX Messages are now added during the data standarization phase

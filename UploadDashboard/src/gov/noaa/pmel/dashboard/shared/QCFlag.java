@@ -24,6 +24,7 @@ public class QCFlag implements Comparable<QCFlag>, Serializable, IsSerializable 
 		CRITICAL,
 		ERROR,
 		WARNING,
+        INFORMATION,
 		ACCEPTABLE,
 		UNASSIGNED
 	}
