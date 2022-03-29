@@ -110,9 +110,9 @@ go OA2_thumbnail_pair oxygen, ctd_oxygen
 define symbol fnamepath=($plotpath)/4_Nutrients/($fname)
 go OA2_thumbnail_pair silicate, ($pres_or_depth)
 go OA2_thumbnail_pair phosphate, ($pres_or_depth)
-go OA2_thumbnail_pair silicate, ($pres_or_depth)
-go OA2_thumbnail_pair phosphate, ($pres_or_depth)
+go OA2_thumbnail_pair ammonia, ($pres_or_depth)
+go OA2_thumbnail_pair ammonium, ($pres_or_depth)
 go OA2_thumbnail_pair nitrate, ($pres_or_depth)
 go OA2_thumbnail_pair nitrite, ($pres_or_depth)
-go OA2_thumbnail_pair ammonia, ($pres_or_depth)
+go OA2_thumbnail_pair nitrite_nitrate, ($pres_or_depth)
 
