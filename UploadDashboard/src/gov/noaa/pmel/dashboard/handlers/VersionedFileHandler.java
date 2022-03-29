@@ -19,6 +19,8 @@ import org.tmatesoft.svn.core.wc.SVNStatus;
 import org.tmatesoft.svn.core.wc.SVNStatusType;
 import org.tmatesoft.svn.core.wc.SVNWCUtil;
 
+import gov.noaa.pmel.dashboard.server.util.Notifications;
+
 /**
  * Abstract file handler for dealing with subversion version
  * control of the files contained within the directory.
@@ -209,8 +211,13 @@ public class VersionedFileHandler {
 
 		if ( needsAdd ) {
 			// Add the file (force), and any unversioned directories in its path, to version control
-			svnManager.getWCClient()
+            try {
+    			svnManager.getWCClient()
 					  .doAdd(wcfile, true, false, false, SVNDepth.EMPTY, false, true);
+            } catch (SVNException sex) {
+                logger.warn("Exception adding " +wcfile+" to svn: " + sex, sex);
+                Notifications.Alert("Exception adding file to SVN", sex);
+            }
 		}
 
 		// Get the list of directories, as well as the file, that need to be committed

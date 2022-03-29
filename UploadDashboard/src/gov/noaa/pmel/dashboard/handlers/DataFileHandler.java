@@ -1181,8 +1181,8 @@ public class DataFileHandler extends VersionedFileHandler {
 			commitVersion(infoFile, message);
 		} catch ( Exception ex ) {
             logger.warn(ex,ex);
-			throw new IllegalArgumentException("Problems committing updated dataset information for  " + 
-							datasetId + " in file " + infoFile.getAbsolutePath() + ": " + ex.getMessage(), ex);
+//			throw new IllegalArgumentException("Problems committing updated dataset information for  " + 
+//							datasetId + " in file " + infoFile.getAbsolutePath() + ": " + ex.getMessage(), ex);
 		}
 	}
 
