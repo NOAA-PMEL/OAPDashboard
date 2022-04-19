@@ -248,8 +248,12 @@ public class TimestampConverter extends ValueConverter<String> {
 						pieces[0] = valueString.substring(0, 2);
 						pieces[1] = valueString.substring(2, 4);
 						pieces[2] = valueString.substring(4);
-					}
-					else
+					} else if ( valueString.length() == 7 ) { // assume single digit month
+						pieces = new String[3];
+						pieces[0] = valueString.substring(0, 1);
+						pieces[1] = valueString.substring(1, 3);
+						pieces[2] = valueString.substring(3);
+					} else
 						throw new IllegalArgumentException("Invalid date string " + valueString + " for given format: " + fromUnit);
 				}
 				month = Integer.valueOf(pieces[0]);
