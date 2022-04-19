@@ -164,7 +164,7 @@ public class DataColumnSpecsPage extends CompositeWithUsername {
 	private static final String SANITY_CHECK_FAIL_MSG = 
 			"The data check failed, indicating very serious errors in the data.";
 	private static final String SANITY_CHECK_ERROR_MSG = 
-			"The data check found serious errors in the data.";
+			"The data check found potential errors in the data.";
 	private static final String SANITY_CHECK_WARNING_MSG = 
 			"The data check found possible errors (warnings) in the data";
 	private static final String SANITY_CHECK_SUCCESS_MSG =

@@ -227,7 +227,7 @@ public class StdUserDataArray extends StdDataArray {
                                     // XXX Should we log unconverted values?
                                     if ( stdVal == null ) {
                                         if ( ! StringUtils.emptyOrNull(origVal)) {
-                                            logger.info("Failed to convert " + colType.getStandardName() + 
+                                            logger.debug("Failed to convert " + colType.getStandardName() + 
                                                         " value " + origVal + " at row " + row + ", col " + col);
                                         } else if ( stdizer instanceof TimestampConverter ) {
         									ADCMessage msg = new ADCMessage();
@@ -258,7 +258,7 @@ public class StdUserDataArray extends StdDataArray {
                                     }
 									stdObjects[row][col] = null;
                                     if ( msg != null ) {
-    									msg.setSeverity(Severity.CRITICAL);
+    									msg.setSeverity(Severity.ERROR);
     									msg.setColIndex(col);
     									msg.setColName(userColNames[col]);
     									msg.setGeneralComment(ex.getMessage());
