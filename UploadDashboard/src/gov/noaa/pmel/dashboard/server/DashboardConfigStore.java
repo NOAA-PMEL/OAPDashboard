@@ -168,7 +168,7 @@ public class DashboardConfigStore {
 	private WatchService watcher;
 	private boolean needToRestart;
 
-	private static File getBaseDir() throws RuntimeException {
+	public static File getBaseDir() throws RuntimeException {
 	    if ( _baseDir == null ) {
     		String baseDir = tryProperty("OA_DOCUMENT_ROOT");
     		if ( baseDir == null ) {
@@ -180,19 +180,30 @@ public class DashboardConfigStore {
     		if ( baseDir == null ) {
     			System.out.println("*** ENV:\n"+System.getenv());
     			System.out.println("*** PROPS:\n"+System.getProperties());
-    			throw new RuntimeException("Document config root not found.");
+//    			throw new RuntimeException("Document config root not found.");
+                baseDir = System.getProperty("user.dir");
+                System.out.println("Document config root not specified.  Trying user.dir: " + baseDir);
     		}
     		if ( ! baseDir.endsWith(File.separator)) {
     			baseDir += File.separator;
     		}
             _baseDir = new File(baseDir);
             if ( !_baseDir.exists()) {
-                throw new RuntimeException(_baseDir.getPath());
+                throw new RuntimeException("Content root base dir not found!: " + _baseDir.getPath());
             }
 	    }
 		return _baseDir;
 	}
 	
+    public static File getContentRoot() {
+        File baseDir = getBaseDir();
+        File contentRoot = new File(baseDir, "content");
+        if ( ! contentRoot.exists()) {
+            throw new RuntimeException("Content root dir not found: " + contentRoot.getAbsolutePath());
+        }
+        return contentRoot;
+    }
+    
     public static File getWebappDir() {
         File webappDir;
         String serverAppName;
@@ -224,13 +235,11 @@ public class DashboardConfigStore {
         return theDir;
     }
     
-    
     public static File getAppContentDir() throws RuntimeException {
         if ( _appContentDir == null ) {
-            File baseDir = getBaseDir();
+            File contentDir = getContentRoot();
     		String serverAppName = getServerAppName();
-            String appContentDirPath = baseDir.getPath() + File.separator +  "content" + File.separator + serverAppName + File.separator;
-            _appContentDir = new File(appContentDirPath);
+            _appContentDir = new File(contentDir, serverAppName);
         }
         return _appContentDir;
     }
