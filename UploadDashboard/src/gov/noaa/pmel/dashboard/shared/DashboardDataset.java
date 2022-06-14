@@ -433,7 +433,9 @@ public class DashboardDataset implements Serializable, IsSerializable {
 	public Date getArchiveDate() {
         return archiveDate;
 	}
+    @Builder.Default
     private transient String formattedDate = null;
+    @Builder.Default
     private transient String dateFormat = null;
 	public String getArchiveDateAsString(String format) {
         if ( archiveDate == null ) {
