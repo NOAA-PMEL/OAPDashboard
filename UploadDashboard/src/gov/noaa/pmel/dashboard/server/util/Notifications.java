@@ -104,6 +104,11 @@ public class Notifications {
 		return ApplicationConfiguration.getProperty("email.smtp_host", "smtp.pmel.noaa.gov");
 	}
 	
+	public static void SendEmailIf(String subject, String message, String toList) {
+        if ( ! StringUtils.emptyOrNull(toList)) {
+            SendEmail(subject, message, toList);
+        }
+	}
 	public static void SendEmail(String subject, String message, String toList) {
         String from = ApplicationConfiguration.getProperty("oap.email.from", "\"OAP Dashboard System\" <"+DEFAULT_EMAIL+">");
         SendEmail(subject, message, toList, from);

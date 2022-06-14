@@ -6,7 +6,6 @@ package gov.noaa.pmel.dashboard.server;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.PrintWriter;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
@@ -106,22 +105,38 @@ public class NotificationService extends HttpServlet {
     
 	private static void saveAndValidateMetadata(String datasetId, InputStream in) throws Exception {
             OadsMetadataDocumentType metadata = saveXmlFromStream(datasetId, in);
-            DashboardDataset info = DashboardConfigStore.get().getDataFileHandler().getDatasetFromInfoFile(datasetId);
-            String validationMessage = ApplicationConfiguration.getProperty("oap.metadata.validate", true) ? 
-                                        OADSMetadata.validateMetadata(info, metadata) :
-                                        "Not checked.";
-    		String timestamp = TimeUtils.formatUTC(new Date(), "yyyy-MM-dd HH:mm Z");
             DataFileHandler df = DashboardConfigStore.get().getDataFileHandler();
             DashboardDataset dataset = df.getDatasetFromInfoFile(datasetId);
+            String validationMessage = ApplicationConfiguration.getProperty("oap.metadata.validate", true) ? 
+                                        OADSMetadata.validateMetadata(dataset, metadata) :
+                                        "Not checked.";
+    		String timestamp = TimeUtils.formatUTC(new Date(), "yyyy-MM-dd HH:mm Z");
             dataset.setMdTimestamp(timestamp);
             dataset.setMdStatus(validationMessage);
             String msg = new Date() + " Updating metadata timestamp on user upload metadata file.";
             logger.info(msg);
             df.saveDatasetInfoToFile(dataset, msg);
-            checkMetadataDataColumns(dataset, metadata);
+            scheduleChecks(dataset, metadata);
 	}
+    private static void scheduleChecks(final DashboardDataset dataset, 
+                                       final OadsMetadataDocumentType metadata) {
+        Runnable notifier = new Runnable() {
+            @Override
+            public void run() {
+                try {
+                    logger.info("Metadata checks running.");
+                    Thread.sleep(500);
+                    checkMetadataDataColumns(dataset, metadata);
+                    Vocabularies.checkForVocabularyAdditions(dataset, metadata);
+                } catch (Exception ex) {
+                    ex.printStackTrace();
+                }
+            }
+        };
+        new Thread(notifier).start();
+    }
 	
-	/**
+    /**
      * @param dataset
      * @param metadata
      */
@@ -181,7 +196,6 @@ public class NotificationService extends HttpServlet {
 	 * 		error message to return
 	 * @throws IOException 
 	 * 		if writing to the response object throws one
-	 */
 	private void sendErrMsg(HttpServletResponse response, String errMsg) throws IOException {
 		response.setStatus(HttpServletResponse.SC_OK);
 		response.setContentType("text/html;charset=UTF-8");
@@ -189,5 +203,6 @@ public class NotificationService extends HttpServlet {
 		respWriter.println(errMsg);
 		response.flushBuffer();
 	}
+	 */
 
 }

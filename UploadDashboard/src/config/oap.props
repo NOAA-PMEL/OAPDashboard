@@ -38,6 +38,7 @@ oap.production.url={URL_BASE}/sdig/oap/Dashboard
 
 oap.admin.email.list=oar.pmel.sdis.admin@noaa.gov
 # oap.admin.email.list=linus.kamb@noaa.gov
+oap.notification.list=linus.kamb@noaa.gov
 
 oap.email.from=OAP Dashboard System <pmel.sdis@noaa.gov>
 oap.email.account=pmel.sdis@noaa.gov
@@ -61,7 +62,7 @@ oap.archive.bundle.cleanup={CLEANUP}
 
 oap.archive.scp.username=kamb
 oap.archive.scp.hostname=dunkel
-oap.archive.scp.destination=scratch
+oap.archive.scp.destination=scratch/scp-test
 oap.archive.scp.id_file=/Users/kamb/.ssh/id_rsa_matisse
 
 oap.archive.cp.destination=/Users/kamb/scratch
@@ -89,4 +90,8 @@ oap.metadata.extract_variables=true
 oap.preview.ng=ng_
 
 # whether to save deleted dataset files and metadata
-oap.dataset.archive_on_delete=true
+oap.dataset.archive_on_delete=false
+
+# notification list of proposed changes or additions to controlled vocabularies.
+# oap.vocabs.email.list
+
