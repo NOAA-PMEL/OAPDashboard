@@ -28,6 +28,12 @@
     #column_type_limitations {
         font-weight: bold;
     }
+    .tip_topic {
+        font-weight: bold;
+    }
+    .tip_topic ul {
+        font-weight: normal;
+    }
     .back_up {
         float:right;
         margin-right: 1em;
@@ -48,6 +54,7 @@ Science Data Information System</h3>
 <div id="Contents">Table of Contents</div>
 <div style="padding-left:20px;">
 <a href="#INTRO">Introduction</a><br/>
+<a href="#QUICK_TIPS">Quick Tips</a><br/>
 <a href="#SHOW_DATASETS">Main Page</a><br/>
 <a href="#UPLOAD_DATA">New Submission</a><br/>
 <a href="#IDENTIFY_COLUMNS">Column Identification</a><br/>
@@ -93,6 +100,54 @@ A set of plots of the data (the “Preview Plots”) are available to help detec
 or other errors in your data. 
  -->
 <p/>
+
+<h3 id="QUICK_TIPS">Quick Tips</h3>
+A few tips and suggestions from the NCEI archive crew to help expedite the archival process.
+<ul>
+    <li class="tip_topic">File Names
+        <ul>
+           <li style="">Please avoid spaces in file names, and use an underscore where necessary to separate terms in a file name.
+        </ul>
+    </li>
+    <li class="tip_topic">Citation Title
+        <ul>
+           <li style="">NCEI requires titles be constructed as closely as possible to the following model:  
+           DataType(s) (observationType(s)) collected by instrumentType(s) from [the] platform(s) in [the] seaname(s) for [the] projectName(s) from startdate to enddate
+           <li style="">Please adhere to the model above because NCEI is not able to change your title without your permission. 
+           <li style="">There is guidance in the SDIS submission form (click on the "?" in the title section of the form)
+        </ul>
+    </li>
+    <li class="tip_topic">Citation Abstract
+        <ul>
+           <li style="">The NCEI abstract should focus on describing the dataset, and not so much the study that produced the data.  Please don't re-use the abstract from related manuscripts 
+           <li style="">Please don't include citations in your abstract, as there are tags specifically for that in the metadata (e.g., "method reference")
+           <li style="">There is guidance in the SDIS submission form (click on the "?" in the title section of the form)
+        </ul>
+    </li>
+    <li class="tip_topic">Project Name and ID
+        <ul>
+           <li style="">Always include the project name and OAP or NRDD project ID for all submissions as NCEI does not know to which project name/ID your dataset belongs, but it is something OAP requires us to archive. 
+        </ul>
+    </li>
+    <li class="tip_topic">Variable Detailed Info 
+        <ul>
+           <li style="">Please avoid using the "detailed information" section for citations and use the "method reference" section instead
+        </ul>
+    </li>
+    <li class="tip_topic">Biological Species Information
+        <ul>
+           <li style="">Please include the species common and scientific name in the title, abstract, and in your metadata.  
+           <li style="">In the title/abstract, please write the species information like this: common name (genus species).  
+           <li style="">In most cases, common names of species are not capitalized unless the common name includes a proper noun. 
+           <li style="">Please list both the species code and the name of the registry in the metadata, as codes differ among registries (e.g., ITIS codes may not be found in WoRMS)
+        </ul>
+    </li>
+    <li class="tip_topic">Proofreading
+        <ul>
+           <li style="">Please thoroughly proofread your title, abstract, metadata, and column headers in your data for spelling errors.
+        </ul>
+    </li>
+</ul>
 
 <h3 id="SHOW_DATASETS">Main Page: Dataset List</h3>
 On the main page of the application, you will see all of the datasets that you have uploaded, 
@@ -163,7 +218,7 @@ When you upload a data file, the Dashboard will examine it and attempt to identi
 However, the first time you upload a file you will have to go through and identify all the columns.
 <p/>
 <span style="font-weight: bold; color: red;">Note that this is an optional step.  
-It is not required for data submission, and is not available for all types of data.</span>
+It is not required for data submission, and it is not available for all types of data.</span>
 <p/>
  The data columns and their suggested identities (their “data type”) will be shown to you in the 
  “Identify Columns” page to allow you to modify these identities as needed. 

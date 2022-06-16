@@ -43,6 +43,9 @@
     padding: 2px 2px;
 	float: right;
 }
+.dataColumnTypeInformation {
+	background-color: #eaeaea;
+}
 .dataColumnTypeWarning {
 	background-color: #f9eb8b;
 }
@@ -204,6 +207,9 @@
     -webkit-box-shadow: 2px 2px 11px #666;
 }
 
+.vertical_bottom {
+	vertical-align: bottom !important;
+}
 /* .hide {
 	display: none;
 } */
