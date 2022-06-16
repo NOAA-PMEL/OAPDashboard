@@ -25,7 +25,8 @@ public class ScpTransfer extends BaseTransferAgent implements FileTransferOp {
      */
     @Override
     public String getTransferCommand(File transferFile, String targetFilePath) throws Exception {
-        String destDir = getTargetDestinationDir(targetFilePath);
+        String destRoot = getProtocolDestinationRoot();
+        String destDir = destRoot + getTargetDestinationDir(targetFilePath);
         return buildCommand(transferFile, destDir);
     }
     
@@ -36,7 +37,7 @@ public class ScpTransfer extends BaseTransferAgent implements FileTransferOp {
                 .append("ssh").append(SPACE)
                    .append(getIdFileSpecifier()).append(SPACE)
                    .append(user).append(SPACE)
-                   .append("\" [ -e ").append(destDir).append(" ] ||  mkdir ").append(destDir).append("\"");
+                   .append("\" [ -e ").append(destDir).append(" ] ||  mkdir -p ").append(destDir).append("\"");
         String scpCmd = ApplicationConfiguration.getProperty("oap.archive.scp.command", _protocol.value());
         transferCmd.append(scpCmd).append(SPACE)
                    .append(getIdFileSpecifier()).append(SPACE)
