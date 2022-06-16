@@ -8,7 +8,6 @@ import java.io.IOException;
 import java.nio.file.CopyOption;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.StandardCopyOption;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.TreeSet;
@@ -120,7 +119,7 @@ public abstract class FileUploadProcessor {
                           .middle(dataSubmitter.middle())
                           .last(dataSubmitter.lastName())
                           .build())
-                    .organization(dataSubmitter.organization())
+                    .addOrganization(dataSubmitter.organization())
                     .contactInfo(PersonContactInfoType.builder()
                                  .email(dataSubmitter.email())
                                  .phone(dataSubmitter.telephoneString())

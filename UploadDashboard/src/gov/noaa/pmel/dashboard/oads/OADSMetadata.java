@@ -568,7 +568,7 @@ public class OADSMetadata {
         if ( StringUtils.emptyOrNull(name.getFirst()) || StringUtils.emptyOrNull(name.getLast())) {
             throw new IllegalStateException("Data submitter name is incomplete.");
         }
-        if ( StringUtils.emptyOrNull(submitter.getOrganization())) {
+        if ( submitter.getOrganizations().isEmpty()) {
             throw new IllegalStateException("No organization specified for data submitter.");
         }
         PersonContactInfoType contactInfo = submitter.getContactInfo();
@@ -591,7 +591,7 @@ public class OADSMetadata {
         if ( StringUtils.emptyOrNull(name.getFirst()) || StringUtils.emptyOrNull(name.getLast())) {
             throw new IllegalStateException("Principle investigator name is incomplete.");
         }
-        if ( StringUtils.emptyOrNull(pi.getOrganization())) {
+        if ( pi.getOrganizations().isEmpty()) {
             throw new IllegalStateException("No organization specified for principle investigator.");
         }
     }
@@ -678,9 +678,7 @@ public class OADSMetadata {
     private static void checkVariables(OadsMetadataDocumentType mdDoc) {
         List<BaseVariableType> variables = mdDoc.getVariables();
         if ( variables == null || variables.size() == 0 ) {
-            logger.info("No variables found for " + mdDoc.getCruiseIds());
-            return;
-//            throw new IllegalStateException("Empty variables element.");
+            throw new IllegalStateException("No variables defined.");
         }
         StringBuilder errormsgs = new StringBuilder();
         int ecount = 0;
@@ -695,7 +693,7 @@ public class OADSMetadata {
             }
         }
         if ( ecount > 1 ) {
-            errormsgs.append(" and " + ecount + " others");
+            errormsgs.append(" and " + (ecount-1) + " others");
         }
         if ( errormsgs.length() > 0 ) {
             throw new IllegalStateException(errormsgs.toString());
@@ -798,7 +796,8 @@ public class OADSMetadata {
         List<PersonType> pis = mdDoc.getInvestigators();
 		if ( pis != null ) {
             for ( PersonType pi : pis ) {
-                String orgName = pi.getOrganization();
+                List<String> orgs = pi.getOrganizations();
+                String orgName = orgs.isEmpty() ? "" : orgs.get(0);
 				if ( StringUtils.emptyOrNull(orgName)) 
 					continue;
 				if ( usedOrganizations.add(orgName) ) {

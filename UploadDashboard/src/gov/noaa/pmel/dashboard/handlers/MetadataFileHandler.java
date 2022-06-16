@@ -936,7 +936,7 @@ public class MetadataFileHandler extends VersionedFileHandler {
                           .middle(dataSubmitter.middle())
                           .last(dataSubmitter.lastName())
                           .build())
-                    .organization(dataSubmitter.organization())
+                    .addOrganization(dataSubmitter.organization())
                     .contactInfo(PersonContactInfoType.builder()
                                  .email(dataSubmitter.email())
                                  .phone(dataSubmitter.telephoneString())
