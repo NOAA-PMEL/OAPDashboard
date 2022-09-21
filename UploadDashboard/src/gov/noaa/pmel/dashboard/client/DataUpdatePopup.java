@@ -503,6 +503,7 @@ public class DataUpdatePopup extends Composite {
 
 	@UiHandler("uploadForm")
 	void uploadFormOnSubmit(SubmitEvent event) {
+		UploadDashboard.showWaitCursor(parentPanel);
 		UploadDashboard.showWaitCursor();
 	}
 
@@ -523,10 +524,11 @@ public class DataUpdatePopup extends Composite {
         if ( wasSuccess ) {
             clearForm();
     		clearTokens();
-            parentPanel.hide();
         }
+        parentPanel.hide();
+		UploadDashboard.showAutoCursor(parentPanel);
 		UploadDashboard.showAutoCursor();
-        DatasetListPage.showPage();
+//        DatasetListPage.showPage();
 	}
 
 	/**
