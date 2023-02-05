@@ -126,7 +126,7 @@ public class ExcelFileReader implements RecordOrientedFileReader, Iterator<Strin
         return new ExcelFileReader(workbook);
     }
     
-    static final int MAX_PEEK = DataUploadService.MAX_ALLOWED_UPLOAD_SIZE; // ~100MB
+    static final int MAX_PEEK = 102400000; // XXX DataUploadService.MAX_ALLOWED_UPLOAD_SIZE; // ~100MB
     static final String STRICT_NS_1 = "http://purl.oclc.org/ooxml/spreadsheetml/main";
 
     /**
