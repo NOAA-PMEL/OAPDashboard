@@ -624,7 +624,7 @@ public class OADSMetadata {
             errormsgs.append("Start date after end date. ");
         }
         Date now = new Date();
-        if ( start.after(now) || end.after(now)) {
+        if ( start.after(now)) { //  || end.after(now)) { // Allowing end dates in the future.
             errormsgs.append("Illegal future date.");
         }
         if ( errormsgs.length() > 0 ) {
