@@ -200,6 +200,10 @@ public class DataUploadPage extends CompositeWithUsername {
     private String observationType = null;
     private FileType selectedFileType = FileType.UNSPECIFIED;
     
+    public static native int getFileSize(final Element data) /*-{
+        return data.files[0].size;
+    }-*/;
+    
 	/**
 	 * Creates an empty cruise upload page.  Do not call this 
 	 * constructor; instead use the showPage static method 
@@ -417,6 +421,8 @@ public class DataUploadPage extends CompositeWithUsername {
 	void submitButtonOnClick(ClickEvent event) {
         submitButton.setEnabled(false);
 		String namesString = getInputFileNames(uploadElement).trim();
+		int size = getFileSize(uploadElement);
+		UploadDashboard.logToConsole("Submitting file " + namesString + " of size " + size);
 		if (  namesString.isEmpty() ) {
 			UploadDashboard.showMessage(NO_FILE_ERROR_MSG);
 			return;

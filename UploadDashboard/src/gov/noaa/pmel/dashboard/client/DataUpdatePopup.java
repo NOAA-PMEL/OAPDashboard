@@ -436,6 +436,8 @@ public class DataUpdatePopup extends Composite {
 			UploadDashboard.showMessage(NO_FILE_ERROR_MSG);
 			return;
 		}
+        int size = DataUploadPage.getFileSize(uploadElement);
+        UploadDashboard.logToConsole("uploading file " + newFileName + " of size " + size);
         if ( ! dataset.getUploadFilename().equals("")) {
             String replaceMessage;
             if ( ! newFileName.equals(dataset.getUploadFilename())) {
@@ -519,16 +521,19 @@ public class DataUpdatePopup extends Composite {
         
 	@UiHandler("uploadForm")
 	void uploadFormOnSubmitComplete(SubmitCompleteEvent event) {
+	    UploadDashboard.logToConsole("submitComplete: "+ event.getResults());
 		boolean wasSuccess = processResultMsg(event.getResults());
-        GWT.log("Upload was successful: " + wasSuccess);
+		GWT.log("Upload was successful: " + wasSuccess);
         if ( wasSuccess ) {
             clearForm();
     		clearTokens();
+            parentPanel.hide();
+            DatasetListPage.showPage();
+        } else {
+            UploadDashboard.showAutoCursor(parentPanel);
+            UploadDashboard.logToConsole("upload unsuccessful: "+ event.getResults());
         }
-        parentPanel.hide();
-		UploadDashboard.showAutoCursor(parentPanel);
 		UploadDashboard.showAutoCursor();
-//        DatasetListPage.showPage();
 	}
 
 	/**
