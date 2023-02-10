@@ -3,3 +3,5 @@
 /.DS_Store
 /dunkel.patch
 /dunkel_https.web.xml.orig
+/jettydbcRealm.properties
+
