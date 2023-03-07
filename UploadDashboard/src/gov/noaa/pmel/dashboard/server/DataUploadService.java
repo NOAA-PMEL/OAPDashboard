@@ -51,9 +51,10 @@ public class DataUploadService extends HttpServlet {
 
     private static Logger logger = LogManager.getLogger(DataUploadService.class);
     
-    public static int DEFAULT_MAX_ALLOWED_UPLOAD_SIZE = 102400000;
-    public static String DEFAULT_MAX_ALLOWED_SIZE_DISPLAY_STR = "~100MB";
-    public static int MAX_ALLOWED_UPLOAD_SIZE = ApplicationConfiguration.getProperty("oap.upload.max_size", DEFAULT_MAX_ALLOWED_UPLOAD_SIZE);
+    public static long MAX_ALLOWED_UPLOAD_SIZE;
+    public static String DEFAULT_MAX_ALLOWED_UPLOAD_SIZE_STR = "102400000";
+    public static long DEFAULT_MAX_ALLOWED_UPLOAD_SIZE = 1024000000;
+    public static String DEFAULT_MAX_ALLOWED_SIZE_DISPLAY_STR = "~1GB";
     public static String MAX_ALLOWED_SIZE_DISPLAY_STR = ApplicationConfiguration.getProperty("oap.upload.max_size.display", DEFAULT_MAX_ALLOWED_SIZE_DISPLAY_STR);
 
 	private ServletFileUpload datafileUpload;
@@ -70,11 +71,20 @@ public class DataUploadService extends HttpServlet {
 		
 		DiskFileItemFactory factory = new DiskFileItemFactory();
 		try {
+            try {
+                String maxUploadSizeStr = ApplicationConfiguration.getProperty("oap.upload.max_size", DEFAULT_MAX_ALLOWED_UPLOAD_SIZE_STR);
+                MAX_ALLOWED_UPLOAD_SIZE = Long.parseLong(maxUploadSizeStr);
+                logger.debug("MAX_ALLOWED_UPLOAD_SIZE: " + MAX_ALLOWED_UPLOAD_SIZE + " from configuration: "+ maxUploadSizeStr);
+            } catch (Exception ex) {
+                MAX_ALLOWED_UPLOAD_SIZE = DEFAULT_MAX_ALLOWED_UPLOAD_SIZE;
+                logger.warn("Exception getting max upload size: " + ex + "\n\t" +
+                            "Using default value: " + DEFAULT_MAX_ALLOWED_UPLOAD_SIZE);
+            }
 			File servletTmpDir = (File) getServletContext().getAttribute("javax.servlet.context.tempdir");
 			factory.setRepository(servletTmpDir);
 		} catch (Exception ex) {
             // factory will use default temp dir
-            logger.debug(ex);
+            logger.debug(ex + " if NPE:  Not to worry. Will use default tmp dir.");
 		}
 		datafileUpload = new ServletFileUpload(factory);
 	}
@@ -218,6 +228,8 @@ public class DataUploadService extends HttpServlet {
         }
         for ( FileItem item : datafiles ) {
             if ( item.getSize() > MAX_ALLOWED_UPLOAD_SIZE ) {
+                logger.warn("Uploaded file " + item.getName() + " size " + item.getSize() + " exceeds max allowed " + MAX_ALLOWED_UPLOAD_SIZE);
+                logger.warn("Max property: " + ApplicationConfiguration.getConfigurationProperty("oap.upload.max_size"));
                 throw new IllegalArgumentException("File size exceeds max allowable size of " + MAX_ALLOWED_SIZE_DISPLAY_STR );
             }
         }
