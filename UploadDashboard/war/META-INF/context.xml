@@ -7,7 +7,7 @@
     -->
        <Realm className="org.apache.catalina.realm.LockOutRealm">
         <Realm className="org.apache.catalina.realm.JDBCRealm"
-               driverName="com.mysql.jdbc.Driver"
+               driverName="com.mysql.cj.jdbc.Driver"
                connectionURL="jdbc:mysql://localhost:3306/oapdashboard?allowMultiQueries=true&amp;useSSL=true&amp;user=erddap&amp;password=dapper"
                userTable="tomcatusers"
                userRoleTable="tomcatroles"
