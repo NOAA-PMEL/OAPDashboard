@@ -36,7 +36,7 @@ CLIENT_JAR="${DIR}/admin-client.jar"
 echo client jar: $CLIENT_JAR
 
 # OAP_ENV=-Doap.env=matisse 
-DEBUG_CONFIG=-Dconfiguration_debug 
+# DEBUG_CONFIG=-Dconfiguration_debug 
 
 cmd="java ${DEBUG_CONFIG} ${OA_DOC_PROP} ${OAP_ENV} -jar ${CLIENT_JAR} add $@"
 echo cmd: $cmd

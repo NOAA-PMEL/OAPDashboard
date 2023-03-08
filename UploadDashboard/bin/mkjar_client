@@ -40,7 +40,7 @@ fi
 mkdir -p ${DEST_DIR}
 
 REMOVE_FOR_HAZY=mysql-connector-java-5.1.41-bin.jar
-REMOVE_FOR_NEWBOCK=mysql-connector-java-8.0.23.jar
+REMOVE_FOR_DUNKEL=mysql-connector-java-8.0.23.jar
 
 SHELLNOCASEMATCH=$(shopt -p nocasematch; true)
 shopt -s nocasematch
@@ -56,9 +56,9 @@ unpackJar() {
 		echo JAR: $JAR
 		if [[ $JAR == *mysql* ]] ; then
 			echo checking mysql jars
-			if [[ $TARGET && $TARGET == new* ]] ; then
-				if [[ $JAR == *$REMOVE_FOR_NEWBOCK ]] ; then
-					echo SKIPPING $JAR for newbock
+			if [[ $TARGET && $TARGET == "dunkel" ]] ; then
+				if [[ $JAR == *$REMOVE_FOR_DUNKEL ]] ; then
+					echo SKIPPING $JAR for dunkel
 					continue
 				fi
 			elif [[ $JAR == *$REMOVE_FOR_HAZY ]] ; then

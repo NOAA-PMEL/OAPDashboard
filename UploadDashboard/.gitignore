@@ -21,14 +21,13 @@
 
 ### Eclipse ###
 .metadata
-bin/
 tmp/
 *.tmp
 *.bak
 *.swp
 *~.nib
 local.properties
-.settings/
+.settings/*
 .loadpath
 .recommenders
 
@@ -86,3 +85,5 @@ local.properties
 .sts4-cache/
 
 # End of https://www.toptal.com/developers/gitignore/api/eclipse
+/fplots/
+/co2sys/

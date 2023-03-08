@@ -1,7 +1,6 @@
 #!/bin/bash
 
 THIS=$0
-echo THIS: $THIS
 PROG_PATH=${THIS%/*}
 DIR="$( cd "$( dirname "$0" )" && pwd )"
 
