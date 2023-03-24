@@ -545,7 +545,6 @@ public class OADSMetadata {
             validationMsg = "Metadata has invalid data: "+iax.getMessage();
             logger.info(metadata + " : " + validationMsg + ": " + iax);
         } catch (IllegalStateException isx) {
-            
             validationMsg = "Metadata is incomplete: " + isx.getMessage();
             logger.info(metadata + " : " + validationMsg + ": " + isx);
         } catch (Exception ex) {
@@ -584,15 +583,16 @@ public class OADSMetadata {
     private static void checkInvestigators(OadsMetadataDocumentType mdDoc) {
         List<PersonType> investigators = mdDoc.getInvestigators();
         if ( investigators == null || investigators.size() == 0 ) { throw new IllegalStateException("Principle investigators list is empty."); }
-        PersonType pi = investigators.get(0);
-        if ( pi == null ) { throw new IllegalStateException("No principle investigators specified."); }
-        PersonNameType name = pi.getName();
-        if ( name == null ) { throw new IllegalStateException("Principle investigator name is empty."); }
-        if ( StringUtils.emptyOrNull(name.getFirst()) || StringUtils.emptyOrNull(name.getLast())) {
-            throw new IllegalStateException("Principle investigator name is incomplete.");
-        }
-        if ( pi.getOrganizations().isEmpty()) {
-            throw new IllegalStateException("No organization specified for principle investigator.");
+        for ( PersonType pi : investigators ) {
+            if ( pi == null ) { throw new IllegalStateException("No principle investigators specified."); }
+            PersonNameType name = pi.getName();
+            if ( name == null ) { throw new IllegalStateException("Principle investigator name is empty."); }
+            if ( StringUtils.emptyOrNull(name.getFirst()) || StringUtils.emptyOrNull(name.getLast())) {
+                throw new IllegalStateException("Principle investigator name is incomplete.");
+            }
+            if ( pi.getOrganizations().isEmpty()) {
+                throw new IllegalStateException("No organization specified for principle investigator.");
+            }
         }
     }
 
@@ -606,6 +606,9 @@ public class OADSMetadata {
         if ( StringUtils.emptyOrNull(mdDoc.getAbstract())) {
             throw new IllegalStateException("No abstract given.");
         }
+        if ( mdDoc.getAuthors() == null || mdDoc.getAuthors().size() == 0 ) {
+            throw new IllegalStateException("No list of authors for citation.");
+        }
     }
 
     /**
@@ -616,11 +619,11 @@ public class OADSMetadata {
         if ( tExtents == null ) { throw new IllegalStateException("Temporal Extents are empty."); }
         Date start = tExtents.getStartDate();
         Date end = tExtents.getEndDate();
-        if ( start == null || end == null ) {
+        if ( start == null ) { // || end == null ) { // allowing empty end date 
             throw new IllegalStateException("Temporal extents are incomplete.");
         }
         StringBuilder errormsgs = new StringBuilder();
-        if ( start.after(end)) {
+        if ( end != null && start.after(end)) {
             errormsgs.append("Start date after end date. ");
         }
         Date now = new Date();
