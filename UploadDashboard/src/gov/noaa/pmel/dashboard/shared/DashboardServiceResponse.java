@@ -9,12 +9,13 @@ import com.google.gwt.user.client.rpc.IsSerializable;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
-import lombok.Value;
+import lombok.Data;
 
 /**
  * @author kamb
  *
  */
+@Data
 @Builder
 @AllArgsConstructor
 public class DashboardServiceResponse<R> implements Serializable, IsSerializable {
@@ -22,7 +23,16 @@ public class DashboardServiceResponse<R> implements Serializable, IsSerializable
     private static final long serialVersionUID = 273980474568876388L;
 
     private R _response;
+    @Builder.Default
+    private boolean _wasSuccessful = true;
+    
+    // XXX WARNING: Should set these global metadata fields once and for all...
+    // Currently set in DashboardServices.getDatasetList();
     private String _version;
+    @Builder.Default
+    private long _maxUploadSize = -1;
+    @Builder.Default
+    private String _maxUploadSizeDisplayStr = "N/A";
 
     @SuppressWarnings("unused") // For GWT
     private DashboardServiceResponse() {
@@ -33,15 +43,17 @@ public class DashboardServiceResponse<R> implements Serializable, IsSerializable
     
     public R response() { return _response; }
     
+    // Because I can't get lombok to work for client code...
     public String getVersion() {
         return _version;
     }
-    public void setVersion(String version) {
-        _version = version;
+    public long getMaxUploadSize() {
+        return _maxUploadSize;
+    }
+    public String getMaxUploadSizeDisplayStr() {
+        return _maxUploadSizeDisplayStr;
     }
 
-    @Builder.Default
-    private boolean _wasSuccessful = true;
     public boolean wasSuccessful() {
         return _wasSuccessful;
     }

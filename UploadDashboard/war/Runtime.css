@@ -213,3 +213,22 @@
 /* .hide {
 	display: none;
 } */
+
+/* from uploadprogress style.css */
+.ProgressBar .progress {
+  height:15px;
+  background-color: paleturquoise;
+  margin: 2px;
+  font-size: 0px;
+}
+
+.UploadPanel {
+  /*
+  border: 1px solid lightgrey;
+  margin-top: 0px;
+  margin-right: 0px;
+  margin-left: 5px;
+  margin-bottom: 5px;
+  */
+}
+

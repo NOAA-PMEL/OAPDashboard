@@ -222,3 +222,11 @@ pre {
 	font-weight: bold;
 	font-size: large;
 }
+
+.UploadProgress {
+  height:21px;
+  width: 200px;
+  margin-left: 2em;
+  margin-bottom: 5px;
+  border: 1px solid lightgrey;
+}

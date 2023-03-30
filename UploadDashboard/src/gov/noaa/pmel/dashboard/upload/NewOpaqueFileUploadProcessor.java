@@ -32,18 +32,18 @@ public class NewOpaqueFileUploadProcessor extends FileUploadProcessor {
     @Override
     public void processUploadedFile(boolean isUpdateRequest) throws UploadProcessingException {
         String datasetId = FormUtils.getFormField("datasetId", _uploadFields.parameterMap());
-        List<FileItem> datafiles = _uploadFields.dataFiles();
+        List<File> datafiles = _uploadFields.dataFiles();
 
         // Currently only allowing upload of 1 file.
 //        boolean multiFileUpload = false;
 //        if ( datafiles.size() > 1 ) {
 //            multiFileUpload = true;
 //        }
-        for ( FileItem item : datafiles ) { // Note: Only allow one at the moment
+        for ( File item : datafiles ) { // Note: Only allow one at the moment
             String filename = item.getName();
             logger.info("processing " + _uploadFields.fileType() + " upload file " + filename);
             datasetId = submissionRecordId; // getDatasetId(datasetId, filename, multiFileUpload);
-            OpaqueDataset pseudoDataset = createPseudoDataset(isUpdateRequest, datasetId, item, _uploadedFile, _uploadFields);
+            OpaqueDataset pseudoDataset = createPseudoDataset(isUpdateRequest, datasetId, item); // , _uploadedFile, _uploadFields);
             String userDatasetName = StringUtils.emptyOrNull(specifiedDatasetId) ?
                                       _uploadedFile.getName() :
                                       specifiedDatasetId;
@@ -118,16 +118,14 @@ public class NewOpaqueFileUploadProcessor extends FileUploadProcessor {
         return datasetFile;
     }
 
-    private OpaqueDataset createPseudoDataset(boolean isUpdateRequest, String itemId, 
-                                              FileItem item, File _uploadedFile, 
-                                              StandardUploadFields _uploadFields) {
+    private OpaqueDataset createPseudoDataset(boolean isUpdateRequest, String itemId, File item) { 
         OpaqueDataset odd = new OpaqueDataset(itemId);
         odd.setUploadFilename(item.getName());
         odd.setUploadTimestamp(_uploadFields.timestamp());
         odd.setRecordId(itemId);
         odd.setUploadedFile(_uploadedFile.getPath());
         odd.setOwner(_uploadFields.username());
-        odd.setFileItem(item);
+//        odd.setFileItem(item);
         odd.setFeatureType(_uploadFields.featureType().name());
         odd.setUserObservationType(_uploadFields.observationType());
         odd.setFileType(_uploadFields.fileType().name());
@@ -138,10 +136,9 @@ public class NewOpaqueFileUploadProcessor extends FileUploadProcessor {
         return odd;
     }
 
-    private int idCounter = 0;
-    private String getDatasetId(String datasetId, String name, boolean multiFileUpload) {
-        return StringUtils.emptyOrNull(datasetId) ? name :
-                multiFileUpload ? datasetId + ++idCounter : datasetId;
-    }
-
+//    private int idCounter = 0;
+//    private String getDatasetId(String datasetId, String name, boolean multiFileUpload) {
+//        return StringUtils.emptyOrNull(datasetId) ? name :
+//                multiFileUpload ? datasetId + ++idCounter : datasetId;
+//    }
 }

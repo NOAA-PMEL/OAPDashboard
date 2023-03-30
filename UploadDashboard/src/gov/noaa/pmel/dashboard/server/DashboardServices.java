@@ -171,8 +171,6 @@ public class DashboardServices extends RemoteServiceServlet implements Dashboard
 		} catch (Exception ex) {
 			throw new IllegalArgumentException("Unexpected configuration error: " + ex.getMessage());
 		}
-        // XXX TODO: No longer using ConfigStore to validate Users.
-//		return configStore.validateUser(username);
         return true;
 	}
 
@@ -184,11 +182,13 @@ public class DashboardServices extends RemoteServiceServlet implements Dashboard
 			throw new IllegalArgumentException("Invalid user request");
 		DashboardDatasetList datasetList = configStore.getUserFileHandler().getDatasetListing(username);
 		logger.info("dataset list returned for " + username);
-        String buildVersion = getBuildVersion();
+        String version = getBuildVersion();
         DashboardServiceResponse<DashboardDatasetList> response = 
                 DashboardServiceResponse.<DashboardDatasetList>builder()
                     .response(datasetList)
-                    .version(buildVersion)
+                    .version(version)
+                    .maxUploadSize(DataUploadService.getMaxUploadSize())
+                    .maxUploadSizeDisplayStr(DataUploadService.getMaxUploadSizeDisplayStr())
                     .build();
 		return response;
 	}

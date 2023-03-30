@@ -41,6 +41,9 @@ import com.google.gwt.user.client.ui.PopupPanel;
 import com.google.gwt.user.client.ui.RadioButton;
 import com.google.gwt.user.client.ui.Widget;
 
+import gov.noaa.pmel.dashboard.client.progress.controller.ProgressController;
+import gov.noaa.pmel.dashboard.client.progress.state.UploadProgressState;
+import gov.noaa.pmel.dashboard.client.progress.view.UploadProgress;
 import gov.noaa.pmel.dashboard.shared.DashboardDataset;
 import gov.noaa.pmel.dashboard.shared.DashboardUtils;
 
@@ -147,6 +150,7 @@ public class DataUpdatePopup extends Composite {
 //	@UiField Anchor moreHelpAnchor;
 	@UiField FormPanel uploadForm;
     @UiField FileUpload fileUpload;
+    @UiField UploadProgress uploadProgress;
 	@UiField Hidden timestampToken;
 	@UiField Hidden actionToken;
 	@UiField Hidden encodingToken;
@@ -331,6 +335,7 @@ public class DataUpdatePopup extends Composite {
 	 * Adds this page to the page history.
 	 */
 	void showPage(DashboardDataset dataset) {
+        GWT.log("DUPup: showPage");
 		clearTokens();
         clearForm();
         setDataset(dataset);
@@ -437,7 +442,14 @@ public class DataUpdatePopup extends Composite {
 			return;
 		}
         int size = DataUploadPage.getFileSize(uploadElement);
-        UploadDashboard.logToConsole("uploading file " + newFileName + " of size " + size);
+        long maxSize = UploadDashboard.getMaxUploadSize();
+        UploadDashboard.logToConsole("Attempting replacement upload of file " + newFileName + " of size " + size);
+        if ( size > maxSize ) {
+            UploadDashboard.showNotification("File exceeds maximum upload size of " + UploadDashboard.getMaxUploadSizeStr(), 
+                                             InfoMsgType.WARNING);
+    		UploadDashboard.logToConsole("File " + newFileName + " of size " + size + " larger than limit of " + UploadDashboard.getMaxUploadSize());
+            return;
+        }
         if ( ! dataset.getUploadFilename().equals("")) {
             String replaceMessage;
             if ( ! newFileName.equals(dataset.getUploadFilename())) {
@@ -450,6 +462,8 @@ public class DataUpdatePopup extends Composite {
                 public void onSuccess(Boolean answer) {
                     if ( answer.booleanValue()) {
                 		assignTolkiens(DashboardUtils.OVERWRITE_DATASETS_REQUEST_TAG);
+                        GWT.log("UpdateDialog onSubmit: initializing progress controller");
+                        ProgressController.INSTANCE.initialise();
                 		uploadForm.submit();
                     }
                 }
@@ -498,18 +512,31 @@ public class DataUpdatePopup extends Composite {
 
     @UiHandler("cancelButton")
 	void cancelButtonOnClick(ClickEvent event) {
-        parentPanel.hide();
+        close();
 		// Make sure the normal cursor is shown
 		UploadDashboard.showAutoCursor();
 	}
 
-	@UiHandler("uploadForm")
+	/**
+     * 
+     */
+    private void close() {
+        parentPanel.hide();
+        clearForm();
+        ProgressController.INSTANCE.stop();
+        UploadProgressState.INSTANCE.clear();
+		UploadDashboard.showAutoCursor();
+		UploadDashboard.showAutoCursor(parentPanel);
+    }
+
+    @UiHandler("uploadForm")
 	void uploadFormOnSubmit(SubmitEvent event) {
 		UploadDashboard.showWaitCursor(parentPanel);
 		UploadDashboard.showWaitCursor();
 	}
 
     private void clearForm() {
+        GWT.log("DUPup: clearForm");
         uploadForm.reset();
         clearInputFileNames(uploadElement);
 //        featureTypeSelector.setSelectedIndex(0);
@@ -517,6 +544,7 @@ public class DataUpdatePopup extends Composite {
         submitButton.setEnabled(false); 
         previewButton.setEnabled(false); 
         cancelButton.setText("Cancel");
+        uploadProgress.reset();
     }
         
 	@UiHandler("uploadForm")
@@ -527,7 +555,7 @@ public class DataUpdatePopup extends Composite {
         if ( wasSuccess ) {
             clearForm();
     		clearTokens();
-            parentPanel.hide();
+            close();
             DatasetListPage.showPage();
         } else {
             UploadDashboard.showAutoCursor(parentPanel);
@@ -650,7 +678,7 @@ public class DataUpdatePopup extends Composite {
 //				DatasetListPage.addSelectedDataset(expo);
 			DatasetListPage.resortTable();
 //            DatasetListPage.showPage();
-            parentPanel.hide();
+            close();
 //            if ( ! ( // featureTypeSelector.getSelectedValue().equals(FeatureType.OTHER.name()) || 
 //                     fileTypeSelector.getSelectedValue().equals(FileType.OTHER.name()))) {
 //    			DataColumnSpecsPage.showPage(getUsername(), cruiseIDs);

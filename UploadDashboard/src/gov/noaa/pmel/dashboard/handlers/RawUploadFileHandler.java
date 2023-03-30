@@ -4,14 +4,18 @@
 package gov.noaa.pmel.dashboard.handlers;
 
 import java.io.File;
+import java.io.FileOutputStream;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.TimeZone;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.apache.tomcat.util.http.fileupload.FileItem;
+import org.apache.tomcat.util.http.fileupload.FileItemStream;
+import org.apache.tomcat.util.http.fileupload.util.Streams;
 
+import gov.noaa.pmel.dashboard.upload.progress.UploadProgressInputStream;
+import gov.noaa.pmel.dashboard.upload.progress.UploadProgressListener;
 /**
  * Handles saving the original uploaded files.
  * Files are saved under the configuration-specified directory in a directory that is:
@@ -37,9 +41,10 @@ public class RawUploadFileHandler /* extends VersionedFileHandler */ {
         filesDir = new File(filesDirName);
 	}
 
-    public File writeFileItem(FileItem item,  String username) throws Exception {
+    public File writeFileItem(FileItemStream fileItemStream, long totalSize, long maxSize,
+                              String username, UploadProgressListener uploadProgressListener) throws Exception {
         File targetDir = createUploadTargetDir(username);
-        File itemFile = writeItem(item, targetDir);
+        File itemFile = writeItem(fileItemStream, totalSize, maxSize, targetDir, uploadProgressListener);
         return itemFile;
     }
 	public File createUploadTargetDir(String username) {
@@ -70,8 +75,7 @@ public class RawUploadFileHandler /* extends VersionedFileHandler */ {
 		return targetDir;
 	}
 	
-	private static File getRawFileTarget(File targetDir, FileItem item) {
-        String uploadFilename = item.getName();
+	private static File getRawFileTarget(File targetDir, String uploadFilename) {
         logger.debug("item filename" + uploadFilename);
         if ( uploadFilename.indexOf('\\') >= 0 ) {
             logger.debug("Trimming windows path of :" + uploadFilename);
@@ -82,14 +86,26 @@ public class RawUploadFileHandler /* extends VersionedFileHandler */ {
 		return targetFile;
 	}
 
-	public static File writeItem(FileItem item, File targetDir) throws Exception {
+	public static File writeItem(FileItemStream fileItemStream, long totalSize, long maxSize,
+	                             File targetDir, UploadProgressListener uploadProgressListener) throws Exception {
 		if ( ! targetDir.exists()) {
 			if ( ! targetDir.mkdirs()) {
 				throw new IllegalStateException("Unable to create target directory " + targetDir.getAbsolutePath());
 			}
 		}
-		File rawFile = getRawFileTarget(targetDir, item);
-		item.write(rawFile);
+		File rawFile = getRawFileTarget(targetDir, fileItemStream.getName());
+        // Right now, the upload is cancelled as soon as it goes over the limit.
+		// Perhaps we might want to allow the file to upload and then reject the upload.  Not sure.
+		// In any case, the approach below doesn't do that right.
+//        boolean failOnOversize = ApplicationConfiguration.getLatestProperty("oap.upload.fail_on_oversize", true);
+		try ( UploadProgressInputStream inputStream = 
+		        new UploadProgressInputStream(fileItemStream.openStream(), totalSize, maxSize); ) { // , failOnOversize); ) {
+    	    inputStream.addListener(uploadProgressListener);
+
+            FileOutputStream fos = new FileOutputStream(rawFile);
+//    		fileItemStream.write(rawFile);
+            Streams.copy(inputStream, fos, true);
+		}
         return rawFile;
 //		commitVersion(rawFile, "Uploaded raw file: " + item.getName());
 	}

@@ -30,7 +30,7 @@ public enum FeatureType {
     
     public static boolean isDSG(String featureTypeName) {
         try {
-            return FeatureType.valueOf(featureTypeName).isDSG();
+            return FeatureType.valueOf(featureTypeName.toUpperCase()).isDSG();
         } catch (Exception ex) {
             System.err.println(ex);
             return false;

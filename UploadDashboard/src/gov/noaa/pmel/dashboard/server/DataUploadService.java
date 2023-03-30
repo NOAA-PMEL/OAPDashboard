@@ -6,27 +6,35 @@ package gov.noaa.pmel.dashboard.server;
 import java.io.BufferedInputStream;
 import java.io.BufferedReader;
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.PrintWriter;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
 import java.util.Set;
 
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import javax.servlet.http.HttpSession;
 
 import org.apache.logging.log4j.Logger;
+import org.apache.commons.io.IOUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.tomcat.util.http.fileupload.FileItem;
+import org.apache.tomcat.util.http.fileupload.FileItemIterator;
+import org.apache.tomcat.util.http.fileupload.FileItemStream;
 import org.apache.tomcat.util.http.fileupload.FileUploadException;
 import org.apache.tomcat.util.http.fileupload.disk.DiskFileItemFactory;
 import org.apache.tomcat.util.http.fileupload.servlet.ServletFileUpload;
 
+import gov.noaa.pmel.dashboard.handlers.RawUploadFileHandler;
 import gov.noaa.pmel.dashboard.server.util.FileTypeTest;
 import gov.noaa.pmel.dashboard.server.util.UIDGen;
 import gov.noaa.pmel.dashboard.shared.DashboardUtils;
@@ -35,7 +43,10 @@ import gov.noaa.pmel.dashboard.shared.FileType;
 import gov.noaa.pmel.dashboard.shared.ObservationType;
 import gov.noaa.pmel.dashboard.upload.RecordOrientedFileReader;
 import gov.noaa.pmel.dashboard.upload.StandardUploadFields;
+import gov.noaa.pmel.dashboard.upload.StandardUploadFields.StandardUploadFieldsBuilder;
 import gov.noaa.pmel.dashboard.upload.UploadProcessor;
+import gov.noaa.pmel.dashboard.upload.progress.UploadProgress;
+import gov.noaa.pmel.dashboard.upload.progress.UploadProgressListener;
 import gov.noaa.pmel.dashboard.util.FormUtils;
 import gov.noaa.pmel.oads.util.StringUtils;
 import gov.noaa.pmel.tws.util.ApplicationConfiguration;
@@ -52,11 +63,23 @@ public class DataUploadService extends HttpServlet {
     private static Logger logger = LogManager.getLogger(DataUploadService.class);
     
     public static long MAX_ALLOWED_UPLOAD_SIZE;
-    public static String DEFAULT_MAX_ALLOWED_UPLOAD_SIZE_STR = "102400000";
+    public static String DEFAULT_MAX_ALLOWED_UPLOAD_SIZE_AS_STR = "1024000000";
     public static long DEFAULT_MAX_ALLOWED_UPLOAD_SIZE = 1024000000;
-    public static String DEFAULT_MAX_ALLOWED_SIZE_DISPLAY_STR = "~1GB";
+    public static String DEFAULT_MAX_ALLOWED_SIZE_DISPLAY_STR = "1GB";
     public static String MAX_ALLOWED_SIZE_DISPLAY_STR = ApplicationConfiguration.getProperty("oap.upload.max_size.display", DEFAULT_MAX_ALLOWED_SIZE_DISPLAY_STR);
 
+    static {
+        try {
+            String maxUploadSizeStr = ApplicationConfiguration.getProperty("oap.upload.max_size", DEFAULT_MAX_ALLOWED_UPLOAD_SIZE_AS_STR);
+            MAX_ALLOWED_UPLOAD_SIZE = Long.parseLong(maxUploadSizeStr);
+            logger.debug("MAX_ALLOWED_UPLOAD_SIZE: " + MAX_ALLOWED_UPLOAD_SIZE + " from configuration: "+ maxUploadSizeStr);
+        } catch (Exception ex) {
+            MAX_ALLOWED_UPLOAD_SIZE = DEFAULT_MAX_ALLOWED_UPLOAD_SIZE;
+            logger.warn("Exception getting max upload size: " + ex + "\n\t" +
+                        "Using default value: " + DEFAULT_MAX_ALLOWED_UPLOAD_SIZE);
+        }
+    }
+        
 	private ServletFileUpload datafileUpload;
 
     public static class BadRequestException extends Exception {
@@ -71,15 +94,6 @@ public class DataUploadService extends HttpServlet {
 		
 		DiskFileItemFactory factory = new DiskFileItemFactory();
 		try {
-            try {
-                String maxUploadSizeStr = ApplicationConfiguration.getProperty("oap.upload.max_size", DEFAULT_MAX_ALLOWED_UPLOAD_SIZE_STR);
-                MAX_ALLOWED_UPLOAD_SIZE = Long.parseLong(maxUploadSizeStr);
-                logger.debug("MAX_ALLOWED_UPLOAD_SIZE: " + MAX_ALLOWED_UPLOAD_SIZE + " from configuration: "+ maxUploadSizeStr);
-            } catch (Exception ex) {
-                MAX_ALLOWED_UPLOAD_SIZE = DEFAULT_MAX_ALLOWED_UPLOAD_SIZE;
-                logger.warn("Exception getting max upload size: " + ex + "\n\t" +
-                            "Using default value: " + DEFAULT_MAX_ALLOWED_UPLOAD_SIZE);
-            }
 			File servletTmpDir = (File) getServletContext().getAttribute("javax.servlet.context.tempdir");
 			factory.setRepository(servletTmpDir);
 		} catch (Exception ex) {
@@ -89,27 +103,26 @@ public class DataUploadService extends HttpServlet {
 		datafileUpload = new ServletFileUpload(factory);
 	}
 
+    public static long getMaxUploadSize() { return MAX_ALLOWED_UPLOAD_SIZE; }
+    public static String getMaxUploadSizeDisplayStr() { return MAX_ALLOWED_SIZE_DISPLAY_STR; }
+    
     @Override 
 	protected void doGet(HttpServletRequest request, HttpServletResponse response) throws IOException {
         logger.debug(request);
         response.sendError(HttpServletResponse.SC_FORBIDDEN);
     }
     
-    private static String getUploadField(String fieldName, Map<String,List<FileItem>> paramMap) {
-        return FormUtils.getFormField(fieldName, paramMap, false);
+    private static String getUploadField(String fieldName, Map<String,String> paramMap) {
+        return FormUtils.getFormField(fieldName, paramMap);
     }
-    
-    private static String getRequiredField(String fieldName, Map<String,List<FileItem>> paramMap) throws NoSuchFieldException {
+    private static String getRequiredField(String fieldName, Map<String,String> paramMap) throws NoSuchFieldException {
         return FormUtils.getRequiredFormField(fieldName, paramMap, false);
     }
-    
+
 	protected void doPost(HttpServletRequest request, HttpServletResponse response) throws IOException {
         // log request
         logger.info(request);
 	    
-        StandardUploadFields stdFields;
-		Map<String,List<FileItem>> paramMap = null;
-        
         try {
             String username = getUsername(request);
             logger.info("Processing upload for user " + username);
@@ -117,23 +130,58 @@ public class DataUploadService extends HttpServlet {
     	    // verify message
             checkRequestMime(request);
             
-    	    // extract meta info
-            paramMap = extractParameterMap(request);
-            stdFields = extractStandardFields(paramMap);
-            stdFields.username(username);
-            
-            // XXX should really move this to a different service
-            if ( isPreviewRequest(getUploadField("dataaction", paramMap))) {
-                sendPreview(stdFields, response);
-                return;
-            }
-            
             String requestPathInfo = request.getPathInfo();
             boolean isUpdateRequest = isUpdateRequest(requestPathInfo);
             
             String submissionRecordId = isUpdateRequest ? getUpdateRecordId(requestPathInfo) : UIDGen.genId();
             
-            UploadProcessor uploadProcessor = new UploadProcessor(stdFields);
+            HttpSession session = request.getSession();
+            UploadProgress uploadProgress = UploadProgress.getUploadProgress(session);
+
+    	    // extract upload info
+            FileItemIterator fit = datafileUpload.getItemIterator(request);
+            Map<String, String> formFields = new HashMap<>();
+            List<File> dataFiles = new ArrayList<>();
+            FileItemStream dataItemStream = null;
+            while ( fit.hasNext() ) {
+                FileItemStream fis = fit.next();
+                String field = fis.getFieldName();
+                System.out.println("Processing field: " + field);
+                if ( fis.isFormField()) {
+                    String fieldValue = getFieldValue(fis);
+                    System.out.println(field + " : " + fieldValue);
+                    formFields.put(field, fieldValue);
+                } else {
+                    if ( dataItemStream != null) {
+                        throw new IllegalArgumentException("Only one data file can be uploaded at a time.");
+                    }
+                    dataItemStream = fis;
+                    String fpath = dataItemStream.getName();
+                    String fname = fpath.substring(fpath.lastIndexOf(File.pathSeparator)+1);
+                    UploadProgressListener progressListener = new UploadProgressListener(fname, uploadProgress);
+                    RawUploadFileHandler rufh = DashboardConfigStore.get().getRawUploadFileHandler();
+                    File rawFile = rufh.writeFileItem(dataItemStream, request.getContentLengthLong(), 
+                                                      MAX_ALLOWED_UPLOAD_SIZE, username, progressListener);
+                    dataFiles.add(rawFile);
+                }
+            }
+            
+            if ( dataItemStream == null ) {
+                throw new IllegalArgumentException("No data file uploaded.");
+            }
+            StandardUploadFieldsBuilder stdFieldsBldr = extractStandardFields(formFields);
+            stdFieldsBldr.username(username)
+                         .uploadFileName(dataItemStream.getName())
+                         .dataFiles(dataFiles);
+            StandardUploadFields stdFields = stdFieldsBldr.build(); 
+            
+            // XXX should really move this to a different service
+            if ( isPreviewRequest(getUploadField("dataaction", formFields))) {
+                sendPreview(stdFields, response);
+                return;
+            }
+            
+            UploadProcessor uploadProcessor = new UploadProcessor(stdFields, request);
             uploadProcessor.processUpload(submissionRecordId, isUpdateRequest);
             List<String>messages = uploadProcessor.getMessages();
             Set<String>successes = uploadProcessor.getSuccesses();
@@ -147,9 +195,9 @@ public class DataUploadService extends HttpServlet {
         } catch (IllegalStateException iex) { // no username
             logger.warn(iex);
             sendErrMsg(response, iex);
-        } catch (NoSuchFieldException nsf) { // missing field
-            logger.warn(nsf);
-            sendErrMsg(response, nsf);
+//        } catch (NoSuchFieldException nsf) { // missing field .. no longer nec with ProgressBar change
+//            logger.warn(nsf);
+//            sendErrMsg(response, nsf);
         } catch (IllegalArgumentException iex) { // no files
             logger.warn(iex);
             sendErrMsg(response, iex);
@@ -169,16 +217,29 @@ public class DataUploadService extends HttpServlet {
             }
             sendErrMsg(response, msg.toString());
         } finally {
-            if ( paramMap != null ) {
-    			for ( Entry<String,List<FileItem>> paramEntry : paramMap.entrySet() ) {
-    				for ( FileItem item : paramEntry.getValue() ) {
-    					item.delete();
-    				}
-    			}
-            }
+           // XXX  .. no longer nec with ProgressBar change
+//            if ( paramMap != null ) {
+//    			for ( Entry<String,List<FileItem>> paramEntry : paramMap.entrySet() ) {
+//    				for ( FileItem item : paramEntry.getValue() ) {
+//    					item.delete();
+//    				}
+//    			}
+//            }
         }
 	}
     
+    /**
+     * @param fis
+     * @return
+     * @throws IOException 
+     */
+    @SuppressWarnings("resource")  // XXX Not sure this is a separate stream from the underlying request InputStream
+    private static String getFieldValue(FileItemStream fis) throws IOException {
+        InputStream is = fis.openStream();
+        String value = IOUtils.toString(is, StandardCharsets.UTF_8); //  Charset.forName("UTF-8"));
+        return value;
+    }
+
     /**
      * @param pathInfo
      * @return
@@ -194,26 +255,41 @@ public class DataUploadService extends HttpServlet {
         return recId;
     }
 
-    private Map<String, List<FileItem>> extractParameterMap(HttpServletRequest request) throws FileUploadException {
-        Map<String,List<FileItem>> paramMap = datafileUpload.parseParameterMap(request);
-        return paramMap;
-    }
-    private static StandardUploadFields extractStandardFields(Map<String,List<FileItem>> paramMap) 
+//    private static StandardUploadFields extractStandardFieldsFromFileItems(Map<String,List<FileItem>> paramMap) 
+//            throws FileUploadException, NoSuchFieldException {
+//        StandardUploadFields sup = null;
+//        try {
+//            sup = StandardUploadFields.builder()
+//                    .parameterMap(paramMap)
+//                    .datasetId(getUploadField("datasetId", paramMap))
+//                    .datasetIdColumnName(getUploadField("datasetIdColumn", paramMap))
+////  XXX                .dataAction(getRequiredField("dataaction", paramMap))
+//                    .fileDataEncoding(getUploadField("dataencoding", paramMap))
+//                    .timestamp(getUploadField("timestamp", paramMap)) // DashboardServerUtils.formatUTC(new Date()))
+//                    .observationType(getUploadField("observationType", paramMap))
+//                    .featureType(getFeatureType(paramMap))
+//                    .fileType(getFileType(paramMap))
+////                    .dataFiles(extractDataFiles(paramMap))  // XXX PUT THIS BACK IF NOT PROGRESS
+//                    .build();
+//        } catch (NullPointerException nex) {
+//            nex.printStackTrace();
+//            throw new NoSuchFieldException(nex.getMessage());
+//        }
+//        return sup;
+//    }
+    private static StandardUploadFields.StandardUploadFieldsBuilder extractStandardFields(Map<String,String> paramMap)
             throws FileUploadException, NoSuchFieldException {
-        StandardUploadFields sup = null;
+        StandardUploadFieldsBuilder sup = StandardUploadFields.builder();
         try {
-            sup = StandardUploadFields.builder()
-                    .parameterMap(paramMap)
-                    .datasetId(getUploadField("datasetId", paramMap))
-                    .datasetIdColumnName(getUploadField("datasetIdColumn", paramMap))
-                    .dataAction(getRequiredField("dataaction", paramMap))
-                    .fileDataEncoding(getUploadField("dataencoding", paramMap))
-                    .timestamp(getUploadField("timestamp", paramMap)) // DashboardServerUtils.formatUTC(new Date()))
-                    .observationType(getUploadField("observationType", paramMap))
-                    .featureType(getFeatureType(paramMap))
-                    .fileType(getFileType(paramMap))
-                    .dataFiles(extractDataFiles(paramMap))
-                    .build();
+            sup .parameterMap(paramMap)
+                .datasetId(getUploadField("datasetId", paramMap))
+                .datasetIdColumnName(getUploadField("datasetIdColumn", paramMap))
+                .dataAction(getRequiredField("dataaction", paramMap))
+                .fileDataEncoding(getUploadField("dataencoding", paramMap))
+                .timestamp(getUploadField("timestamp", paramMap)) // DashboardServerUtils.formatUTC(new Date()))
+                .observationType(getUploadField("observationType", paramMap))
+                .featureType(getFeatureType(paramMap))
+                .fileType(getFileType(paramMap));
         } catch (NullPointerException nex) {
             nex.printStackTrace();
             throw new NoSuchFieldException(nex.getMessage());
@@ -246,13 +322,13 @@ public class DataUploadService extends HttpServlet {
         }
     }
 
-    private static FeatureType getFeatureType(Map<String, List<FileItem>> paramMap) throws NoSuchFieldException {
+    private static FeatureType getFeatureType(Map<String, String> paramMap) throws NoSuchFieldException {
         String observationTypeName = getUploadField("observationType", paramMap);
         FeatureType featureType = ObservationType.featureTypeOf(observationTypeName);
         return featureType;
     }
     
-    private static FileType getFileType(Map<String, List<FileItem>> paramMap) throws NoSuchFieldException {
+    private static FileType getFileType(Map<String, String> paramMap) throws NoSuchFieldException {
         FileType fileType = null;
         String fileTypeName = getUploadField("fileType", paramMap);
         try { 
@@ -277,32 +353,40 @@ public class DataUploadService extends HttpServlet {
     }
 
     private static void sendPreview(StandardUploadFields stdFields, HttpServletResponse response) throws Exception  {
-        FileItem firstItem = stdFields.dataFiles().iterator().next();
+        Iterator<File> fiterator = stdFields.dataFiles().iterator();
+        File firstItem = fiterator.next();
         String filename = firstItem.getName();
         String encoding = stdFields.fileDataEncoding(); 
 		ArrayList<String> contentsList = new ArrayList<String>(50);
-        try (BufferedInputStream inStream = new BufferedInputStream(firstItem.getInputStream()); ) {
+        try (BufferedInputStream inStream = new BufferedInputStream(new FileInputStream(firstItem))) {
             String fileType = FileTypeTest.getFileType(inStream);
             if ( FileTypeTest.fileIsDelimited(fileType)) {
-                RecordOrientedFileReader reader = RecordOrientedFileReader.getFileReader(fileType, inStream);
-                Iterator<String[]> iterator = reader.iterator();
-                
-    			for (int k = 0; k < 50 && iterator.hasNext(); k++) {
-    				String[] linedata = iterator.next();
-    				contentsList.add(reader.reconstitute(linedata));
+                try (RecordOrientedFileReader reader = RecordOrientedFileReader.getFileReader(fileType, inStream)) {
+                    Iterator<String[]> iterator = reader.iterator();
+                    for (int k = 0; k < 50 && iterator.hasNext(); k++) {
+                    	String[] linedata = iterator.next();
+                    	contentsList.add(reader.reconstitute(linedata));
+                    }
                 }
             } else {
-        		BufferedReader cruiseReader = new BufferedReader(new InputStreamReader(inStream, encoding));
-    			for (int k = 0; k < 50; k++) {
-    				String dataline = cruiseReader.readLine();
-    				if ( dataline == null )
-    					break;
-    				contentsList.add(dataline);
-    			}
+        		try (BufferedReader cruiseReader = new BufferedReader(new InputStreamReader(inStream, encoding))) {
+                    for (int k = 0; k < 50; k++) {
+                    	String dataline = cruiseReader.readLine();
+                    	if ( dataline == null )
+                    		break;
+                    	contentsList.add(dataline);
+                    }
+                }
 			}
 		} finally {
 		    firstItem.delete();
 		}
+        
+        // just in case somehow multiple files sent.
+        while ( fiterator.hasNext()) {
+            File item = fiterator.next();
+            item.delete();
+        }
 
 		// Respond with some info and the interpreted contents
 		response.setStatus(HttpServletResponse.SC_OK);
