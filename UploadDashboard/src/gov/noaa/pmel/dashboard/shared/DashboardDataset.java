@@ -126,6 +126,11 @@ public class DashboardDataset implements Serializable, IsSerializable {
         featureType = DashboardUtils.STRING_MISSING_VALUE;
         userObservationType = DashboardUtils.STRING_MISSING_VALUE;
 	}
+    
+	public DashboardDataset(String recordId) {
+        this();
+        this.recordId = recordId;
+	}
 
     public String getAccession() {
         return accession;

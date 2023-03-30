@@ -150,6 +150,8 @@ public class UploadDashboard implements EntryPoint, ValueChangeHandler<String> {
     private EditProfilePopup userInfoPopup;
     
     private static String buildVersion = "n/a";
+    private static String maxUploadSizeStr = "n/a";
+    private static long maxUploadSize = -1;
     
 	/**
 	 * Create the manager for the UploadDashboard pages.
@@ -956,5 +958,17 @@ public class UploadDashboard implements EntryPoint, ValueChangeHandler<String> {
      */
     public static void setAppBuildVersion(String version) {
         buildVersion = version;
+    }
+    public static void setMaxUploadSize(long sizeLimit) {
+        maxUploadSize = sizeLimit;
+    }
+    public static long getMaxUploadSize() {
+        return maxUploadSize;
+    }
+    public static void setMaxUploadSizeDisplayStr(String sizeLimit) {
+        maxUploadSizeStr = sizeLimit;
+    }
+    public static String getMaxUploadSizeStr() {
+        return maxUploadSizeStr;
     }
  }

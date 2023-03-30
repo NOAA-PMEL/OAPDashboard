@@ -676,7 +676,7 @@ hr .hline {
 }
 .uploadfile {
 	display: block;
-	width: 90%;
+	width: 50%;
 	font-size: 100%;
 	margin: 1em 2em;
 }
@@ -693,3 +693,21 @@ hr {
     text-align: right;
     margin-right: 1em;
 }
+
+/* (not) From gwt-upload-progres:style.css */
+.UploadProgress {
+  height:21px;
+  width: 200px;
+  margin-left: 2em;
+  margin-right: 5px;
+  border: 1px solid lightgrey; 
+}
+
+/* comes from Runtime.css */
+/* .ProgressBar .progress {
+  height:10px;
+  background-color: red; 
+  margin: 2px;
+  font-size: 0px;
+}
+ */

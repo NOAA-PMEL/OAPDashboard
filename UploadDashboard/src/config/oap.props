@@ -82,8 +82,8 @@ oap.db.environment=oapdashboard
 
 tws.pkauth.certificates_dir=/usr/local/src/oads/apache-tomcat-8.5.34/content/OAPUploadDashboard/config
 
-oap.upload.max_size=51200000
-oap.upload.max_size.display=~50MB
+oap.upload.max_size=2048000000
+oap.upload.max_size.display=2GB
 
 oap.metadata.extract_variables=true
 

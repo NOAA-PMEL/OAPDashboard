@@ -708,6 +708,8 @@ public class DatasetListPage extends CompositeWithUsername {
 				}
                 
                 UploadDashboard.setAppBuildVersion(result.getVersion());
+                UploadDashboard.setMaxUploadSize(result.getMaxUploadSize());
+                UploadDashboard.setMaxUploadSizeDisplayStr(result.getMaxUploadSizeDisplayStr());
 				UploadDashboard.updateCurrentPage(singleton);
 				singleton.updateDatasets(cruises);
 				UploadDashboard.showAutoCursor();

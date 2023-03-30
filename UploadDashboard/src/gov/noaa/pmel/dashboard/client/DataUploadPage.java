@@ -6,6 +6,7 @@ package gov.noaa.pmel.dashboard.client;
 import java.util.ArrayList;
 import java.util.Date;
 
+
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.SelectElement;
@@ -17,7 +18,6 @@ import com.google.gwt.safehtml.shared.SafeHtmlUtils;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.uibinder.client.UiHandler;
-import com.google.gwt.user.client.History;
 import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.ui.Anchor;
 import com.google.gwt.user.client.ui.Button;
@@ -33,6 +33,9 @@ import com.google.gwt.user.client.ui.ListBox;
 import com.google.gwt.user.client.ui.Widget;
 
 import gov.noaa.pmel.dashboard.client.UploadDashboard.PagesEnum;
+import gov.noaa.pmel.dashboard.client.progress.view.UploadProgress;
+import gov.noaa.pmel.dashboard.client.progress.controller.ProgressController;
+import gov.noaa.pmel.dashboard.client.progress.state.UploadProgressState;
 import gov.noaa.pmel.dashboard.shared.DashboardUtils;
 import gov.noaa.pmel.dashboard.shared.FileType;
 import gov.noaa.pmel.dashboard.shared.ObservationType;
@@ -177,6 +180,7 @@ public class DataUploadPage extends CompositeWithUsername {
 	@UiField Anchor moreHelpAnchor;
 	@UiField FormPanel uploadForm;
     @UiField FileUpload fileUpload;
+    @UiField UploadProgress uploadProgress;
 	@UiField Hidden timestampToken;
 	@UiField Hidden actionToken;
 	@UiField Hidden encodingToken;
@@ -204,6 +208,18 @@ public class DataUploadPage extends CompositeWithUsername {
         return data.files[0].size;
     }-*/;
     
+    @Override
+    protected void onLoad() {
+        GWT.log("DUP onLoad: ");
+    }
+
+    @Override
+    protected void onUnload() {
+        GWT.log("DUP unload: stopping progress controller");
+      ProgressController.INSTANCE.stop();
+      UploadProgressState.INSTANCE.clear();
+      uploadProgress.reset();
+    }
 	/**
 	 * Creates an empty cruise upload page.  Do not call this 
 	 * constructor; instead use the showPage static method 
@@ -422,7 +438,14 @@ public class DataUploadPage extends CompositeWithUsername {
         submitButton.setEnabled(false);
 		String namesString = getInputFileNames(uploadElement).trim();
 		int size = getFileSize(uploadElement);
-		UploadDashboard.logToConsole("Submitting file " + namesString + " of size " + size);
+        long maxSize = UploadDashboard.getMaxUploadSize();
+		UploadDashboard.logToConsole("Attempting submit of file " + namesString + " of size " + size);
+        if ( size > maxSize ) {
+            UploadDashboard.showNotification("File exceeds maximum upload size of " + UploadDashboard.getMaxUploadSizeStr(), 
+                                             InfoMsgType.WARNING);
+    		UploadDashboard.logToConsole("File " + namesString + " of size " + size + " larger than limit of " + UploadDashboard.getMaxUploadSize());
+            return;
+        }
 		if (  namesString.isEmpty() ) {
 			UploadDashboard.showMessage(NO_FILE_ERROR_MSG);
 			return;
@@ -443,6 +466,10 @@ public class DataUploadPage extends CompositeWithUsername {
 //			assignTokens(DashboardUtils.APPEND_DATASETS_REQUEST_TAG);
 //		else 
 			assignTolkiens(DashboardUtils.NEW_DATASETS_REQUEST_TAG);
+            
+        GWT.log("onSubmit: initializing progress controller");
+        ProgressController.INSTANCE.initialise();
+        
 		uploadForm.submit();
 	}
 
@@ -461,12 +488,14 @@ public class DataUploadPage extends CompositeWithUsername {
 	}
 
     private void clearForm() {
+        GWT.log("DUP: clearForm");
         uploadForm.reset();
         clearInputFileNames(uploadElement);
         featureTypeSelector.setSelectedIndex(0);
         submitButton.setEnabled(false); 
         previewButton.setEnabled(false); 
         cancelButton.setText("Done");
+        uploadProgress.reset();
     }
         
 	private ArrayList<String> cruiseIDs = new ArrayList<String>();

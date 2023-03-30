@@ -18,8 +18,13 @@ public class FormUtils {
 
     private static Logger logger = LogManager.getLogger(FormUtils.class);
     
-    public static String getFormField(String fieldName, Map<String,List<FileItem>> paramMap) {
-        return getFormField(fieldName, paramMap, false);
+    public static String getFormField(String fieldName, Map<String,String> paramMap) {
+        String fieldValue = paramMap.get(fieldName);
+        if (fieldValue == null) {
+            logger.warn("No upload form value provided for:" + fieldName);
+            fieldValue = "";
+        }
+        return fieldValue;
     }
     
     public static String getFormField(String fieldName, Map<String,List<FileItem>> paramMap, boolean allowMultipleValues) {
@@ -37,17 +42,16 @@ public class FormUtils {
         return fieldValue;
     }
     
-    public static String getRequiredFormField(String fieldName, Map<String,List<FileItem>> paramMap) throws NoSuchFieldException {
+    public static String getRequiredFormField(String fieldName, Map<String,String> paramMap) throws NoSuchFieldException {
         return getRequiredFormField(fieldName, paramMap, false);
     }
     
-    public static String getRequiredFormField(String fieldName, Map<String,List<FileItem>> paramMap, boolean allowMultipleValues) 
+    public static String getRequiredFormField(String fieldName, Map<String,String> paramMap, boolean allowMultipleValues) 
             throws NoSuchFieldException {
-        String fieldValue = getFormField(fieldName, paramMap, allowMultipleValues);
+        String fieldValue = getFormField(fieldName, paramMap);
         if ( fieldValue == null || fieldValue.trim().length() == 0 ) {
             throw new NoSuchFieldException(fieldName);
         }
         return fieldValue;
     }
-
 }

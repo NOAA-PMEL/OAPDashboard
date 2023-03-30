@@ -8,16 +8,24 @@ import java.io.InputStream;
 import java.util.List;
 import java.util.Set;
 
+import javax.servlet.http.HttpServletRequest;
+
 import org.apache.log4j.Logger;
 import org.apache.tika.Tika;
 import org.apache.tika.config.TikaConfig;
 import org.apache.tomcat.util.http.fileupload.FileItem;
+import org.apache.tomcat.util.http.fileupload.FileItemIterator;
+import org.apache.tomcat.util.http.fileupload.FileItemStream;
+import org.apache.tomcat.util.http.fileupload.FileUploadException;
+import org.apache.tomcat.util.http.fileupload.servlet.ServletFileUpload;
 
 import gov.noaa.pmel.dashboard.handlers.RawUploadFileHandler;
 import gov.noaa.pmel.dashboard.server.DashboardConfigStore;
 import gov.noaa.pmel.dashboard.server.util.FileTypeTest;
 import gov.noaa.pmel.dashboard.shared.DashboardUtils;
 import gov.noaa.pmel.dashboard.shared.FileType;
+import gov.noaa.pmel.dashboard.upload.progress.UploadProgress;
+import gov.noaa.pmel.dashboard.upload.progress.UploadProgressListener;
 import gov.noaa.pmel.tws.util.Logging;
 
 /**
@@ -28,8 +36,9 @@ public class UploadProcessor {
 
     private static Logger logger = Logging.getLogger(UploadProcessor.class);
     
-    private StandardUploadFields _stdFields;
     private FileUploadProcessor _processor;
+    private StandardUploadFields _stdFields;
+    private HttpServletRequest _request;
     
     public static String checkFileType(File file) {
         try {
@@ -49,34 +58,49 @@ public class UploadProcessor {
     public UploadProcessor(StandardUploadFields stdFields) {
         _stdFields = stdFields;
     }
-    public void processUpload(String submissionRecordId, boolean isUpdateRequest) throws UploadProcessingException {
-        List<FileItem> datafiles = _stdFields.dataFiles();
-        for ( FileItem item : datafiles ) {
+    /**
+     * @param stdFields
+     * @param request 
+     * @param datafileUpload 
+     * @param uploadProgress
+     */
+    public UploadProcessor(StandardUploadFields stdFields, HttpServletRequest request) {
+        _stdFields = stdFields;
+        _request = request;
+    }
+
+    public void processUpload(String submissionRecordId, boolean isUpdateRequest) throws UploadProcessingException, FileUploadException, IOException {
+//        List<FileItem> datafiles = _stdFields.dataFiles();
+//        FileItemIterator fileItemIterator = _datafileUpload.getItemIterator(_request);
+//        while (fileItemIterator.hasNext()) {
+//            FileItemStream fileItemStream = fileItemIterator.next();
+//        for ( FileItem item : datafiles ) {
             
-            String uploadName = item.getName();
+            String uploadName = _stdFields.uploadFileName();
             logger.debug("item filename" + uploadName);
             if ( uploadName.indexOf('\\') >= 0 ) {
                 logger.debug("Trimming windows path of :" + uploadName);
                 uploadName = uploadName.substring(uploadName.lastIndexOf('\\')+1);
             }
                 
-            String uploadContentType = item.getContentType();
+            String uploadContentType = _stdFields.fileDataEncoding();
             _stdFields.uploadFileName(uploadName);
             _stdFields.uploadType(uploadContentType);
             
             logger.info("Processing uploaded file " + uploadName + " of type " + uploadContentType);
-            // save raw upload file
-            File rawFile = null;
-            try {
-                rawFile = saveRawFile(item);
-            } catch (Exception ex) {
-                throw new UploadProcessingException("Unable to save uploaded file.", ex);
-            } finally {
-                item.delete();
-            }
+
+            // save raw upload file -- XXX Already saved..
+            File rawFile = _stdFields.dataFiles().get(0);
+//            try {
+//                rawFile = saveRawFile(fileItemStream, _request.getContentLengthLong(), uploadProgressListener);
+//            } catch (Exception ex) {
+//                throw new UploadProcessingException("Unable to save uploaded file.", ex);
+//            } finally {
+////                item.delete();
+//            }
             
             try {
-                String checkedFileType = FileTypeTest.getFileType(rawFile);
+                String checkedFileType = FileTypeTest.getFileType(rawFile); // XXXX 
                 _stdFields.checkedFileType(checkedFileType);
                 _stdFields.fileType(FileTypeTest.fileIsDelimited(checkedFileType) ? FileType.DELIMITED : FileType.OTHER);
             } catch (Exception ex) {
@@ -103,7 +127,7 @@ public class UploadProcessor {
             } catch (Exception ex) {
                 throw new UploadProcessingException(ex);
             }
-        }
+//        }
     }
             
     private static FileUploadProcessor getUploadFileProcessor(File uploadedFile, StandardUploadFields stdFields) {
@@ -111,11 +135,11 @@ public class UploadProcessor {
         return uploadProcessor;
     }
 
-    protected File saveRawFile(FileItem item) throws Exception {
-        RawUploadFileHandler rfh = DashboardConfigStore.get(false).getRawUploadFileHandler();
-        File itemFile = rfh.writeFileItem(item, _stdFields.username());
-        return itemFile;
-    }
+//    protected File saveRawFile(FileItemStream fileItemStream, long totalSize, UploadProgressListener uploadProgressListener) throws Exception {
+//        RawUploadFileHandler rfh = DashboardConfigStore.get(false).getRawUploadFileHandler();
+//        File itemFile = rfh.writeFileItem(fileItemStream, totalSize, _stdFields.username(), uploadProgressListener);
+//        return itemFile;
+//    }
     
     /**
      * @return
