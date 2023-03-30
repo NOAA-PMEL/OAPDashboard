@@ -1634,13 +1634,18 @@ public class DataFileHandler extends VersionedFileHandler {
 			throw new IllegalArgumentException("Unexpected failure to get the dashboard configuration");
 		}
 
-		// If they exist, delete the DSG files and notify ERDDAP
-		DsgNcFileHandler dsgHandler = configStore.getDsgNcFileHandler();
-        try {
-    		if ( dsgHandler.deleteCruise(datasetId) )
-    			dsgHandler.flagErddap();
-        } catch (Exception ex) {
-            logger.warn(ex,ex);
+        FeatureType dsgType = dataset.getFeatureType();
+        if ( FeatureType.isDSG(dsgType.dsgTypeName())) {
+    		// If they exist, delete the DSG files and notify ERDDAP
+    		DsgNcFileHandler dsgHandler = configStore.getDsgNcFileHandler();
+            try {
+        		if ( dsgHandler.deleteCruise(datasetId) )
+        			dsgHandler.flagErddap();
+            } catch (Exception ex) {
+                logger.warn(ex,ex);
+            }
+        } else {
+            logger.info("No DSG NC file to delete for FeatureType " + dsgType + " for dataset " + datasetId);
         }
 
         boolean doArchive = ApplicationConfiguration.getProperty("oap.dataset.archive_on_delete", true);
