@@ -27,6 +27,7 @@ import org.apache.log4j.Logger;
 
 import gov.noaa.pmel.dashboard.oads.OADSMetadata;
 import gov.noaa.pmel.dashboard.server.DashboardConfigStore;
+import gov.noaa.pmel.dashboard.server.util.Notifications;
 import gov.noaa.pmel.dashboard.shared.MetadataPreviewInfo;
 import gov.noaa.pmel.dashboard.shared.NotFoundException;
 import gov.noaa.pmel.oads.util.StringUtils;
@@ -93,6 +94,7 @@ public class MetadataPoster {
                 logger.warn("ME response: " + statLine.getStatusCode() + ":" + statLine.getReasonPhrase());
                 String msg = responseContent;
                 logger.warn("ME response content: " + msg);
+                Notifications.PANIC("Bad response from post to ME: " + statLine.getStatusCode());
                 throw new IllegalArgumentException(msg);
             }
             docId = responseContent;

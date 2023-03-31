@@ -4,19 +4,20 @@
 package gov.noaa.pmel.dashboard.server.util;
 
 import java.io.ByteArrayOutputStream;
-import java.io.OutputStream;
+import java.io.File;
+import java.io.FileWriter;
 import java.io.PrintStream;
-
-import javax.mail.Message.RecipientType;
+import java.util.Date;
 
 import org.apache.logging.log4j.LogManager;
 
-//import gov.noaa.pmel.tsunami.server.notify.TwilioSMSnotifier;
+import gov.noaa.pmel.tws.util.TimeUtils;
 import gov.noaa.pmel.tws.util.ApplicationConfiguration;
 import gov.noaa.pmel.tws.util.StringUtils;
 
 import org.apache.logging.log4j.Logger;
 
+import com.twilio.rest.api.v2010.account.Message;
 
 /**
  * @author kamb
@@ -33,31 +34,61 @@ public class Notifications {
     
 	public static final String OADB_RETURN_ADDR = "\"OAP Dashboard\" <" + DEFAULT_EMAIL + ">"; // noreply@pmel.noaa.gov>";
 
-//	public static void SendSMS(String message, Iterable<String> phoneNumbers) {
-//		for (String phoneNumber : phoneNumbers) {
-//			SendSMS(message, phoneNumber);
-//			try { Thread.sleep(200); } catch (Exception ex) {} // ignore
-//		}
-//	}
-//	
-//	public static void SendSMS(String message, String phoneNumber) {
-//		logger.info("sending " + message + " sms to: " + phoneNumber);
-//		if (StringUtils.emptyOrNull(message) || StringUtils.emptyOrNull(phoneNumber)) {
-//			throw new IllegalArgumentException("Missing SMS parameter: #" + phoneNumber + ", msg: " + message);
-//		}
-//		try {
-//			String sendMsg = message;
-//			if (message.length() > MAX_SMS_MSG_LENGTH) {
-//				logger.warn("Truncating over-long ("+message.length() + "/" + MAX_SMS_MSG_LENGTH + ") SMS message: " + message);
-//				sendMsg = message.substring(0, MAX_SMS_MSG_LENGTH);
-//			}
-//			TwilioSMSnotifier notifier = new TwilioSMSnotifier();
-//			Sms sms = notifier.sendSMS(sendMsg, phoneNumber);
-//			logger.debug("sms status:"+ sms.getStatus());
-//		} catch (Exception ex) {
-//			logger.warn(ex,ex);
-//		}
-//	}
+	public static void SendSMS(String message, Iterable<String> phoneNumbers) {
+		for (String phoneNumber : phoneNumbers) {
+			SendSMS(message, phoneNumber);
+			try { Thread.sleep(200); } catch (Exception ex) {} // ignore
+		}
+	}
+	
+	public static void SendSMS(String message, String phoneNumber) {
+		logger.info("sending " + message + " sms to: " + phoneNumber);
+		if (StringUtils.emptyOrNull(message) || StringUtils.emptyOrNull(phoneNumber)) {
+			throw new IllegalArgumentException("Missing SMS parameter: #" + phoneNumber + ", msg: " + message);
+		}
+		try {
+			String sendMsg = message;
+			if (message.length() > MAX_SMS_MSG_LENGTH) {
+				logger.warn("Truncating over-long ("+message.length() + "/" + MAX_SMS_MSG_LENGTH + ") SMS message: " + message);
+				sendMsg = message.substring(0, MAX_SMS_MSG_LENGTH);
+			}
+            Message sms = TwilioService.SendSMS(phoneNumber, sendMsg);
+			logger.debug("sms status:"+ sms.getStatus());
+		} catch (Exception ex) {
+			logger.warn(ex,ex);
+		}
+	}
+    
+    // No pre-send logging, in case we're panicking over the logging.
+	private static void justSendSMS(String message, String phoneNumber) {
+		if (StringUtils.emptyOrNull(message) || StringUtils.emptyOrNull(phoneNumber)) {
+			throw new IllegalArgumentException("Missing SMS parameter: #" + phoneNumber + ", msg: " + message);
+		}
+        String trimmedMessage = message.trim();
+        if ( trimmedMessage.length() > MAX_SMS_MSG_LENGTH ) {
+            trimmedMessage = trimmedMessage.substring(0, MAX_SMS_MSG_LENGTH);
+        }
+        String cleanedNumber = phoneNumber.trim();
+        cleanedNumber = cleanNumber(cleanedNumber);
+		try {
+			String sendMsg = trimmedMessage;
+			Message sms = new TwilioService().sendSMS(cleanedNumber, sendMsg);
+		} catch (Exception ex) {
+            ex.printStackTrace();
+			logger.warn(ex,ex);
+		}
+	}
+    
+    private static String cleanNumber(String phone_number) {
+        if ( phone_number == null || phone_number.trim().isEmpty()) {
+            throw new IllegalArgumentException("Null or empty phone number.");
+        }
+        String cleaned = phone_number.trim();
+        String plus = cleaned.startsWith("+") ? "+" : "";
+        cleaned = phone_number.replaceAll("[^\\d]", "");
+        cleaned = plus + cleaned;
+        return cleaned;
+    }
 	
 	private static String buildRecipientListString(Iterable<String> addrs) {
 		if ( addrs == null ) {
@@ -125,19 +156,52 @@ public class Notifications {
 			logger.warn("Failed to send \""+ subject + "\" message to: " + toList, e);
 		}
 	}
+    
+	public static void PANIC(String msg) {
+	    String dateString = TimeUtils.formatISO8601(new Date());
+        String panicFileName = "PANIC.log";
+        File panicFile = new File(panicFileName);
+        String panicMsg = msg;
+        String datedMsg = dateString + " : " + panicMsg;
+        System.out.println("#########");
+        System.out.println("######### PANIC!");
+        System.out.println("######### " + datedMsg);
+        System.out.println("######### Check : " + panicFile.getAbsolutePath());
+        System.out.println("#########");
+        try (FileWriter fout = new FileWriter(panicFile);) {
+            fout.append(datedMsg).append("\n");
+        } catch (Throwable t) {
+            System.out.println("######### Exception writing to PANIC.log : " + t);
+            t.printStackTrace();
+        }
+        TwilioService.SendSMS("2067957934", "SDIS:" + panicMsg);
+	}
 	
-	/**
+    static void usage() {
+        System.out.println("Usage: notify [-s|-m] arguments" );
+        System.out.println("\t-s : send SMS. args: <telno> <message>");
+        System.out.println("\t-m : send email. args: <to_addr_list> <subject> <message>");
+    }
+    /**
 	 * @param args
 	 */
 	public static void main(String[] args) {
 		String me = "2067957934";
 		String eugene = "2062952338";
 		
-		// System.out.println("Notify:"+ApplicationConfiguration.getProperty("eids.notifications"));
-		 SendEmail("OAP Data Dashboard Test notification", "Hi John!\n I just wanted to let you know, I'm back working on the data archive dashboard, "
-		         + "which will include (occasional) messages to you that new bundles have been uploaded to the SFTP site.\n\nThanks - Linus", "linus.kamb@gmail.com,linus.kamb@noaa.gov", 
-					 "\"OAP Dashboard System\" <linus.kamb@noaa.gov>");
-
+        if ( args.length < 3 ) {
+            usage();
+            System.exit(-1);
+        }
+        if ( "-s".equals(args[0]) && args.length == 3) {
+            System.err.println("SMS not currently supported");
+            SendSMS(args[2], args[1]);
+        } else if ( "-m".equals(args[0]) && args.length == 4 ) {
+            SendEmail(args[2], args[3], args[1], 
+					 "\"SDIS\" <pmel.sdis@noaa.gov>");
+        } else {
+            usage();
+        }
 	}
 
 }

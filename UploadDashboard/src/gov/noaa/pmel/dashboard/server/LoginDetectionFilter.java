@@ -136,7 +136,11 @@ public class LoginDetectionFilter implements Filter {
                 Notifications.SendEmail("SDIS Login", msg, "linus.kamb@noaa.gov,linus.kamb@gmail.com");
             }
         };
-        Executors.newSingleThreadExecutor().execute(notifier);
+        try {
+            Executors.newSingleThreadExecutor().execute(notifier);
+        } catch (Throwable t) {
+            Notifications.PANIC("Exception notifying new login mnsg " + msg + ": "+ t);
+        }
     }
 
     /**
