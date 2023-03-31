@@ -13,7 +13,6 @@ import org.apache.logging.log4j.LogManager;
 
 import gov.noaa.pmel.tws.util.TimeUtils;
 import gov.noaa.pmel.tws.util.ApplicationConfiguration;
-import gov.noaa.pmel.tws.util.ApplicationConfiguration.PropertyNotFoundException;
 import gov.noaa.pmel.tws.util.StringUtils;
 
 import org.apache.logging.log4j.Logger;
