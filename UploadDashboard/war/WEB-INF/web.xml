@@ -67,6 +67,15 @@
     <url-pattern>/OAPUploadDashboard/DataUploadService/*</url-pattern>
   </servlet-mapping>
   <servlet>
+    <servlet-name>UploadProgress</servlet-name>
+    <servlet-class>gov.noaa.pmel.dashboard.upload.progress.UploadProgressServlet</servlet-class>
+  </servlet>
+  <servlet-mapping>
+    <servlet-name>UploadProgress</servlet-name>
+    <url-pattern>/OAPUploadDashboard/uploadprogress</url-pattern>
+    <url-pattern>/OAPUploadDashboard/uploadprogress/*</url-pattern>
+  </servlet-mapping>
+  <servlet>
     <servlet-name>DashboardMetadataUploadServlet</servlet-name>
     <servlet-class>gov.noaa.pmel.dashboard.server.MetadataUploadService</servlet-class>
   </servlet>
