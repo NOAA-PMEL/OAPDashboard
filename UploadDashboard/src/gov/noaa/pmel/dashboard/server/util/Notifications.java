@@ -13,6 +13,7 @@ import org.apache.logging.log4j.LogManager;
 
 import gov.noaa.pmel.tws.util.TimeUtils;
 import gov.noaa.pmel.tws.util.ApplicationConfiguration;
+import gov.noaa.pmel.tws.util.ApplicationConfiguration.PropertyNotFoundException;
 import gov.noaa.pmel.tws.util.StringUtils;
 
 import org.apache.logging.log4j.Logger;
@@ -174,7 +175,12 @@ public class Notifications {
             System.out.println("######### Exception writing to PANIC.log : " + t);
             t.printStackTrace();
         }
-        TwilioService.SendSMS("2067957934", "SDIS:" + panicMsg);
+        try {
+            TwilioService.SendSMS("2067957934", "SDIS:" + panicMsg);
+        } catch (Throwable t) {
+            System.out.println("######### Exception sending SMS Notification : " + t);
+            t.printStackTrace();
+        }
 	}
 	
     static void usage() {
@@ -193,8 +199,7 @@ public class Notifications {
             usage();
             System.exit(-1);
         }
-        if ( "-s".equals(args[0]) && args.length == 3) {
-            System.err.println("SMS not currently supported");
+        if ( "-s".equals(args[0]) && args.length >= 3) {
             SendSMS(args[2], args[1]);
         } else if ( "-m".equals(args[0]) && args.length == 4 ) {
             SendEmail(args[2], args[3], args[1], 
