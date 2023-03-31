@@ -147,10 +147,13 @@ public class OapMailSender {
         msg.setContent(mm);
 		
         Address[] recipients = msg.getAllRecipients();
-		logger.info("Sending " + msg.getSubject() + " from: " + from + " to: " + Arrays.asList(recipients));
+        String logMsg = "Sending " + msg.getSubject() + " from: " + from + " to: " + Arrays.asList(recipients);
+        System.out.println("["+Thread.currentThread().getName()+"]: " + logMsg);
+		logger.info(logMsg);
 
 		// off goes the message...
 		transport.sendMessage(msg, msg.getAllRecipients());
+        System.out.println("["+Thread.currentThread().getName()+"]: SENT " + logMsg);
 
         if ( logSentMessages ) {
             saveMsg(msg);

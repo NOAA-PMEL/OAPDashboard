@@ -206,6 +206,7 @@ public class MetadataManagerPage extends CompositeWithUsername {
                 if ( info != null ) {
                     FileInfo finfo = info.getMetadataFileInfo();
                     Date fmod = finfo.getFileModTime();
+                    UploadDashboard.debugLog("metadata file mod: " + fmod);
                     if ( fmod.after(lastUpdateTime)) {
                         UploadDashboard.debugLog("Got it on " + callCount + " at: " + fmod);
                         Timer t = new Timer() {
