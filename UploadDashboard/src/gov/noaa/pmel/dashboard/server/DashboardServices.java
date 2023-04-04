@@ -212,8 +212,14 @@ public class DashboardServices extends RemoteServiceServlet implements Dashboard
 			throw new IllegalArgumentException("Invalid user request");
         
         try {
-        CloneSubmission.Clone(submissionRecordId, pageUsername, copyAssociatedFiles);
+        String clonedRecordId = CloneSubmission.Clone(submissionRecordId, pageUsername, copyAssociatedFiles);
 		DashboardDatasetList datasetList = configStore.getUserFileHandler().getDatasetListing(username);
+        for (DashboardDataset dd : datasetList.values()) {
+            if ( dd.getRecordId().equals(clonedRecordId)) {
+                dd.setSelected(true);
+                break;
+            }
+        }
 		logger.info("dataset list returned for " + username);
         
 		return datasetList;

@@ -796,8 +796,8 @@ public class DatasetListPage extends CompositeWithUsername {
 		for ( DashboardDataset dataset : providerList ) {
             if ( selectedCruises != null ) {
                  dataset.setSelected( selectedCruises.contains(dataset.getRecordId()));
-            } else {
-				dataset.setSelected(selectedDatasets.containsKey(dataset.getRecordId()));
+            } else if ( selectedDatasets.containsKey(dataset.getRecordId())) {
+				dataset.setSelected(true);
             }
 		}
         selectedCruises = null;
@@ -1023,6 +1023,7 @@ public class DatasetListPage extends CompositeWithUsername {
                                     @Override
                                     public void onSuccess(DashboardDatasetList result) {
                                         UploadDashboard.showAutoCursor();
+                                        selectedDatasets.clear();
                                         updateDatasets(result);
                                     }
                             });
