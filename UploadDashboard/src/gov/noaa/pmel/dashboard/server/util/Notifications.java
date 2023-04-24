@@ -3,10 +3,12 @@
  */
 package gov.noaa.pmel.dashboard.server.util;
 
+import java.io.BufferedWriter;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.PrintStream;
+import java.io.PrintWriter;
 import java.util.Date;
 
 import org.apache.logging.log4j.LogManager;
@@ -168,8 +170,12 @@ public class Notifications {
         System.out.println("######### " + datedMsg);
         System.out.println("######### Check : " + panicFile.getAbsolutePath());
         System.out.println("#########");
-        try (FileWriter fout = new FileWriter(panicFile);) {
-            fout.append(datedMsg).append("\n");
+        try ( FileWriter fw = new FileWriter(panicFile, true);
+              BufferedWriter bw = new BufferedWriter(fw); 
+              PrintWriter fout = new PrintWriter(bw);) {
+            fout.append("######### " + datedMsg).append("\n");
+            new Exception(datedMsg).printStackTrace(fout);
+            fout.flush();
         } catch (Throwable t) {
             System.out.println("######### Exception writing to PANIC.log : " + t);
             t.printStackTrace();
