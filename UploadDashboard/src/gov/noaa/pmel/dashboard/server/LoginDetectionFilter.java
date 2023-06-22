@@ -103,7 +103,7 @@ public class LoginDetectionFilter implements Filter {
                         return;
                     } else {
                         synchronized (requiredPasswordChange) {
-                            logger.info("removeing " + username + " from changePassword cache.");
+                            logger.info("removing " + username + " from changePassword cache.");
                             requiredPasswordChange.remove(username);
                         }
                     }
