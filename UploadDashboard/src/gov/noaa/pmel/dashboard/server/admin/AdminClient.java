@@ -116,6 +116,17 @@ public class AdminClient extends CLClient {
                                                 .option(opt_verbose)
                                                 .build();
     
+    @SuppressWarnings("unused") // found by reflection
+    private static CLCommand cmd_setPassword = CLCommand.builder().name("set_password")
+                                                .command("pwset")
+                                                .option(opt_username)
+                                                .option(opt_password)
+                                                .option(opt_target)
+                                                .option(opt_batch)
+                                                .option(opt_noop)
+                                                .option(opt_verbose)
+                                                .description("Set user password. Password must comply with NOAA password complexity rules.")
+                                                .build();
     private CLOptions _clOptions;
 
     /**
@@ -265,6 +276,35 @@ public class AdminClient extends CLClient {
                 }
             } else {
                 logger.info("User not deleted.");
+            }
+        } catch (Exception ex) {
+            ex.printStackTrace();
+        }
+    }
+    
+    public void doPwset() {
+        logger.info("Set password for user");
+        try {
+            String target = _clOptions.get(opt_target);
+            String userid = _clOptions.get(opt_username);
+            String passwd = _clOptions.get(opt_password);
+            if ( passwd == null ) {
+                passwd = PasswordUtils.generateSecurePassword();
+            }
+            User existgUser = Users.getUser(userid);
+            if ( existgUser == null ) {
+                throw new IllegalStateException("User " + userid + " does not exist!");
+            }
+            if ( confirm("Set password for user " + existgUser + " to '" + passwd + "' in target db: " + target)) {
+                if ( ! _clOptions.booleanValue(opt_noop, false)) {
+                    System.out.println("Setting password for user " + existgUser.username());
+                    Users.setUserPassword(existgUser, passwd);
+                    System.out.println("Password set for User " + userid + ".");
+                } else {
+                    System.out.println("No-op requested.  Password not set.");
+                }
+            } else {
+                logger.info("Password not set.");
             }
         } catch (Exception ex) {
             ex.printStackTrace();
