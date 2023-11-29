@@ -23,6 +23,7 @@ import gov.noaa.pmel.dashboard.server.Users.UserRole;
 import gov.noaa.pmel.dashboard.server.db.myb.MybatisConnectionFactory;
 import gov.noaa.pmel.dashboard.server.model.User;
 import gov.noaa.pmel.dashboard.server.util.Notifications;
+import gov.noaa.pmel.dashboard.server.util.OapMailSender;
 import gov.noaa.pmel.dashboard.util.PasswordUtils;
 import gov.noaa.pmel.tws.client.impl.TwsClientImpl.NoopException;
 import gov.noaa.pmel.tws.util.ApplicationConfiguration;
@@ -40,7 +41,7 @@ import gov.noaa.pmel.tws.util.cli.CommandProcessor;
  */
 public class AdminClient extends CLClient {
 
-    private static final String DEFAULT_URL = "https://www.pmel.noaa.gov/sdig/oap/Dashboard";
+    private static final String DEFAULT_URL = "https://www.pmel.noaa.gov/sdig/oap/Dashboard/OAPUploadDashboard.html";
 
     private static Logger logger;
     
@@ -164,7 +165,7 @@ public class AdminClient extends CLClient {
         }
     }
 
-    private static boolean sendNewUserEmail(User newUser, String tempPass) {
+    static boolean sendNewUserEmail(User newUser, String tempPass) {
         try {
             StringBuilder msgBldr = new StringBuilder()
                 .append("A new user account has been created for " )
@@ -179,9 +180,12 @@ public class AdminClient extends CLClient {
             }
             String url = ApplicationConfiguration.getProperty("oap.production.url", DEFAULT_URL);
             msgBldr.append("The SDIS is at ").append(url).append("\n");
+            msgBldr.append("\nIf you have any questions, please contact linus.kamb@noaa.gov\n");
             String message = msgBldr.toString();
             String email = newUser.email();
-            Notifications.SendEmail("New SDIS Account", message, email);
+            String bccAdmins = "linus.kamb@gmail.com"; // "oar.pmel.sdis.admin@noaa.gov";
+//            Notifications.SendEmail("New SDIS Account", message, email);
+            new OapMailSender().sendMessage(email, null, bccAdmins, "New SDIS Account", message);
             return true;
         } catch (Exception ex) {
             ex.printStackTrace();
@@ -229,7 +233,7 @@ public class AdminClient extends CLClient {
                             .build();
             boolean sendEmail = ! _clOptions.booleanValue(opt_nonotify, false);
             if ( confirm("Add user " + newUser.shortString() + 
-                         ( sendEmail ? "" : "(without notification email)") + 
+                         ( sendEmail ? "" : "(**** without notification email ****)") + 
                          " to target db: " + target)) {
                 if ( ! _clOptions.booleanValue(opt_noop, false)) {
                     Users.addUser(newUser, pw, UserRole.Groupie);

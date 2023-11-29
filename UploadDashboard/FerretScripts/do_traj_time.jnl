@@ -1,0 +1,26 @@
+ ! NOAA/PMEL TMAP
+ ! PyFerret v7.6 (optimized)
+ ! Darwin 18.7.0 - 07/29/20
+ !  3-Sep-20 10:45     
+
+! DEFINE SYMBOL PAUSE = "1"
+
+SET MODE VERIFY:ALWAY
+
+IF ($PAUSE"0) THEN 
+  SET MODE WAIT
+ELSE
+  CAN MODE WAIT
+ENDIF
+
+IF ($PROGRAM_NAME"0|PyFerret>1|*>0") THEN  SET TEXT /FONT=Arial
+
+use dsg_trajectory.nc
+define symbol land_palette = "tan"
+go plot_pad.jnl "plot/vs longitude, latitude"
+! go plot_vs_pad.jnl longitude, latitude
+go oap_preview_fland "tan"
+go OA_trajectory_plot sample_time
+! PLOT/over/missing=blank/thick/NOLAB($symquals)/PAL=ocean_blue sample_time
+frame/file="tplots/traj_map.png"
+

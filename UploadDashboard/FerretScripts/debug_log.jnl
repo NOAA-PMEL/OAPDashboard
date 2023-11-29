@@ -1,0 +1,4 @@
+
+! DEFINE SYMBOL DEBUG_LOG "1"
+
+if ($DEBUG_LOG"0") 

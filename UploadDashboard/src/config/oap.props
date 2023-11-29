@@ -80,7 +80,7 @@ oap.feedback.recipients=linus.kamb@noaa.gov
 # 
 oap.db.environment=oapdashboard
 
-tws.pkauth.certificates_dir=/usr/local/src/oads/apache-tomcat-8.5.34/content/OAPUploadDashboard/config
+tws.pkauth.certificates_dir=/usr/local/src/oads/tomcat/content/OAPUploadDashboard/config
 
 oap.upload.max_size=2048000000
 oap.upload.max_size.display=2GB

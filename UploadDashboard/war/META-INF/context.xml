@@ -13,7 +13,8 @@
                userRoleTable="tomcatroles"
                userNameCol="username"
                userCredCol="password"
-               roleNameCol="userrole" >
+               roleNameCol="userrole" 
+               debug="9" >
                <CredentialHandler className="org.apache.catalina.realm.NestedCredentialHandler">
                   <CredentialHandler className="org.apache.catalina.realm.SecretKeyCredentialHandler"
                           algorithm="PBKDF2WithHmacSHA512"

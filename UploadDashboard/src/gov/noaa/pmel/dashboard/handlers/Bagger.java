@@ -27,6 +27,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.TimeZone;
 import java.util.zip.ZipEntry;
+import java.util.zip.ZipInputStream;
 import java.util.zip.ZipOutputStream;
 
 import org.apache.commons.compress.archivers.ArchiveException;
@@ -42,6 +43,7 @@ import org.apache.logging.log4j.Logger;
 
 import gov.loc.repository.bagit.creator.BagCreator;
 import gov.loc.repository.bagit.domain.Bag;
+import gov.loc.repository.bagit.domain.Manifest;
 import gov.loc.repository.bagit.exceptions.CorruptChecksumException;
 import gov.loc.repository.bagit.exceptions.FileNotInPayloadDirectoryException;
 import gov.loc.repository.bagit.exceptions.InvalidBagMetadataException;
@@ -53,9 +55,11 @@ import gov.loc.repository.bagit.exceptions.MissingPayloadManifestException;
 import gov.loc.repository.bagit.exceptions.UnparsableVersionException;
 import gov.loc.repository.bagit.exceptions.UnsupportedAlgorithmException;
 import gov.loc.repository.bagit.exceptions.VerificationException;
+import gov.loc.repository.bagit.hash.Hasher;
 import gov.loc.repository.bagit.hash.StandardSupportedAlgorithms;
 import gov.loc.repository.bagit.verify.BagVerifier;
 import gov.loc.repository.bagit.writer.BagWriter;
+import gov.loc.repository.bagit.writer.BagitFileWriter;
 import gov.noaa.pmel.dashboard.actions.DatasetSubmitter;
 import gov.noaa.pmel.dashboard.server.DashboardConfigStore;
 import gov.noaa.pmel.dashboard.server.submission.status.SubmissionRecord;
@@ -73,6 +77,8 @@ public class Bagger implements ArchiveBundler {
 
     private static Logger logger = LogManager.getLogger(Bagger.class);
     
+    
+    
     private SubmissionRecord _submitRecord;
     private String _datasetId;
     private boolean _includeHiddenFiles = false;
@@ -81,6 +87,21 @@ public class Bagger implements ArchiveBundler {
     private SimpleDateFormat _tsFormatter;
     private DashboardConfigStore _store;
 
+    public static File Bag(String submissionRecordId, 
+                           String observationType, 
+                           String comments, 
+                           String outputFile,
+                           File... files) throws Exception {
+        File bagFile = null;
+        Bagger bagger;
+        try {
+        } catch (Exception ex) {
+            ex.printStackTrace();
+            // TODO: handle exception
+        }
+        return bagFile;
+    }
+    
     public static File Bag(SubmissionRecord submitRecord, String datasetId) throws Exception {
         return Bag(submitRecord, datasetId, null, "");
     }
@@ -94,7 +115,7 @@ public class Bagger implements ArchiveBundler {
             bagger = new Bagger(submitRecord, datasetId, submitProperties, false, store);
             staged = bagger.stuffit();
             Bag bag = bagger.bagit(staged);
-            bagger.addSubmissionComment(staged, submitMsg);
+            bagger.addSubmissionComment(bag, staged, submitMsg);
             bagger.verify(bag);
             File archiveFile = bagger.packit(staged);
             Bagger.hashit(archiveFile);
@@ -158,7 +179,7 @@ public class Bagger implements ArchiveBundler {
         bagRoot.mkdirs();
         if ( !bagRoot.exists()) { throw new IllegalStateException("Unable to create bag root dir: " + bagRoot); }
         
-        File dataDir = new File(bagRoot, "data");
+        File dataDir = bagRoot; // New version of Bagit code adds a data/ dir.  new File(bagRoot, "data");
         dataDir.mkdirs();
         if ( !dataDir.exists()) { throw new IllegalStateException("Unable to create bag data dir: " + dataDir); }
         
@@ -216,14 +237,13 @@ public class Bagger implements ArchiveBundler {
         return bag;
     }
     
+    
     /**
      * @param staged
      * @throws IOException 
+     * @throws NoSuchAlgorithmException 
      */
-    private void addSubmissionComment(Path staged, String submitMsg) throws IOException {
-        if ( _submitProps.isEmpty() && StringUtils.emptyOrNull(submitMsg)) {
-            return;
-        }
+    private File addSubmissionComment(Bag toBag, Path staged, String submitMsg) throws IOException, NoSuchAlgorithmException {
         File msgFile = new File(staged.toFile(), _submitRecord.submissionKey() + "_SubmissionInstructions.txt");
         try (PrintWriter fout = new PrintWriter(new FileWriter(msgFile))) {
             for (Entry<String, String> prop : _submitProps.entrySet()) {
@@ -234,6 +254,16 @@ public class Bagger implements ArchiveBundler {
                 fout.println("user_submit_message="+userMsg);
             }
         }
+        File tagMfFile = new File(toBag.getRootDir().toFile(), "tagmanifest-sha256.txt");
+        Path commentPath = msgFile.toPath();
+        String checkSum = Hasher.hash(commentPath, MessageDigest.getInstance("SHA-256"));
+        try (FileWriter mfout = new FileWriter(tagMfFile, true)) {
+            String manifest = new StringBuilder(checkSum).append("  ").append(msgFile.getName()).toString();
+            mfout.write(manifest);
+        }
+        Manifest tagMf = toBag.getTagManifests().iterator().next();
+        tagMf.getFileToChecksumMap().put(commentPath, checkSum);
+        return msgFile;
     }
 
     /**
@@ -269,8 +299,11 @@ public class Bagger implements ArchiveBundler {
     private void tossit(Bag bag) throws NoSuchAlgorithmException, IOException {
         File bagDir = new File(_contentRoot, "bags");
         File root = new File(bagDir, _datasetId);
-        Path outputPath = root.toPath();
-        BagWriter.write(bag, outputPath);
+        dumpit(bag, root);
+    }
+    private static void dumpit(Bag bag, File toDir) throws NoSuchAlgorithmException, IOException {
+        Path toPath = toDir.toPath();
+        BagWriter.write(bag, toPath);
     }
 
     @SuppressWarnings("resource")
@@ -307,6 +340,43 @@ public class Bagger implements ArchiveBundler {
                 addZipEntry(file, dirPath, zipos);
             }
         }
+    }
+    
+    public static void unzip(String zipFilePath, String destDir) {
+        File dir = new File(destDir);
+        // create output directory if it doesn't exist
+        if(!dir.exists()) dir.mkdirs();
+        FileInputStream fis;
+        //buffer for read and write data to file
+        byte[] buffer = new byte[1024];
+        try {
+            fis = new FileInputStream(zipFilePath);
+            ZipInputStream zis = new ZipInputStream(fis);
+            ZipEntry ze = zis.getNextEntry();
+            while(ze != null){
+                String fileName = ze.getName();
+                File newFile = new File(destDir + File.separator + fileName);
+                System.out.println("Unzipping to "+newFile.getAbsolutePath());
+                //create directories for sub directories in zip
+                new File(newFile.getParent()).mkdirs();
+                FileOutputStream fos = new FileOutputStream(newFile);
+                int len;
+                while ((len = zis.read(buffer)) > 0) {
+                fos.write(buffer, 0, len);
+                }
+                fos.close();
+                //close this ZipEntry
+                zis.closeEntry();
+                ze = zis.getNextEntry();
+            }
+            //close last ZipEntry
+            zis.closeEntry();
+            zis.close();
+            fis.close();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        
     }
         
     private static void addZipEntry(File file, String entryPath, ZipOutputStream zipos) throws IOException {
@@ -386,13 +456,15 @@ public class Bagger implements ArchiveBundler {
        try (FileWriter hashWriter = new FileWriter(digestFile)) {
            hashWriter.write(hash);
        }
+//       try { // simpler way using Bagit class
+//           String hashy = Hasher.hash(archiveFile.toPath(), digest);
+//           System.out.println("hashy: " + hash.compareTo(hashy));
+//       } catch (Exception ex) {
+//           ex.printStackTrace();
+//       }
        return digestFile;
     }
 
-    private void dumpit(Bag bag, File toDir) throws NoSuchAlgorithmException, IOException {
-        Path toPath = toDir.toPath();
-        BagWriter.write(bag, toPath);
-    }
     private String getBagArchiveName(String bagFileName) {
         return bagFileName + "_" + getTimestampStr();
     }
@@ -527,11 +599,26 @@ public class Bagger implements ArchiveBundler {
         }
     }
 
+    static void usage(Integer exit) {
+        System.out.println("Usage: bagger [bag_data_dir] [bag_output_dir]");
+        if ( exit != null ) {
+            System.exit(exit.intValue());
+        }
+    }
     /**
      * @param args
      */
     public static void main(String[] args) {
+        System.out.println("Running bagger");
         try {
+            if ( args.length < 2 ) {
+                usage(-1);
+            }
+            File bagDir = new File(args[0]);
+            File bagFile = new File(args[1]);
+            Path bagPath = bagDir.toPath();
+            Bag bag = BagCreator.bagInPlace(bagPath, Arrays.asList(getHashAlgorithm()), false);
+            BagWriter.write(bag, bagFile.toPath());
 //            File configDir = new File("/Users/kamb/tomcat/7/content/OAPUploadDashboard/config");
 //            ApplicationConfiguration.Initialize(configDir, "oap");
 //            String datasetId = "PRISM082008";

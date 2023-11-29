@@ -1,0 +1,11 @@
+[DEBUG] 2020-09-21 14:38:22.229 [qtp2050457688-102] ferret.Task.finish.206 -  **ERROR: value out of legal range: Invalid format specification: (F8.*,'LON
+plot/vs/symbol=boxfill/size=.15/color=blue longitude, latitude
+Command file, command group, or REPEAT execution aborted
+Executed by script: *** GO plot_pad "plot/vs/symbol=boxfill/size=.15/color=blue longitude, latitude" 15, 10 ***
+
+[DEBUG] 2020-09-21 14:38:22.240 [qtp2050457688-102] ferret.Task.finish.206 - At line 144 of file numcde.F
+Fortran runtime error: Nonnegative width required in format
+(F8.*,'#')          
+    ^
+
+

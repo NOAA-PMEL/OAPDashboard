@@ -1,0 +1,6 @@
+   SET TEXT/FONT="Arial Unicode MS"
+   go plot_vs_pad longitude, latitude
+   go oap_preview_fland
+   plot/vs/over/nolab/thick/symbol=boxfill/size=0.14/color=red  longitude, latitude
+
+

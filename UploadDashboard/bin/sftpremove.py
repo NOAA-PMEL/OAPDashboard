@@ -7,14 +7,23 @@ _verbose=True
 
 server ="sftp.pmel.noaa.gov"
 username = "ncei_sftp"
-path_to_ssh = os.path.join("~", ".ssh")
+path_to_ssh = os.path.join("/Users/kamb", ".ssh")
 # path_to_hosts_file = os.path.join("~", ".ssh", "known_hosts")
 path_to_hosts_file = os.path.join(path_to_ssh, "known_hosts")
 path_to_pkey_file = os.path.join(path_to_ssh, "ncei-key-rsa")
 
+pkey = paramiko.RSAKey.from_private_key_file(path_to_pkey_file)
 ssh = paramiko.SSHClient()
 ssh.load_host_keys(os.path.expanduser(path_to_hosts_file))
-ssh.connect(server, username=username, key_filename=os.path.expanduser(path_to_pkey_file))
+ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+ssh.connect(server, username=username, pkey=pkey,look_for_keys=False,disabled_algorithms={'pubkeys': ['rsa-sha2-512', 'rsa-sha2-256']})
+
+# client.connect(hostname=HOSTNAME,username=LOGIN_USERNAME,password=LOGIN_PASSWORD,sock=jumpbox_channel,pkey=pkey,look_for_keys=False,disabled_algorithms={'pubkeys': ['rsa-sha2-512', 'rsa-sha2-256']})
+
+# ssh = paramiko.SSHClient()
+# ssh.load_host_keys(os.path.expanduser(path_to_hosts_file))
+# ssh.connect(server, username=username, key_filename=os.path.expanduser(path_to_pkey_file))
+
 sftp = ssh.open_sftp()
 
 def log(msg):

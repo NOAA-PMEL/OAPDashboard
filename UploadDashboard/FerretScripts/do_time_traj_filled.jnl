@@ -1,0 +1,17 @@
+
+use dsg_trajectory
+
+! DEFINE SYMBOL DO_QUICK "1"
+! DEFINE SYMBOL PAUSE "1"
+
+! filled : real	0m4.433s 0m3.866s 0m4.304s:e 
+! quick  : real	0m2.201s
+
+go do_traj_var xCO2_water_sst_wet_ppm
+go do_traj_var xCO2_atm_dry_actual
+go do_traj_var atmospheric_pressure
+go do_traj_var sea_surface_temperature
+go do_traj_var fCO2_insitu_from_fCO2_water_sst_100humidty_uatm
+go do_traj_var fCO2_atm_wet_actual
+go do_traj_var delta_fCO2
+

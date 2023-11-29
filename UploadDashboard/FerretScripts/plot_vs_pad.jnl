@@ -1,0 +1,120 @@
+! plot_vs_pad.jnl
+!  Make a PLOT/VS plot with the region expanded either automatically
+!  or by a fixed amount in either direction
+!  IF the arguments xpts and ypts have titles indicating longitude
+!  and latitude, then the plot is not extended beyond a range of 360
+!  degrees longitude and -90:90 latitude.
+!
+! usage:           arg1   arg2    arg3    arg4   arg5  
+!  GO plot_vs_pad  xpts   ypts   [xpad]  [ypad] [plot qualifiers]
+!
+!  Arguments
+!  arg1  Variable containing x locations. If it's longitude, the title
+!        should contain "lon"
+!  arg2  Variable containing y locations. If it's latitude, the title
+!        should contain "lat"
+!  arg3  Optional padding to use in the X direction, in units of the data, e.g. degrees.
+!  arg4  Optional padding to use in the y direction, in units of the data, e.g. degrees.
+!  arg5  Plot qualifiers e.g. /symbol=19/color=blue/thick
+!
+! Examples
+!   go plot_vs_pad longitude, latitude, 5, 2, /symbol=boxfill/siz=0.14/color=blue
+
+!   go plot_vs_pad longitude, latitude, " ", " ", /symbol=19/siz=0.14/thick
+
+LET min_pad = 1 ! degree
+
+! Get the arguments
+LET vsp_xpts = ($1)
+LET vsp_ypts = ($2)
+
+LET vsp_xpad = 0
+LET vsp_ypad = 0
+IF ($3"0|*>1") THEN LET vsp_xpad = ($3"0")
+IF ($4"0|*>1") THEN LET vsp_ypad = ($4"0")
+IF ($5"0|*>1") THEN 
+   DEFINE SYMBOL vsp_plot_qual = ($5)
+ENDIF
+
+IF `vsp_xpad LT 0` THEN LET vsp_xpad = 0
+IF `vsp_ypad LT 0` THEN LET vsp_ypad = 0
+
+! Draw a plot to have Ferret find the ranges
+
+PLOT/VS/nolab vsp_xpts, vsp_ypts
+
+! Are the variables longitude and latitude?
+
+LET vsp_x_is_lon =  `STRINDEX(DNCASE("($LABX)"), "lon") GT 0`
+LET vsp_y_is_lat =  `STRINDEX(DNCASE("($LABY)"), "lat") GT 0`
+
+! The exact data vsp_xmin and vsp_xmax
+LET vsp_xmin = ($xaxis_min)
+LET vsp_xmax = ($xaxis_max)
+
+LET vsp_ymin = ($yaxis_min)
+LET vsp_ymax = ($yaxis_max)
+
+! auto-pad by 10%, or if longitude at least 5 degrees above and below data range 
+
+IF `vsp_xpad EQ 0` THEN
+
+   LET vsp_xpad = (vsp_xmax - vsp_xmin)/10
+   IF `vsp_x_is_lon` THEN LET vsp_xpad = MAX(`vsp_xpad`, `min_pad`)
+   LET vsp_xlo = vsp_xmin - vsp_xpad
+   LET vsp_xhi = vsp_xmax + vsp_xpad
+
+else
+
+   LET vsp_xlo = vsp_xmin - vsp_xpad
+   LET vsp_xhi = vsp_xmax + vsp_xpad
+
+endif
+
+! If the data is mostly global, just expand by one degree.
+if `vsp_x_is_lon AND (vsp_xhi - vsp_xlo) GT 350` then
+   LET vsp_xlo = vsp_xmin - 1
+   LET vsp_xhi = vsp_xmax + 1
+endif
+
+! auto-pad by 10%, or if latitude at least 5 degrees above and below data range 
+
+IF `vsp_ypad EQ 0` THEN
+
+   LET vsp_ypad = (vsp_ymax-vsp_ymin)/10
+   IF `vsp_y_is_lat` THEN LET vsp_ypad = MAX(`vsp_ypad`, `min_pad`)
+   LET vsp_ylo = vsp_ymin - vsp_ypad
+   LET vsp_yhi = vsp_ymax + vsp_ypad
+
+else
+
+   LET vsp_ylo = vsp_ymin - vsp_ypad
+   LET vsp_yhi = vsp_ymax + vsp_ypad
+
+endif
+
+! IF it's latitude, stay within [-90,90]
+
+IF `vsp_y_is_lat` THEN 
+
+   LET vsp_ylo = `MAX(-90, vsp_ylo)`
+   LET vsp_yhi = `MIN(90, vsp_yhi)`
+
+ENDIF
+
+! go color_datekey "V", time_var
+
+! Draw the plot
+PLOT/VS/nolab($vsp_plot_qual)/HLIM=`vsp_xlo`:`vsp_xhi`/VLIM=`vsp_ylo`:`vsp_yhi` vsp_xpts, vsp_ypts
+
+
+! Define some symbols with the x and y range for use in further plots such as fland.
+
+DEFINE SYMBOL region_x_range = `vsp_xhi-vsp_xlo`
+DEFINE SYMBOL region_y_range = `vsp_yhi-vsp_ylo`
+say region_x_range and region_y_range are defined
+
+
+! clean up
+CANCEL VARIABLE vsp_*
+

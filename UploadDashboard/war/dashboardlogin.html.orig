@@ -1,0 +1,73 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html>
+
+<head>
+<meta http-equiv="content-type" content="text/html; charset=UTF-8" />
+<title>OAP Dashboard Login</title>
+<link rel="stylesheet" href="css/public.css" />
+</head>
+<body style="min-height:600px; min-width:1100px; overflow:scroll; ">
+<div class="pageheader" style="position: absolute; left: 0px; top: 0px; right: 0px; bottom: 0px;">
+    <img class="headerLogo" src="images/NOAA_logo.png"></img>
+    <div class="headerInfo">
+      <span class="headerpagelabel"></span>
+      <div class="headersoftwaretitle">OAP Scientific Data Information System</div>
+      <div class="titlereset"></div>
+    </div>
+</div>
+
+<div>
+<form method="post" action="j_security_check">
+  <!-- DON'T REMOVE THIS.  IT'S NECESSARY TO DETECT SESSION EXPIRATION.
+  
+        IF YOU SEE THIS IN AN ERROR MESSAGE, YOUR SESSION HAS EXPIRED.  
+        REFRESH THE PAGE IN YOUR BROWSER TO LOGIN AGAIN.  
+  -->
+  <table class="login_table" border="0" cellspacing="5">
+    <tr>
+      <td style="text-align:center; padding-bottom: 1em;" colspan="2"><b>Please enter your OAP Dashboard Login Credentials</b></td>
+    </tr>
+    <tr>
+      <td>Username:</td>
+      <td><input style="width: 97%; " id="username_field" type="text" name="j_username" autofocus /></td>
+    </tr>
+    <tr>
+      <td>Password:</td>
+      <td><input style="width: 97%; " type="password" name="j_password" /></td>
+    </tr>
+    <tr>
+      <td style="text-align:right; " colspan="2"><input type="submit" value="Submit" /></td>
+    </tr>
+    <tr style="padding-top: 1em;">
+      <td style="text-align:left;" colspan="1"><a style="font-size:smaller; text-decoration:none;" href="requestlogin.html">Request an account.</a></td>
+      <td style="text-align:right;" colspan="1"><a style="font-size:smaller; text-decoration:none;" href="passwordhelp.html">Need login help?</a></td>
+    </tr>
+  </table>
+</form>
+<table class="pra_table">
+  <tr>
+    <td style="width:34%;">NOAA FORM 24-13<br/>(Expires 03-31-2025)<br/>OMB No. 0648-0024</td>
+    <td rowspan="2">
+    PAPERWORK REDUCTION ACT STATEMENT: A Federal agency may not conduct or sponsor, and a person is not required to respond to, nor shall a person be subject to a penalty for failure to comply with an information collection subject to the requirements of the Paperwork Reduction Act of 1995 unless the information collection has a currently valid OMB Control Number. The approved OMB Control Number for this information collection is 0648-0024. Without this approval, we could not conduct this information collection. Public reporting for this information collection is estimated to be approximately 2 hours per response, including the time for reviewing instructions, searching existing data sources, gathering and maintaining the data needed, and completing and reviewing the information collection. All responses to this information collection are voluntary. Send comments regarding this burden estimate or any other aspect of this information collection, including suggestions for reducing this burden to the OAR, Eugene.Burger@noaa.gov.  Geospatial metadata is requested in accordance with Executive Order 12906 and NOAA Administrative Order 212-5.
+    </td>
+  </tr>
+  <tr>
+    <td>
+    Notwithstanding any other provision of the law, no person is required to respond to, nor shall any person be subject to a penalty for failure to comply with, a collection of information subject to the requirements of the Paperwork Reduction Act, unless that collection of information displays a currently valid OMB Control Number.
+    </td>
+  </tr>
+</table>
+</div>
+<div class="pagefooter" >
+    <a href="http://www.noaa.gov" title="The National Oceanographic and Atmospheric Administration" target="_blank">NOAA</a>
+        &nbsp;|&nbsp; <a href="http://www.research.noaa.gov/"  target="_blank"
+          title="Department of Commerce > NOAA > Office of Oceanic and Atmospheric Research">OAR</a>
+        &nbsp;|&nbsp; <a href="http://www.pmel.noaa.gov" title="PMEL" target="_blank">PMEL</a>
+        &nbsp;|&nbsp; <a href="http://www.noaa.gov/privacy.html" target="_blank" title="">Privacy Policy</a>
+        &nbsp;|&nbsp; <a href="http://www.noaa.gov/disclaimer.html" target="_blank" title="">Disclaimer</a>
+        &nbsp;|&nbsp; <a href="http://www.noaa.gov/accessibility" target="_blank">Accessibility</a>
+  </div>
+</body>
+
+</html>
+

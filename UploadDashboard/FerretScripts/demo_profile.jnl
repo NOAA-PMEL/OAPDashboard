@@ -1,0 +1,51 @@
+
+! Use a PyFerret font (this is any system font).
+set text/font=calibri
+
+! remove the date/time/version number stuff from the upper right
+cancel mode logo
+
+! These commands use the dsg-enanced stuff, so use or use/feature=profile
+
+! use  dsg_data/BEM9D1Y6Z_profile.nc
+use ($1)
+pause
+
+! the default profile plot is a whole set of profiles together, one for each
+! station. Use /NOKEY to turn off the line legend below the plot.
+plot/thick oxygen
+pause
+
+! A nicer version with bigger symbols. The sequence of symbols/linecolors is hardwired
+plot/thick/siz=0.14/line/sym oxygen
+pause
+
+! These plots all show the need for something like PLOT/VS/PAD to leave a little space
+! around the edges and not plot right on the axis lines.
+
+! a plot/vs scatter plot.  Use /COLOR=blue for instance to make it a nicer color
+plot/vs/thick/sym=boxfill/siz=0.12 ctd_temperature, oxygen
+pause
+
+! a Ribbon plot:  scatter plot colored by a third variable
+
+ribbon/vs/thick/sym=boxfill/siz=0.12 ctd_temperature, oxygen, ctd_temperature
+pause
+
+! If time, lon, lat are given in a scatter plot they'll be promoted to have
+! the right dimensionality to plot with observed variables.
+ribbon/vs/thick/sym=boxfill/siz=0.12 time, sample_depth, oxygen
+pause
+
+ribbon/vs/thick/sym=boxfill/siz=0.12 latitude, sample_depth, ctd_temperature
+pause
+
+! Lots of possible customizations.
+!
+!    For any color plot PLOT/KEY=horiz puts the colorbar across the top.  But
+!    then you probably need PLOT/NOLABEL because the colorbar winds up on top of
+!    the labels. To add back some of the labels, the ANNOTATE command is nice
+
+ribbon/vs/thick/sym=boxfill/siz=0.12/nolab/key=horiz latitude, sample_depth, ctd_temperature
+annotate/norm/x=0.5/y=-0.15/halign=0 "`ctd_temperature,return=title` (`ctd_temperature,return=units`)"
+

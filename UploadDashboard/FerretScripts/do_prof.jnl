@@ -1,0 +1,14 @@
+ ! NOAA/PMEL TMAP
+ ! PyFerret v7.6 (optimized)
+ ! Darwin 18.7.0 - 07/29/20
+ !  3-Sep-20 10:47     
+
+SET TEXT/FONT="Arial Unicode MS"
+set mode verify
+use ($1)
+go plot_vs_pad.jnl longitude, latitude, " ", " ", /color=red
+! go oap_preview_fland ! in sample_time map plot in OA_profile_plot
+pause
+!plot/vs/over/ribbon longitude, latitude, time
+go OA_profile_plot time
+

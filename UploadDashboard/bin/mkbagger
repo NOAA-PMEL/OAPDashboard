@@ -1,0 +1,10 @@
+#!/bin/bash
+
+jar cvmf META-INF/MANIFEST.MF bagger.jar \
+ -C war/WEB-INF/lib commons-compress-1.18.jar \
+ -C war/WEB-INF/lib commons-io-2.6.jar \
+ -C war/WEB-INF/lib bagit-5.2.0.jar \
+ -C war/WEB-INF/lib slf4j-api-1.7.24.jar \
+ -C jarinjar org \
+ -C war/WEB-INF/classes gov/noaa/pmel/dashboard/handlers/Bagit.class \
+ -C war/WEB-INF/classes gov/noaa/pmel/dashboard/handlers/Bagit\$COMP_FORMAT.class
