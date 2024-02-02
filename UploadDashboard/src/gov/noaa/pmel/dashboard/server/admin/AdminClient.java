@@ -41,7 +41,7 @@ import gov.noaa.pmel.tws.util.cli.CommandProcessor;
  */
 public class AdminClient extends CLClient {
 
-    private static final String DEFAULT_URL = "https://www.pmel.noaa.gov/sdig/oap/Dashboard/OAPUploadDashboard.html";
+    private static final String DEFAULT_URL = "https://data.pmel.noaa.gov/sdig/oap/Dashboard/OAPUploadDashboard.html";
 
     private static Logger logger;
     
