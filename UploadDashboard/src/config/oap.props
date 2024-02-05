@@ -34,7 +34,7 @@ oap.URL_HOST=data.pmel.noaa.gov
 oap.url.host={URL_HOST}
 oap.URL_BASE=https://{URL_HOST}
 oap.url.base={URL_BASE}
-oap.production.url={URL_BASE}/sdig/oap/Dashboard
+oap.production.url={URL_BASE}/sdig/oap/Dashboard/OAPUploadDashboard.html
 
 oap.admin.email.list=oar.pmel.sdis.admin@noaa.gov
 # oap.admin.email.list=linus.kamb@noaa.gov
