@@ -30,9 +30,12 @@ public abstract class OAPAsyncCallback<T> implements AsyncCallback<T> {
         logger.info(error.toString());
         String exMsg = error.getMessage();
         
-        if (( exMsg.indexOf("SESSION HAS EXPIRED") >= 0 ) ||
-              ( error instanceof StatusCodeException &&
-              ((StatusCodeException)error).getStatusCode() == 401 )) {
+        if ( exMsg.indexOf("SESSION HAS EXPIRED") >= 0 ) {
+        	UploadDashboard.logToConsole("SESSION EXPIRED msg");
+            UploadDashboard.showLoginPopup();
+        } else if ( error instanceof StatusCodeException &&
+	              ((StatusCodeException)error).getStatusCode() == 401 ) {
+        	UploadDashboard.logToConsole("StatusCodeException");
             UploadDashboard.showLoginPopup();
         } else {
             customFailure(error);
