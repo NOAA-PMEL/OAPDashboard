@@ -9,9 +9,9 @@ host=${host%%\.*}
 host=${host/-/_}
 echo host: $host
 
-matisse_CONTENT_ROOT="/local/tomcat"
-dunkel_CONTENT_ROOT="/home/users/kamb/tomcat/tomcat-5680-8.5.11"
-new_bock_CONTENT_ROOT="/usr/local/src/oads/apache-tomcat-8.5.34"
+buckeye_CONTENT_ROOT="/local/tomcat"
+sour_CONTENT_ROOT="/home/users/kamb/sdis"
+hazy_CONTENT_ROOT="/usr/local/src/oads/tomcat"
 
 content_var="${host}_CONTENT_ROOT"
 echo content_var = $content_var
@@ -26,9 +26,9 @@ OA_DOC_PROP="-DOA_DOCUMENT_ROOT=${OA_DOCUMENT_ROOT}"
 
 STD_LOC=content/OAPUploadDashboard/bin
 
-matisse_APP_CONTENT="${OA_DOCUMENT_ROOT}/${STD_LOC}"
-dunkel_APP_CONTENT="${OA_DOCUMENT_ROOT}/${STD_LOC}"
-new_bock_APP_CONTENT="${OA_DOCUMENT_ROOT}/${STD_LOC}"
+buckeye_APP_CONTENT="${OA_DOCUMENT_ROOT}/${STD_LOC}"
+sour_APP_CONTENT="${OA_DOCUMENT_ROOT}/${STD_LOC}"
+hazy_APP_CONTENT="${OA_DOCUMENT_ROOT}/${STD_LOC}"
 
 APP_CONTENT="${host}_APP_CONTENT"
 
