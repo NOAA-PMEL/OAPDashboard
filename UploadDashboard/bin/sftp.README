@@ -1,0 +1,4 @@
+The extra options are due to using a later version of OpenSSH I guess?   OR whatever the mac uses.
+
+sftp -i /Users/kamb/.ssh/ncei-key-rsa -o HostKeyAlgorithms=+ssh-rsa -o PubkeyAcceptedAlgorithms=+ssh-rsa ncei_sftp@sftp.pmel.noaa.gov << end_sftp_check
+
