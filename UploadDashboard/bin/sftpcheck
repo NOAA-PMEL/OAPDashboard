@@ -2,12 +2,14 @@
 
 DS_ID=$1
 
+# problems connecting to sftp from new mac due to newer version of OpenSSH.  Fixed with the added options.
 if [ $DS_ID ] ; then
-	sftp -i /Users/kamb/.ssh/ncei-key-rsa  ncei_sftp@sftp.pmel.noaa.gov << end_sftp_check
+	sftp -i /Users/kamb/.ssh/ncei-key-rsa -o HostKeyAlgorithms=+ssh-rsa -o PubkeyAcceptedAlgorithms=+ssh-rsa ncei_sftp@sftp.pmel.noaa.gov << end_sftp_check
+	# old way: sftp -i /Users/kamb/.ssh/ncei-key-rsa  ncei_sftp@sftp.pmel.noaa.gov << end_sftp_check
 cd data/oap
 ls -l $1
 end_sftp_check
 else
-	sftp -i /Users/kamb/.ssh/ncei-key-rsa  ncei_sftp@sftp.pmel.noaa.gov
+	sftp -i /Users/kamb/.ssh/ncei-key-rsa -o HostKeyAlgorithms=+ssh-rsa -o PubkeyAcceptedAlgorithms=+ssh-rsa ncei_sftp@sftp.pmel.noaa.gov
 fi
 
