@@ -23,6 +23,8 @@ import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.NativeEvent;
 import com.google.gwt.dom.client.Node;
 import com.google.gwt.dom.client.Style;
+import com.google.gwt.dom.client.TableCellElement;
+import com.google.gwt.dom.client.TableRowElement;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.DoubleClickEvent;
 import com.google.gwt.event.dom.client.DoubleClickHandler;
@@ -365,6 +367,8 @@ public class DatasetListPage extends CompositeWithUsername {
 	// The singleton instance of this page
 	private static DatasetListPage singleton;
 
+    private int activeRow = -1;
+    
     private int priorSelectionRow = -1;
 //    private DashboardDataset clickedDataset;
     
@@ -712,6 +716,15 @@ public class DatasetListPage extends CompositeWithUsername {
                 UploadDashboard.setMaxUploadSizeDisplayStr(result.getMaxUploadSizeDisplayStr());
 				UploadDashboard.updateCurrentPage(singleton);
 				singleton.updateDatasets(cruises);
+				if ( singleton.activeRow > 0 ) {
+					int adjustedRow = singleton.activeRow; // Math.min(singleton.listProvider.getList().size(), singleton.activeRow + 8)-1;
+					TableRowElement row = singleton.datasetsGrid.getRowElement(adjustedRow);
+					TableCellElement cell = row.getCells().getItem(SELECT_COLUMN_IDX);
+					singleton.scrollIt(cell);
+//					cell.setScrollLeft(0); // doesn't seem to make a difference, including after the scroll cmd
+//					cell.scrollIntoView();
+					singleton.activeRow = -1;
+				}
 				UploadDashboard.showAutoCursor();
 			}
 			@Override
@@ -730,6 +743,23 @@ public class DatasetListPage extends CompositeWithUsername {
             meLink = null;
         }
 	}
+
+    private native void scrollIt(Element element) /*-{
+    console.log("scrolling " + element);
+//    var cell = $doc.getElementById(eid);
+//    var table = cell.closest('table');
+//    console.log(cell, table);
+//    table.style.pointerEvents="none"
+//    console.log("element: "+ cell);
+//    var offp = cell.offsetParent; //  === null;
+//    console.log("offp " + offp);
+//    var style = window.getComputedStyle(cell);
+//    console.log("style display: " + style.display);
+//    console.log("style visibility: " + style.visibility);
+//    if (style.display === 'none')
+        element.scrollIntoView({behavior: "instant", block: "center", inline: "start"});
+//      _currentId = eid;
+}-*/;
 
 	/**
 	 * Redisplays the last version of this page if the username
@@ -891,7 +921,9 @@ public class DatasetListPage extends CompositeWithUsername {
 	 */
 	private boolean getSelectedDatasets(Boolean onlyEditable) {
 		selectedDatasets.clear();
+		int rowIdx = -1;
 		for ( DashboardDataset dataset : listProvider.getList() ) {
+			rowIdx += 1;
 			if ( dataset.isSelected() ) {
 				if ( onlyEditable != null ) {
 					Boolean editable = dataset.isEditable();
@@ -903,6 +935,7 @@ public class DatasetListPage extends CompositeWithUsername {
 						return false;
 				}
 				String recordid = dataset.getRecordId();
+				if ( singleton.activeRow < 0 ) { singleton.activeRow = rowIdx; }
 				selectedDatasets.put(recordid, dataset);
 			}
 		}
@@ -911,9 +944,12 @@ public class DatasetListPage extends CompositeWithUsername {
     
     private DashboardDatasetList getSelectedDatasets() {
 		selectedDatasets.clear();
+		int rowIdx = -1;
 		for ( DashboardDataset dataset : listProvider.getList() ) {
+			rowIdx += 1;
 			if ( dataset.isSelected() ) {
 				String recordid = dataset.getRecordId();
+				if ( singleton.activeRow < 0 ) { singleton.activeRow = rowIdx; }
 				selectedDatasets.put(recordid, dataset);
 			}
 		}
@@ -2126,6 +2162,9 @@ public class DatasetListPage extends CompositeWithUsername {
 				// Go to the QC page after performing the client-side checks on this one cruise
                 DashboardDatasetList checkSet = new DashboardDatasetList(getUsername());
 				checkSet.put(cruise.getRecordId(), cruise);
+				singleton.activeRow = index;
+				TableRowElement row = singleton.datasetsGrid.getRowElement(index);
+				UploadDashboard.logToConsole("row scroll from left:" + row.getScrollLeft());
 				AddlDocsManagerPage.showPage(checkSet);
 			}
 		});
