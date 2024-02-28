@@ -64,7 +64,7 @@ public class LoginDetectionFilter implements Filter {
         if (principal != null) {
             String username = principal.getName();
             if (session == null || session.getAttribute("user") == null) {
-                request.getSession().setAttribute("user", principal);
+                request.getSession().setAttribute("user", username);
                 String browser = request.getHeader("User-Agent");
                 String msg = "Login by " + principal + " on " + request.getLocalName() + " using " + browser;
                 logger.info(msg);
