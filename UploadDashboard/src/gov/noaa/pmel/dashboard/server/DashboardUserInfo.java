@@ -32,7 +32,7 @@ public class DashboardUserInfo {
 	 * 		if username is invalid (null or too short)
 	 */
 	public DashboardUserInfo(String username) throws IllegalArgumentException {
-		if ( (username == null) || (username.trim().length() < 4) )
+		if ( (username == null) || (username.trim().length() < 3) ) // XXX TODO:  Why?!? // Changed to 3- LK
 			throw new IllegalArgumentException("User name too short");
 		this.username = DashboardUtils.cleanUsername(username);
         userRoles = new HashSet<>();
