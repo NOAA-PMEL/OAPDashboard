@@ -27,8 +27,9 @@ public abstract class OAPAsyncCallback<T> implements AsyncCallback<T> {
     @Override
     public void onFailure(Throwable error) {
         UploadDashboard.showAutoCursor();
-        logger.info(error.toString());
+        logger.info("Async failure:"+error.toString());
         String exMsg = error.getMessage();
+        logger.info("exception message:" + exMsg);
         
         if ( exMsg.indexOf("SESSION HAS EXPIRED") >= 0 ) {
         	UploadDashboard.logToConsole("SESSION EXPIRED msg");

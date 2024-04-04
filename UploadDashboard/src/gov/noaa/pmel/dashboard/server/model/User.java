@@ -33,6 +33,9 @@ public class User {
     
     private Date _lastLogin;
     private Date _lastPwChange;
+    /**
+     * set to UUID if user needs to change their password.
+     */
     private String _requiresPwChange;
     
     private String _firstName;
@@ -105,7 +108,9 @@ public class User {
                 + " _organization="+_organization;
     }
     /**
-     * @return
+     * Checks whether _requiresPwChange is set
+     * 
+     * @return whether _requiresPwChange is set 
      */
     public boolean requiresPasswordChange() {
         return _requiresPwChange != null;
