@@ -49,8 +49,11 @@ import gov.noaa.pmel.dashboard.datatype.DashDataType;
 import gov.noaa.pmel.dashboard.dsg.DsgMetadata;
 import gov.noaa.pmel.dashboard.dsg.StdUserDataArray;
 import gov.noaa.pmel.dashboard.handlers.MetadataFileHandler;
+import gov.noaa.pmel.dashboard.server.Archive;
 import gov.noaa.pmel.dashboard.server.DashboardConfigStore;
 import gov.noaa.pmel.dashboard.server.DashboardServerUtils;
+import gov.noaa.pmel.dashboard.server.submission.status.StatusState;
+import gov.noaa.pmel.dashboard.server.submission.status.SubmissionRecord;
 import gov.noaa.pmel.dashboard.shared.DashboardDataset;
 import gov.noaa.pmel.dashboard.shared.DashboardMetadata;
 import gov.noaa.pmel.dashboard.shared.DashboardUtils;
@@ -525,7 +528,7 @@ public class OADSMetadata {
             FeatureType ftype = dataset.getFeatureType();
             checkSubmitter(metadata);
             checkInvestigators(metadata);
-            checkCitationInfo(metadata);
+            checkCitationInfo(dataset, metadata);
             if ( ftype.isDSG()) {
                 checkSpatialExtents(metadata);
             }
@@ -599,7 +602,7 @@ public class OADSMetadata {
     /**
      * @param mdDoc
      */
-    private static void checkCitationInfo(OadsMetadataDocumentType mdDoc) {
+    private static void checkCitationInfo(DashboardDataset dataset, OadsMetadataDocumentType mdDoc) {
         if ( StringUtils.emptyOrNull(mdDoc.getTitle())) {
             throw new IllegalStateException("No title given.");
         }
@@ -608,6 +611,19 @@ public class OADSMetadata {
         }
         if ( mdDoc.getAuthors() == null || mdDoc.getAuthors().size() == 0 ) {
             throw new IllegalStateException("No list of authors for citation.");
+        }
+        SubmissionRecord srec = null; 
+        try {
+        	srec = Archive.getCurrentSubmissionRecordForPackage(dataset.getRecordId());
+        } catch (Exception ex) {
+        	logger.warn("Exception getting status record for dataset " + dataset.getRecordId());
+        }
+        if ( ( srec == null || 
+        	 ( dataset.getArchiveDate() != null && srec.status().status().ordinal() < StatusState.ACCEPTED.ordinal() )) &&
+	        	 ( mdDoc.getDataLicense() == null ||   // The URL component will be filled in if a license has been selected.
+	        	   mdDoc.getDataLicense().getUrl() == null || 
+	        	   mdDoc.getDataLicense().getUrl().trim().isEmpty())) {
+            throw new IllegalStateException("No Data License specified.");
         }
     }
 
