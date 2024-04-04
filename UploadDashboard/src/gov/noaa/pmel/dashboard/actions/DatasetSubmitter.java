@@ -388,6 +388,7 @@ public class DatasetSubmitter {
     
     private static void updateStatus(SubmissionRecord submission, StatusState statusState, String archiveStatusMsg) throws SQLException {
         StatusRecord status = StatusRecord.builder().submissionId(submission.dbId().longValue())
+        							.statusTime(new Date()) // Yes, there is a default, but it's not working on mysql 8!
                                     .status(statusState)
                                     .message(archiveStatusMsg)
                                     .build();

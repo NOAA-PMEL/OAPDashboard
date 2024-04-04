@@ -52,6 +52,7 @@ public class StatusRecord {
     
     public static StatusRecord initialStatus(Long submissionId) {
         return StatusRecord.builder().submissionId(submissionId)
+        			.statusTime(new Date()) // I know it's default, but not working on mysql 8 for some reason.
                     .status(StatusState.INITIAL)
                     .message("Archive submission initiated.")
                     .build();

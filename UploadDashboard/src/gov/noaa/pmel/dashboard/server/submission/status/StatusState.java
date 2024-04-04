@@ -10,6 +10,12 @@ package gov.noaa.pmel.dashboard.server.submission.status;
  */
 public enum StatusState {
     NOT_SUBMITTED("Not submitted", "Package has not been submitted"),
+    FAILED("Failed", "Archive cannot process the submitted package"),
+    REJECTED("Rejected", "Rejected by archive"),
+    SUPERSEDED("Superseded", "Version has been superseded"),
+//    RECALLED("Submission has been recalled"),
+    ERROR("Processing Error", "An error occurred processing the submission"),
+    OTHER("Other: see message"),
     INITIAL("Initiated", "Submission process initiated"),
     STAGED("Submitted", "Staged for delivery"),
     RECEIVED("Received", "Received by archive"),
@@ -17,13 +23,7 @@ public enum StatusState {
     PENDING_INFO("Pending", "Pending additional information"),
     VALIDATED("Validated", "Submission validated"),
     ACCEPTED("Accepted", "Submission accepted by archive"),
-    PUBLISHED("Published", "Published by archive"),
-    FAILED("Failed", "Archive cannot process the submitted package"),
-    REJECTED("Rejected", "Rejected by archive"),
-    SUPERSEDED("Superseded", "Version has been superseded"),
-//    RECALLED("Submission has been recalled"),
-    ERROR("Processing Error", "An error occurred processing the submission"),
-    OTHER("Other: see message");
+    PUBLISHED("Published", "Published by archive");
         
     private StatusState(String displayMsg) {
         this(displayMsg, displayMsg);
