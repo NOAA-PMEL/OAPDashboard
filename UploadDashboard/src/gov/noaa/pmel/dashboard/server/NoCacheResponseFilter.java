@@ -15,6 +15,8 @@ import javax.servlet.http.HttpServletResponseWrapper;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+import com.amazonaws.http.HttpResponse;
+
 public class NoCacheResponseFilter implements Filter {
 
 	@Override
@@ -29,14 +31,25 @@ public class NoCacheResponseFilter implements Filter {
 		
 		HttpServletRequest httpRequest = (HttpServletRequest)request;
 		HttpServletResponse httpResponse = (HttpServletResponse)response;
-		HttpServletResponseWrapper wrapper = new HttpServletResponseWrapper(httpResponse);
+		if ( dontCache(httpRequest)) {
+			HttpServletResponseWrapper wrapper = new HttpServletResponseWrapper(httpResponse);
+	
+			logger.debug("NoCacheFilter:" + httpRequest.getRequestURL().toString());
+			
+			wrapper.addHeader("Cache-Control", "no-cache, no-store, must-revalidate");
+			wrapper.addHeader("Pragma", "no-cache");
+			wrapper.addHeader("Expires", "0");
+			httpResponse = wrapper;
+		}
+		chain.doFilter(request, httpResponse);
+	}
 
-		logger.debug("NoCacheFilter:" + httpRequest.getRequestURL().toString());
-		
-		wrapper.addHeader("Cache-Control", "no-cache, no-store, must-revalidate");
-		wrapper.addHeader("Pragma", "no-cache");
-		wrapper.addHeader("Expires", "0");
-		chain.doFilter(request, wrapper);
+	private static boolean dontCache(HttpServletRequest httpRequest) {
+		String something = httpRequest.getRequestURI().toLowerCase();
+		String contentType = httpRequest.getHeader("Accept") != null ? httpRequest.getHeader("Accept").toLowerCase() : "";
+		boolean dontCache = something.endsWith("cache.js") || something.endsWith("html");
+		logger.debug("dontCache: " + something + " : " + contentType + " : "+dontCache);
+		return dontCache;
 	}
 
 	private static Logger logger = LogManager.getLogger(AuthenticateFilter.class);

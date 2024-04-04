@@ -30,6 +30,7 @@
     <filter-name>LoginDetectionFilter</filter-name>
     <url-pattern>/*</url-pattern>
   </filter-mapping>
+<!-- Maybe the smaller obfuscated .cache.js will solve this problem... NOPE. -->
   <filter-mapping>
   	<filter-name>NoCacheHeadersFilter</filter-name>
   	<url-pattern>/*</url-pattern>

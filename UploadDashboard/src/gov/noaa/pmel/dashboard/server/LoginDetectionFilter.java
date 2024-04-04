@@ -80,6 +80,7 @@ public class LoginDetectionFilter implements Filter {
                         synchronized (requiredPasswordChange) {
                             requiredPasswordChange.add(user.username());
                         }
+                        logger.info("adding sdisuid cookie");
                         response.addCookie(new Cookie("sdisuid", user.requiresPwChange()));
                         response.sendRedirect(getPasswordChangeUrl(request));
                         return;
@@ -97,7 +98,7 @@ public class LoginDetectionFilter implements Filter {
                     UsersDao udao = DaoFactory.UsersDao();
                     User user = udao.retrieveUser(username);
                     if ( user.requiresPasswordChange()) {
-                        logger.debug("redirecting for request: "+ request);
+                        logger.info("adding sdisuid cookie and redirecting to PW change for request: "+ request);
                         response.addCookie(new Cookie("sdisuid", user.requiresPwChange()));
                         response.sendRedirect(getPasswordChangeUrl(request));
                         return;
@@ -105,6 +106,10 @@ public class LoginDetectionFilter implements Filter {
                         synchronized (requiredPasswordChange) {
                             logger.info("removing " + username + " from changePassword cache.");
                             requiredPasswordChange.remove(username);
+                            logger.info("setting sdisuid to maxAge=0 to remove.");
+                            Cookie removeSuidCookie = new Cookie("sdisuid", null);
+                            removeSuidCookie.setMaxAge(0);
+	                        response.addCookie(removeSuidCookie);
                         }
                     }
                 } catch (SQLException ex) {

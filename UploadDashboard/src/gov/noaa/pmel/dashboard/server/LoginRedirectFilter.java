@@ -38,8 +38,6 @@ public class LoginRedirectFilter implements Filter {
 		HttpServletRequest request = (HttpServletRequest) servletRequest;
 		HttpServletResponse response = (HttpServletResponse) servletResponse;
 
-		logger.debug(request);
-		
         String target = request.getRequestURL().toString();
         String referer = request.getHeader("Referer");
         String contentType = request.getHeader("Content-Type");
@@ -50,7 +48,8 @@ public class LoginRedirectFilter implements Filter {
               target.indexOf("SessionServices") > 0 ) &&
             ( "GET".equals(method) || contentType == null || referer.indexOf("dashboardlogin") > 0 )) {
             response.setStatus(HttpServletResponse.SC_NO_CONTENT);
-            logger.debug("j_security_check bogus GET request.  Sending NO_CONTENT");
+            logger.warn("j_security_check bogus GET request.  Sending NO_CONTENT");
+			logger.warn(method + ": target:" + target + ", referer: " + referer + ", content: " + contentType);
             return;
         } else {
     		// All is well - continue on

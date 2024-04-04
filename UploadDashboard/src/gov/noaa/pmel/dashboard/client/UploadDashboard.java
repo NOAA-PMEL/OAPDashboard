@@ -179,6 +179,9 @@ public class UploadDashboard implements EntryPoint, ValueChangeHandler<String> {
             logToConsole(msg);
         }
     }
+    public static native void hardReload() /*-{
+	    $wnd.location.reload(true);
+	  }-*/;
     static native void logToConsole(String msg) /*-{
         console.log(msg);
     }-*/;
