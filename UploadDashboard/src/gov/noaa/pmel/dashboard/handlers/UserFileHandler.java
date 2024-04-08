@@ -25,6 +25,7 @@ import gov.noaa.pmel.dashboard.datatype.DashDataType;
 import gov.noaa.pmel.dashboard.datatype.KnownDataTypes;
 import gov.noaa.pmel.dashboard.server.DashboardConfigStore;
 import gov.noaa.pmel.dashboard.server.DashboardServerUtils;
+import gov.noaa.pmel.dashboard.server.DashboardUserInfo;
 import gov.noaa.pmel.dashboard.server.Users;
 import gov.noaa.pmel.dashboard.shared.DashboardDataset;
 import gov.noaa.pmel.dashboard.shared.DashboardDatasetList;
@@ -358,7 +359,7 @@ public class UserFileHandler extends VersionedFileHandler {
 	 * user, or owned by someone the user manages, are added. 
 	 * 
 	 * @param wildDatasetId
-	 * 		dataset ID, possibly with wildcards * and ?, to add
+	 * 		dataset ID OR username of dataset owner, possibly with wildcards * and ?, to add
 	 * @param username
 	 * 		user whose dataset list is to be updated
 	 * @return
@@ -375,6 +376,9 @@ public class UserFileHandler extends VersionedFileHandler {
 		String cleanUsername = DashboardUtils.cleanUsername(username);
 		if ( cleanUsername.isEmpty() )
 			throw new IllegalArgumentException("invalid username");
+		DashboardUserInfo user = Users.getUserInfo(cleanUsername);
+		if ( user == null ) 
+			throw new IllegalArgumentException("no user found for username " + username + " as " + cleanUsername);
 		DashboardConfigStore configStore;
 		try {
 			configStore = DashboardConfigStore.get(false);
@@ -384,8 +388,15 @@ public class UserFileHandler extends VersionedFileHandler {
 		DataFileHandler dataHandler = configStore.getDataFileHandler();
 		DashboardDatasetList existingDatasetList = getDatasetListing(cleanUsername);
 		HashSet<String> matchingIds = dataHandler.getMatchingDatasetIds(wildDatasetId);
-		if ( matchingIds.size() == 0 ) 
-			throw new IllegalArgumentException("No datasets with an ID matching " + wildDatasetId);
+		if ( matchingIds.isEmpty() ) {
+			logger.info("No datasets with an ID matching " + wildDatasetId + ". Looking for user files for " + wildDatasetId);
+			if ( user.isAdmin()) {
+				matchingIds = dataHandler.getDatasetsThatMatch(wildDatasetId, user);
+			}
+			if ( matchingIds.isEmpty()) {
+				throw new IllegalArgumentException("No datasets found that match filter " + wildDatasetId);
+			}
+		}
 		DashboardDatasetList datasetList = new DashboardDatasetList(cleanUsername);
         datasetList.setManager(existingDatasetList.isManager());
 		String commitMsg = "Filtering dataset(s) ";

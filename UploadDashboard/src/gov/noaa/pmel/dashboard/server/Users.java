@@ -381,7 +381,7 @@ public class Users {
      * @return
 	 * @throws DashboardException 
      */
-    private static DashboardUserInfo getUserInfo(String name) {
+    public static DashboardUserInfo getUserInfo(String name) {
         User u = null;
         try {
             u = getUser(name);

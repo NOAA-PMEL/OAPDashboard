@@ -46,6 +46,7 @@ import gov.noaa.pmel.dashboard.dsg.StdUserDataArray;
 import gov.noaa.pmel.dashboard.oads.DashboardOADSMetadata;
 import gov.noaa.pmel.dashboard.server.DashboardConfigStore;
 import gov.noaa.pmel.dashboard.server.DashboardServerUtils;
+import gov.noaa.pmel.dashboard.server.DashboardUserInfo;
 import gov.noaa.pmel.dashboard.server.Users;
 import gov.noaa.pmel.dashboard.server.util.FileTypeTest;
 import gov.noaa.pmel.dashboard.shared.DashboardDataset;
@@ -285,6 +286,51 @@ public class DataFileHandler extends VersionedFileHandler {
 		return dataFile;
 	}
 	
+	public HashSet<String> getDatasetsThatMatch(String matchStr, DashboardUserInfo user) {
+		HashSet<String> matchingIds = new HashSet<String>();
+		final Pattern matchPattern;
+		try {
+			String matcherRegEx = matchStr;
+			matcherRegEx = matcherRegEx.replaceAll("\\.", "\\.");
+			matcherRegEx = matcherRegEx.replaceAll("\\*", ".+");
+			matcherRegEx = matcherRegEx.replaceAll("\\?", ".");
+			matchPattern = Pattern.compile(matcherRegEx, Pattern.CASE_INSENSITIVE);
+		} catch (PatternSyntaxException ex) {
+			throw new IllegalArgumentException(ex);
+		}
+		File[] grandparents = filesDir.listFiles(new FileFilter() {
+			@Override
+			public boolean accept(File pathname) {
+				if ( pathname.isDirectory() )
+					return true;
+				return false;
+			}
+		});
+		for ( File partitionDir : grandparents ) {
+    		File[] parentDirs = partitionDir.listFiles(new FileFilter() {
+    			@Override
+    			public boolean accept(File file) {
+    					if ( file.isDirectory() &&
+    					     new File(file, file.getName()+".properties").exists()) {
+    						return true;
+    					}
+    					return false;
+    				}
+			});
+			for ( File match : parentDirs ) {
+				String datasetId = match.getName();
+				DashboardDataset dd = getDatasetFromInfoFile(datasetId);
+				String datasetOwner = dd.getOwner();
+				String filename = dd.getUploadFilename();
+				if ( matchPattern.matcher(datasetOwner).matches() ||
+					 matchPattern.matcher(filename).matches()) {
+					matchingIds.add(datasetId);
+				}
+			}
+        }
+		
+		return matchingIds;
+	}
 	/**
 	 * Searches all existing datasets and returns the dataset IDs of those that
 	 * match the given dataset ID containing wildcards and/or regular expressions.
