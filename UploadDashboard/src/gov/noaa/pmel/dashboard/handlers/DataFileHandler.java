@@ -292,7 +292,7 @@ public class DataFileHandler extends VersionedFileHandler {
 		try {
 			String matcherRegEx = matchStr;
 			matcherRegEx = matcherRegEx.replaceAll("\\.", "\\.");
-			matcherRegEx = matcherRegEx.replaceAll("\\*", ".+");
+			matcherRegEx = matcherRegEx.replaceAll("\\*", ".*");
 			matcherRegEx = matcherRegEx.replaceAll("\\?", ".");
 			matchPattern = Pattern.compile(matcherRegEx, Pattern.CASE_INSENSITIVE);
 		} catch (PatternSyntaxException ex) {
@@ -352,7 +352,7 @@ public class DataFileHandler extends VersionedFileHandler {
 		final Pattern filenamePattern;
 		try {
 			String filenameRegEx = wildDatasetId.toUpperCase();
-			filenameRegEx = filenameRegEx.replace("*", "[\\p{javaUpperCase}\\p{Digit}]+");
+			filenameRegEx = filenameRegEx.replace("*", "[\\p{javaUpperCase}\\p{Digit}]*");
 			filenameRegEx = filenameRegEx.replace("?", "[\\p{javaUpperCase}\\p{Digit}]{1}");
 //			filenameRegEx += INFO_FILENAME_EXTENSION;
 			filenamePattern = Pattern.compile(filenameRegEx);
