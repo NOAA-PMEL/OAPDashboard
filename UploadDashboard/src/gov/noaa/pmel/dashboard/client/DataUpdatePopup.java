@@ -57,7 +57,7 @@ public class DataUpdatePopup extends Composite {
 	private static final String TITLE_TEXT = "Upload Data Files";
 
     private static final String TITLE_BASE = 
-             "Upload a new version of the data file for dataset ";
+             "Upload a new version of the dataset data file ";
 	private static final String DESCRIPTION_HTML1 = 
             "Select a new version of the data file "
             + "<span style='font-family:\"Courier New\", Courier, monospace;'>";
@@ -321,6 +321,11 @@ public class DataUpdatePopup extends Composite {
     private void setDisplayTitle(String titleText) {
         title.setHTML(titleText);
     }
+    private void setMultipleFileDescription() {
+    	descriptionHtml.setHTML("<div style=\"color:red; text-align: center; padding-top:1em; margin-bottom: -1em;\">"
+				    			+ "If you are uploading multiple files for this submission, "
+    							+ "please create a zip archive and upload the single zip file.</div>");
+    }
     private void setDescription(String filename) {
         descriptionHtml.setHTML(DESCRIPTION_HTML1 + filename + DESCRIPTION_HTML2);
     }
@@ -344,6 +349,7 @@ public class DataUpdatePopup extends Composite {
         setDisplayTitle(getDisplayText(dataset));
         previousFileNameToken.setValue(dataset.getUploadFilename());
 		uploadForm.setAction(GWT.getModuleBaseURL() + "DataUploadService/update/" + dataset.getDatasetId());
+		setMultipleFileDescription();
 //        setDescription(dataset.getUploadFilename());
 //		singleton.userInfoLabel.setText(WELCOME_INTRO + singleton.getUsername());
 //        singleton.featureTypeSelector.removeStyleName("missingInfoItem");
