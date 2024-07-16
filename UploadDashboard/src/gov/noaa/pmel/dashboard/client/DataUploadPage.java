@@ -36,6 +36,7 @@ import gov.noaa.pmel.dashboard.client.UploadDashboard.PagesEnum;
 import gov.noaa.pmel.dashboard.client.progress.view.UploadProgress;
 import gov.noaa.pmel.dashboard.client.progress.controller.ProgressController;
 import gov.noaa.pmel.dashboard.client.progress.state.UploadProgressState;
+import gov.noaa.pmel.dashboard.shared.DashboardServicesInterface;
 import gov.noaa.pmel.dashboard.shared.DashboardUtils;
 import gov.noaa.pmel.dashboard.shared.FileType;
 import gov.noaa.pmel.dashboard.shared.ObservationType;
@@ -525,7 +526,7 @@ public class DataUploadPage extends CompositeWithUsername {
         UploadDashboard.logToConsole("Upload result msg:" + resultMsg + ".");
 		// Check the returned results
 		if ( resultMsg == null || resultMsg.trim().length() == 0 ) {
-		    if ( wasActuallyOk ) {
+		    if ( wasActuallyOk ) { // XXX WTF ... this is set by the return value of this method...
                 return true;
     		} 
 			UploadDashboard.showMessage(UNEXPLAINED_FAIL_MSG);
@@ -594,6 +595,18 @@ public class DataUploadPage extends CompositeWithUsername {
 				if ( info.length > 3 )
 					failMsg += "<p>&nbsp;&nbsp;&nbsp;&nbsp;Submit Status = " + SafeHtmlUtils.htmlEscape(info[3].trim()) + "</p>";
 				errMsgs.add(failMsg + DATASET_EXISTS_FAIL_MSG_END); 
+			} else if ( responseMsgItem.startsWith(DashboardServicesInterface.RESPONSE_ALERT_MSG_PROLOGUE)) {
+				// An ALERT was thrown while processing the input file
+//				String filename = responseMsgItem.substring(DashboardServicesInterface.RESPONSE_ALERT_MSG_PROLOGUE.length()).trim();
+				String failMsg = FAIL_MSG_START + SafeHtmlUtils.htmlEscape(responseMsgItem) + EXPLAINED_FAIL_MSG_START;
+				for (k++; k < splitMsgs.length; k++) {
+					if ( splitMsgs[k].trim().startsWith(DashboardUtils.END_OF_ERROR_MESSAGE_TAG) )
+						break;
+					failMsg += SafeHtmlUtils.htmlEscape(splitMsgs[k]) + "\n";
+				}
+				errMsgs.add(failMsg);
+				errMsgs.add(EXPLAINED_FAIL_MSG_END);
+				errMsgs.add(DashboardUtils.VIRUS_DETECTED);
 			}
 			else if ( responseMsgItem.startsWith(JAVASCRIPT_START) ) {
 				// ignore the added javascript from the firewall

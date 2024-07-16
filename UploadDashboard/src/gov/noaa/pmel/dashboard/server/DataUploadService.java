@@ -19,7 +19,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
@@ -36,6 +35,7 @@ import org.apache.tomcat.util.http.fileupload.servlet.ServletFileUpload;
 
 import gov.noaa.pmel.dashboard.handlers.RawUploadFileHandler;
 import gov.noaa.pmel.dashboard.server.util.FileTypeTest;
+import gov.noaa.pmel.dashboard.server.util.Notifications;
 import gov.noaa.pmel.dashboard.server.util.UIDGen;
 import gov.noaa.pmel.dashboard.shared.DashboardUtils;
 import gov.noaa.pmel.dashboard.shared.FeatureType;
@@ -48,6 +48,7 @@ import gov.noaa.pmel.dashboard.upload.UploadProcessor;
 import gov.noaa.pmel.dashboard.upload.progress.UploadProgress;
 import gov.noaa.pmel.dashboard.upload.progress.UploadProgressListener;
 import gov.noaa.pmel.dashboard.util.FormUtils;
+import gov.noaa.pmel.dashboard.util.VScanner;
 import gov.noaa.pmel.oads.util.StringUtils;
 import gov.noaa.pmel.tws.util.ApplicationConfiguration;
 
@@ -57,7 +58,7 @@ import gov.noaa.pmel.tws.util.ApplicationConfiguration;
  * 
  * @author Karl Smith
  */
-public class DataUploadService extends HttpServlet { 
+public class DataUploadService extends CommonServiceBase { 
 	private static final long serialVersionUID = 1547524322159252520L;
 
     private static Logger logger = LogManager.getLogger(DataUploadService.class);
@@ -162,6 +163,15 @@ public class DataUploadService extends HttpServlet {
                     RawUploadFileHandler rufh = DashboardConfigStore.get().getRawUploadFileHandler();
                     File rawFile = rufh.writeFileItem(dataItemStream, request.getContentLengthLong(), 
                                                       MAX_ALLOWED_UPLOAD_SIZE, username, progressListener);
+                    VScanner scanner = new VScanner();
+                    String quarantine = getQuarantineLocation(username);
+                    boolean hasVirus = scanner.scanFile(rawFile, quarantine);
+                    if ( hasVirus ) {
+                    	String alertMsg = "*** ALERT *** Virus detected in uploaded file " + fname + " : " + 
+                    						scanner.getVirus();
+                    	Notifications.Alert(alertMsg, null);
+                    	throw new IllegalArgumentException(alertMsg);
+                    }
                     dataFiles.add(rawFile);
                 }
             }
@@ -200,7 +210,11 @@ public class DataUploadService extends HttpServlet {
 //            sendErrMsg(response, nsf);
         } catch (IllegalArgumentException iex) { // no files
             logger.warn(iex);
-            sendErrMsg(response, iex);
+            if ( iex.getMessage().startsWith("***")) {
+            	sendRequestErrorResponse(response, iex.getMessage());
+            } else {
+	            sendErrMsg(response, iex);
+            }
         } catch (Throwable ex) {
             logger.warn(ex, ex);
             StackTraceElement[] trace = ex.getStackTrace();
@@ -310,16 +324,6 @@ public class DataUploadService extends HttpServlet {
             }
         }
         return datafiles;
-    }
-
-    private static String getUsername(HttpServletRequest request) {
-        try {
-            String username = request.getUserPrincipal().getName();
-            return username;
-        } catch (Exception ex) {
-            logger.info(ex);
-            throw new IllegalStateException("No user found.");
-        }
     }
 
     private static FeatureType getFeatureType(Map<String, String> paramMap) throws NoSuchFieldException {
@@ -466,6 +470,19 @@ public class DataUploadService extends HttpServlet {
             try ( PrintWriter respWriter = response.getWriter(); ) {
                 respWriter.println("There was an error on the server:");
         		respWriter.println(ex.getMessage());
+        		response.flushBuffer();
+            }
+        } catch (IOException iox) {
+            logger.warn(iox);
+        }
+	}
+	
+	private static void sendRequestErrorResponse(HttpServletResponse response, String errMsg) {
+        try {
+    		response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
+    		response.setContentType("text/html;charset=UTF-8");
+            try ( PrintWriter respWriter = response.getWriter(); ) {
+        		respWriter.println(errMsg);
         		response.flushBuffer();
             }
         } catch (IOException iox) {

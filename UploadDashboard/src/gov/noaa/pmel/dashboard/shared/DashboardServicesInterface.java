@@ -20,6 +20,8 @@ import com.google.gwt.user.client.rpc.RemoteServiceRelativePath;
 @RemoteServiceRelativePath("DashboardServices")
 public interface DashboardServicesInterface extends RemoteService {
 
+	public static final String RESPONSE_ALERT_MSG_PROLOGUE = "*** ALERT ***";
+	
 	/**
 	 * Logs out the current user.
 	 */

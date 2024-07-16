@@ -106,7 +106,8 @@ public class Notifications {
 	}
 
     public static void Alert(String subject, Throwable t) {
-        SendEmail(subject, buildExceptionMessage(t), "linus.kamb@noaa.gov");
+    	String toList = ApplicationConfiguration.getProperty("oap.admin.email.list","linus.kamb@noaa.gov");
+        SendEmail(subject, buildExceptionMessage(t), toList);
     }
         
     /**
@@ -114,6 +115,9 @@ public class Notifications {
      * @return
      */
     private static String buildExceptionMessage(Throwable t) {
+    	if ( t == null ) {
+    		return "No Exception Provided";
+    	}
         StringBuilder b = new StringBuilder(String.valueOf(t));
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
         PrintStream ps = new PrintStream(baos);

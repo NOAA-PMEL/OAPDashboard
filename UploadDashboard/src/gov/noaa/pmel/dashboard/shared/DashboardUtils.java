@@ -921,5 +921,9 @@ public class DashboardUtils {
 //            // TODO: handle exception
 //        }
     }
+
+	public static final String VIRUS_DETECTED = "A virus has been detected in your file.<br/>"
+	+ "Please check your file.<br/><br/>"
+	+ "If you feel this is in error, please contact the SDIS team at: pmel.sdis@noaa.gov";
     
 }

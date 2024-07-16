@@ -87,3 +87,5 @@ local.properties
 # End of https://www.toptal.com/developers/gitignore/api/eclipse
 /fplots/
 /co2sys/
+/jaxb_jar/
+/extras/

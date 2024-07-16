@@ -49,8 +49,8 @@ oap.archive.submit_ocads=true
 
 oap.archive.mode=sftp
 oap.archive.sftp.hostname=sftp.pmel.noaa.gov
-oap.archive.sftp.username=oap_sftp
-oap.archive.sftp.destination=ncei_sftp/data/oap
+oap.archive.sftp.username=ncei_sftp
+oap.archive.sftp.destination=data/oap
 # oap.archive.sftp.destination=/home/sftp/data
 # oap.archive.sftp.id_file=/Users/kamb/oxy-work/oap-git/OAPDashboard/UploadDashboard/ssh/ssk_id_rsa
 # oap.archive.sftp.hostname=dunkel

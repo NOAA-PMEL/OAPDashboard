@@ -108,6 +108,9 @@ public class AddlDocsManagerPage extends CompositeWithUsername {
 	private static final String EXPLAINED_FAIL_MSG_START = 
 			"<h3>Upload failed.</h3>" +
 			"<p><pre>\n";
+	private static final String EXPLAINED_ERROR_MSG_START = 
+			"<h3>There was an error uploading the document(s).</h3>" +
+			"<p><pre>\n";
 	private static final String EXPLAINED_FAIL_MSG_END = 
 			"</pre></p>";
 
@@ -424,6 +427,12 @@ public class AddlDocsManagerPage extends CompositeWithUsername {
             wasActuallyOk = true;
 			// Do not show any messages on success;
 			// depend on the updated list of documents to show success
+		}
+		else if ( resultMsg.startsWith(DashboardUtils.INVALID_FILE_HEADER_TAG)) {
+			String errorMsg = resultMsg.substring(DashboardUtils.INVALID_FILE_HEADER_TAG.length()+1);
+			UploadDashboard.showMessage(EXPLAINED_ERROR_MSG_START + 
+					SafeHtmlUtils.htmlEscape(errorMsg) + EXPLAINED_FAIL_MSG_END 
+					+ DashboardUtils.VIRUS_DETECTED);
 		}
 		else {
 		    GWT.log("unknown response fail:"+resultMsg);
