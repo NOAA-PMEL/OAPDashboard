@@ -2,5 +2,7 @@
 
 DIR=$(dirname "$0")
 
-python3 $DIR/sftpremove.py $@
+P3=/usr/bin/python3
+
+$P3 $DIR/sftpremove.py $@
 
