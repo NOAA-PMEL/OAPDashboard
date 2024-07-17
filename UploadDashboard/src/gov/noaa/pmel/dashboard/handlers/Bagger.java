@@ -86,22 +86,7 @@ public class Bagger implements ArchiveBundler {
     private Map<String, String> _submitProps;
     private SimpleDateFormat _tsFormatter;
     private DashboardConfigStore _store;
-
-    public static File Bag(String submissionRecordId, 
-                           String observationType, 
-                           String comments, 
-                           String outputFile,
-                           File... files) throws Exception {
-        File bagFile = null;
-        Bagger bagger;
-        try {
-        } catch (Exception ex) {
-            ex.printStackTrace();
-            // TODO: handle exception
-        }
-        return bagFile;
-    }
-    
+  
     public static File Bag(SubmissionRecord submitRecord, String datasetId) throws Exception {
         return Bag(submitRecord, datasetId, null, "");
     }
