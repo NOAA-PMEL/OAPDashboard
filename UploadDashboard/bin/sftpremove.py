@@ -8,7 +8,6 @@ _verbose=True
 server ="sftp.pmel.noaa.gov"
 username = "ncei_sftp"
 path_to_ssh = os.path.join("/Users/kamb", ".ssh")
-# path_to_hosts_file = os.path.join("~", ".ssh", "known_hosts")
 path_to_hosts_file = os.path.join(path_to_ssh, "known_hosts")
 path_to_pkey_file = os.path.join(path_to_ssh, "ncei-key-rsa")
 
@@ -75,7 +74,12 @@ if __name__ == "__main__":
     if len(sys.argv) <= 1:
         log('No path given.')
         close()
-    path = sys.argv[1]
+    narg = 1
+    do_confirm = True
+    if '-y' == sys.argv[1].lower():
+        do_confirm = False
+        narg += 1
+    path = sys.argv[narg]
     if path == "/":
         print("Removing / is not allowed.")
         close()
@@ -85,10 +89,13 @@ if __name__ == "__main__":
     except:
         log(f'Path {path} does not appear to exist!')
         close()
-    if confirm(path):
-        log(f'sftp remove path {path}')
-        rmdR(path)
+    if do_confirm:
+        if confirm(path):
+            log(f'sftp remove path {path}')
+            rmdR(path)
+        else:
+            log(f"Not removing {path}")
     else:
-        log(f"Not removing {path}")
+        rmdR(path)
 
     close()
