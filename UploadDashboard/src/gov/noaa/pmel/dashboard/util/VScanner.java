@@ -56,27 +56,27 @@ public class VScanner {
 //		return Instance().scanFile(file);
 //	}
 	
-	public boolean scanFilePB(File file) throws Exception {
-		if ( ! file.exists()) {
-			throw new FileNotFoundException(file.getAbsolutePath());
-		}
-//		OutputStream out = new ByteArrayOutputStream();
-//		OutputStream err = new ByteArrayOutputStream();
-//		String command = CLAM_COMMAND + " --quiet " + file.getAbsolutePath();
-		ProcessBuilder pb = new ProcessBuilder();
-//		Map<String, String> env = pb.environment();
-//		System.out.println(env);
-//		String path = env.get("PATH");
-//		path += ":/opt/homebrew/bin";
-//		env.put("PATH", path);
-//		System.out.println(pb.environment());
-//		pb.directory(new File(System.getProperty("user.home")));
-//		System.out.println("dir: " + pb.directory());
-		pb.command(CLAM_COMMAND, "--no-summary", "--fdpass", file.getAbsolutePath());
-		Process process = pb.start();
-		int exit = process.waitFor();
-		return exit != 0;
-	}
+//	public boolean scanFilePB(File file) throws Exception {
+//		if ( ! file.exists()) {
+//			throw new FileNotFoundException(file.getAbsolutePath());
+//		}
+////		OutputStream out = new ByteArrayOutputStream();
+////		OutputStream err = new ByteArrayOutputStream();
+////		String command = CLAM_COMMAND + " --quiet " + file.getAbsolutePath();
+//		ProcessBuilder pb = new ProcessBuilder();
+////		Map<String, String> env = pb.environment();
+////		System.out.println(env);
+////		String path = env.get("PATH");
+////		path += ":/opt/homebrew/bin";
+////		env.put("PATH", path);
+////		System.out.println(pb.environment());
+////		pb.directory(new File(System.getProperty("user.home")));
+////		System.out.println("dir: " + pb.directory());
+//		pb.command(CLAM_COMMAND, "--no-summary", "--fdpass", "\""+file.getAbsolutePath()+"\"");
+//		Process process = pb.start();
+//		int exit = process.waitFor();
+//		return exit != 0;
+//	}
 	private String QUIET_FLAG = " --quiet ";
 	private String BE_QUIET = "";
 	
@@ -109,7 +109,7 @@ public class VScanner {
 		}
 		ByteArrayOutputStream out = new ByteArrayOutputStream();
 		ByteArrayOutputStream err = new ByteArrayOutputStream();
-		String command = CLAM_COMMAND + BE_QUIET + quarantineFlag + " --fdpass --no-summary " + file.getAbsolutePath();
+		String command = CLAM_COMMAND + BE_QUIET + quarantineFlag + " --fdpass --no-summary " + "\""+file.getAbsolutePath()+"\"";
 		runner = new CommandRunner(command, out, err);
 		int exit;
 		try {
