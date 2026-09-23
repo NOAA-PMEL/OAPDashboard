@@ -279,6 +279,8 @@ public class DsgNcFileHandler {
 	/**
 	 * Notifies ERDDAP that content has changed in the DSG files. 
 	 * 
+     * NOTE that this is from the SOCAT roots, and is not (currently) used by the SDIS.
+     * 
 	 * @param flagDsg
 	 * 		if true, notify ERDDAP that content has changed in the full DSG files.
 	 * @param flagDecDsg

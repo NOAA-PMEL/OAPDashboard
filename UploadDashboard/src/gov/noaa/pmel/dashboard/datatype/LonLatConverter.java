@@ -51,9 +51,15 @@ public class LonLatConverter extends ValueConverter<Double> {
 
 	@Override
 	public Double convertValueOf(String valueString, int recordNumber) throws IllegalArgumentException, IllegalStateException {
+        
+        
 		// Deal with missing values
 		if ( isMissingValue(valueString, true) )
 			return null;
+		// Deal with em-dashes
+        if ( valueString.contains(EM_DASH))
+    		valueString = valueString.replaceAll(EM_DASH, "-");
+        
 		// Make sure nothing unexpected was added
 		if ( ! ( "deg E".equalsIgnoreCase(toUnit) || "deg N".equalsIgnoreCase(toUnit) ) )
 			throw new IllegalArgumentException("conversion to \"" + toUnit + "\" is not supported");

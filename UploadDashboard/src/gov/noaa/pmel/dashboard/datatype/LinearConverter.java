@@ -132,8 +132,13 @@ public class LinearConverter extends ValueConverter<Double> {
 		if ( (slope == null) || (intercept == null) )
 			throw new IllegalArgumentException("conversion from \"" + 
 					fromUnit + "\" to \"" + toUnit + "\" is not supported");
+        
 		if ( isMissingValue(valueString, true) )
 			return null;
+		// Deal with em-dashes
+        if ( valueString.contains(EM_DASH))
+    		valueString = valueString.replaceAll(EM_DASH, "-");
+        
 		Double dataVal;
 		try {
 			dataVal = Double.valueOf(valueString);

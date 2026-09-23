@@ -22,7 +22,6 @@ import gov.noaa.pmel.dashboard.server.Users;
 import gov.noaa.pmel.dashboard.server.Users.UserRole;
 import gov.noaa.pmel.dashboard.server.db.myb.MybatisConnectionFactory;
 import gov.noaa.pmel.dashboard.server.model.User;
-import gov.noaa.pmel.dashboard.server.util.Notifications;
 import gov.noaa.pmel.dashboard.server.util.OapMailSender;
 import gov.noaa.pmel.dashboard.util.PasswordUtils;
 import gov.noaa.pmel.tws.client.impl.TwsClientImpl.NoopException;
@@ -33,7 +32,6 @@ import gov.noaa.pmel.tws.util.cli.CLCommand;
 import gov.noaa.pmel.tws.util.cli.CLOption;
 import gov.noaa.pmel.tws.util.cli.CLOptionValue;
 import gov.noaa.pmel.tws.util.cli.CLOptions;
-import gov.noaa.pmel.tws.util.cli.CommandProcessor;
 
 /**
  * @author kamb
@@ -341,13 +339,15 @@ public class AdminClient extends CLClient {
         }
     }
 
-    /**
+    /* 
+     * THESE ARE SAME AS DEFAULTS in interface CommandProcessor *
+     *
      * @param command
      * @return
      * @throws SecurityException 
      * @throws NoSuchMethodException 
-     */
-    private Method getProcessingMethod(CLCommand command) {
+     * /
+    public Method getProcessingMethod(CLCommand command) {
         String methodName = getMethodName(command);
         Method processingMethod = null;
         Class<?> thisClass = this.getClass();
@@ -378,7 +378,7 @@ public class AdminClient extends CLClient {
     /**
      * @param command
      * @return
-     */
+     * /
     private static String getMethodName(CLCommand command) {
         String methodName = command.methodName();
         if ( methodName == null ) {
@@ -389,6 +389,7 @@ public class AdminClient extends CLClient {
         }
         return methodName;
     }
+    */
     
     private static void dumpProperties() {
         Properties sysprops = System.getProperties();

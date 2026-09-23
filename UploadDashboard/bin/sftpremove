@@ -1,6 +1,9 @@
 #!/bin/bash
 
-DIR=$(dirname "$0")
+PROG=$0
+LINK=$(readlink $PROG)
+[ "$LINK" ] && DIR=$(dirname $LINK) || DIR=$(dirname "$0")
+# echo DIR $DIR
 
 P3=/usr/bin/python3
 

@@ -84,7 +84,7 @@ public class FileXferService {
 
     public String submitArchiveBundle(String stdId, String version, File archiveBundle)  throws Exception {
         String targetDir = stdId + "/" + version + "/";
-        String targetFile = stdId + "_bagit.zip";
+        String targetFile = archiveBundle.getName();
         String targetFilePath = targetDir + targetFile;
         String command = _transferOp.getTransferCommand(archiveBundle, targetFilePath);
         logger.debug("xfer cmd: " + command);
@@ -108,8 +108,13 @@ public class FileXferService {
      * @return
      */
     private int submitHash(File archiveBundle, String hashFilePath) throws Exception {
+    	String compressionFormat = ApplicationConfiguration.getProperty("oap.archive_bundle.format", "zip");
+        int extensionLength = 4;
+        if ( "tgz".equals(compressionFormat)) {
+        	extensionLength = ".tar.gz".length();
+        }
         String fname = archiveBundle.getName();
-        String fbase = fname.substring(0, fname.lastIndexOf('.'));
+        String fbase = fname.substring(0, fname.length() - extensionLength);
         File hashFile = new File(archiveBundle.getParentFile(), fbase+"-sha256.txt");
         String command = _transferOp.getTransferCommand(hashFile, hashFilePath);
         logger.debug("xfer cmd: " + command);

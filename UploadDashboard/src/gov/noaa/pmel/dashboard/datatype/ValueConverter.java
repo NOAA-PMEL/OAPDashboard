@@ -31,6 +31,7 @@ public abstract class ValueConverter<T> {
 			new Double[] {-999.0, -999.9, -999.99, -999.999,
 					-9999.0, -9999.9, -9999.99, -99999.0, -99999.9};
 
+	static final String EM_DASH = "−";
 	
 	public static final int VALUE_NOT_APPLICABLE = -9999;
 	

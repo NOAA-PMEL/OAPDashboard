@@ -157,28 +157,30 @@ public class MetadataUploadService extends CommonServiceBase {
     			String uploadFilename = DashboardUtils.baseName(metadataItem.getName());
                 uploadFile = getUploadedFile(metadataItem);
                 String quarantine = ApplicationConfiguration.getProperty("oap.upload.quarantine","");
-                VScanner scanner = new VScanner();
-                if ( scanner.scanFile(uploadFile)) { //, quarantine, uploadFilename)) {
-                	if ( !StringUtils.emptyOrNull(quarantine)) {
-                		File qdir = getQuarantineDir(quarantine,username);
-                		if ( qdir == null ) {
-                			logger.warn("Failed to create quarantine dir: "+ quarantine);
-                			// Alert?
-                		} else {
-                			File qfile = new File(qdir, uploadFilename);
-                			if ( !uploadFile.renameTo(qfile)) { // Doesn't number copies like clamdscan --move
-                				FileUtils.copyFile(uploadFile, qfile);
-                			}
-                		}
-                	}
-                	String virus = scanner.getVirus();
-                	String msg = DashboardServicesInterface.RESPONSE_ALERT_MSG_PROLOGUE + " "
-                				  + "Virus found in uploaded file " + uploadFilename + " : " + virus + ". "
-                				  + "File will be ignored.";
-                	logger.warn(msg);
-                	Notifications.Alert(msg, null);
-                	errorMsgs.add(msg);
-                	continue;
+                if ( ApplicationConfiguration.getProperty("oap.upload.virus_checker", true)) {
+                    VScanner scanner = new VScanner();
+                    if ( scanner.scanFile(uploadFile)) { //, quarantine, uploadFilename)) 
+                    	if ( !StringUtils.emptyOrNull(quarantine)) {
+                    		File qdir = getQuarantineDir(quarantine,username);
+                    		if ( qdir == null ) {
+                    			logger.warn("Failed to create quarantine dir: "+ quarantine);
+                    			// Alert?
+                    		} else {
+                    			File qfile = new File(qdir, uploadFilename);
+                    			if ( !uploadFile.renameTo(qfile)) { // Doesn't number copies like clamdscan --move
+                    				FileUtils.copyFile(uploadFile, qfile);
+                    			}
+                    		}
+                    	}
+                    	String virus = scanner.getVirus();
+                    	String msg = DashboardServicesInterface.RESPONSE_ALERT_MSG_PROLOGUE + " "
+                    				  + "Virus found in uploaded file " + uploadFilename + " : " + virus + ". "
+                    				  + "File will be ignored.";
+                    	logger.warn(msg);
+                    	Notifications.Alert(msg, null);
+                    	errorMsgs.add(msg);
+                    	continue;
+                    }
                 }
     			for (String datasetId : idList) {
                     try ( InputStream is = new FileInputStream(uploadFile);) {

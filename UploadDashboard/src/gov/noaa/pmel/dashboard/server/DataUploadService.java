@@ -19,6 +19,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
@@ -102,8 +103,14 @@ public class DataUploadService extends CommonServiceBase {
             logger.debug(ex + " if NPE:  Not to worry. Will use default tmp dir.");
 		}
 		datafileUpload = new ServletFileUpload(factory);
+        logger.debug("datafileUpload: " + datafileUpload);
 	}
 
+    @Override
+    public void init() throws ServletException {
+        logger.debug("context: "+ getServletContext());
+    }
+    
     public static long getMaxUploadSize() { return MAX_ALLOWED_UPLOAD_SIZE; }
     public static String getMaxUploadSizeDisplayStr() { return MAX_ALLOWED_SIZE_DISPLAY_STR; }
     
@@ -163,14 +170,18 @@ public class DataUploadService extends CommonServiceBase {
                     RawUploadFileHandler rufh = DashboardConfigStore.get().getRawUploadFileHandler();
                     File rawFile = rufh.writeFileItem(dataItemStream, request.getContentLengthLong(), 
                                                       MAX_ALLOWED_UPLOAD_SIZE, username, progressListener);
-                    VScanner scanner = new VScanner();
-                    String quarantine = getQuarantineLocation(username);
-                    boolean hasVirus = scanner.scanFile(rawFile, quarantine);
-                    if ( hasVirus ) {
-                    	String alertMsg = "*** ALERT *** Virus detected in uploaded file " + fname + " : " + 
-                    						scanner.getVirus();
-                    	Notifications.Alert(alertMsg, null);
-                    	throw new IllegalArgumentException(alertMsg);
+                    if ( ApplicationConfiguration.getProperty("oap.upload.virus_checker", true)) {
+                        VScanner scanner = new VScanner();
+                        String quarantine = getQuarantineLocation(username);
+                        boolean hasVirus = scanner.scanFile(rawFile, quarantine);
+                        if ( hasVirus ) {
+                        	String alertMsg = "*** ALERT *** Virus detected in uploaded file " + fname + " : " + 
+                        						scanner.getVirus();
+                        	Notifications.Alert(alertMsg, null);
+                        	throw new IllegalArgumentException(alertMsg);
+                        }
+                    } else {
+                    	logger.warn("File scanning turned off: " + rawFile );
                     }
                     dataFiles.add(rawFile);
                 }

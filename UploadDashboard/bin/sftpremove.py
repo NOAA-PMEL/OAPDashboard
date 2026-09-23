@@ -76,9 +76,12 @@ if __name__ == "__main__":
         close()
     narg = 1
     do_confirm = True
-    if '-y' == sys.argv[1].lower():
+    if '-y' == sys.argv[narg].lower():
         do_confirm = False
         narg += 1
+#    if '-q' == sys.argv[narg].lower():
+#        _verbose = False
+#        narg += 1
     path = sys.argv[narg]
     if path == "/":
         print("Removing / is not allowed.")

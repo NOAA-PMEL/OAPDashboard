@@ -228,8 +228,14 @@ public class MetadataManagerPage extends CompositeWithUsername {
                     };
                     t.schedule(2000);
                 } else {
-                    UploadDashboard.showMessage("There seems to be a failure updating the metadata.<br/>Please check with your administrator.");
-                    showDataListPage();
+                    String errMsg = "There seems to be a failure updating the metadata.<br/>Please check with your administrator.";
+                    DashboardInfoPopup popup = new DashboardInfoPopup(errMsg, new OAPAsyncCallback<Void>() {
+						@Override
+						public void onSuccess(Void arg0) {
+                            showDataListPage();
+						}
+					});
+                    popup.showCentered();
                 }
             }
         };
@@ -410,6 +416,7 @@ public class MetadataManagerPage extends CompositeWithUsername {
     
     private void sendCurrentMetadataToMetaEd(String datasetId) {
         try {
+            UploadDashboard.logToConsole("ME requesting send metadata for " + datasetId);
             service.sendMetadataInfo(getUsername(), datasetId, new OAPAsyncCallback<MetadataPreviewInfo>() {
                 @Override
                 public void onSuccess(MetadataPreviewInfo result) {

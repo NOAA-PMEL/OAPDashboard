@@ -487,6 +487,15 @@ hr .hline {
 .sideSelectionRadio {
 	/* margin-left: 5px; */
 }
+.alert {
+	border: red solid 1px;
+	margin: 1.5em;
+	padding: 1em;
+    font-weight: bold;
+    text-align: center;
+    color: red;
+}
+
 .submit_msg_panel {
     padding: 0em 0em 1.5em 2em;
  	display: flex;

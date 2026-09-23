@@ -9,5 +9,6 @@
 	<classpathentry kind="lib" path="lib/tws_client.jar"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.USER_LIBRARY/lombok_latest"/>
 	<classpathentry kind="con" path="com.gwtplugins.gwt.eclipse.core.GWT_CONTAINER"/>
+	<classpathentry kind="lib" path="war/WEB-INF/lib/tomcat_extra_utils.jar"/>
 	<classpathentry kind="output" path="war/WEB-INF/classes"/>
 </classpath>

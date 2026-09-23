@@ -612,12 +612,18 @@ public class OADSMetadata {
         if ( mdDoc.getAuthors() == null || mdDoc.getAuthors().size() == 0 ) {
             throw new IllegalStateException("No list of authors for citation.");
         }
+    	if ( mdDoc.getDataLicense() == null ||   
+	      	 mdDoc.getDataLicense().getUrl() == null || 
+	         mdDoc.getDataLicense().getUrl().trim().isEmpty()) {
+                throw new IllegalStateException("No Data License specified.");
+        }
         SubmissionRecord srec = null; 
         try {
         	srec = Archive.getCurrentSubmissionRecordForPackage(dataset.getRecordId());
         } catch (Exception ex) {
         	logger.warn("Exception getting status record for dataset " + dataset.getRecordId());
         }
+        // Not sure what's going on here...
         if ( ( srec == null || 
         	 ( dataset.getArchiveDate() != null && srec.status().status().ordinal() < StatusState.ACCEPTED.ordinal() )) &&
 	        	 ( mdDoc.getDataLicense() == null ||   // The URL component will be filled in if a license has been selected.

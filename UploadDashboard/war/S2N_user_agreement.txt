@@ -1,0 +1,24 @@
+
+NCEI Data Submission and Metadata Tools User Agreement
+
+You agree to use the National Centers for Environmental Information’s (NCEI) data submission and metadata management tools (including, but not limited to, Send2NCEI, ATRAC, and the metadata management suite of tools such as CoMET and the Data Stewardship Maturity Questionnaire, DSMQ) consistent with the terms of this User Agreement to submit data, and/or create, edit, and otherwise manage metadata for earth science or environmental data and information related to NOAA’s mission.
+
+When using these tools, you agree not to include any malicious, defamatory, or offensive content. Access to these tools is provided as-is and on an as-available basis, and may be terminated for users that violate this User Agreement. NCEI makes no warranty that the tools will be error free or that access will be continuous or uninterrupted.
+
+For Non-NOAA users accessing the metadata management tools and not submitting data or metadata to NOAA: after using a metadata management tool, you should export any outputs you wish to save (e.g., metadata XML or a DSMQ). NCEI may remove data and/or inactivate accounts for non-NOAA users accessing metadata management tools after 90 or more days of inactivity.
+Contact Information
+
+You agree to provide contact information to enable NCEI to authenticate your account, and as applicable, data submission request, and to contact you with any questions about your data. If submitting data and/or metadata, your contact information will be stored and redistributed as part of the corresponding metadata record.
+
+NCEI requires at least your name and email address to enable identity validation. Additional contact information (e.g., institutional affiliation, mailing address, phone number) is optional, but facilitates the resolution of any problems with submitted data. Contact information is used to provide proper attribution and to facilitate data discovery. All such use by NOAA and NCEI is governed by System of Records Notice (SORN) COMMERCE/NOAA-11, Contact Information for Members of the Public Requesting or Providing Information Related to NOAA’s Mission (https://www.commerce.gov/opog/privacy-privacy-act/system-records-notices/system-records-notices-commerce-noaa-11).
+
+If you provide names, email or physical addresses, or other contact information for other people or organizations who are responsible for producing, maintaining, or providing additional information about the data you submit to NCEI, you warrant that you have obtained permission from those named persons to submit their contact information to NCEI for the purposes specified in this User Agreement and for the purposes of the SORN referenced above.
+Data Licensing
+
+If you are using a tool to voluntarily submit data to NCEI, you agree that if accepted, such data will be without financial compensation and must be licensed consistent with NCEI’s policy (https://www.ncei.noaa.gov/archive#v-pills-licensing). If data are subject to the intellectual property rights of a third party, you warrant that you have obtained permission from that third party to submit those data to NCEI. Additional information, including selecting a specific data license, may be requested as part of the data submission process.
+General Provisions
+
+This User Agreement constitutes the entire agreement between you and NCEI regarding the use of data submission and metadata management tools. This User Agreement may only be modified by the posting of a revised version by NCEI, which you will need to accept to continue using these tools.
+
+User Agreement Revision Date: 2023-12-05
+

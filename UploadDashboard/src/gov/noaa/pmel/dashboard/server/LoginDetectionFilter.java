@@ -31,6 +31,8 @@ import gov.noaa.pmel.tws.util.ApplicationConfiguration;
 import gov.noaa.pmel.tws.util.Logging;
 
 /**
+ * Does some bookkeeping on user login.
+ * 
  * @author kamb
  *
  */
@@ -58,66 +60,73 @@ public class LoginDetectionFilter implements Filter {
         HttpServletRequest request = (HttpServletRequest) req;
         HttpServletResponse response = (HttpServletResponse) resp;
         Principal principal = request.getUserPrincipal();
+        logger.debug(request.getMethod() + ":" + request.getRequestURL().toString());
+        logger.debug("principal:"+principal);
         HttpSession session = request.getSession(false);
 
         logger.trace(request.getRequestURL().toString());
         if (principal != null) {
             String username = principal.getName();
-            if (session == null || session.getAttribute("user") == null) {
-                request.getSession().setAttribute("user", username);
-                String browser = request.getHeader("User-Agent");
-                String msg = "Login by " + principal + " on " + request.getLocalName() + " using " + browser;
-                logger.info(msg);
-                if ( ApplicationConfiguration.getProperty("oap.login.notify", false)) {
-                    sendNotification(msg);
-                }
-                try {
-                    UsersDao udao = DaoFactory.UsersDao();
-                    User user = udao.retrieveUser(username);
-                    udao.userLogin(user);
-                    if ( user.requiresPasswordChange()) {
-                        logger.info("change password required for request by " + username + ": "+ request.getRequestURI());
-                        synchronized (requiredPasswordChange) {
-                            requiredPasswordChange.add(user.username());
+            logger.debug("username:"+username);
+            if ( "sdis".equals(username)) {
+            	logger.info("skipping user sdis " + request.getMethod() + " to " + request.getRequestURI());
+            } else {
+                if (session == null || session.getAttribute("user") == null) {
+                    request.getSession().setAttribute("user", username);
+                    String browser = request.getHeader("User-Agent");
+                    String msg = "Login by " + principal + " on " + request.getLocalName() + " using " + browser;
+                    logger.info(msg);
+                    if ( ApplicationConfiguration.getProperty("oap.login.notify", false)) {
+                        sendNotification(msg);
+                    }
+                    try {
+                        UsersDao udao = DaoFactory.UsersDao();
+                        User user = udao.retrieveUser(username);
+                        udao.userLogin(user);
+                        if ( user.requiresPasswordChange()) {
+                            logger.info("change password required for request by " + username + ": "+ request.getRequestURI());
+                            synchronized (requiredPasswordChange) {
+                                requiredPasswordChange.add(user.username());
+                            }
+                            logger.info("adding sdisuid cookie");
+                            response.addCookie(new Cookie("sdisuid", user.requiresPwChange()));
+                            response.sendRedirect(getPasswordChangeUrl(request));
+                            return;
                         }
-                        logger.info("adding sdisuid cookie");
-                        response.addCookie(new Cookie("sdisuid", user.requiresPwChange()));
-                        response.sendRedirect(getPasswordChangeUrl(request));
+                    } catch (SQLException ex) {
+                        logger.warn(ex,ex);
+                        response.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Error retrieving user information.");
                         return;
                     }
-                } catch (SQLException ex) {
-                    logger.warn(ex,ex);
-                    response.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Error retrieving user information.");
-                    return;
-                }
-            } else if ( requiredPasswordChange.contains(username) &&
-                        shouldBeRedirected(request)) {
-                try {
-                    logger.info("Redirecting attempted bypass by " + username + 
-                                " to " + request.getRequestURL().toString());
-                    UsersDao udao = DaoFactory.UsersDao();
-                    User user = udao.retrieveUser(username);
-                    if ( user.requiresPasswordChange()) {
-                        logger.info("adding sdisuid cookie and redirecting to PW change for request: "+ request);
-                        response.addCookie(new Cookie("sdisuid", user.requiresPwChange()));
-                        response.sendRedirect(getPasswordChangeUrl(request));
-                        return;
-                    } else {
-                        synchronized (requiredPasswordChange) {
-                            logger.info("removing " + username + " from changePassword cache.");
-                            requiredPasswordChange.remove(username);
-                            logger.info("setting sdisuid to maxAge=0 to remove.");
-                            Cookie removeSuidCookie = new Cookie("sdisuid", null);
-                            removeSuidCookie.setMaxAge(0);
-	                        response.addCookie(removeSuidCookie);
+                } else if ( requiredPasswordChange.contains(username) &&
+                            shouldBeRedirected(request)) {
+                    try {
+                        logger.info("Redirecting attempted bypass by " + username + 
+                                    " to " + request.getRequestURL().toString());
+                        UsersDao udao = DaoFactory.UsersDao();
+                        User user = udao.retrieveUser(username);
+                        if ( user.requiresPasswordChange()) {
+                            logger.info("adding sdisuid cookie and redirecting to PW change for request: "+ request);
+                            response.addCookie(new Cookie("sdisuid", user.requiresPwChange()));
+                            response.sendRedirect(getPasswordChangeUrl(request));
+                            return;
+                        } else {
+                            synchronized (requiredPasswordChange) {
+                                logger.info("removing " + username + " from changePassword cache.");
+                                requiredPasswordChange.remove(username);
+                                logger.info("setting sdisuid to maxAge=0 to remove.");
+                                Cookie removeSuidCookie = new Cookie("sdisuid", null);
+                                removeSuidCookie.setMaxAge(0);
+    	                        response.addCookie(removeSuidCookie);
+                            }
                         }
+                    } catch (SQLException ex) {
+                        logger.warn(ex,ex);
+                        response.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Error retrieving user information.");
+                        return;
                     }
-                } catch (SQLException ex) {
-                    logger.warn(ex,ex);
-                    response.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Error retrieving user information.");
-                    return;
-                }
-            } 
+                } 
+            }
         } else if ( request.getRequestURL().toString().contains("DashboardServices")) {
             logger.warn("Null user principle!");
             Notifications.SendEmail("Null user principle", "Null user principle at\n"+String.valueOf(request), "linus.kamb@noaa.gov");
@@ -126,7 +135,12 @@ public class LoginDetectionFilter implements Filter {
 //            return;
         }
 
+        try {
+            logger.debug("chaining on");
         chain.doFilter(req, resp);
+        } catch (Throwable t ) {
+        	t.printStackTrace();
+        }
     }
 
     /**
