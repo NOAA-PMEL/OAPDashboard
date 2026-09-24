@@ -4,6 +4,9 @@
 package gov.noaa.pmel.dashboard.server.ws;
 
 import java.io.IOException;
+import java.util.Collection;
+import java.util.Date;
+import java.util.Enumeration;
 import java.util.Map;
 
 import javax.servlet.annotation.MultipartConfig;
@@ -42,8 +45,37 @@ public class PublicServices extends CommonServiceBase {
 	@Override
 	protected void doGet(HttpServletRequest request, HttpServletResponse response) throws IOException {
         logger.warn("PublicServices root");
-        response.sendError(SC_FORBIDDEN);
+        String path = request.getPathInfo();
+        String requestedOp = path.substring(path.lastIndexOf('/')+1);
+        String context = request.getRequestURI();
+        context = context.substring(0, context.indexOf(SERVICES_PATH));
+        if ("oa_head".equals(requestedOp)) {
+            StringBuilder msg = new StringBuilder()
+                            		.append(new Date())
+									.append(" Headers at: ")
+									.append(request.getContextPath())
+									.append("\n\t")
+									.append(request.getRequestURL())
+									.append("\n\t")
+                                    .append("with scheme:")
+									.append(request.getScheme())
+									.append("\n");
+            dumpHeadersAsString(request, msg);
+            respondSuccess(response, msg.toString());
+        } else {
+            response.sendError(SC_FORBIDDEN);
+        }
 	}
+
+    private static String dumpHeadersAsString(HttpServletRequest request, StringBuilder msg) {
+        Enumeration<String>headers = request.getHeaderNames();
+        while ( headers.hasMoreElements()) {
+            String name = headers.nextElement();
+            String value = request.getHeader(name);
+            msg.append("  ").append(name).append(":").append(value).append("\n");
+        }
+    	return msg.toString();
+    }
 
 	@Override
 	protected void doPost(HttpServletRequest httpRequest, HttpServletResponse httpResponse) throws IOException {

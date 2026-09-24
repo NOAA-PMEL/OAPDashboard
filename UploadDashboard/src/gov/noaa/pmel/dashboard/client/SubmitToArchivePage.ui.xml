@@ -99,6 +99,12 @@
         <g:center addStyleNames="{style.fullpagecontainer}">
             <g:ScrollPanel addStyleNames="{style.contentscroll}">
                 <g:FlowPanel>
+                <!--
+                	<g:HTML addStyleNames="{style.alert}">
+                	PLEASE NOTE: Due to disruption from Hurricane Helene, archive processing of submissions will be delayed.<br/>
+                	Please continue submitting data with SDIS and archive processing will commence as soon as services are restored.<br/>
+                	We apologize for the inconvenience.</g:HTML>
+            	-->
                     <g:FlowPanel addStyleNames="{style.archiveFileListPanel}">
                         <g:HTML ui:field="fileListLabel" addStyleNames="{style.archiveFileListLabel}"/>
                         <g:HTML ui:field="fileListHtml" addStyleNames="{style.archiveFileList}"></g:HTML>

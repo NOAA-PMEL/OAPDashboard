@@ -22,15 +22,14 @@
 		<result property="_message" column="message"/>
 	</resultMap>
 	
+    <!-- removed status_time, because upgrade to 8.0 broke the DEFAULT now direction. -->
     <sql id="stdColumns">
         submission_id,
-        status_time,
         status,
         message
     </sql>
     <sql id="stdFields">
         #{_submissionId},
-        #{_statusTime},
         #{_status},
         #{_message}
     </sql>

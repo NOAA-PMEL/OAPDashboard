@@ -34,12 +34,13 @@ public final class UploadProgressServlet extends RemoteServiceServlet implements
 
         //    uploadDirectory = properties.getProperty("upload.directory", "target");
         uploadDirectory = ApplicationConfiguration.getProperty("oap.upload.raw_directory", "RawFiles");
+        LOGGER.debug("raw files upload dir: " + uploadDirectory);
     }
 
     @Override
     public void initialise() {
         HttpSession session = getThreadLocalRequest().getSession(true);
-        LOGGER.info("session: " + session);
+        LOGGER.info("upload session: " + session);
     }
 
     //  @Override

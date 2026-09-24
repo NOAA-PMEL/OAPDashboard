@@ -79,9 +79,13 @@ public class MetadataPoster {
             MultipartEntityBuilder builder = MultipartEntityBuilder.create();
             builder.addPart("xmlFile", body);
             String notifyUrl = getNotificationUrl(httpRequest.getRequestURL().toString(), datasetId);
-            System.out.println("noticationUrl: " + notifyUrl);
+            logger.debug("noticationUrl: " + notifyUrl);
             StringBody notificationUrl = new StringBody(notifyUrl, ContentType.MULTIPART_FORM_DATA);
             builder.addPart("notificationUrl", notificationUrl);
+            String docLocation = getLocationUrl(httpRequest, datasetId);
+            logger.debug("locationUrl: " + docLocation);
+            StringBody locationUrl = new StringBody(docLocation, ContentType.MULTIPART_FORM_DATA);
+            builder.addPart("locationUrl", locationUrl);
             HttpEntity postit = builder.build();
             post.setEntity(postit);
             HttpResponse response = client.execute(post);
@@ -115,11 +119,11 @@ public class MetadataPoster {
         }
     }
 
-    private static String getMetadataPostPoint(HttpServletRequest request, String datasetId) throws Exception {
+	private static String getMetadataPostPoint(HttpServletRequest request, String datasetId) throws Exception {
         String requestUrl = request.getRequestURL().toString();
-        System.out.println("get ME post point request: " + requestUrl);
+        logger.debug("get ME post point request: " + requestUrl);
         String context = request.getContextPath();
-        System.out.println("get ME post point context: " + context);
+        logger.debug("get ME post point context: " + context);
         String meUrlProp = ApplicationConfiguration.getOptionalProperty(DashboardConfigStore.METADATA_EDITOR_POST_ENDPOINT);
         String url;
         if ( StringUtils.emptyOrNull(meUrlProp)) {
@@ -137,30 +141,57 @@ public class MetadataPoster {
         }
         String slash = url.endsWith("/") ? "" : "/";
         url = url + slash + datasetId;
-        System.out.println("Post point: " + url);
+        logger.debug("Post point: " + url);
         return url;
     }
     
+    private static String getLocationUrl(HttpServletRequest httpRequest, String datasetId) {
+        String docLocation = null;
+        String meDocLocationProperty = ApplicationConfiguration.getProperty("metadata_editor.document.url", null);
+        String origin = httpRequest.getHeader("origin");
+        String host = httpRequest.getHeader("host");
+        String contextPath = httpRequest.getContextPath();
+        String baseContext = contextPath.substring(0, contextPath.indexOf("Dashboard")); // XXX .war name...
+        
+        if ( meDocLocationProperty != null ) {
+        	docLocation = meDocLocationProperty + "/" + datasetId;
+            logger.debug("property docLocation: "+ docLocation);
+        } else if ( origin != null && origin.startsWith("https://")) {
+        	docLocation = origin + baseContext + "MetadataEditor/document/getXml/" + datasetId;
+            logger.debug("origin docLocation: "+ docLocation);
+        } else {
+        	docLocation = host + baseContext + "MetadataEditor/document/getXml/" + datasetId;
+            logger.debug("host docLocation: "+ docLocation);
+        }
+		return docLocation;
+	}
+
     // request URL is in the form: http://matisse:8080/OAPUploadDashboard/OAPUploadDashboard/DashboardServices
     // or http://dunkel.pmel.noaa.gov:5680/oa/Dashboard/OAPUploadDashboard/DashboardServices
 	// And notification URL should be http://dunkel.pmel.noaa.gov:5680/oa/Dashboard/DashboardUpdateService/notify/<datasetId>
     private static String getNotificationUrl(String requestUrl, String datasetId) {
-        System.out.println("get notify URL request: " + requestUrl);
-        String notifyUrl = revise(requestUrl, "OAPUploadDashboard", "DashboardUpdateService/notify/"+datasetId);
-        logger.debug("revise url: " + notifyUrl);
-        if ( isPublicUrl(requestUrl)) { 
-            notifyUrl = revise(requestUrl, "OAPUploadDashboard", "DashboardUpdateService/notify/"+datasetId);
+        logger.debug("get notify URL request: " + requestUrl);
+        String notifyUrlProperty = ApplicationConfiguration.getProperty("metadata_editor.notify.url", null);
+        logger.debug("notifyUrlProperty:"+notifyUrlProperty);
+        String notifyUrl = null;
+        
+        if ( ! StringUtils.emptyOrNull(notifyUrlProperty)) {
+            String slash = notifyUrlProperty.endsWith("/") ? "" : "/";
+        	notifyUrl = notifyUrlProperty + slash + datasetId;
+        } else if ( isPublicUrl(requestUrl)) { 
+//            notifyUrl = revise(requestUrl, "OAPUploadDashboard", "DashboardUpdateService/notify/"+datasetId);
             // requests through the F5/Kemp come as http:
             notifyUrl = "https://" + getPublicHost() +
                             requestUrl.substring(requestUrl.indexOf("/sdig"),
                                                  requestUrl.indexOf("OAPUploadDashboard"));
-            logger.debug("https url: " + notifyUrl);
             notifyUrl = notifyUrl + "DashboardUpdateService/notify/"+datasetId;
+            logger.debug("public https notify url: " + notifyUrl);
         } else {
+    		// revise(requestUrl, "OAPUploadDashboard", "DashboardUpdateService/notify/"+datasetId);
             notifyUrl = requestUrl.substring(0, requestUrl.lastIndexOf("OAPUploadDashboard"));
             notifyUrl = notifyUrl + "DashboardUpdateService/notify/"+datasetId;
         }
-        System.out.println("nofity url: " + notifyUrl);
+        logger.debug("final nofity url: " + notifyUrl);
         return notifyUrl;
     }
     /**
@@ -168,13 +199,14 @@ public class MetadataPoster {
      * @return
      */
     private static boolean isPublicUrl(String requestUrl) {
-        return requestUrl.contains(getPublicHost());
+        return requestUrl.startsWith("https://")  && requestUrl.contains(getPublicHost());
     }
     private static String publicHost = null;
     private static final String DEFAULT_PUBLIC_HOST = "data.pmel.noaa.gov";
     private static String getPublicHost() {
         if ( publicHost == null ) {
             publicHost = ApplicationConfiguration.getProperty("oap.url.host", DEFAULT_PUBLIC_HOST);
+            logger.debug("setting public host as: " + publicHost);
         }
         return publicHost;
     }

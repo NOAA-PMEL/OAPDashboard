@@ -79,6 +79,7 @@ public class VScanner {
 //	}
 	private String QUIET_FLAG = " --quiet ";
 	private String BE_QUIET = "";
+	private String SUMMARY = ""; // "--no-summary"
 	
 	public boolean scanFile(File file) throws Exception {
 		return scanFile(file, "");
@@ -109,7 +110,7 @@ public class VScanner {
 		}
 		ByteArrayOutputStream out = new ByteArrayOutputStream();
 		ByteArrayOutputStream err = new ByteArrayOutputStream();
-		String command = CLAM_COMMAND + BE_QUIET + quarantineFlag + " --fdpass --no-summary " + "\""+file.getAbsolutePath()+"\"";
+		String command = CLAM_COMMAND + BE_QUIET + quarantineFlag + " --fdpass " + SUMMARY + "\""+file.getAbsolutePath()+"\"";
 		runner = new CommandRunner(command, out, err);
 		int exit;
 		try {

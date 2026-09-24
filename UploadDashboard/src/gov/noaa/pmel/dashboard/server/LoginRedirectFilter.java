@@ -19,7 +19,7 @@ import gov.noaa.pmel.dashboard.shared.DashboardUtils;
 
 
 /**
- * Authenticates a user for a session
+ * Catches the occasional bogus GET request to DashboardServices.
  */
 public class LoginRedirectFilter implements Filter {
 
@@ -46,14 +46,19 @@ public class LoginRedirectFilter implements Filter {
         if (( target.indexOf("DashboardServices") > 0 || 
               target.indexOf("DataUploadService") > 0 ||
               target.indexOf("SessionServices") > 0 ) &&
-            ( "GET".equals(method) || contentType == null || referer.indexOf("dashboardlogin") > 0 )) {
+            ( "GET".equals(method) || contentType == null || 
+            	( referer != null && referer.indexOf("dashboardlogin") > 0 ))) {
             response.setStatus(HttpServletResponse.SC_NO_CONTENT);
             logger.warn("j_security_check bogus GET request.  Sending NO_CONTENT");
 			logger.warn(method + ": target:" + target + ", referer: " + referer + ", content: " + contentType);
             return;
         } else {
     		// All is well - continue on
-    		chain.doFilter(request, response);
+            try {
+        		chain.doFilter(request, response);
+            } catch (Throwable t) {
+            	t.printStackTrace();
+            }
         }
 	}
 

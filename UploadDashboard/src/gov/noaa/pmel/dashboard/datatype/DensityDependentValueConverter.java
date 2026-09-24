@@ -131,6 +131,9 @@ public class DensityDependentValueConverter extends ValueConverter<Double> {
 		if ( isMissingValue(valueString, true)) {
 			return null;
 		}
+		// Deal with em-dashes
+        if ( valueString.contains(EM_DASH))
+    		valueString = valueString.replaceAll(EM_DASH, "-");
 		double columnValue = Double.parseDouble(valueString);
         try {
     		double dependentValue = _sigTheta.getSigmaThetaForRow(recordNumber);

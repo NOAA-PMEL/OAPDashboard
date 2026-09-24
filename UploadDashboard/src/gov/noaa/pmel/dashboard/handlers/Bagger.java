@@ -86,6 +86,12 @@ public class Bagger implements ArchiveBundler {
     private Map<String, String> _submitProps;
     private SimpleDateFormat _tsFormatter;
     private DashboardConfigStore _store;
+
+
+
+    /* for tar'ing big (> 8GB) files; */
+	private boolean _BIG_MODE = false; 
+    private static long EIGHT_GB = 8 * 1024 * 1024 * 1024;
   
     public static File Bag(SubmissionRecord submitRecord, String datasetId) throws Exception {
         return Bag(submitRecord, datasetId, null, "");
@@ -116,6 +122,15 @@ public class Bagger implements ArchiveBundler {
         }
     }
     
+    public File bagit(File dataFile, String observationType, File metadataFile) throws Exception {
+    	File datafile = new File(_contentRoot, "MetadataDocs/"+_datasetId.substring(0, 4)+"/"+_datasetId+"/"+_datasetId+"_metadata.xml");
+    			
+    	Path staged = this.stuffit(datafile,observationType);
+    	Bag bag = this.bagit(staged);
+    	File archiveFile = this.packit(staged);
+    	return archiveFile;
+    }
+    
     /**
      * @see gov.noaa.pmel.dashboard.handlers.ArchiveBundler#createArchiveFilesBundle(java.lang.String, java.io.File)
      */
@@ -124,6 +139,9 @@ public class Bagger implements ArchiveBundler {
         return Bag(submitRecord, stdId);
     }
 
+    public Bagger(String datasetId, DashboardConfigStore store) {
+        this(null, datasetId, store);
+    }
     /**
      * 
      */
@@ -139,7 +157,12 @@ public class Bagger implements ArchiveBundler {
         _includeHiddenFiles = includeHiddenFiles;
         _submitProps = submitProperties != null ? submitProperties : new HashMap<>();
         _store = store;
-        _contentRoot = _store.getAppContentDir();
+        _contentRoot = DashboardConfigStore.getAppContentDir();
+    }
+    
+    public Bagger(String datasetId, File contentRoot) {
+    	_datasetId = datasetId;
+    	_contentRoot = contentRoot;
     }
 
     /**
@@ -149,6 +172,11 @@ public class Bagger implements ArchiveBundler {
     private Path stuffit() throws IOException {
         DataFileHandler dataFiler = _store.getDataFileHandler();
         File dataFile  = dataFiler.datasetUploadedFile(_datasetId);
+        long fsize = dataFile.length();
+        if ( fsize > EIGHT_GB ) {
+            logger.info("Setting BIG_MODE for data file of length: " + fsize);
+        	_BIG_MODE  = true;
+        }
         DashboardDataset dd = dataFiler.getDatasetFromInfoFile(_datasetId);
         String observationType = dd.getUserObservationType();
         return stuffit(dataFile, observationType);
@@ -229,7 +257,8 @@ public class Bagger implements ArchiveBundler {
      * @throws NoSuchAlgorithmException 
      */
     private File addSubmissionComment(Bag toBag, Path staged, String submitMsg) throws IOException, NoSuchAlgorithmException {
-        File msgFile = new File(staged.toFile(), _submitRecord.submissionKey() + "_SubmissionInstructions.txt");
+//        File msgFile = new File(staged.toFile(), _submitRecord.submissionKey() + "_SubmissionInstructions.txt");
+        File msgFile = new File(staged.toFile(), _datasetId + "_SubmissionInstructions.txt"); // submission_key == datasetId
         try (PrintWriter fout = new PrintWriter(new FileWriter(msgFile))) {
             for (Entry<String, String> prop : _submitProps.entrySet()) {
                 fout.println(prop);
@@ -383,9 +412,12 @@ public class Bagger implements ArchiveBundler {
         BufferedOutputStream bufOS = new BufferedOutputStream(fos);
         GzipCompressorOutputStream gzOS = (GzipCompressorOutputStream) 
                 csFactoid.createCompressorOutputStream(CompressorStreamFactory.GZIP, bufOS); 
-        try (
-            TarArchiveOutputStream tarcOS = (TarArchiveOutputStream)
+        try ( TarArchiveOutputStream tarcOS = (TarArchiveOutputStream)
                 asFactoid.createArchiveOutputStream(ArchiveStreamFactory.TAR, gzOS)) {
+            if ( _BIG_MODE ) {
+                logger.debug("Setting archiveString BigNumberMode to POSIX");
+                tarcOS.setBigNumberMode(TarArchiveOutputStream.BIGNUMBER_POSIX);
+            }
             addFileToArchive(tarcOS, bagFile, "");
         }
         return bagArchiveFile;
@@ -599,11 +631,18 @@ public class Bagger implements ArchiveBundler {
             if ( args.length < 2 ) {
                 usage(-1);
             }
-            File bagDir = new File(args[0]);
-            File bagFile = new File(args[1]);
+            File bagDataDir = new File(args[0]);
+            File bagDir = new File(args[1]);
             Path bagPath = bagDir.toPath();
+            org.apache.commons.io.FileUtils.copyDirectory(bagDataDir, bagDir);
             Bag bag = BagCreator.bagInPlace(bagPath, Arrays.asList(getHashAlgorithm()), false);
-            BagWriter.write(bag, bagFile.toPath());
+//            BagWriter.write(bag, bagFile.toPath());
+            File bagArchiveFile = new File(args[1]+".zip");
+            try ( FileOutputStream fos = new FileOutputStream(bagArchiveFile);
+                    ZipOutputStream zipOut = new ZipOutputStream(fos); ) {
+                  zipDirFiles(bagDir, "", zipOut);
+              }
+
 //            File configDir = new File("/Users/kamb/tomcat/7/content/OAPUploadDashboard/config");
 //            ApplicationConfiguration.Initialize(configDir, "oap");
 //            String datasetId = "PRISM082008";

@@ -84,7 +84,7 @@ public class NotificationService extends HttpServlet {
             @Override
             public void run() {
                 try {
-                    System.out.println("Retriver running.");
+                    System.out.println("Metadata File Retriever running.");
                     Thread.sleep(500);
                     retrieveMetadataFile(location, datasetId);
                 } catch (Exception ex) {
@@ -104,12 +104,14 @@ public class NotificationService extends HttpServlet {
 	}
     
 	private static void saveAndValidateMetadata(String datasetId, InputStream in) throws Exception {
+            logger.debug("saveAndValidateMetadata for " + datasetId);
             OadsMetadataDocumentType metadata = saveXmlFromStream(datasetId, in);
             DataFileHandler df = DashboardConfigStore.get().getDataFileHandler();
             DashboardDataset dataset = df.getDatasetFromInfoFile(datasetId);
             String validationMessage = ApplicationConfiguration.getProperty("oap.metadata.validate", true) ? 
                                         OADSMetadata.validateMetadata(dataset, metadata) :
                                         "Not checked.";
+            logger.debug("validation msg: " + validationMessage);
     		String timestamp = TimeUtils.formatUTC(new Date(), "yyyy-MM-dd HH:mm Z");
             dataset.setMdTimestamp(timestamp);
             dataset.setMdStatus(validationMessage);
